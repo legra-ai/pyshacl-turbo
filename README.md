@@ -1,9 +1,9 @@
 # pyshacl-turbo
 
-A synchronous Rust SHACL engine with Python bindings. Shape compilation, Core
+A Rust SHACL engine with Python bindings. Shape compilation, Core
 validation, SPARQL constraints, targets, rules and inference execute in Rust.
-There is no runtime dependency on pySHACL or owlrl, no alternate validator,
-and no Tokio runtime. Native execution releases the Python GIL.
+There is no runtime dependency on pySHACL or owlrl. Native execution releases
+the Python GIL.
 
 Compatibility work targets **pySHACL 0.40.1, excluding SHACL-JS**. It is incomplete.
 The complete upstream run passes **402/403 cases (99.8%)**, including
@@ -98,10 +98,12 @@ samples show substantial scheduling variation. Sparse-target workloads remain
 slower with fresh RDFLib input. See the report's load notes before using its
 speedup ratios for capacity planning.
 
-The [latest measured matrix](benchmarks/current.md) includes literal identity,
+The [last full matrix](benchmarks/current.md) includes literal identity,
 report graph context and inference axiom fixes. It predates the recursion and
 undefined-function changes in ADR 0012; its recorded source hashes identify
 the measured checkpoint. Earlier matrices remain in `benchmarks/`.
+The [newer Core measurements](benchmarks/pattern-core.md) include the Python
+pattern compatibility changes in ADR 0013, at 100, 1,000 and 10,000 nodes.
 
 ```sh
 # Run alone, separately from builds and other tests.
@@ -133,8 +135,9 @@ has not been tested.
 
 Architectural decisions are in [docs/adr](docs/adr). The exact-term dataset avoids
 premature literal canonicalization. Documented local Rust dependency patches
-preserve RDFLib string identity and SHACL SPARQL prebinding. Project code is Apache-2.0;
-vendored assets retain their licenses and provenance.
+preserve RDFLib string identity and SHACL SPARQL prebinding. Original project code
+is dual-licensed under [Apache-2.0](LICENSE-APACHE) or [MIT](LICENSE-MIT), at your
+option. Vendored code and assets retain their licenses and provenance.
 
 GitHub CI builds and checks Linux Python 3.11/3.13 and macOS Python 3.13,
 including isolated wheel installs without pySHACL or owlrl. PRs use conventional

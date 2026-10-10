@@ -410,7 +410,11 @@ impl CompiledShapes {
                 }
                 Constraint::Pattern(regex) => {
                     for value in &values {
-                        if !crate::value::lexical(value).is_some_and(|text| regex.is_match(text)) {
+                        let valid = crate::value::lexical(value)
+                            .map(|text| regex.is_match(text))
+                            .transpose()?
+                            .unwrap_or(false);
+                        if !valid {
                             results.push(violation("PatternConstraintComponent", Some(value)));
                         }
                     }
@@ -984,6 +988,21 @@ impl CompiledShapes {
                     .strip_prefix(SH)
                     .unwrap_or(violation.component.as_str());
                 match component {
+                    "PatternConstraintComponent" => {
+                        let patterns = values(&self.graph, &shape.node, "pattern")?
+                            .iter()
+                            .filter_map(crate::value::lexical)
+                            .map(str::to_owned)
+                            .collect::<Vec<_>>();
+                        if patterns.len() == 1 {
+                            format!("Value does not match pattern '{}'", patterns[0])
+                        } else {
+                            format!(
+                                "Value does not match every pattern in ('{}')",
+                                patterns.join("', '")
+                            )
+                        }
+                    }
                     "ClassConstraintComponent" => {
                         let mut classes = values(&self.graph, &shape.node, "class")?
                             .iter()

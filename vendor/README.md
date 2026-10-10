@@ -16,6 +16,9 @@
   variables for SHACL prebindings; see its `TURBO-PATCH.md`.
 - `oxrdf-0.3.4/`: optional exact string term identity, documented in its
   `TURBO-PATCH.md` and [ADR 0011](../docs/adr/0011-literal-identity-and-report-graph-scope.md).
+- `fancy-regex-0.19.2/`: published crate with an opt-in Python backreference
+  and lookaround feature, documented in its `TURBO-PATCH.md`. Original checksum
+  and revision are in `rust-sources.json`; its MIT license is retained.
 
 No upstream PRs have been submitted for these local Rust patches.
 
