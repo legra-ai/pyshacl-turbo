@@ -11,6 +11,9 @@ thiserror.workspace = true
 spargebra = "=0.4.7"
 spareval = { version = "=0.2.7", features = ["undefined-functions-as-expression-errors"] }
 bigdecimal = "0.4"
-regex = "1"
+fancy-regex = { version = "=0.19.2", default-features = false, features = ["std", "perf", "unicode", "python-re"] }
+regex-syntax = "0.8"
+unicode-ident = "1"
+unicode_names2 = "4"
 oxsdatatypes = "=0.2.3"
 num-bigint = "0.4"

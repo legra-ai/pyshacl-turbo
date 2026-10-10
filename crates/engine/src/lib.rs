@@ -12,6 +12,7 @@ mod graph;
 mod inference;
 mod ontology;
 mod path;
+mod pattern;
 mod sparql;
 mod value;
 
