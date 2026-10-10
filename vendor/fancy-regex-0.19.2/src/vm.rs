@@ -867,10 +867,41 @@ fn python_backref_end<S: HaystackInput + ?Sized>(
         } else {
             actual.eq_ignore_ascii_case(&expected)
         };
-        if !equal { return None; }
+        if !equal {
+            return None;
+        }
         end += actual.len_utf8();
     }
     Some(end)
+}
+
+#[cfg(all(test, feature = "python-re"))]
+mod python_re_tests {
+    use super::python_backref_end;
+
+    #[test]
+    fn unicode_backreferences_advance_by_characters_and_compare_lowercase() {
+        assert_eq!(python_backref_end("xxİ!", 2, b"i", true), Some(4));
+        assert_eq!(python_backref_end("xxi!", 2, "İ".as_bytes(), true), Some(3));
+        assert_eq!(python_backref_end("K", 0, b"k", true), Some(3));
+        assert_eq!(python_backref_end("ı", 0, b"i", true), None);
+        assert_eq!(python_backref_end("ſ", 0, b"s", true), None);
+        assert_eq!(python_backref_end("ς", 0, "σ".as_bytes(), true), None);
+    }
+
+    #[test]
+    fn ascii_backreferences_preserve_non_ascii_and_reject_invalid_boundaries() {
+        assert_eq!(
+            python_backref_end("éA!", 0, "éa".as_bytes(), false),
+            Some(3)
+        );
+        assert_eq!(python_backref_end("Éa", 0, "éa".as_bytes(), false), None);
+        assert_eq!(python_backref_end("İ", 0, b"i", false), None);
+        assert_eq!(python_backref_end("é", 1, b"a", true), None);
+        assert_eq!(python_backref_end("", 1, b"a", true), None);
+        assert_eq!(python_backref_end("a", 0, b"ab", true), None);
+        assert_eq!(python_backref_end("a", 1, b"", true), Some(1));
+    }
 }
 
 fn matches_literal_casei_unicode(text: &str, literal: &str) -> bool {

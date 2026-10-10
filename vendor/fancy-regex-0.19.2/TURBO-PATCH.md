@@ -16,4 +16,6 @@ anchors before compilation. This is not a general Python mode for unmodified
 patterns passed directly to fancy-regex. Its seek optimization remains disabled:
 the upstream case-folding approximation is not valid for Python backreferences.
 
-Regressions are in `../../tests/test_patterns.py`.
+Regressions are in `../../tests/test_patterns.py` and the private VM unit tests
+in `src/vm.rs`. The full dependency test suite runs with default features; the
+VM regressions run with `--features python-re python_re_tests`.

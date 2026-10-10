@@ -11,3 +11,11 @@ This crate supports several optional features that can be enabled or disabled:
   This feature uses reverse DFA matching from the `regex-automata` crate to efficiently handle
   variable-length patterns that don't use backreferences or other fancy features.
 - **`leftmost_longest`** (disabled by default): Enables support for switching on leftmost-longest match semantics in the `RegexBuilder`/`RegexOptionsBuilder`, as opposed to the usual leftmost-first.
+
+## Local pyshacl-turbo feature
+
+`python-re` enables scoped ASCII backreference matching (`a`), Python's simple
+lowercase comparison for case-insensitive backreferences, character-based UTF-8
+advancement, and repeatable lookarounds. It is disabled by default. The SHACL
+engine translates the rest of Python syntax; see `../TURBO-PATCH.md`.
+

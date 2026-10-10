@@ -184,7 +184,11 @@ impl<'a> Compiler<'a> {
             Expr::LookAround(_, la) => {
                 self.compile_lookaround(info, la)?;
             }
-            Expr::Backref { group, casei, ascii } => {
+            Expr::Backref {
+                group,
+                casei,
+                ascii,
+            } => {
                 self.b.add(Insn::Backref {
                     slot: group * 2,
                     casei,

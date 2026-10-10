@@ -95,3 +95,11 @@ Absent repeater:
 
 `(?~abc)`
 : match anything until `abc` would match or until the end of the haystack if no match
+
+## Local pyshacl-turbo syntax extension
+
+With `python-re`, `(?a:...)` and `(?-a:...)` select ASCII or Unicode
+case-insensitive backreference comparison. This flag does not translate
+character classes; the SHACL engine handles those separately. Python's repeated
+lookarounds are also accepted. See `../TURBO-PATCH.md` for the complete scope.
+

@@ -42,7 +42,9 @@ The new 82-case regression suite covers complete reports, flags, Unicode and
 ASCII modes, named/numbered/mixed captures, conditionals, repeated assertions,
 atomic/possessive constructs, invalid syntax, language-tagged patterns, IRI
 values, program reuse and backtracking errors. The patched dependency passes
-303 upstream unit tests with the Python feature disabled.
+303 upstream unit tests without default features and its full test suite with
+default features (both with Python mode disabled). Two direct VM unit tests
+verify Python backreference case rules, byte boundaries and mixed ASCII text.
 
 This is bounded compatibility evidence against Python 3.11–3.13, not a claim
 that every Python expression is equivalent. Unicode database versions, parser

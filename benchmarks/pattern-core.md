@@ -62,3 +62,5 @@ Independent phase timings are diagnostic and must not be summed into the end-to-
 | oxigraph_store_handoff | 9.82 |
 
 Compatibility remains incomplete; this benchmark only certifies the displayed workloads. Native OWL-RL coverage is still being expanded. No result here establishes 100% pySHACL compatibility.
+
+Source checkpoint: [`aeed1cb`](https://github.com/legra-ai/pyshacl-turbo/commit/aeed1cb93458bf988bfea03d75b92ad26555aad7). Later changes in this PR add dependency unit tests and formatting only.
