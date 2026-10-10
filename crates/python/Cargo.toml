@@ -1,0 +1,13 @@
+[package]
+name = "pyshacl-turbo-python"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[lib]
+name = "_native"
+crate-type = ["cdylib"]
+
+[dependencies]
+pyo3.workspace = true
+pyshacl-turbo-engine = { path = "../engine" }

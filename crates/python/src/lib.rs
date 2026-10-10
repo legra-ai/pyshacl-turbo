@@ -1,0 +1,328 @@
+use pyo3::exceptions::{PyNotImplementedError, PyRuntimeError, PyValueError};
+use pyo3::prelude::*;
+use pyshacl_turbo_engine::oxigraph::io::RdfFormat;
+use pyshacl_turbo_engine::oxigraph::{
+    io::{RdfParser, RdfSerializer},
+    model::*,
+};
+use pyshacl_turbo_engine::{
+    CompiledShapes, Error, Options, parse_dataset, parse_graph, serialize_graph,
+};
+
+pyo3::create_exception!(_native, ValidationFailure, PyValueError);
+
+fn error(error: Error) -> PyErr {
+    match error {
+        Error::ValidationFailure(_) => ValidationFailure::new_err(error.to_string()),
+        Error::Unsupported(_) => PyNotImplementedError::new_err(error.to_string()),
+        Error::Invalid(_) => PyValueError::new_err(error.to_string()),
+        _ => PyRuntimeError::new_err(error.to_string()),
+    }
+}
+
+struct InputFormat {
+    rdf: RdfFormat,
+    store_strings: bool,
+}
+
+impl InputFormat {
+    fn parse(&self, source: &str, base: Option<&str>) -> pyshacl_turbo_engine::Result<Dataset> {
+        if self.store_strings {
+            pyshacl_turbo_engine::parse_store_snapshot(source)
+        } else {
+            parse_dataset(source, self.rdf, base)
+        }
+    }
+}
+
+fn format(name: &str) -> PyResult<InputFormat> {
+    let rdf = match name {
+        "turtle" | "ttl" => Ok(RdfFormat::Turtle),
+        "nt" | "ntriples" => Ok(RdfFormat::NTriples),
+        "nquads" | "nq" | "oxigraph-nquads" => Ok(RdfFormat::NQuads),
+        "trig" => Ok(RdfFormat::TriG),
+        "xml" | "rdfxml" => Ok(RdfFormat::RdfXml),
+        "n3" => Ok(RdfFormat::N3),
+        "json-ld" | "jsonld" => Ok(RdfFormat::JsonLd {
+            profile: Default::default(),
+        }),
+        _ => Err(PyNotImplementedError::new_err(format!(
+            "Unsupported RDF format: {name}"
+        ))),
+    }?;
+    Ok(InputFormat {
+        rdf,
+        store_strings: name == "oxigraph-nquads",
+    })
+}
+
+#[pyfunction]
+fn parse_rdf(
+    py: Python<'_>,
+    source: &str,
+    rdf_format: &str,
+    base: Option<&str>,
+) -> PyResult<(String, Vec<(String, String)>)> {
+    let format = format(rdf_format)?;
+    py.detach(|| {
+        let mut parser = RdfParser::from_format(format.rdf);
+        if let Some(base) = base {
+            parser = parser
+                .with_base_iri(base)
+                .map_err(|e| PyValueError::new_err(e.to_string()))?;
+        }
+        let mut parser = parser.for_slice(source.as_bytes());
+        let mut writer = RdfSerializer::from_format(RdfFormat::NQuads).for_writer(Vec::new());
+        for quad in parser.by_ref() {
+            let quad = quad.map_err(|e| PyValueError::new_err(e.to_string()))?;
+            let quad = if format.store_strings {
+                pyshacl_turbo_engine::store_quad(quad)
+            } else {
+                quad
+            };
+            writer
+                .serialize_quad(&quad)
+                .map_err(|e| PyValueError::new_err(e.to_string()))?;
+        }
+        let prefixes = parser
+            .prefixes()
+            .map(|(p, n)| (p.to_owned(), n.to_owned()))
+            .collect();
+        let output = writer
+            .finish()
+            .map_err(|e| PyValueError::new_err(e.to_string()))?;
+        Ok((
+            String::from_utf8(output).map_err(|e| PyValueError::new_err(e.to_string()))?,
+            prefixes,
+        ))
+    })
+}
+
+#[pyfunction]
+fn additions(py: Python<'_>, before: &str, rdf_format: &str, after: &str) -> PyResult<String> {
+    let rdf_format = format(rdf_format)?;
+    py.detach(|| {
+        let before = rdf_format.parse(before, None)?;
+        let after = parse_dataset(after, RdfFormat::NQuads, None)?;
+        let additions = after
+            .iter()
+            .filter(|q| !before.contains(*q))
+            .map(|q| q.into_owned())
+            .collect();
+        serialize_graph(&additions)
+    })
+    .map_err(error)
+}
+
+#[pyfunction]
+#[pyo3(signature = (source, rdf_format, mode, destination=None))]
+fn infer(
+    py: Python<'_>,
+    source: &str,
+    rdf_format: &str,
+    mode: &str,
+    destination: Option<&str>,
+) -> PyResult<String> {
+    let rdf_format = format(rdf_format)?;
+    let destination = destination
+        .map(NamedNode::new)
+        .transpose()
+        .map_err(|e| PyValueError::new_err(e.to_string()))?;
+    py.detach(|| {
+        let mut data = rdf_format.parse(source, None)?;
+        if let Some(destination) = destination {
+            pyshacl_turbo_engine::infer_into(&mut data, mode, destination.into())?;
+        } else {
+            pyshacl_turbo_engine::infer(&mut data, mode)?;
+        }
+        serialize_graph(&data)
+    })
+    .map_err(error)
+}
+
+#[pyfunction]
+fn inoculate(py: Python<'_>, source: &str, rdf_format: &str, ontology: &str) -> PyResult<String> {
+    let rdf_format = format(rdf_format)?;
+    py.detach(|| {
+        let mut data = rdf_format.parse(source, None)?;
+        let ontology = parse_graph(ontology, RdfFormat::NTriples, None)?;
+        pyshacl_turbo_engine::inoculate(&mut data, &ontology);
+        serialize_graph(&data)
+    })
+    .map_err(error)
+}
+
+#[pyfunction]
+fn query(py: Python<'_>, source: &str, rdf_format: &str, query: &str) -> PyResult<String> {
+    use pyshacl_turbo_engine::oxigraph::sparql::QueryResults;
+    use pyshacl_turbo_engine::oxigraph::sparql::results::{
+        QueryResultsFormat, QueryResultsSerializer,
+    };
+    let rdf_format = format(rdf_format)?;
+    py.detach(|| {
+        let mut data = rdf_format.parse(source, None)?;
+        let default: Vec<_> = data
+            .iter()
+            .map(|q| Quad::new(q.subject, q.predicate, q.object, GraphName::DefaultGraph))
+            .collect();
+        data.extend(default);
+        let serializer = QueryResultsSerializer::from_format(QueryResultsFormat::Json);
+        let bytes = match pyshacl_turbo_engine::evaluate_query(&data, &data, query, &[])? {
+            QueryResults::Solutions(solutions) => {
+                let mut writer = serializer
+                    .serialize_solutions_to_writer(Vec::new(), solutions.variables().to_vec())
+                    .map_err(|e| Error::Runtime(e.to_string()))?;
+                for solution in solutions {
+                    writer
+                        .serialize(&solution?)
+                        .map_err(|e| Error::Runtime(e.to_string()))?;
+                }
+                writer.finish().map_err(|e| Error::Runtime(e.to_string()))?
+            }
+            QueryResults::Boolean(value) => serializer
+                .serialize_boolean_to_writer(Vec::new(), value)
+                .map_err(|e| Error::Runtime(e.to_string()))?,
+            QueryResults::Graph(_) => {
+                return Err(Error::Invalid("SELECT or ASK query required".into()));
+            }
+        };
+        String::from_utf8(bytes).map_err(|e| Error::Runtime(e.to_string()))
+    })
+    .map_err(error)
+}
+
+#[pyclass(frozen, name = "CompiledShapes")]
+struct PyCompiledShapes {
+    inner: CompiledShapes,
+}
+
+type ReportOutput = (bool, String, String, Option<String>, Vec<String>);
+
+#[pymethods]
+impl PyCompiledShapes {
+    #[new]
+    fn new(
+        py: Python<'_>,
+        source: &str,
+        rdf_format: &str,
+        base: Option<&str>,
+        advanced: bool,
+        numeric_booleans: bool,
+        namespaces: Vec<(String, String)>,
+    ) -> PyResult<Self> {
+        let rdf_format = format(rdf_format)?;
+        py.detach(|| {
+            let graph = parse_graph(source, rdf_format.rdf, base)?;
+            Ok(Self {
+                inner: CompiledShapes::compile_with_namespaces(
+                    graph,
+                    advanced,
+                    numeric_booleans,
+                    &namespaces,
+                )?,
+            })
+        })
+        .map_err(error)
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    fn validate(
+        &self,
+        py: Python<'_>,
+        source: &str,
+        rdf_format: &str,
+        base: Option<&str>,
+        iterate_rules: bool,
+        max_rule_iterations: usize,
+        max_validation_depth: usize,
+        include_data: bool,
+        allow_infos: bool,
+        allow_warnings: bool,
+        abort_on_first: bool,
+        focus_nodes: Vec<String>,
+        use_shapes: Vec<String>,
+        namespaces: Vec<(String, String)>,
+    ) -> PyResult<ReportOutput> {
+        let rdf_format = format(rdf_format)?;
+        py.detach(|| {
+            let mut data = rdf_format.parse(source, base)?;
+            let report = self.inner.validate(
+                &mut data,
+                Options {
+                    iterate_rules,
+                    max_rule_iterations,
+                    max_validation_depth,
+                    allow_infos,
+                    allow_warnings,
+                    abort_on_first,
+                    namespaces,
+                    focus_nodes: focus_nodes
+                        .into_iter()
+                        .map(|s| NamedNode::new(s).map(Term::from))
+                        .collect::<std::result::Result<_, _>>()
+                        .map_err(|e| Error::Invalid(e.to_string()))?,
+                    use_shapes: use_shapes
+                        .into_iter()
+                        .map(|s| NamedNode::new(s).map(Term::from))
+                        .collect::<std::result::Result<_, _>>()
+                        .map_err(|e| Error::Invalid(e.to_string()))?,
+                },
+            )?;
+            Ok((
+                report.conforms,
+                serialize_graph(&report.graph)?,
+                report.text,
+                if include_data {
+                    Some(serialize_graph(&data)?)
+                } else {
+                    None
+                },
+                report.recursion_warnings,
+            ))
+        })
+        .map_err(error)
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    fn expand(
+        &self,
+        py: Python<'_>,
+        source: &str,
+        rdf_format: &str,
+        base: Option<&str>,
+        iterate_rules: bool,
+        max_rule_iterations: usize,
+        max_validation_depth: usize,
+    ) -> PyResult<(String, Vec<String>)> {
+        let rdf_format = format(rdf_format)?;
+        py.detach(|| {
+            let mut data = rdf_format.parse(source, base)?;
+            let warnings = self.inner.expand_rules(
+                &mut data,
+                Options {
+                    iterate_rules,
+                    max_rule_iterations,
+                    max_validation_depth,
+                    ..Options::default()
+                },
+            )?;
+            Ok((serialize_graph(&data)?, warnings))
+        })
+        .map_err(error)
+    }
+}
+
+#[pymodule]
+fn _native(module: &Bound<'_, PyModule>) -> PyResult<()> {
+    module.add_class::<PyCompiledShapes>()?;
+    module.add_function(wrap_pyfunction!(parse_rdf, module)?)?;
+    module.add_function(wrap_pyfunction!(additions, module)?)?;
+    module.add_function(wrap_pyfunction!(infer, module)?)?;
+    module.add_function(wrap_pyfunction!(inoculate, module)?)?;
+    module.add_function(wrap_pyfunction!(query, module)?)?;
+    module.add(
+        "ValidationFailure",
+        module.py().get_type::<ValidationFailure>(),
+    )?;
+    Ok(())
+}

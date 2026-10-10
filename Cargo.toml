@@ -1,0 +1,20 @@
+[workspace]
+members = ["crates/engine", "crates/python"]
+resolver = "2"
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+license = "Apache-2.0"
+
+[workspace.dependencies]
+oxigraph = { version = "=0.5.11", default-features = false }
+thiserror = "2"
+pyo3 = { version = "0.28", features = ["abi3-py311"] }
+
+[patch.crates-io]
+oxrdf = { path = "vendor/oxrdf-0.3.4" }
+sparopt = { path = "vendor/sparopt-0.3.7" }
+spareval = { path = "vendor/spareval-0.2.7" }
+
+spargebra = { path = "vendor/spargebra-0.4.7" }

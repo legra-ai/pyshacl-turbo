@@ -1,0 +1,93 @@
+{
+  "environment": {
+    "python": "3.13.16",
+    "platform": "macOS-27.0.1-arm64-arm-64bit-Mach-O",
+    "pyshacl": "0.40.1",
+    "pyoxigraph": "0.5.11"
+  },
+  "method": "Median of warmed calls, RDFLib Graph input and report output. Oxigraph baseline includes Graph serialization and loading. Reused-shapes excludes initial shape compilation. No process startup or file I/O in timings. Synthetic SPARQL-rule pipeline, not the screenshot workload.",
+  "runs": [
+    {
+      "focus_nodes": 100,
+      "input_triples": 250,
+      "results": 50,
+      "median_ms": {
+        "pyshacl_rdflib": 112.303,
+        "pyshacl_oxigraph": 38.604,
+        "turbo": 6.289,
+        "turbo_reused_shapes": 6.073
+      },
+      "samples_ms": {
+        "pyshacl_rdflib": [
+          110.537583,
+          112.302959,
+          120.794416,
+          115.236709,
+          111.36725
+        ],
+        "pyshacl_oxigraph": [
+          38.16075,
+          39.098542,
+          38.60375,
+          38.474291,
+          50.09975
+        ],
+        "turbo": [
+          6.371625,
+          6.160917,
+          6.289375,
+          6.457209,
+          6.223458
+        ],
+        "turbo_reused_shapes": [
+          6.282708,
+          5.843791,
+          6.072958,
+          6.07475,
+          5.991958
+        ]
+      }
+    },
+    {
+      "focus_nodes": 1000,
+      "input_triples": 2500,
+      "results": 500,
+      "median_ms": {
+        "pyshacl_rdflib": 1142.377,
+        "pyshacl_oxigraph": 1318.338,
+        "turbo": 63.071,
+        "turbo_reused_shapes": 61.778
+      },
+      "samples_ms": {
+        "pyshacl_rdflib": [
+          1115.250417,
+          1167.72575,
+          1177.404792,
+          1113.608416,
+          1142.377375
+        ],
+        "pyshacl_oxigraph": [
+          1318.338375,
+          1363.714125,
+          1308.169792,
+          1299.002792,
+          1329.39025
+        ],
+        "turbo": [
+          63.071041,
+          64.651958,
+          61.439833,
+          61.417208,
+          63.135583
+        ],
+        "turbo_reused_shapes": [
+          61.777667,
+          63.886125,
+          60.742458,
+          60.474333,
+          63.137292
+        ]
+      }
+    }
+  ]
+}

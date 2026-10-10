@@ -1,0 +1,12 @@
+/target/
+/.venv/
+/.wheel-venv/
+/.pytest_cache/
+/.ruff_cache/
+__pycache__/
+*.py[cod]
+*.so
+*.dylib
+/dist/
+/upstream-results.json
+/reference-fixture-audit.json
