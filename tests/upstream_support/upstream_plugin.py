@@ -4,10 +4,12 @@ from collections import Counter
 from pathlib import Path
 
 import pytest
+from case_ids import portable_id
 from redirect import configure_item, install
 
 ROWS = {}
 COLLECTION_ERRORS = []
+ROOT = Path(__file__).resolve().parents[2]
 
 
 def pytest_configure(config):
@@ -22,7 +24,7 @@ def pytest_collection_modifyitems(items):
     from native_equivalents import PORTS
 
     for item in items:
-        ROWS[item.nodeid] = {"id": item.nodeid, "status": "not_run"}
+        ROWS[item.nodeid] = {"id": portable_id(item.nodeid, ROOT), "status": "not_run"}
         if os.environ.get("PYSHACL_TURBO_TEST_REDIRECT") == "1" and item.nodeid in PORTS:
             port = PORTS[item.nodeid]
             module = item.module
@@ -49,7 +51,9 @@ def pytest_runtest_makereport(item, call):
 
 def pytest_collectreport(report):
     if report.failed:
-        COLLECTION_ERRORS.append({"id": report.nodeid, "reason": str(report.longrepr)})
+        COLLECTION_ERRORS.append(
+            {"id": portable_id(report.nodeid, ROOT), "reason": str(report.longrepr)}
+        )
 
 
 def pytest_sessionfinish(session, exitstatus):
