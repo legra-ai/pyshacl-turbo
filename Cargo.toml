@@ -5,7 +5,7 @@ resolver = "2"
 [workspace.package]
 version = "0.1.0"
 edition = "2024"
-license = "Apache-2.0"
+license = "Apache-2.0 OR MIT"
 
 [workspace.dependencies]
 oxigraph = { version = "=0.5.11", default-features = false }
@@ -13,6 +13,7 @@ thiserror = "2"
 pyo3 = { version = "0.29.3", features = ["abi3-py311"] }
 
 [patch.crates-io]
+fancy-regex = { path = "vendor/fancy-regex-0.19.2" }
 oxrdf = { path = "vendor/oxrdf-0.3.4" }
 sparopt = { path = "vendor/sparopt-0.3.7" }
 spareval = { path = "vendor/spareval-0.2.7" }

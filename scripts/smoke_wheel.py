@@ -37,4 +37,15 @@ with warnings.catch_warnings(record=True) as emitted:
     warnings.simplefilter("always", turbo.ShapeRecursionWarning)
     assert turbo.validate(data, shacl_graph=shapes)[0]
 assert sum(issubclass(w.category, turbo.ShapeRecursionWarning) for w in emitted) == 1
-print("Installed wheel passes identity, inference and recursion checks without pySHACL/owlrl.")
+
+data, shapes = Graph(), Graph()
+shapes.add((ex.S, SH.targetNode, ex.s))
+shapes.add((ex.S, SH.path, ex.p))
+shapes.add((ex.S, SH.pattern, Literal(r"(?i)^(?P<letter>i)-(?P=letter)(?=$)")))
+program = turbo.compile_shapes(shapes)
+for value, conforms in [("i-İ", True), ("i-ı", False), ("I-i", True)]:
+    data.set((ex.s, ex.p, Literal(value)))
+    assert program.validate(data)[0] is conforms
+print(
+    "Installed wheel passes identity, inference, recursion and regex checks without pySHACL/owlrl."
+)

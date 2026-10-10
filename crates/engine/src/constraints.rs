@@ -58,7 +58,7 @@ pub(crate) enum Constraint {
     Class(Term),
     Datatype(NamedNode),
     NodeKind(String),
-    Pattern(regex::Regex),
+    Pattern(crate::pattern::Pattern),
     Expression {
         component: &'static str,
         query: Box<PreparedSparqlQuery>,
@@ -238,35 +238,13 @@ pub(crate) fn compile(
         .transpose()?
         .unwrap_or_default();
     for pattern in values(store, node, "pattern")? {
-        let pattern = string(pattern, "pattern")?;
-        // Compile once with the same regex implementation as Oxigraph's SPARQL.
-        // Invalid regular expressions are shape errors, not data violations.
-        let mut regex = regex::RegexBuilder::new(&pattern);
-        for flag in flags.chars() {
-            match flag {
-                'i' => {
-                    regex.case_insensitive(true);
-                }
-                'm' => {
-                    regex.multi_line(true);
-                }
-                's' => {
-                    regex.dot_matches_new_line(true);
-                }
-                'x' => {
-                    regex.ignore_whitespace(true);
-                }
-                _ => {
-                    return Err(Error::Invalid(format!(
-                        "Invalid regular expression flag {flag}"
-                    )));
-                }
-            }
-        }
-        let regex = regex
-            .build()
-            .map_err(|e| Error::Invalid(format!("Invalid sh:pattern: {e}")))?;
-        result.push(Constraint::Pattern(regex));
+        let Term::Literal(pattern) = pattern else {
+            return Err(Error::Invalid("sh:pattern requires a literal".into()));
+        };
+        result.push(Constraint::Pattern(crate::pattern::Pattern::compile(
+            pattern.value(),
+            &flags,
+        )?));
     }
     if let Some(head) = one(store, node, "languageIn")? {
         result.push(Constraint::LanguageIn(
