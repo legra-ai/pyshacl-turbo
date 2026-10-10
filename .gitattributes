@@ -1,0 +1,5 @@
+* text=auto eol=lf
+# Preserve the exact bytes of pinned third-party fixtures and source archives.
+/vendor/** -text linguist-vendored
+/tests/w3c/** -text linguist-vendored
+/python/pyshacl_turbo/assets/** -text linguist-vendored

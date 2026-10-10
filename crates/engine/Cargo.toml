@@ -1,0 +1,16 @@
+[package]
+name = "pyshacl-turbo-engine"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+oxigraph.workspace = true
+oxrdf = { version = "=0.3.4", features = ["rdf-10-string-identity"] }
+thiserror.workspace = true
+spargebra = "=0.4.7"
+spareval = { version = "=0.2.7", features = ["undefined-functions-as-expression-errors"] }
+bigdecimal = "0.4"
+regex = "1"
+oxsdatatypes = "=0.2.3"
+num-bigint = "0.4"

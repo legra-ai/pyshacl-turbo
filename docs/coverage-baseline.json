@@ -1,0 +1,1920 @@
+{
+  "sources": {
+    "w3c": {
+      "repository": "w3c/data-shapes",
+      "revision": "07458ebb1ece6addc664636d70b08444a7b66609",
+      "files": [
+        "core/complex/manifest.ttl",
+        "core/complex/personexample.ttl",
+        "core/complex/shacl-shacl-data-shapes.ttl",
+        "core/complex/shacl-shacl.ttl",
+        "core/manifest.ttl",
+        "core/misc/deactivated-001.ttl",
+        "core/misc/deactivated-002.ttl",
+        "core/misc/manifest.ttl",
+        "core/misc/message-001.ttl",
+        "core/misc/severity-001.ttl",
+        "core/misc/severity-002.ttl",
+        "core/node/and-001.ttl",
+        "core/node/and-002.ttl",
+        "core/node/class-001.ttl",
+        "core/node/class-002.ttl",
+        "core/node/class-003.ttl",
+        "core/node/closed-001.ttl",
+        "core/node/closed-002.ttl",
+        "core/node/datatype-001.ttl",
+        "core/node/datatype-002.ttl",
+        "core/node/disjoint-001.ttl",
+        "core/node/equals-001.ttl",
+        "core/node/hasValue-001.ttl",
+        "core/node/in-001.ttl",
+        "core/node/languageIn-001.ttl",
+        "core/node/manifest.ttl",
+        "core/node/maxExclusive-001.ttl",
+        "core/node/maxInclusive-001.ttl",
+        "core/node/maxLength-001.ttl",
+        "core/node/minExclusive-001.ttl",
+        "core/node/minInclusive-001.ttl",
+        "core/node/minInclusive-002.ttl",
+        "core/node/minInclusive-003.ttl",
+        "core/node/minLength-001.ttl",
+        "core/node/node-001.ttl",
+        "core/node/nodeKind-001.ttl",
+        "core/node/not-001.ttl",
+        "core/node/not-002.ttl",
+        "core/node/or-001.ttl",
+        "core/node/pattern-001.ttl",
+        "core/node/pattern-002.ttl",
+        "core/node/qualified-001-data.ttl",
+        "core/node/qualified-001-shapes.ttl",
+        "core/node/qualified-001.ttl",
+        "core/node/xone-001.ttl",
+        "core/node/xone-duplicate-data.ttl",
+        "core/node/xone-duplicate-shapes.ttl",
+        "core/node/xone-duplicate.ttl",
+        "core/path/manifest.ttl",
+        "core/path/path-alternative-001.ttl",
+        "core/path/path-complex-001.ttl",
+        "core/path/path-complex-002-data.ttl",
+        "core/path/path-complex-002-shapes.ttl",
+        "core/path/path-complex-002.ttl",
+        "core/path/path-inverse-001.ttl",
+        "core/path/path-oneOrMore-001.ttl",
+        "core/path/path-sequence-001.ttl",
+        "core/path/path-sequence-002.ttl",
+        "core/path/path-sequence-duplicate-001.ttl",
+        "core/path/path-strange-001.ttl",
+        "core/path/path-strange-002.ttl",
+        "core/path/path-unused-001-data.ttl",
+        "core/path/path-unused-001-shapes.ttl",
+        "core/path/path-unused-001.ttl",
+        "core/path/path-zeroOrMore-001.ttl",
+        "core/path/path-zeroOrOne-001.ttl",
+        "core/property/and-001.ttl",
+        "core/property/class-001.ttl",
+        "core/property/datatype-001.ttl",
+        "core/property/datatype-002.ttl",
+        "core/property/datatype-003.ttl",
+        "core/property/datatype-ill-formed-data.ttl",
+        "core/property/datatype-ill-formed-shapes.ttl",
+        "core/property/datatype-ill-formed.ttl",
+        "core/property/disjoint-001.ttl",
+        "core/property/equals-001.ttl",
+        "core/property/hasValue-001.ttl",
+        "core/property/in-001.ttl",
+        "core/property/languageIn-001.ttl",
+        "core/property/lessThan-001.ttl",
+        "core/property/lessThan-002.ttl",
+        "core/property/lessThanOrEquals-001.ttl",
+        "core/property/manifest.ttl",
+        "core/property/maxCount-001.ttl",
+        "core/property/maxCount-002.ttl",
+        "core/property/maxExclusive-001.ttl",
+        "core/property/maxInclusive-001.ttl",
+        "core/property/maxLength-001.ttl",
+        "core/property/minCount-001.ttl",
+        "core/property/minCount-002.ttl",
+        "core/property/minExclusive-001.ttl",
+        "core/property/minExclusive-002.ttl",
+        "core/property/minLength-001.ttl",
+        "core/property/node-001.ttl",
+        "core/property/node-002.ttl",
+        "core/property/nodeKind-001.ttl",
+        "core/property/not-001.ttl",
+        "core/property/or-001.ttl",
+        "core/property/or-datatypes-001.ttl",
+        "core/property/pattern-001.ttl",
+        "core/property/pattern-002.ttl",
+        "core/property/property-001.ttl",
+        "core/property/qualifiedMinCountDisjoint-001.ttl",
+        "core/property/qualifiedValueShape-001.ttl",
+        "core/property/qualifiedValueShapesDisjoint-001.ttl",
+        "core/property/uniqueLang-001.ttl",
+        "core/property/uniqueLang-002-data.ttl",
+        "core/property/uniqueLang-002-shapes.ttl",
+        "core/property/uniqueLang-002.ttl",
+        "core/targets/manifest.ttl",
+        "core/targets/multipleTargets-001.ttl",
+        "core/targets/targetClass-001.ttl",
+        "core/targets/targetClassImplicit-001.ttl",
+        "core/targets/targetNode-001.ttl",
+        "core/targets/targetObjectsOf-001.ttl",
+        "core/targets/targetSubjectsOf-001.ttl",
+        "core/targets/targetSubjectsOf-002.ttl",
+        "core/validation-reports/manifest.ttl",
+        "core/validation-reports/shared-data.ttl",
+        "core/validation-reports/shared-shapes.ttl",
+        "core/validation-reports/shared.ttl",
+        "manifest.ttl",
+        "sparql/component/manifest.ttl",
+        "sparql/component/nodeValidator-001.ttl",
+        "sparql/component/optional-001.ttl",
+        "sparql/component/propertyValidator-select-001.ttl",
+        "sparql/component/validator-001.ttl",
+        "sparql/manifest.ttl",
+        "sparql/node/manifest.ttl",
+        "sparql/node/prefixes-001.ttl",
+        "sparql/node/sparql-001.ttl",
+        "sparql/node/sparql-002.ttl",
+        "sparql/node/sparql-003.ttl",
+        "sparql/pre-binding/manifest.ttl",
+        "sparql/pre-binding/pre-binding-001.ttl",
+        "sparql/pre-binding/pre-binding-002.ttl",
+        "sparql/pre-binding/pre-binding-003.ttl",
+        "sparql/pre-binding/pre-binding-004.ttl",
+        "sparql/pre-binding/pre-binding-005.ttl",
+        "sparql/pre-binding/pre-binding-006.ttl",
+        "sparql/pre-binding/pre-binding-007.ttl",
+        "sparql/pre-binding/shapesGraph-001.ttl",
+        "sparql/pre-binding/unsupported-sparql-001.ttl",
+        "sparql/pre-binding/unsupported-sparql-002.ttl",
+        "sparql/pre-binding/unsupported-sparql-003.ttl",
+        "sparql/pre-binding/unsupported-sparql-004.ttl",
+        "sparql/pre-binding/unsupported-sparql-005.ttl",
+        "sparql/pre-binding/unsupported-sparql-006.ttl",
+        "sparql/property/manifest.ttl",
+        "sparql/property/sparql-001.ttl"
+      ]
+    },
+    "pyshacl": {
+      "repository": "RDFLib/pySHACL",
+      "revision": "469cca7a22a078b36c167c1e8dadecf5e5ec6c75",
+      "files": [
+        "FEATURES.md",
+        "LICENSE.txt",
+        "pyproject.toml",
+        "test/__init__.py",
+        "test/helpers.py",
+        "test/implementation_report.py",
+        "test/issues/__init__.py",
+        "test/issues/bad_test_070.py",
+        "test/issues/issue_102.py",
+        "test/issues/test_008.py",
+        "test/issues/test_009.py",
+        "test/issues/test_012.py",
+        "test/issues/test_014.py",
+        "test/issues/test_026.py",
+        "test/issues/test_029/__init__.py",
+        "test/issues/test_029/simpleData.ttl",
+        "test/issues/test_029/simpleOnto.ttl",
+        "test/issues/test_036.py",
+        "test/issues/test_038.py",
+        "test/issues/test_040/03-Network.ttl",
+        "test/issues/test_040/__init__.py",
+        "test/issues/test_040/sample-network.ttl",
+        "test/issues/test_058.py",
+        "test/issues/test_062.py",
+        "test/issues/test_071.py",
+        "test/issues/test_076.py",
+        "test/issues/test_079.py",
+        "test/issues/test_087.py",
+        "test/issues/test_098.py",
+        "test/issues/test_108.py",
+        "test/issues/test_116.py",
+        "test/issues/test_120.py",
+        "test/issues/test_124.py",
+        "test/issues/test_126.py",
+        "test/issues/test_133.py",
+        "test/issues/test_141.py",
+        "test/issues/test_142.py",
+        "test/issues/test_146.py",
+        "test/issues/test_148.py",
+        "test/issues/test_154.py",
+        "test/issues/test_160.py",
+        "test/issues/test_162.py",
+        "test/issues/test_170.py",
+        "test/issues/test_190.py",
+        "test/issues/test_199.py",
+        "test/issues/test_213.py",
+        "test/issues/test_217.py",
+        "test/issues/test_220/LICENSE.md",
+        "test/issues/test_220/__init__.py",
+        "test/issues/test_220/kb-REPRODUCTION-1.ttl",
+        "test/issues/test_220/kb-REPRODUCTION-2.ttl",
+        "test/issues/test_220/owl-REPRODUCTION.ttl",
+        "test/issues/test_220/sh-REPRODUCTION-1.ttl",
+        "test/issues/test_220/sh-REPRODUCTION-2.ttl",
+        "test/issues/test_227.py",
+        "test/issues/test_240.py",
+        "test/issues/test_281/data.ttl",
+        "test/issues/test_281/policies.ttl",
+        "test/issues/test_281/policies/gitlab-policy.ttl",
+        "test/issues/test_281/test_281.py",
+        "test/issues/test_286.py",
+        "test/issues/test_298.py",
+        "test/issues/test_301.py",
+        "test/issues/test_304.py",
+        "test/issues/test_306.py",
+        "test/issues/test_319.py",
+        "test/issues/test_96.py",
+        "test/issues/test_w3_list1.py",
+        "test/resources/cmdline_tests/d1.jsonld",
+        "test/resources/cmdline_tests/d1.ttl",
+        "test/resources/cmdline_tests/d2.ttl",
+        "test/resources/cmdline_tests/o1.ttl",
+        "test/resources/cmdline_tests/rules_d.ttl",
+        "test/resources/cmdline_tests/rules_s.ttl",
+        "test/resources/cmdline_tests/s1.ttl",
+        "test/resources/dash_tests/core/complex/personexample.test.ttl",
+        "test/resources/dash_tests/core/misc/deactivated-001.test.ttl",
+        "test/resources/dash_tests/core/misc/deactivated-002.test.ttl",
+        "test/resources/dash_tests/core/misc/severity-001.test.ttl",
+        "test/resources/dash_tests/core/misc/severity-002.test.ttl",
+        "test/resources/dash_tests/core/node/and-001.test.ttl",
+        "test/resources/dash_tests/core/node/and-002.test.ttl",
+        "test/resources/dash_tests/core/node/class-001.test.ttl",
+        "test/resources/dash_tests/core/node/class-002.test.ttl",
+        "test/resources/dash_tests/core/node/closed-001.test.ttl",
+        "test/resources/dash_tests/core/node/closed-002.test.ttl",
+        "test/resources/dash_tests/core/node/datatype-001.test.ttl",
+        "test/resources/dash_tests/core/node/datatype-002.test.ttl",
+        "test/resources/dash_tests/core/node/disjoint-001.test.ttl",
+        "test/resources/dash_tests/core/node/equals-001.test.ttl",
+        "test/resources/dash_tests/core/node/hasValue-001.test.ttl",
+        "test/resources/dash_tests/core/node/in-001.test.ttl",
+        "test/resources/dash_tests/core/node/languageIn-001.test.ttl",
+        "test/resources/dash_tests/core/node/maxExclusive-001.test.ttl",
+        "test/resources/dash_tests/core/node/maxInclusive-001.test.ttl",
+        "test/resources/dash_tests/core/node/maxLength-001.test.ttl",
+        "test/resources/dash_tests/core/node/minExclusive-001.test.ttl",
+        "test/resources/dash_tests/core/node/minInclusive-001.test.ttl",
+        "test/resources/dash_tests/core/node/minLength-001.test.ttl",
+        "test/resources/dash_tests/core/node/node-001.test.ttl",
+        "test/resources/dash_tests/core/node/nodeKind-001.test.ttl",
+        "test/resources/dash_tests/core/node/not-001.test.ttl",
+        "test/resources/dash_tests/core/node/not-002.test.ttl",
+        "test/resources/dash_tests/core/node/or-001.test.ttl",
+        "test/resources/dash_tests/core/node/pattern-001.test.ttl",
+        "test/resources/dash_tests/core/node/pattern-002.test.ttl",
+        "test/resources/dash_tests/core/node/xone-001.test.ttl",
+        "test/resources/dash_tests/core/path/path-alternative-001.test.ttl",
+        "test/resources/dash_tests/core/path/path-complex-001.test.ttl",
+        "test/resources/dash_tests/core/path/path-inverse-001.test.ttl",
+        "test/resources/dash_tests/core/path/path-oneOrMore-001.test.ttl",
+        "test/resources/dash_tests/core/path/path-sequence-001.test.ttl",
+        "test/resources/dash_tests/core/path/path-sequence-002.test.ttl",
+        "test/resources/dash_tests/core/path/path-sequence-duplicate-001.test.ttl",
+        "test/resources/dash_tests/core/path/path-zeroOrMore-001.test.ttl",
+        "test/resources/dash_tests/core/path/path-zeroOrOne-001.test.ttl",
+        "test/resources/dash_tests/core/property/and-001.test.ttl",
+        "test/resources/dash_tests/core/property/class-001.test.ttl",
+        "test/resources/dash_tests/core/property/datatype-001.test.ttl",
+        "test/resources/dash_tests/core/property/datatype-002.test.ttl",
+        "test/resources/dash_tests/core/property/datatype-003.test.ttl",
+        "test/resources/dash_tests/core/property/disjoint-001.test.ttl",
+        "test/resources/dash_tests/core/property/equals-001.test.ttl",
+        "test/resources/dash_tests/core/property/hasValue-001.test.ttl",
+        "test/resources/dash_tests/core/property/in-001.test.ttl",
+        "test/resources/dash_tests/core/property/languageIn-001.test.ttl",
+        "test/resources/dash_tests/core/property/lessThan-001.test.ttl",
+        "test/resources/dash_tests/core/property/lessThan-002.test.ttl",
+        "test/resources/dash_tests/core/property/lessThanOrEquals-001.test.ttl",
+        "test/resources/dash_tests/core/property/maxCount-001.test.ttl",
+        "test/resources/dash_tests/core/property/maxCount-002.test.ttl",
+        "test/resources/dash_tests/core/property/maxExclusive-001.test.ttl",
+        "test/resources/dash_tests/core/property/maxInclusive-001.test.ttl",
+        "test/resources/dash_tests/core/property/maxLength-001.test.ttl",
+        "test/resources/dash_tests/core/property/minCount-001.test.ttl",
+        "test/resources/dash_tests/core/property/minCount-002.test.ttl",
+        "test/resources/dash_tests/core/property/minExclusive-001.test.ttl",
+        "test/resources/dash_tests/core/property/minExclusive-002.test.ttl",
+        "test/resources/dash_tests/core/property/minLength-001.test.ttl",
+        "test/resources/dash_tests/core/property/node-001.test.ttl",
+        "test/resources/dash_tests/core/property/node-002.test.ttl",
+        "test/resources/dash_tests/core/property/nodeKind-001.test.ttl",
+        "test/resources/dash_tests/core/property/not-001.test.ttl",
+        "test/resources/dash_tests/core/property/or-001.test.ttl",
+        "test/resources/dash_tests/core/property/or-datatypes-001.test.ttl",
+        "test/resources/dash_tests/core/property/pattern-001.test.ttl",
+        "test/resources/dash_tests/core/property/pattern-002.test.ttl",
+        "test/resources/dash_tests/core/property/property-001.test.ttl",
+        "test/resources/dash_tests/core/property/qualifiedMinCountDisjoint-001.test.ttl",
+        "test/resources/dash_tests/core/property/qualifiedValueShape-001.test.ttl",
+        "test/resources/dash_tests/core/property/qualifiedValueShapesDisjoint-001.test.ttl",
+        "test/resources/dash_tests/core/property/uniqueLang-001.test.ttl",
+        "test/resources/dash_tests/core/property/xone-001.test.ttl",
+        "test/resources/dash_tests/core/targets/multipleTargets-001.test.ttl",
+        "test/resources/dash_tests/core/targets/targetClass-001.test.ttl",
+        "test/resources/dash_tests/core/targets/targetClassImplicit-001.test.ttl",
+        "test/resources/dash_tests/core/targets/targetNode-001.test.ttl",
+        "test/resources/dash_tests/core/targets/targetObjectsOf-001.test.ttl",
+        "test/resources/dash_tests/core/targets/targetSubjectsOf-001.test.ttl",
+        "test/resources/dash_tests/core/targets/targetSubjectsOf-002.test.ttl",
+        "test/resources/dash_tests/expression/booleans-001.test.ttl",
+        "test/resources/dash_tests/function/callSPARQLFunction.test.ttl",
+        "test/resources/dash_tests/function/simpleSPARQLFunction.test.ttl",
+        "test/resources/dash_tests/query/failing-001.test.ttl",
+        "test/resources/dash_tests/query/failing-002.test.ttl",
+        "test/resources/dash_tests/query/failing-003.test.ttl",
+        "test/resources/dash_tests/query/invalid_query.test.ttl",
+        "test/resources/dash_tests/query/malformed_json.test.ttl",
+        "test/resources/dash_tests/query/malformed_json_result.test.ttl",
+        "test/resources/dash_tests/query/passing-001.test.ttl",
+        "test/resources/dash_tests/query/passing-002.test.ttl",
+        "test/resources/dash_tests/rules/sparql/classify-square.test.ttl",
+        "test/resources/dash_tests/rules/sparql/rectangle.test.ttl",
+        "test/resources/dash_tests/rules/triple/functions-permutations.test.ttl",
+        "test/resources/dash_tests/rules/triple/person.ttl",
+        "test/resources/dash_tests/rules/triple/person2schema.test.ttl",
+        "test/resources/dash_tests/rules/triple/rectangle.test.ttl",
+        "test/resources/dash_tests/rules/triple/schema2person.test.ttl",
+        "test/resources/dash_tests/rules/triple/square.test.ttl",
+        "test/resources/dash_tests/shapedefs/anon-shape-001.test.ttl",
+        "test/resources/dash_tests/shapedefs/anon-shape-002.test.ttl",
+        "test/resources/dash_tests/sparql/component/nodeValidator-001.test.ttl",
+        "test/resources/dash_tests/sparql/component/optional-001.test.ttl",
+        "test/resources/dash_tests/sparql/component/propertyValidator-select-001.test.ttl",
+        "test/resources/dash_tests/sparql/component/validator-001.test.ttl",
+        "test/resources/dash_tests/sparql/node/prefixes-001.test.ttl",
+        "test/resources/dash_tests/sparql/node/sparql-001.test.ttl",
+        "test/resources/dash_tests/sparql/node/sparql-002.test.ttl",
+        "test/resources/dash_tests/sparql/property/sparql-001.test.ttl",
+        "test/resources/dash_tests/target/sparqlTarget-001.test.ttl",
+        "test/resources/dash_tests/target/sparqlTargetType-001.test.ttl",
+        "test/resources/js/findBornIn.js",
+        "test/resources/js/findThings.js",
+        "test/resources/js/germanLabel.js",
+        "test/resources/js/hasMaxCount.js",
+        "test/resources/js/hasMaxLength.js",
+        "test/resources/js/multiply.js",
+        "test/resources/js/rectangle.js",
+        "test/resources/sht_tests/core/complex/manifest.ttl",
+        "test/resources/sht_tests/core/complex/personexample.ttl",
+        "test/resources/sht_tests/core/complex/shacl-shacl-data-shapes.ttl",
+        "test/resources/sht_tests/core/complex/shacl-shacl.ttl",
+        "test/resources/sht_tests/core/manifest.ttl",
+        "test/resources/sht_tests/core/misc/deactivated-001.ttl",
+        "test/resources/sht_tests/core/misc/deactivated-002.ttl",
+        "test/resources/sht_tests/core/misc/manifest.ttl",
+        "test/resources/sht_tests/core/misc/message-001.ttl",
+        "test/resources/sht_tests/core/misc/severity-001.ttl",
+        "test/resources/sht_tests/core/misc/severity-002.ttl",
+        "test/resources/sht_tests/core/node/and-001.ttl",
+        "test/resources/sht_tests/core/node/and-002.ttl",
+        "test/resources/sht_tests/core/node/class-001.ttl",
+        "test/resources/sht_tests/core/node/class-002.ttl",
+        "test/resources/sht_tests/core/node/class-003.ttl",
+        "test/resources/sht_tests/core/node/closed-001.ttl",
+        "test/resources/sht_tests/core/node/closed-002.ttl",
+        "test/resources/sht_tests/core/node/datatype-001.ttl",
+        "test/resources/sht_tests/core/node/datatype-002.ttl",
+        "test/resources/sht_tests/core/node/disjoint-001.ttl",
+        "test/resources/sht_tests/core/node/equals-001.ttl",
+        "test/resources/sht_tests/core/node/hasValue-001.ttl",
+        "test/resources/sht_tests/core/node/in-001.ttl",
+        "test/resources/sht_tests/core/node/languageIn-001.ttl",
+        "test/resources/sht_tests/core/node/manifest.ttl",
+        "test/resources/sht_tests/core/node/maxExclusive-001.ttl",
+        "test/resources/sht_tests/core/node/maxInclusive-001.ttl",
+        "test/resources/sht_tests/core/node/maxLength-001.ttl",
+        "test/resources/sht_tests/core/node/minExclusive-001.ttl",
+        "test/resources/sht_tests/core/node/minInclusive-001.ttl",
+        "test/resources/sht_tests/core/node/minInclusive-002.ttl",
+        "test/resources/sht_tests/core/node/minInclusive-003.ttl",
+        "test/resources/sht_tests/core/node/minLength-001.ttl",
+        "test/resources/sht_tests/core/node/node-001.ttl",
+        "test/resources/sht_tests/core/node/nodeKind-001.ttl",
+        "test/resources/sht_tests/core/node/not-001.ttl",
+        "test/resources/sht_tests/core/node/not-002.ttl",
+        "test/resources/sht_tests/core/node/or-001.ttl",
+        "test/resources/sht_tests/core/node/pattern-001.ttl",
+        "test/resources/sht_tests/core/node/pattern-002.ttl",
+        "test/resources/sht_tests/core/node/qualified-001-data.ttl",
+        "test/resources/sht_tests/core/node/qualified-001-shapes.ttl",
+        "test/resources/sht_tests/core/node/qualified-001.ttl",
+        "test/resources/sht_tests/core/node/xone-001.ttl",
+        "test/resources/sht_tests/core/node/xone-duplicate-data.ttl",
+        "test/resources/sht_tests/core/node/xone-duplicate-shapes.ttl",
+        "test/resources/sht_tests/core/node/xone-duplicate.ttl",
+        "test/resources/sht_tests/core/path/manifest.ttl",
+        "test/resources/sht_tests/core/path/path-alternative-001.ttl",
+        "test/resources/sht_tests/core/path/path-complex-001.ttl",
+        "test/resources/sht_tests/core/path/path-complex-002-data.ttl",
+        "test/resources/sht_tests/core/path/path-complex-002-shapes.ttl",
+        "test/resources/sht_tests/core/path/path-complex-002.ttl",
+        "test/resources/sht_tests/core/path/path-inverse-001.ttl",
+        "test/resources/sht_tests/core/path/path-oneOrMore-001.ttl",
+        "test/resources/sht_tests/core/path/path-sequence-001.ttl",
+        "test/resources/sht_tests/core/path/path-sequence-002.ttl",
+        "test/resources/sht_tests/core/path/path-sequence-duplicate-001.ttl",
+        "test/resources/sht_tests/core/path/path-strange-001.ttl",
+        "test/resources/sht_tests/core/path/path-strange-002.ttl",
+        "test/resources/sht_tests/core/path/path-unused-001-data.ttl",
+        "test/resources/sht_tests/core/path/path-unused-001-shapes.ttl",
+        "test/resources/sht_tests/core/path/path-unused-001.ttl",
+        "test/resources/sht_tests/core/path/path-zeroOrMore-001.ttl",
+        "test/resources/sht_tests/core/path/path-zeroOrOne-001.ttl",
+        "test/resources/sht_tests/core/property/and-001.ttl",
+        "test/resources/sht_tests/core/property/class-001.ttl",
+        "test/resources/sht_tests/core/property/datatype-001.ttl",
+        "test/resources/sht_tests/core/property/datatype-002.ttl",
+        "test/resources/sht_tests/core/property/datatype-003.ttl",
+        "test/resources/sht_tests/core/property/datatype-ill-formed-data.ttl",
+        "test/resources/sht_tests/core/property/datatype-ill-formed-shapes.ttl",
+        "test/resources/sht_tests/core/property/datatype-ill-formed.ttl",
+        "test/resources/sht_tests/core/property/disjoint-001.ttl",
+        "test/resources/sht_tests/core/property/equals-001.ttl",
+        "test/resources/sht_tests/core/property/hasValue-001.ttl",
+        "test/resources/sht_tests/core/property/in-001.ttl",
+        "test/resources/sht_tests/core/property/languageIn-001.ttl",
+        "test/resources/sht_tests/core/property/lessThan-001.ttl",
+        "test/resources/sht_tests/core/property/lessThan-002.ttl",
+        "test/resources/sht_tests/core/property/lessThanOrEquals-001.ttl",
+        "test/resources/sht_tests/core/property/manifest.ttl",
+        "test/resources/sht_tests/core/property/maxCount-001.ttl",
+        "test/resources/sht_tests/core/property/maxCount-002.ttl",
+        "test/resources/sht_tests/core/property/maxExclusive-001.ttl",
+        "test/resources/sht_tests/core/property/maxInclusive-001.ttl",
+        "test/resources/sht_tests/core/property/maxLength-001.ttl",
+        "test/resources/sht_tests/core/property/minCount-001.ttl",
+        "test/resources/sht_tests/core/property/minCount-002.ttl",
+        "test/resources/sht_tests/core/property/minExclusive-001.ttl",
+        "test/resources/sht_tests/core/property/minExclusive-002.ttl",
+        "test/resources/sht_tests/core/property/minLength-001.ttl",
+        "test/resources/sht_tests/core/property/node-001.ttl",
+        "test/resources/sht_tests/core/property/node-002.ttl",
+        "test/resources/sht_tests/core/property/nodeKind-001.ttl",
+        "test/resources/sht_tests/core/property/not-001.ttl",
+        "test/resources/sht_tests/core/property/or-001.ttl",
+        "test/resources/sht_tests/core/property/or-datatypes-001.ttl",
+        "test/resources/sht_tests/core/property/pattern-001.ttl",
+        "test/resources/sht_tests/core/property/pattern-002.ttl",
+        "test/resources/sht_tests/core/property/property-001.ttl",
+        "test/resources/sht_tests/core/property/qualifiedMinCountDisjoint-001.ttl",
+        "test/resources/sht_tests/core/property/qualifiedValueShape-001.ttl",
+        "test/resources/sht_tests/core/property/qualifiedValueShapesDisjoint-001.ttl",
+        "test/resources/sht_tests/core/property/uniqueLang-001.ttl",
+        "test/resources/sht_tests/core/property/uniqueLang-002-data.ttl",
+        "test/resources/sht_tests/core/property/uniqueLang-002-shapes.ttl",
+        "test/resources/sht_tests/core/property/uniqueLang-002.ttl",
+        "test/resources/sht_tests/core/targets/manifest.ttl",
+        "test/resources/sht_tests/core/targets/multipleTargets-001.ttl",
+        "test/resources/sht_tests/core/targets/targetClass-001.ttl",
+        "test/resources/sht_tests/core/targets/targetClassImplicit-001.ttl",
+        "test/resources/sht_tests/core/targets/targetNode-001.ttl",
+        "test/resources/sht_tests/core/targets/targetObjectsOf-001.ttl",
+        "test/resources/sht_tests/core/targets/targetSubjectsOf-001.ttl",
+        "test/resources/sht_tests/core/targets/targetSubjectsOf-002.ttl",
+        "test/resources/sht_tests/core/validation-reports/manifest.ttl",
+        "test/resources/sht_tests/core/validation-reports/shared-data.ttl",
+        "test/resources/sht_tests/core/validation-reports/shared-shapes.ttl",
+        "test/resources/sht_tests/core/validation-reports/shared.ttl",
+        "test/resources/sht_tests/manifest.ttl",
+        "test/resources/sht_tests/sparql/component/manifest.ttl",
+        "test/resources/sht_tests/sparql/component/nodeValidator-001.ttl",
+        "test/resources/sht_tests/sparql/component/optional-001.ttl",
+        "test/resources/sht_tests/sparql/component/propertyValidator-select-001.ttl",
+        "test/resources/sht_tests/sparql/component/validator-001.ttl",
+        "test/resources/sht_tests/sparql/manifest.ttl",
+        "test/resources/sht_tests/sparql/node/manifest.ttl",
+        "test/resources/sht_tests/sparql/node/prefixes-001.ttl",
+        "test/resources/sht_tests/sparql/node/sparql-001.ttl",
+        "test/resources/sht_tests/sparql/node/sparql-002.ttl",
+        "test/resources/sht_tests/sparql/node/sparql-003.ttl",
+        "test/resources/sht_tests/sparql/pre-binding/manifest.ttl",
+        "test/resources/sht_tests/sparql/pre-binding/pre-binding-001.ttl",
+        "test/resources/sht_tests/sparql/pre-binding/pre-binding-002.ttl",
+        "test/resources/sht_tests/sparql/pre-binding/pre-binding-003.ttl",
+        "test/resources/sht_tests/sparql/pre-binding/pre-binding-004.ttl",
+        "test/resources/sht_tests/sparql/pre-binding/pre-binding-005.ttl",
+        "test/resources/sht_tests/sparql/pre-binding/pre-binding-006.ttl",
+        "test/resources/sht_tests/sparql/pre-binding/pre-binding-007.ttl",
+        "test/resources/sht_tests/sparql/pre-binding/shapesGraph-001.ttl",
+        "test/resources/sht_tests/sparql/pre-binding/unsupported-sparql-001.ttl",
+        "test/resources/sht_tests/sparql/pre-binding/unsupported-sparql-002.ttl",
+        "test/resources/sht_tests/sparql/pre-binding/unsupported-sparql-003.ttl",
+        "test/resources/sht_tests/sparql/pre-binding/unsupported-sparql-004.ttl",
+        "test/resources/sht_tests/sparql/pre-binding/unsupported-sparql-005.ttl",
+        "test/resources/sht_tests/sparql/pre-binding/unsupported-sparql-006.ttl",
+        "test/resources/sht_tests/sparql/property/manifest.ttl",
+        "test/resources/sht_tests/sparql/property/sparql-001.ttl",
+        "test/test_advanced.py",
+        "test/test_cmdline.py",
+        "test/test_cmdline_rules.py",
+        "test/test_dash_validate.py",
+        "test/test_extra.py",
+        "test/test_inoculate.py",
+        "test/test_integers.py",
+        "test/test_js/__init__.py",
+        "test/test_js/conftest.py",
+        "test/test_js/test_js_constraint.py",
+        "test/test_js/test_js_constraint_component.py",
+        "test/test_js/test_js_constraint_path_component.py",
+        "test/test_js/test_js_function.py",
+        "test/test_js/test_js_rules.py",
+        "test/test_js/test_js_target.py",
+        "test/test_js/test_js_target_type.py",
+        "test/test_manual_targeting.py",
+        "test/test_multiple_data_graphs.py",
+        "test/test_rules_oxigraph.py",
+        "test/test_schema_org.py",
+        "test/test_sh_details.py",
+        "test/test_shacl_rules_runner.py",
+        "test/test_sht_validate.py"
+      ]
+    }
+  },
+  "w3c_summary": {
+    "unsupported": 114,
+    "pass": 6
+  },
+  "w3c": [
+    {
+      "id": "core/complex/personexample.ttl::personexample",
+      "status": "unsupported",
+      "reason": "Unsupported feature: sh:closed on <http://datashapes.org/sh/tests/core/complex/personexample.test#PersonShape>"
+    },
+    {
+      "id": "core/complex/shacl-shacl.ttl::shacl-shacl",
+      "status": "unsupported",
+      "reason": "Unsupported feature: sh:not on _:nc5920892896147b9a54268c9c3c67b25b7"
+    },
+    {
+      "id": "core/misc/deactivated-001.ttl::deactivated-001",
+      "status": "unsupported",
+      "reason": "Unsupported feature: sh:datatype on <http://datashapes.org/sh/tests/core/misc/deactivated-001.test#TestShape>"
+    },
+    {
+      "id": "core/misc/deactivated-002.ttl::deactivated-002",
+      "status": "unsupported",
+      "reason": "Unsupported feature: sh:datatype on <http://datashapes.org/sh/tests/core/misc/deactivated-002.test#TestShape>"
+    },
+    {
+      "id": "core/misc/message-001.ttl::message-001",
+      "status": "unsupported",
+      "reason": "Unsupported feature: sh:datatype on <http://datashapes.org/sh/tests/core/misc/message-001.test#TestShape>"
+    },
+    {
+      "id": "core/misc/severity-001.ttl::severity-001",
+      "status": "unsupported",
+      "reason": "Unsupported feature: sh:datatype on <http://datashapes.org/sh/tests/core/misc/severity-001.test#TestShape>"
+    },
+    {
+      "id": "core/misc/severity-002.ttl::severity-002",
+      "status": "unsupported",
+      "reason": "Unsupported feature: sh:nodeKind on <http://datashapes.org/sh/tests/core/misc/severity-002.test#TestShape1>"
+    },
+    {
+      "id": "core/node/and-001.ttl::and-001",
+      "status": "unsupported",
+      "reason": "Unsupported feature: sh:and on <http://datashapes.org/sh/tests/core/node/and-001.test#Rectangle>"
+    },
+    {
+      "id": "core/node/and-002.ttl::and-002",
+      "status": "unsupported",
+      "reason": "Unsupported feature: sh:and on <http://datashapes.org/sh/tests/core/node/and-002.test#AndShape>"
+    },
+    {
+      "id": "core/node/class-001.ttl::class-001",
+      "status": "unsupported",
+      "reason": "Unsupported feature: sh:class on <http://datashapes.org/sh/tests/core/node/class-001.test#TestShape>"
+    },
+    {
+      "id": "core/node/class-002.ttl::class-002",
+      "status": "unsupported",
+      "reason": "Unsupported feature: sh:class on <http://datashapes.org/sh/tests/core/node/class-002.test#TestShape>"
+    },
+    {
+      "id": "core/node/class-003.ttl::class-003",
+      "status": "unsupported",
+      "reason": "Unsupported feature: sh:class on <http://datashapes.org/sh/tests/core/node/class-001.test#TestShape>"
+    },
+    {
+      "id": "core/node/closed-001.ttl::closed-001",
+      "status": "unsupported",
+      "reason": "Unsupported feature: sh:closed on <http://datashapes.org/sh/tests/core/node/closed-001.test#MyShape>"
+    },
+    {
+      "id": "core/node/closed-002.ttl::closed-002",
+      "status": "unsupported",
+      "reason": "Unsupported feature: sh:ignoredProperties on <http://datashapes.org/sh/tests/core/node/closed-002.test#MyShape>"
+    },
+    {
+      "id": "core/node/datatype-001.ttl::datatype-001",
+      "status": "unsupported",
+      "reason": "Unsupported feature: sh:datatype on <http://datashapes.org/sh/tests/core/node/datatype-001.test#TestShape>"
+    },
+    {
+      "id": "core/node/datatype-002.ttl::datatype-002",
+      "status": "unsupported",
+      "reason": "Unsupported feature: sh:datatype on <http://datashapes.org/sh/tests/core/node/datatype-002.test#TestShape>"
+    },
+    {
+      "id": "core/node/disjoint-001.ttl::disjoint-001",
+      "status": "unsupported",
+      "reason": "Unsupported feature: sh:disjoint on <http://datashapes.org/sh/tests/core/node/disjoint-001.test#TestShape>"
+    },
+    {
+      "id": "core/node/equals-001.ttl::equals-001",
+      "status": "unsupported",
+      "reason": "Unsupported feature: sh:equals on <http://datashapes.org/sh/tests/core/node/equals-001.test#TestShape>"
+    },
+    {
+      "id": "core/node/hasValue-001.ttl::hasValue-001",
+      "status": "pass"
+    },
+    {
+      "id": "core/node/in-001.ttl::in-001",
+      "status": "unsupported",
+      "reason": "Unsupported feature: sh:in on <http://datashapes.org/sh/tests/core/node/in-001.test#TestShape>"
+    },
+    {
+      "id": "core/node/languageIn-001.ttl::languageIn-001",
+      "status": "unsupported",
+      "reason": "Unsupported feature: sh:languageIn on <http://datashapes.org/sh/tests/core/node/languageIn-001.test#TestShape>"
+    },
+    {
+      "id": "core/node/maxExclusive-001.ttl::maxExclusive-001",
+      "status": "unsupported",
+      "reason": "Unsupported feature: sh:maxExclusive on <http://datashapes.org/sh/tests/core/node/maxExclusive-001.test#TestShape>"
+    },
+    {
+      "id": "core/node/maxInclusive-001.ttl::maxInclusive-001",
+      "status": "unsupported",
+      "reason": "Unsupported feature: sh:maxInclusive on <http://datashapes.org/sh/tests/core/node/maxInclusive-001.test#TestShape>"
+    },
+    {
+      "id": "core/node/maxLength-001.ttl::maxLength-001",
+      "status": "unsupported",
+      "reason": "Unsupported feature: sh:maxLength on <http://datashapes.org/sh/tests/core/node/maxLength-001.test#TestShape>"
+    },
+    {
+      "id": "core/node/minExclusive-001.ttl::minExclusive-001",
+      "status": "unsupported",
+      "reason": "Unsupported feature: sh:minExclusive on <http://datashapes.org/sh/tests/core/node/minExclusive-001.test#TestShape>"
+    },
+    {
+      "id": "core/node/minInclusive-001.ttl::minInclusive-001",
+      "status": "unsupported",
+      "reason": "Unsupported feature: sh:minInclusive on <http://datashapes.org/sh/tests/core/node/minInclusive-001.test#TestShape>"
+    },
+    {
+      "id": "core/node/minInclusive-002.ttl::minInclusive-002",
+      "status": "unsupported",
+      "reason": "Unsupported feature: sh:minInclusive on <http://datashapes.org/sh/tests/core/node/minInclusive-001.test#TestShape>"
+    },
+    {
+      "id": "core/node/minInclusive-003.ttl::minInclusive-003",
+      "status": "unsupported",
+      "reason": "Unsupported feature: sh:minInclusive on <http://datashapes.org/sh/tests/core/node/minInclusive-001.test#TestShape>"
+    },
+    {
+      "id": "core/node/minLength-001.ttl::minLength-001",
+      "status": "unsupported",
+      "reason": "Unsupported feature: sh:minLength on <http://datashapes.org/sh/tests/core/node/minLength-001.test#TestShape>"
+    },
+    {
+      "id": "core/node/node-001.ttl::node-001",
+      "status": "unsupported",
+      "reason": "Unsupported feature: sh:node on <http://datashapes.org/sh/tests/core/node/node-001.test#TestClass>"
+    },
+    {
+      "id": "core/node/nodeKind-001.ttl::nodeKind-001",
+      "status": "unsupported",
+      "reason": "Unsupported feature: sh:nodeKind on <http://datashapes.org/sh/tests/core/node/nodeKind-001.test#IRITestShape>"
+    },
+    {
+      "id": "core/node/not-001.ttl::not-001",
+      "status": "unsupported",
+      "reason": "Unsupported feature: sh:not on <http://datashapes.org/sh/tests/core/node/not-001#TestShape>"
+    },
+    {
+      "id": "core/node/not-002.ttl::not-002",
+      "status": "unsupported",
+      "reason": "Unsupported feature: sh:not on <http://datashapes.org/sh/tests/core/node/not-002.test#NotExampleShape>"
+    },
+    {
+      "id": "core/node/or-001.ttl::or-001",
+      "status": "unsupported",
+      "reason": "Unsupported feature: sh:or on <http://datashapes.org/sh/tests/core/node/or-001.test#RectangleWithArea>"
+    },
+    {
+      "id": "core/node/pattern-001.ttl::pattern-001",
+      "status": "unsupported",
+      "reason": "Unsupported feature: sh:pattern on <http://datashapes.org/sh/tests/core/node/pattern-001.test#TestShape>"
+    },
+    {
+      "id": "core/node/pattern-002.ttl::pattern-002",
+      "status": "unsupported",
+      "reason": "Unsupported feature: sh:flags on <http://datashapes.org/sh/tests/core/node/pattern-002.test#TestShape>"
+    },
+    {
+      "id": "core/node/qualified-001.ttl::qualified-001",
+      "status": "unsupported",
+      "reason": "Unsupported feature: sh:class on <http://example.org/shacl-test/s1>"
+    },
+    {
+      "id": "core/node/xone-001.ttl::xone-001",
+      "status": "unsupported",
+      "reason": "Unsupported feature: sh:xone on <http://datashapes.org/sh/tests/core/node/xone-001.test#XoneConstraintExampleShape>"
+    },
+    {
+      "id": "core/node/xone-duplicate.ttl::xone-duplicate",
+      "status": "unsupported",
+      "reason": "Unsupported feature: sh:xone on <http://example.org/shacl-test/s1>"
+    },
+    {
+      "id": "core/path/path-alternative-001.ttl::path-alternative-001",
+      "status": "unsupported",
+      "reason": "Unsupported feature: complex sh:path on <http://datashapes.org/sh/tests/core/path/path-alternative-001.test#TestShape>"
+    },
+    {
+      "id": "core/path/path-complex-001.ttl::path-complex-001",
+      "status": "unsupported",
+      "reason": "Unsupported feature: complex sh:path on <http://datashapes.org/sh/tests/core/path/path-complex-001.test#TestShape>"
+    },
+    {
+      "id": "core/path/path-complex-002.ttl::path-complex-002",
+      "status": "unsupported",
+      "reason": "Unsupported feature: sh:class on <http://example.org/shacl/tests/s1>"
+    },
+    {
+      "id": "core/path/path-inverse-001.ttl::path-inverse-001",
+      "status": "unsupported",
+      "reason": "Unsupported feature: complex sh:path on <http://datashapes.org/sh/tests/core/path/path-inverse-001.test#TestShape-P>"
+    },
+    {
+      "id": "core/path/path-oneOrMore-001.ttl::path-oneOrMore-001",
+      "status": "unsupported",
+      "reason": "Unsupported feature: complex sh:path on <http://datashapes.org/sh/tests/core/path/path-oneOrMore-001.test#TestShape>"
+    },
+    {
+      "id": "core/path/path-sequence-001.ttl::path-sequence-001",
+      "status": "unsupported",
+      "reason": "Unsupported feature: complex sh:path on <http://datashapes.org/sh/tests/core/path/path-sequence-001.test#TestShape>"
+    },
+    {
+      "id": "core/path/path-sequence-002.ttl::path-sequence-002",
+      "status": "unsupported",
+      "reason": "Unsupported feature: complex sh:path on <http://datashapes.org/sh/tests/core/path/path-sequence-002.test#TestShape>"
+    },
+    {
+      "id": "core/path/path-sequence-duplicate-001.ttl::path-sequence-duplicate-001",
+      "status": "unsupported",
+      "reason": "Unsupported feature: sh:nodeKind on <http://datashapes.org/sh/tests/core/path/path-sequence-duplicate-001.test#SP>"
+    },
+    {
+      "id": "core/path/path-strange-001.ttl::path-strange-001",
+      "status": "unsupported",
+      "reason": "Unsupported feature: sh:class on <http://example.org/test#s1>"
+    },
+    {
+      "id": "core/path/path-strange-002.ttl::path-strange-002",
+      "status": "unsupported",
+      "reason": "Unsupported feature: sh:class on <http://example.org/test#s1>"
+    },
+    {
+      "id": "core/path/path-unused-001.ttl::path-unused-001",
+      "status": "unsupported",
+      "reason": "Unsupported feature: sh:class on <http://example.org/shacl/tests/s1>"
+    },
+    {
+      "id": "core/path/path-zeroOrMore-001.ttl::path-zeroOrMore-001",
+      "status": "unsupported",
+      "reason": "Unsupported feature: complex sh:path on <http://datashapes.org/sh/tests/core/path/path-zeroOrMore-001.test#TestShape>"
+    },
+    {
+      "id": "core/path/path-zeroOrOne-001.ttl::path-zeroOrOne-001",
+      "status": "unsupported",
+      "reason": "Unsupported feature: complex sh:path on <http://datashapes.org/sh/tests/core/path/path-zeroOrOne-001.test#TestShape>"
+    },
+    {
+      "id": "core/property/and-001.ttl::and-001",
+      "status": "unsupported",
+      "reason": "Unsupported feature: sh:and on <http://datashapes.org/sh/tests/core/property/and-001.test#AddressShape-address>"
+    },
+    {
+      "id": "core/property/class-001.ttl::class-001",
+      "status": "unsupported",
+      "reason": "Unsupported feature: sh:class on <http://datashapes.org/sh/tests/core/property/class-001.test#TestShape-testProperty>"
+    },
+    {
+      "id": "core/property/datatype-001.ttl::datatype-001",
+      "status": "unsupported",
+      "reason": "Unsupported feature: sh:datatype on <http://datashapes.org/sh/tests/core/property/datatype-001.test#TestShape-integerProperty>"
+    },
+    {
+      "id": "core/property/datatype-002.ttl::datatype-002",
+      "status": "unsupported",
+      "reason": "Unsupported feature: sh:datatype on <http://datashapes.org/sh/tests/core/property/datatype-002.test#TestShape-value>"
+    },
+    {
+      "id": "core/property/datatype-003.ttl::datatype-003",
+      "status": "unsupported",
+      "reason": "Unsupported feature: sh:or on <http://datashapes.org/sh/tests/core/property/datatype-003.test#TestShape-value>"
+    },
+    {
+      "id": "core/property/datatype-ill-formed.ttl::datatype-ill-formed",
+      "status": "unsupported",
+      "reason": "Unsupported feature: sh:datatype on <http://example.org/shacl-test/s>"
+    },
+    {
+      "id": "core/property/disjoint-001.ttl::disjoint-001",
+      "status": "unsupported",
+      "reason": "Unsupported feature: sh:disjoint on <http://datashapes.org/sh/tests/core/property/disjoint-001.test#TestShape-property1>"
+    },
+    {
+      "id": "core/property/equals-001.ttl::equals-001",
+      "status": "unsupported",
+      "reason": "Unsupported feature: sh:equals on <http://datashapes.org/sh/tests/core/property/equals-001.test#TestShape-property1>"
+    },
+    {
+      "id": "core/property/hasValue-001.ttl::hasValue-001",
+      "status": "unsupported",
+      "reason": "Unsupported feature: sh:datatype on <http://datashapes.org/sh/tests/core/property/hasValue-001.test#PersonShape-gender>"
+    },
+    {
+      "id": "core/property/in-001.ttl::in-001",
+      "status": "unsupported",
+      "reason": "Unsupported feature: sh:in on <http://datashapes.org/sh/tests/core/property/in-001.test#ShapeClass-property>"
+    },
+    {
+      "id": "core/property/languageIn-001.ttl::languageIn-001",
+      "status": "unsupported",
+      "reason": "Unsupported feature: sh:languageIn on <http://datashapes.org/sh/tests/core/property/languageIn-001.test#NewZealandLanguagesShape-prefLabel>"
+    },
+    {
+      "id": "core/property/lessThan-001.ttl::lessThan-001",
+      "status": "unsupported",
+      "reason": "Unsupported feature: sh:lessThan on <http://datashapes.org/sh/tests/core/property/lessThan-001.test#TestShape-property1>"
+    },
+    {
+      "id": "core/property/lessThan-002.ttl::lessThan-002",
+      "status": "unsupported",
+      "reason": "Unsupported feature: sh:lessThan on <http://datashapes.org/sh/tests/core/property/lessThan-002.test#TestShape-first>"
+    },
+    {
+      "id": "core/property/lessThanOrEquals-001.ttl::lessThanOrEquals-001",
+      "status": "unsupported",
+      "reason": "Unsupported feature: sh:lessThanOrEquals on <http://datashapes.org/sh/tests/core/property/lessThanOrEquals-001.test#TestShape-property1>"
+    },
+    {
+      "id": "core/property/maxCount-001.ttl::maxCount-001",
+      "status": "unsupported",
+      "reason": "Unsupported feature: sh:datatype on <http://datashapes.org/sh/tests/core/property/maxCount-001.test#PersonShape-firstName>"
+    },
+    {
+      "id": "core/property/maxCount-002.ttl::maxCount-002",
+      "status": "pass"
+    },
+    {
+      "id": "core/property/maxExclusive-001.ttl::maxExclusive-001",
+      "status": "unsupported",
+      "reason": "Unsupported feature: sh:maxExclusive on <http://datashapes.org/sh/tests/core/property/maxExclusive-001.test#TestShape-property>"
+    },
+    {
+      "id": "core/property/maxInclusive-001.ttl::maxInclusive-001",
+      "status": "unsupported",
+      "reason": "Unsupported feature: sh:maxInclusive on <http://datashapes.org/sh/tests/core/property/maxInclusive-001.test#TestShape-property>"
+    },
+    {
+      "id": "core/property/maxLength-001.ttl::maxLength-001",
+      "status": "unsupported",
+      "reason": "Unsupported feature: sh:datatype on <http://datashapes.org/sh/tests/core/property/maxLength-001.test#TestShape-testProperty>"
+    },
+    {
+      "id": "core/property/minCount-001.ttl::minCount-001",
+      "status": "unsupported",
+      "reason": "Unsupported feature: sh:datatype on <http://datashapes.org/sh/tests/core/property/minCount-001.test#PersonShape-firstName>"
+    },
+    {
+      "id": "core/property/minCount-002.ttl::minCount-002",
+      "status": "pass"
+    },
+    {
+      "id": "core/property/minExclusive-001.ttl::minExclusive-001",
+      "status": "unsupported",
+      "reason": "Unsupported feature: sh:minExclusive on <http://datashapes.org/sh/tests/core/property/minExclusive-001.test#TestShape-testProperty>"
+    },
+    {
+      "id": "core/property/minExclusive-002.ttl::minExclusive-002",
+      "status": "unsupported",
+      "reason": "Unsupported feature: sh:minExclusive on <http://datashapes.org/sh/tests/core/property/minExclusive-002.test#TestShape-testProperty>"
+    },
+    {
+      "id": "core/property/minLength-001.ttl::minLength-001",
+      "status": "unsupported",
+      "reason": "Unsupported feature: sh:minLength on <http://datashapes.org/sh/tests/core/property/minLength-001.test#TestShape-testProperty>"
+    },
+    {
+      "id": "core/property/node-001.ttl::node-001",
+      "status": "unsupported",
+      "reason": "Unsupported feature: sh:datatype on _:n49d24eb3430642e2b72ace2102ec1056b5"
+    },
+    {
+      "id": "core/property/node-002.ttl::node-002",
+      "status": "unsupported",
+      "reason": "Unsupported feature: sh:node on <http://datashapes.org/sh/tests/core/property/node-002.test#PersonShape-address>"
+    },
+    {
+      "id": "core/property/nodeKind-001.ttl::nodeKind-001",
+      "status": "unsupported",
+      "reason": "Unsupported feature: sh:nodeKind on _:nc5aa20f6c35747ec921a87eba9752deeb5"
+    },
+    {
+      "id": "core/property/not-001.ttl::not-001",
+      "status": "unsupported",
+      "reason": "Unsupported feature: sh:not on <http://datashapes.org/sh/tests/core/property/not-001.test#TestShape-property>"
+    },
+    {
+      "id": "core/property/or-001.ttl::or-001",
+      "status": "unsupported",
+      "reason": "Unsupported feature: sh:or on <http://datashapes.org/sh/tests/core/property/or-001.test#AddressShape-address>"
+    },
+    {
+      "id": "core/property/or-datatypes-001.ttl::or-datatypes-001",
+      "status": "unsupported",
+      "reason": "Unsupported feature: sh:or on <http://datashapes.org/sh/tests/core/property/or-datatypes-001.test#TestShape-comment>"
+    },
+    {
+      "id": "core/property/pattern-001.ttl::pattern-001",
+      "status": "unsupported",
+      "reason": "Unsupported feature: sh:pattern on <http://datashapes.org/sh/tests/core/property/pattern-001.test#TestShape-property>"
+    },
+    {
+      "id": "core/property/pattern-002.ttl::pattern-002",
+      "status": "unsupported",
+      "reason": "Unsupported feature: sh:pattern on <http://datashapes.org/sh/tests/core/property/pattern-002.test#TestShape-property>"
+    },
+    {
+      "id": "core/property/property-001.ttl::property-001",
+      "status": "unsupported",
+      "reason": "Unsupported feature: sh:class on <http://datashapes.org/sh/tests/core/property/property-001.test#PersonShape-address-city>"
+    },
+    {
+      "id": "core/property/qualifiedMinCountDisjoint-001.ttl::qualifiedMinCountDisjoint-001",
+      "status": "unsupported",
+      "reason": "Unsupported feature: sh:qualifiedValueShape on <http://datashapes.org/sh/tests/core/property/qualifiedMinCountDisjoint-001.test#HandShape-digit-maxCount4>"
+    },
+    {
+      "id": "core/property/qualifiedValueShape-001.ttl::qualifiedValueShape-001",
+      "status": "unsupported",
+      "reason": "Unsupported feature: sh:qualifiedMinCount on <http://datashapes.org/sh/tests/core/property/qualifiedValueShape-001.test#APGARObservationShape-related>"
+    },
+    {
+      "id": "core/property/qualifiedValueShapesDisjoint-001.ttl::qualifiedValueShapesDisjoint-001",
+      "status": "unsupported",
+      "reason": "Unsupported feature: sh:qualifiedValueShape on <http://datashapes.org/sh/tests/core/property/qualifiedValueShapesDisjoint-001.test#HandShape-digit4>"
+    },
+    {
+      "id": "core/property/uniqueLang-001.ttl::uniqueLang-001",
+      "status": "unsupported",
+      "reason": "Unsupported feature: sh:uniqueLang on <http://datashapes.org/sh/tests/core/property/uniqueLang-001.test#TestShape-testProperty>"
+    },
+    {
+      "id": "core/property/uniqueLang-002.ttl::uniqueLang-002",
+      "status": "unsupported",
+      "reason": "Unsupported feature: sh:uniqueLang on <http://example.org/shacl-test/s1>"
+    },
+    {
+      "id": "core/targets/multipleTargets-001.ttl::multipleTargets-001",
+      "status": "unsupported",
+      "reason": "Unsupported feature: sh:in on <http://datashapes.org/sh/tests/core/targets/multipleTargets-001.test#TestShape>"
+    },
+    {
+      "id": "core/targets/targetClass-001.ttl::targetClass-001",
+      "status": "pass"
+    },
+    {
+      "id": "core/targets/targetClassImplicit-001.ttl::targetClassImplicit-001",
+      "status": "unsupported",
+      "reason": "Unsupported feature: sh:in on <http://datashapes.org/sh/tests/core/targets/targetClassImplicit-001.test#SuperClass>"
+    },
+    {
+      "id": "core/targets/targetNode-001.ttl::targetNode-001",
+      "status": "unsupported",
+      "reason": "Unsupported feature: sh:datatype on <http://datashapes.org/sh/tests/core/targets/targetNode-001.test#TestShape-label>"
+    },
+    {
+      "id": "core/targets/targetObjectsOf-001.ttl::targetObjectsOf-001",
+      "status": "unsupported",
+      "reason": "Unsupported feature: sh:datatype on <http://datashapes.org/sh/tests/core/targets/targetObjectsOf-001.test#TestShape>"
+    },
+    {
+      "id": "core/targets/targetSubjectsOf-001.ttl::targetSubjectsOf-001",
+      "status": "pass"
+    },
+    {
+      "id": "core/targets/targetSubjectsOf-002.ttl::targetSubjectsOf-002",
+      "status": "pass"
+    },
+    {
+      "id": "core/validation-reports/shared.ttl::shared",
+      "status": "unsupported",
+      "reason": "Unsupported feature: sh:class on <http://example.org/shacl-test/s4>"
+    },
+    {
+      "id": "sparql/component/optional-001.ttl::optional-001",
+      "status": "unsupported",
+      "reason": "Unsupported feature: sh:ConstraintComponent"
+    },
+    {
+      "id": "sparql/component/propertyValidator-select-001.ttl::propertyValidator-select-001",
+      "status": "unsupported",
+      "reason": "Unsupported feature: sh:datatype on _:n8ca5f907ef71446cadca5f1ac10249adb1"
+    },
+    {
+      "id": "sparql/component/validator-001.ttl::validator-001",
+      "status": "unsupported",
+      "reason": "Unsupported feature: sh:datatype on <http://datashapes.org/sh/tests/sparql/component/validator-001.test#TestParameter2>"
+    },
+    {
+      "id": "sparql/node/prefixes-001.ttl::prefixes-001",
+      "status": "unsupported",
+      "reason": "Unsupported feature: sh:sparql on <http://datashapes.org/sh/tests/sparql/node/prefixes-001.test#TestShape>"
+    },
+    {
+      "id": "sparql/node/sparql-001.ttl::sparql-001",
+      "status": "unsupported",
+      "reason": "Unsupported feature: sh:sparql on <http://datashapes.org/sh/tests/sparql/node/sparql-001.test#TestShape>"
+    },
+    {
+      "id": "sparql/node/sparql-002.ttl::sparql-002",
+      "status": "unsupported",
+      "reason": "Unsupported feature: sh:sparql on <http://datashapes.org/sh/tests/sparql/node/sparql-002.test#LanguageExampleShape>"
+    },
+    {
+      "id": "sparql/node/sparql-003.ttl::sparql-003",
+      "status": "unsupported",
+      "reason": "Unsupported feature: sh:prefixes on <http://datashapes.org/sh/tests/sparql/node/sparql-003.test#LanguageExampleShape>"
+    },
+    {
+      "id": "sparql/pre-binding/pre-binding-001.ttl::pre-binding-001",
+      "status": "unsupported",
+      "reason": "Unsupported feature: sh:sparql on <http://datashapes.org/sh/tests/sparql/pre-binding/pre-binding-001.test#TestShape>"
+    },
+    {
+      "id": "sparql/pre-binding/pre-binding-002.ttl::pre-binding-002",
+      "status": "unsupported",
+      "reason": "Unsupported feature: sh:sparql on <http://datashapes.org/sh/tests/sparql/pre-binding/pre-binding-002.test#TestShape>"
+    },
+    {
+      "id": "sparql/pre-binding/pre-binding-003.ttl::pre-binding-003",
+      "status": "unsupported",
+      "reason": "Unsupported feature: sh:sparql on <http://datashapes.org/sh/tests/sparql/pre-binding/pre-binding-003.test#TestShape>"
+    },
+    {
+      "id": "sparql/pre-binding/pre-binding-004.ttl::pre-binding-004",
+      "status": "unsupported",
+      "reason": "Unsupported feature: sh:sparql on <http://datashapes.org/sh/tests/sparql/pre-binding/pre-binding-004.test#TestShape>"
+    },
+    {
+      "id": "sparql/pre-binding/pre-binding-005.ttl::pre-binding-005",
+      "status": "unsupported",
+      "reason": "Unsupported feature: sh:sparql on <http://datashapes.org/sh/tests/sparql/pre-binding/pre-binding-005.test#TestShape>"
+    },
+    {
+      "id": "sparql/pre-binding/pre-binding-006.ttl::pre-binding-006",
+      "status": "unsupported",
+      "reason": "W3C failure expectation: http://www.w3.org/ns/shacl-test#Failure"
+    },
+    {
+      "id": "sparql/pre-binding/pre-binding-007.ttl::pre-binding-007",
+      "status": "unsupported",
+      "reason": "Unsupported feature: sh:sparql on <http://datashapes.org/sh/tests/sparql/pre-binding/pre-binding-007.test#TestShape>"
+    },
+    {
+      "id": "sparql/pre-binding/shapesGraph-001.ttl::shapesGraph-001",
+      "status": "unsupported",
+      "reason": "Unsupported feature: sh:sparql on <http://datashapes.org/sh/tests/sparql/pre-binding/shapesGraph-001.test#TestShape>"
+    },
+    {
+      "id": "sparql/pre-binding/unsupported-sparql-001.ttl::unsupported-sparql-001",
+      "status": "unsupported",
+      "reason": "W3C failure expectation: http://www.w3.org/ns/shacl-test#Failure"
+    },
+    {
+      "id": "sparql/pre-binding/unsupported-sparql-002.ttl::unsupported-sparql-002",
+      "status": "unsupported",
+      "reason": "W3C failure expectation: http://www.w3.org/ns/shacl-test#Failure"
+    },
+    {
+      "id": "sparql/pre-binding/unsupported-sparql-003.ttl::unsupported-sparql-003",
+      "status": "unsupported",
+      "reason": "W3C failure expectation: http://www.w3.org/ns/shacl-test#Failure"
+    },
+    {
+      "id": "sparql/pre-binding/unsupported-sparql-004.ttl::unsupported-sparql-004",
+      "status": "unsupported",
+      "reason": "W3C failure expectation: http://www.w3.org/ns/shacl-test#Failure"
+    },
+    {
+      "id": "sparql/pre-binding/unsupported-sparql-005.ttl::unsupported-sparql-005",
+      "status": "unsupported",
+      "reason": "W3C failure expectation: http://www.w3.org/ns/shacl-test#Failure"
+    },
+    {
+      "id": "sparql/pre-binding/unsupported-sparql-006.ttl::unsupported-sparql-006",
+      "status": "unsupported",
+      "reason": "W3C failure expectation: http://www.w3.org/ns/shacl-test#Failure"
+    },
+    {
+      "id": "sparql/property/sparql-001.ttl::sparql-001",
+      "status": "unsupported",
+      "reason": "Unsupported feature: sh:sparql on <http://datashapes.org/sh/tests/sparql/property/sparql-001.test#LanguageExamplePropertyShape>"
+    }
+  ],
+  "upstream": [
+    {
+      "file": "vendor/pyshacl/test/issues/bad_test_070.py",
+      "name": "test_070",
+      "line": 47,
+      "status": "not_run"
+    },
+    {
+      "file": "vendor/pyshacl/test/issues/issue_102.py",
+      "name": "test_102",
+      "line": 288,
+      "status": "not_run"
+    },
+    {
+      "file": "vendor/pyshacl/test/issues/test_008.py",
+      "name": "test_008",
+      "line": 236,
+      "status": "not_run"
+    },
+    {
+      "file": "vendor/pyshacl/test/issues/test_009.py",
+      "name": "test_009",
+      "line": 46,
+      "status": "not_run"
+    },
+    {
+      "file": "vendor/pyshacl/test/issues/test_012.py",
+      "name": "test_012_text",
+      "line": 36,
+      "status": "not_run"
+    },
+    {
+      "file": "vendor/pyshacl/test/issues/test_012.py",
+      "name": "test_012_graph",
+      "line": 49,
+      "status": "not_run"
+    },
+    {
+      "file": "vendor/pyshacl/test/issues/test_014.py",
+      "name": "test_014_fail",
+      "line": 86,
+      "status": "not_run"
+    },
+    {
+      "file": "vendor/pyshacl/test/issues/test_014.py",
+      "name": "test_014_pass",
+      "line": 99,
+      "status": "not_run"
+    },
+    {
+      "file": "vendor/pyshacl/test/issues/test_026.py",
+      "name": "test_026_trig",
+      "line": 84,
+      "status": "not_run"
+    },
+    {
+      "file": "vendor/pyshacl/test/issues/test_026.py",
+      "name": "test_026_jsonld",
+      "line": 97,
+      "status": "not_run"
+    },
+    {
+      "file": "vendor/pyshacl/test/issues/test_029/__init__.py",
+      "name": "test_029",
+      "line": 10,
+      "status": "not_run"
+    },
+    {
+      "file": "vendor/pyshacl/test/issues/test_036.py",
+      "name": "test_036_jsonld",
+      "line": 45,
+      "status": "not_run"
+    },
+    {
+      "file": "vendor/pyshacl/test/issues/test_038.py",
+      "name": "test_038",
+      "line": 46,
+      "status": "not_run"
+    },
+    {
+      "file": "vendor/pyshacl/test/issues/test_040/__init__.py",
+      "name": "test_040",
+      "line": 17,
+      "status": "not_run"
+    },
+    {
+      "file": "vendor/pyshacl/test/issues/test_058.py",
+      "name": "test_058",
+      "line": 29,
+      "status": "not_run"
+    },
+    {
+      "file": "vendor/pyshacl/test/issues/test_062.py",
+      "name": "test_062",
+      "line": 107,
+      "status": "not_run"
+    },
+    {
+      "file": "vendor/pyshacl/test/issues/test_071.py",
+      "name": "test_071_positive",
+      "line": 94,
+      "status": "not_run"
+    },
+    {
+      "file": "vendor/pyshacl/test/issues/test_076.py",
+      "name": "test_076_positive",
+      "line": 110,
+      "status": "not_run"
+    },
+    {
+      "file": "vendor/pyshacl/test/issues/test_076.py",
+      "name": "test_076_negative",
+      "line": 131,
+      "status": "not_run"
+    },
+    {
+      "file": "vendor/pyshacl/test/issues/test_079.py",
+      "name": "test_079",
+      "line": 30,
+      "status": "not_run"
+    },
+    {
+      "file": "vendor/pyshacl/test/issues/test_087.py",
+      "name": "test_087",
+      "line": 56,
+      "status": "not_run"
+    },
+    {
+      "file": "vendor/pyshacl/test/issues/test_098.py",
+      "name": "test_98",
+      "line": 74,
+      "status": "not_run"
+    },
+    {
+      "file": "vendor/pyshacl/test/issues/test_108.py",
+      "name": "test_108",
+      "line": 34,
+      "status": "not_run"
+    },
+    {
+      "file": "vendor/pyshacl/test/issues/test_116.py",
+      "name": "test_116_1",
+      "line": 82,
+      "status": "not_run"
+    },
+    {
+      "file": "vendor/pyshacl/test/issues/test_116.py",
+      "name": "test_116_2",
+      "line": 86,
+      "status": "not_run"
+    },
+    {
+      "file": "vendor/pyshacl/test/issues/test_116.py",
+      "name": "test_116_3",
+      "line": 90,
+      "status": "not_run"
+    },
+    {
+      "file": "vendor/pyshacl/test/issues/test_116.py",
+      "name": "test_116_4",
+      "line": 94,
+      "status": "not_run"
+    },
+    {
+      "file": "vendor/pyshacl/test/issues/test_120.py",
+      "name": "test_120",
+      "line": 72,
+      "status": "not_run"
+    },
+    {
+      "file": "vendor/pyshacl/test/issues/test_124.py",
+      "name": "test_124",
+      "line": 71,
+      "status": "not_run"
+    },
+    {
+      "file": "vendor/pyshacl/test/issues/test_126.py",
+      "name": "test_126_1",
+      "line": 96,
+      "status": "not_run"
+    },
+    {
+      "file": "vendor/pyshacl/test/issues/test_126.py",
+      "name": "test_126_2",
+      "line": 103,
+      "status": "not_run"
+    },
+    {
+      "file": "vendor/pyshacl/test/issues/test_126.py",
+      "name": "test_126_3",
+      "line": 110,
+      "status": "not_run"
+    },
+    {
+      "file": "vendor/pyshacl/test/issues/test_133.py",
+      "name": "test_133",
+      "line": 60,
+      "status": "not_run"
+    },
+    {
+      "file": "vendor/pyshacl/test/issues/test_141.py",
+      "name": "test_me",
+      "line": 120,
+      "status": "not_run"
+    },
+    {
+      "file": "vendor/pyshacl/test/issues/test_141.py",
+      "name": "test_141",
+      "line": 195,
+      "status": "not_run"
+    },
+    {
+      "file": "vendor/pyshacl/test/issues/test_142.py",
+      "name": "test_142",
+      "line": 47,
+      "status": "not_run"
+    },
+    {
+      "file": "vendor/pyshacl/test/issues/test_146.py",
+      "name": "test_146",
+      "line": 9,
+      "status": "not_run"
+    },
+    {
+      "file": "vendor/pyshacl/test/issues/test_148.py",
+      "name": "test_148",
+      "line": 50,
+      "status": "not_run"
+    },
+    {
+      "file": "vendor/pyshacl/test/issues/test_154.py",
+      "name": "test_154",
+      "line": 57,
+      "status": "not_run"
+    },
+    {
+      "file": "vendor/pyshacl/test/issues/test_160.py",
+      "name": "test_160_1",
+      "line": 130,
+      "status": "not_run"
+    },
+    {
+      "file": "vendor/pyshacl/test/issues/test_160.py",
+      "name": "test_160_2",
+      "line": 134,
+      "status": "not_run"
+    },
+    {
+      "file": "vendor/pyshacl/test/issues/test_162.py",
+      "name": "test_162",
+      "line": 59,
+      "status": "not_run"
+    },
+    {
+      "file": "vendor/pyshacl/test/issues/test_170.py",
+      "name": "test_170",
+      "line": 107,
+      "status": "not_run"
+    },
+    {
+      "file": "vendor/pyshacl/test/issues/test_170.py",
+      "name": "test_170_2",
+      "line": 173,
+      "status": "not_run"
+    },
+    {
+      "file": "vendor/pyshacl/test/issues/test_170.py",
+      "name": "test_170_3",
+      "line": 221,
+      "status": "not_run"
+    },
+    {
+      "file": "vendor/pyshacl/test/issues/test_190.py",
+      "name": "test_190_1",
+      "line": 128,
+      "status": "not_run"
+    },
+    {
+      "file": "vendor/pyshacl/test/issues/test_190.py",
+      "name": "test_190_2",
+      "line": 142,
+      "status": "not_run"
+    },
+    {
+      "file": "vendor/pyshacl/test/issues/test_199.py",
+      "name": "test_199",
+      "line": 47,
+      "status": "not_run"
+    },
+    {
+      "file": "vendor/pyshacl/test/issues/test_213.py",
+      "name": "test_213",
+      "line": 50,
+      "status": "not_run"
+    },
+    {
+      "file": "vendor/pyshacl/test/issues/test_217.py",
+      "name": "test_217",
+      "line": 64,
+      "status": "not_run"
+    },
+    {
+      "file": "vendor/pyshacl/test/issues/test_220/__init__.py",
+      "name": "test_220_1",
+      "line": 17,
+      "status": "not_run"
+    },
+    {
+      "file": "vendor/pyshacl/test/issues/test_220/__init__.py",
+      "name": "test_220_2",
+      "line": 22,
+      "status": "not_run"
+    },
+    {
+      "file": "vendor/pyshacl/test/issues/test_227.py",
+      "name": "test_227",
+      "line": 72,
+      "status": "not_run"
+    },
+    {
+      "file": "vendor/pyshacl/test/issues/test_240.py",
+      "name": "test_240",
+      "line": 85,
+      "status": "not_run"
+    },
+    {
+      "file": "vendor/pyshacl/test/issues/test_281/test_281.py",
+      "name": "test_281_a",
+      "line": 15,
+      "status": "not_run"
+    },
+    {
+      "file": "vendor/pyshacl/test/issues/test_281/test_281.py",
+      "name": "test_281_b",
+      "line": 27,
+      "status": "not_run"
+    },
+    {
+      "file": "vendor/pyshacl/test/issues/test_286.py",
+      "name": "test_286_a",
+      "line": 57,
+      "status": "not_run"
+    },
+    {
+      "file": "vendor/pyshacl/test/issues/test_286.py",
+      "name": "test_286_b",
+      "line": 71,
+      "status": "not_run"
+    },
+    {
+      "file": "vendor/pyshacl/test/issues/test_298.py",
+      "name": "test_298",
+      "line": 14,
+      "status": "not_run"
+    },
+    {
+      "file": "vendor/pyshacl/test/issues/test_301.py",
+      "name": "test_301",
+      "line": 47,
+      "status": "not_run"
+    },
+    {
+      "file": "vendor/pyshacl/test/issues/test_304.py",
+      "name": "test_304",
+      "line": 108,
+      "status": "not_run"
+    },
+    {
+      "file": "vendor/pyshacl/test/issues/test_306.py",
+      "name": "test_306",
+      "line": 30,
+      "status": "not_run"
+    },
+    {
+      "file": "vendor/pyshacl/test/issues/test_319.py",
+      "name": "test_319_http_owl_imports_do_not_leave_closed_response_finalizers",
+      "line": 49,
+      "status": "not_run"
+    },
+    {
+      "file": "vendor/pyshacl/test/issues/test_96.py",
+      "name": "test_96",
+      "line": 44,
+      "status": "not_run"
+    },
+    {
+      "file": "vendor/pyshacl/test/issues/test_w3_list1.py",
+      "name": "test_w3_list1",
+      "line": 57,
+      "status": "not_run"
+    },
+    {
+      "file": "vendor/pyshacl/test/test_advanced.py",
+      "name": "test_advanced",
+      "line": 171,
+      "status": "not_run"
+    },
+    {
+      "file": "vendor/pyshacl/test/test_advanced.py",
+      "name": "test_advanced_sparql_custom_function",
+      "line": 179,
+      "status": "not_run"
+    },
+    {
+      "file": "vendor/pyshacl/test/test_cmdline.py",
+      "name": "test_cmdline",
+      "line": 97,
+      "status": "not_run"
+    },
+    {
+      "file": "vendor/pyshacl/test/test_cmdline.py",
+      "name": "test_cmdline_fail",
+      "line": 118,
+      "status": "not_run"
+    },
+    {
+      "file": "vendor/pyshacl/test/test_cmdline.py",
+      "name": "test_cmdline_table",
+      "line": 139,
+      "status": "not_run"
+    },
+    {
+      "file": "vendor/pyshacl/test/test_cmdline.py",
+      "name": "test_cmdline_web",
+      "line": 153,
+      "status": "not_run"
+    },
+    {
+      "file": "vendor/pyshacl/test/test_cmdline.py",
+      "name": "test_cmdline_jsonld",
+      "line": 180,
+      "status": "not_run"
+    },
+    {
+      "file": "vendor/pyshacl/test/test_cmdline_rules.py",
+      "name": "test_cmdline_rules",
+      "line": 100,
+      "status": "not_run"
+    },
+    {
+      "file": "vendor/pyshacl/test/test_dash_validate.py",
+      "name": "test_dash_validate_all_core",
+      "line": 38,
+      "status": "not_run"
+    },
+    {
+      "file": "vendor/pyshacl/test/test_dash_validate.py",
+      "name": "test_dash_validate_all_core_sparql_mode",
+      "line": 56,
+      "status": "not_run"
+    },
+    {
+      "file": "vendor/pyshacl/test/test_dash_validate.py",
+      "name": "test_dash_validate_all_sparql",
+      "line": 88,
+      "status": "not_run"
+    },
+    {
+      "file": "vendor/pyshacl/test/test_dash_validate.py",
+      "name": "test_dash_validate_all_sparql_sparql_mode",
+      "line": 106,
+      "status": "not_run"
+    },
+    {
+      "file": "vendor/pyshacl/test/test_dash_validate.py",
+      "name": "test_dash_validate_all_sparql_rules",
+      "line": 158,
+      "status": "not_run"
+    },
+    {
+      "file": "vendor/pyshacl/test/test_dash_validate.py",
+      "name": "test_dash_validate_all_triple_rules",
+      "line": 192,
+      "status": "not_run"
+    },
+    {
+      "file": "vendor/pyshacl/test/test_dash_validate.py",
+      "name": "test_dash_validate_target",
+      "line": 243,
+      "status": "not_run"
+    },
+    {
+      "file": "vendor/pyshacl/test/test_dash_validate.py",
+      "name": "test_dash_validate_target_sparql_mode",
+      "line": 288,
+      "status": "not_run"
+    },
+    {
+      "file": "vendor/pyshacl/test/test_dash_validate.py",
+      "name": "test_dash_validate_expression",
+      "line": 343,
+      "status": "not_run"
+    },
+    {
+      "file": "vendor/pyshacl/test/test_dash_validate.py",
+      "name": "test_extract_query_and_expected_result_valid_query",
+      "line": 387,
+      "status": "not_run"
+    },
+    {
+      "file": "vendor/pyshacl/test/test_dash_validate.py",
+      "name": "test_evaluate_query_testcase",
+      "line": 420,
+      "status": "not_run"
+    },
+    {
+      "file": "vendor/pyshacl/test/test_dash_validate.py",
+      "name": "test_dash_validate_query_cases",
+      "line": 447,
+      "status": "not_run"
+    },
+    {
+      "file": "vendor/pyshacl/test/test_dash_validate.py",
+      "name": "test_dash_validate_functions",
+      "line": 494,
+      "status": "not_run"
+    },
+    {
+      "file": "vendor/pyshacl/test/test_extra.py",
+      "name": "test_validate_with_ontology",
+      "line": 129,
+      "status": "not_run"
+    },
+    {
+      "file": "vendor/pyshacl/test/test_extra.py",
+      "name": "test_validate_with_ontology_inplace",
+      "line": 142,
+      "status": "not_run"
+    },
+    {
+      "file": "vendor/pyshacl/test/test_extra.py",
+      "name": "test_validate_with_ontology_fail1",
+      "line": 161,
+      "status": "not_run"
+    },
+    {
+      "file": "vendor/pyshacl/test/test_extra.py",
+      "name": "test_validate_with_ontology_fail2",
+      "line": 176,
+      "status": "not_run"
+    },
+    {
+      "file": "vendor/pyshacl/test/test_extra.py",
+      "name": "test_metashacl_pass",
+      "line": 191,
+      "status": "not_run"
+    },
+    {
+      "file": "vendor/pyshacl/test/test_extra.py",
+      "name": "test_metashacl_fail",
+      "line": 207,
+      "status": "not_run"
+    },
+    {
+      "file": "vendor/pyshacl/test/test_extra.py",
+      "name": "test_blank_node_string_generation",
+      "line": 296,
+      "status": "not_run"
+    },
+    {
+      "file": "vendor/pyshacl/test/test_extra.py",
+      "name": "test_serialize_report_graph",
+      "line": 315,
+      "status": "not_run"
+    },
+    {
+      "file": "vendor/pyshacl/test/test_extra.py",
+      "name": "test_property_shape_focus",
+      "line": 364,
+      "status": "not_run"
+    },
+    {
+      "file": "vendor/pyshacl/test/test_extra.py",
+      "name": "test_property_shape_focus_fail1",
+      "line": 379,
+      "status": "not_run"
+    },
+    {
+      "file": "vendor/pyshacl/test/test_extra.py",
+      "name": "test_web_retrieve",
+      "line": 426,
+      "status": "not_run"
+    },
+    {
+      "file": "vendor/pyshacl/test/test_extra.py",
+      "name": "test_web_retrieve_fail",
+      "line": 449,
+      "status": "not_run"
+    },
+    {
+      "file": "vendor/pyshacl/test/test_extra.py",
+      "name": "test_owl_imports",
+      "line": 489,
+      "status": "not_run"
+    },
+    {
+      "file": "vendor/pyshacl/test/test_extra.py",
+      "name": "test_owl_imports_fail",
+      "line": 512,
+      "status": "not_run"
+    },
+    {
+      "file": "vendor/pyshacl/test/test_extra.py",
+      "name": "test_sparql_message_subst",
+      "line": 536,
+      "status": "not_run"
+    },
+    {
+      "file": "vendor/pyshacl/test/test_inoculate.py",
+      "name": "test_validate_ds_with_graph_ontology",
+      "line": 177,
+      "status": "not_run"
+    },
+    {
+      "file": "vendor/pyshacl/test/test_inoculate.py",
+      "name": "test_validate_ds_with_ds_ontology",
+      "line": 193,
+      "status": "not_run"
+    },
+    {
+      "file": "vendor/pyshacl/test/test_inoculate.py",
+      "name": "test_validate_ds_with_ds_ontology_inplace",
+      "line": 209,
+      "status": "not_run"
+    },
+    {
+      "file": "vendor/pyshacl/test/test_integers.py",
+      "name": "test_validate_with_ontology",
+      "line": 119,
+      "status": "not_run"
+    },
+    {
+      "file": "vendor/pyshacl/test/test_integers.py",
+      "name": "test_validate_with_ontology_XFAIL_sh_datatypes",
+      "line": 155,
+      "status": "not_run"
+    },
+    {
+      "file": "vendor/pyshacl/test/test_integers.py",
+      "name": "test_validate_with_ontology_XFAIL_spaces",
+      "line": 194,
+      "status": "not_run"
+    },
+    {
+      "file": "vendor/pyshacl/test/test_js/test_js_constraint.py",
+      "name": "test_js_constraint",
+      "line": 38,
+      "status": "not_run"
+    },
+    {
+      "file": "vendor/pyshacl/test/test_js/test_js_constraint_component.py",
+      "name": "test_js_constraint_component",
+      "line": 57,
+      "status": "not_run"
+    },
+    {
+      "file": "vendor/pyshacl/test/test_js/test_js_constraint_path_component.py",
+      "name": "test_js_constraint_path_component",
+      "line": 55,
+      "status": "not_run"
+    },
+    {
+      "file": "vendor/pyshacl/test/test_js/test_js_function.py",
+      "name": "test_js_function",
+      "line": 101,
+      "status": "not_run"
+    },
+    {
+      "file": "vendor/pyshacl/test/test_js/test_js_rules.py",
+      "name": "test_js_rules",
+      "line": 41,
+      "status": "not_run"
+    },
+    {
+      "file": "vendor/pyshacl/test/test_js/test_js_target.py",
+      "name": "test_js_target",
+      "line": 75,
+      "status": "not_run"
+    },
+    {
+      "file": "vendor/pyshacl/test/test_js/test_js_target_type.py",
+      "name": "test_js_target_type",
+      "line": 116,
+      "status": "not_run"
+    },
+    {
+      "file": "vendor/pyshacl/test/test_manual_targeting.py",
+      "name": "test_validate_pass_manual_targeting_focus",
+      "line": 149,
+      "status": "not_run"
+    },
+    {
+      "file": "vendor/pyshacl/test/test_manual_targeting.py",
+      "name": "test_validate_fail_manual_targeting_focus",
+      "line": 166,
+      "status": "not_run"
+    },
+    {
+      "file": "vendor/pyshacl/test/test_manual_targeting.py",
+      "name": "test_validate_fail_manual_targeting_shape",
+      "line": 183,
+      "status": "not_run"
+    },
+    {
+      "file": "vendor/pyshacl/test/test_manual_targeting.py",
+      "name": "test_validate_fail_manual_targeting_shape_or",
+      "line": 199,
+      "status": "not_run"
+    },
+    {
+      "file": "vendor/pyshacl/test/test_manual_targeting.py",
+      "name": "test_validate_fail_manual_targeting_focus_with_shape",
+      "line": 215,
+      "status": "not_run"
+    },
+    {
+      "file": "vendor/pyshacl/test/test_multiple_data_graphs.py",
+      "name": "test_validate_combine_multiple_graphs",
+      "line": 33,
+      "status": "not_run"
+    },
+    {
+      "file": "vendor/pyshacl/test/test_multiple_data_graphs.py",
+      "name": "test_validate_each_multiple_graphs",
+      "line": 42,
+      "status": "not_run"
+    },
+    {
+      "file": "vendor/pyshacl/test/test_multiple_data_graphs.py",
+      "name": "test_validate_each_multiple_graphs_via_mode",
+      "line": 51,
+      "status": "not_run"
+    },
+    {
+      "file": "vendor/pyshacl/test/test_rules_oxigraph.py",
+      "name": "test_sparql_rules_oxigraph",
+      "line": 52,
+      "status": "not_run"
+    },
+    {
+      "file": "vendor/pyshacl/test/test_rules_oxigraph.py",
+      "name": "test_triple_rules_oxigraph",
+      "line": 87,
+      "status": "not_run"
+    },
+    {
+      "file": "vendor/pyshacl/test/test_rules_oxigraph.py",
+      "name": "test_rules_runner_oxigraph",
+      "line": 133,
+      "status": "not_run"
+    },
+    {
+      "file": "vendor/pyshacl/test/test_rules_oxigraph.py",
+      "name": "test_oxigraph_data_graph_wrapper_used",
+      "line": 149,
+      "status": "not_run"
+    },
+    {
+      "file": "vendor/pyshacl/test/test_sh_details.py",
+      "name": "test_node_details",
+      "line": 46,
+      "status": "not_run"
+    },
+    {
+      "file": "vendor/pyshacl/test/test_shacl_rules_runner.py",
+      "name": "test_rules_runner",
+      "line": 132,
+      "status": "not_run"
+    },
+    {
+      "file": "vendor/pyshacl/test/test_sht_validate.py",
+      "name": "test_sht_all",
+      "line": 39,
+      "status": "not_run"
+    },
+    {
+      "file": "vendor/pyshacl/test/test_sht_validate.py",
+      "name": "test_sht_all_sparql_mode",
+      "line": 47,
+      "status": "not_run"
+    }
+  ],
+  "upstream_note": "Inventory of functions, not parametrized cases. Not yet ported or executed against turbo."
+}

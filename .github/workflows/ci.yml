@@ -1,0 +1,83 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 4 * * *'
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash {0}
+
+jobs:
+  verify:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            python: '3.11'
+          - os: ubuntu-latest
+            python: '3.13'
+          - os: macos-latest
+            python: '3.13'
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: ${{ matrix.python }}
+      - uses: astral-sh/setup-uv@v10
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - name: Build native extension and install pinned test dependencies
+        run: make dev PYTHON=${{ matrix.python }}
+      - name: Python, Rust, formatting and lint checks
+        run: make check
+      - name: Strict upstream suite and independent reference-fixture audit
+        if: matrix.os == 'ubuntu-latest' && matrix.python == '3.13'
+        run: .venv/bin/python scripts/check_upstream.py --output upstream-results.json
+      - name: Build wheel
+        run: .venv/bin/maturin build --release --locked --out dist
+      - name: Create isolated wheel environment
+        run: uv venv --python ${{ matrix.python }} .wheel-venv
+      - name: Install wheel with only runtime dependencies
+        run: uv pip install --python .wheel-venv/bin/python dist/*.whl
+      - name: Test installed wheel without pySHACL or owlrl
+        run: .wheel-venv/bin/python scripts/smoke_wheel.py
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: verification-${{ matrix.os }}-py${{ matrix.python }}
+          path: |
+            dist/*.whl
+            upstream-results.json
+            reference-fixture-audit.json
+          if-no-files-found: error
+
+  test:
+    name: test
+    needs: verify
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require every platform to pass
+        env:
+          VERIFY_RESULT: ${{ needs.verify.result }}
+        shell: python
+        run: |
+          import os
+          if os.environ['VERIFY_RESULT'] != 'success':
+              raise SystemExit('One or more required verification jobs did not pass')

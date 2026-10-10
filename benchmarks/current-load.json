@@ -1,0 +1,51 @@
+{
+  "captured_at": "2026-10-10T17:42:19.838111+00:00",
+  "load_averages": [
+    53.7314453125,
+    47.0205078125,
+    33.46533203125
+  ],
+  "concurrent_rust_compilers": [
+    {
+      "pid": 14330,
+      "cpu_percent": 43.3,
+      "command": "clippy-driver"
+    },
+    {
+      "pid": 14872,
+      "cpu_percent": 97.9,
+      "command": "rustc"
+    },
+    {
+      "pid": 14880,
+      "cpu_percent": 92.5,
+      "command": "rustc"
+    },
+    {
+      "pid": 14894,
+      "cpu_percent": 107.9,
+      "command": "rustc"
+    },
+    {
+      "pid": 14897,
+      "cpu_percent": 113.7,
+      "command": "rustc"
+    },
+    {
+      "pid": 14899,
+      "cpu_percent": 45.5,
+      "command": "clippy-driver"
+    },
+    {
+      "pid": 14905,
+      "cpu_percent": 24.6,
+      "command": "clippy-driver"
+    },
+    {
+      "pid": 85894,
+      "cpu_percent": 466.5,
+      "command": "rustc"
+    }
+  ],
+  "note": "Other workspace builds ran during this benchmark. No project build or full test run was launched concurrently by this task. These results are descriptive shared-machine measurements."
+}

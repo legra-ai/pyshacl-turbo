@@ -1,0 +1,6 @@
+{
+  "source": "pySHACL 0.40.1, pyshacl/assets/shacl-shacl.ttl",
+  "upstream_revision": "469cca7a22a078b36c167c1e8dadecf5e5ec6c75",
+  "sha256": "2c8cc83fbfad967f1c926413dcccd8baf8695f744464270f0c79690b885f31ca",
+  "upstream": "https://github.com/RDFLib/pySHACL/blob/469cca7a22a078b36c167c1e8dadecf5e5ec6c75/pyshacl/assets/shacl-shacl.ttl"
+}

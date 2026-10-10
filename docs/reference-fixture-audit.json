@@ -1,0 +1,92 @@
+{
+  "date": "2026-10-10T17:40:03.027771+00:00",
+  "pyshacl": "0.40.1",
+  "rdflib": "7.6.0",
+  "case": "test/issues/bad_test_070.py::test_070",
+  "test_sha256": "dbbd3868d92469b4a3c492ca6d2223e06535885686153500e648d8c3413258bf",
+  "shapes_url": "https://raw.githubusercontent.com/rapw3k/DEMETER/94762b9b0645f3b97dee675b15ee6278145a818b/models/SHACL/demeterAgriProfile-SHACL.ttl",
+  "shapes_sha256": "ac57e99d7da5c9e87651cd424fd41f9db78659084dc8720d252d7c7f28906610",
+  "report_graphs_isomorphic": true,
+  "engines": {
+    "pyshacl": {
+      "conforms": false,
+      "results": [
+        [
+          [
+            "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+            "http://www.w3.org/ns/shacl#ValidationResult"
+          ],
+          [
+            "http://www.w3.org/ns/shacl#focusNode",
+            "http://www.w3id.org/afarcloud/poi?lat=45.75&amp;long=4.85"
+          ],
+          [
+            "http://www.w3.org/ns/shacl#resultMessage",
+            "Value does not have class geo:Geometry"
+          ],
+          [
+            "http://www.w3.org/ns/shacl#resultPath",
+            "http://www.opengis.net/ont/geosparql#hasGeometry"
+          ],
+          [
+            "http://www.w3.org/ns/shacl#resultSeverity",
+            "http://www.w3.org/ns/shacl#Violation"
+          ],
+          [
+            "http://www.w3.org/ns/shacl#sourceConstraintComponent",
+            "http://www.w3.org/ns/shacl#ClassConstraintComponent"
+          ],
+          [
+            "http://www.w3.org/ns/shacl#sourceShape",
+            "https://astrea.linkeddata.es/shapes#3f6891594ac2d163a004bec00f8db48a"
+          ],
+          [
+            "http://www.w3.org/ns/shacl#value",
+            "http://www.w3id.org/afarcloud/pCoord?lat=45.75&amp;long=4.85"
+          ]
+        ]
+      ]
+    },
+    "turbo": {
+      "conforms": false,
+      "results": [
+        [
+          [
+            "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+            "http://www.w3.org/ns/shacl#ValidationResult"
+          ],
+          [
+            "http://www.w3.org/ns/shacl#focusNode",
+            "http://www.w3id.org/afarcloud/poi?lat=45.75&amp;long=4.85"
+          ],
+          [
+            "http://www.w3.org/ns/shacl#resultMessage",
+            "Value does not have class geo:Geometry"
+          ],
+          [
+            "http://www.w3.org/ns/shacl#resultPath",
+            "http://www.opengis.net/ont/geosparql#hasGeometry"
+          ],
+          [
+            "http://www.w3.org/ns/shacl#resultSeverity",
+            "http://www.w3.org/ns/shacl#Violation"
+          ],
+          [
+            "http://www.w3.org/ns/shacl#sourceConstraintComponent",
+            "http://www.w3.org/ns/shacl#ClassConstraintComponent"
+          ],
+          [
+            "http://www.w3.org/ns/shacl#sourceShape",
+            "https://astrea.linkeddata.es/shapes#3f6891594ac2d163a004bec00f8db48a"
+          ],
+          [
+            "http://www.w3.org/ns/shacl#value",
+            "http://www.w3id.org/afarcloud/pCoord?lat=45.75&amp;long=4.85"
+          ]
+        ]
+      ]
+    }
+  },
+  "strict_upstream_status": "failed",
+  "reason": "The test asserts conformance, but its geometry node lacks the required geo:Geometry class. Both engines report the same violation."
+}
