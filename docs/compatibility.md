@@ -16,6 +16,10 @@ The test bridge blocks reference validation and rule execution. Both engines run
 with upstream failure allowances disabled. Skips and collection errors never
 count as passes.
 
+Current report IDs use repository-relative fixture paths for parametrized cases.
+Moving the checkout between macOS and Linux does not change the inventory;
+fixture names, parameter values and native-equivalent mappings remain intact.
+
 Two implementation-specific cases have explicit native equivalents, recorded in
 the JSON. They verify native SPARQL function invocation and the Store adapter,
 instead of a reference Python callback or wrapper class name. See
