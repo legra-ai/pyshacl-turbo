@@ -34,6 +34,13 @@ updates:
     directory: /
     schedule:
       interval: daily
+    groups:
+      compatible:
+        update-types: [minor, patch]
+        patterns: ['*']
+      security:
+        applies-to: security-updates
+        patterns: ['*']
     commit-message:
       prefix: ci
       include: scope

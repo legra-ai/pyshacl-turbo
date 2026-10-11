@@ -32,6 +32,8 @@ pytest==8.4.2
     #   pytest-cov
 pytest-cov==7.1.0
     # via pyshacl-turbo (pyproject.toml)
+pyyaml==6.0.3
+    # via pyshacl-turbo (pyproject.toml)
 rdflib==7.6.0
     # via
     #   pyshacl-turbo (pyproject.toml)

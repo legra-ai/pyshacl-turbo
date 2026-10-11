@@ -17,3 +17,7 @@ __pycache__/
 /htmlcov/
 /python-coverage.json
 /python-coverage.xml
+/CHANGELOG.md
+/release-packages.zip
+/release-packages/
+/pending-packages/

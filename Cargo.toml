@@ -1,5 +1,6 @@
 [workspace]
 members = ["crates/engine", "crates/python"]
+default-members = ["crates/engine", "crates/python"]
 # Test vendored crates independently, without unifying Turbo's opt-in features.
 exclude = ["vendor/fancy-regex-0.19.2", "vendor/spareval-0.2.7"]
 resolver = "2"
@@ -7,7 +8,10 @@ resolver = "2"
 [workspace.package]
 version = "0.1.0"
 edition = "2024"
-license = "Apache-2.0 OR MIT"
+license = "MIT OR Apache-2.0"
+rust-version = "1.98.0"
+authors = ["DataRoad Inc, Delaware, USA, trading as Legra"]
+repository = "https://github.com/legra-ai/pyshacl-turbo"
 
 [workspace.dependencies]
 oxigraph = { version = "=0.5.11", default-features = false }

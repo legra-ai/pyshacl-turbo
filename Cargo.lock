@@ -709,6 +709,7 @@ dependencies = [
  "oxrdf",
  "oxsdatatypes",
  "regex-syntax",
+ "rhusky",
  "shacl-structural-model",
  "spareval",
  "spargebra",
