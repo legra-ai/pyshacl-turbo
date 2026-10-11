@@ -1,5 +1,6 @@
 """Run in an isolated wheel environment with only declared runtime dependencies."""
 
+import sys
 import warnings
 from importlib.util import find_spec
 
@@ -49,3 +50,22 @@ for value, conforms in [("i-İ", True), ("i-ı", False), ("I-i", True)]:
 print(
     "Installed wheel passes identity, inference, recursion and regex checks without pySHACL/owlrl."
 )
+
+if sys.argv[1:]:
+    assert sys.argv[1:] == ["--oxigraph"]
+    from pyoxigraph import RdfFormat, Store
+
+    store = Store()
+    store.load(input='<urn:s> <urn:p> "value" .', format=RdfFormat.N_TRIPLES)
+    shapes = Graph().parse(
+        data="""@prefix sh: <http://www.w3.org/ns/shacl#> .
+        <urn:S> sh:targetNode <urn:s>; sh:property [sh:path <urn:p>; sh:minCount 1].""",
+        format="turtle",
+    )
+    program = turbo.compile_shapes(shapes)
+    assert turbo.validate(store, shacl_graph=shapes)[0]
+    assert program.validate(store)[0]
+    store.clear()
+    assert not turbo.validate(store, shacl_graph=shapes)[0]
+    assert not program.validate(store)[0]
+    print("Optional PyOxigraph Store input passes valid and invalid cases, including shape reuse.")

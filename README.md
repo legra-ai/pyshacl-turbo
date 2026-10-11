@@ -45,20 +45,72 @@ pySHACL. **SHACL-JS is planned.** Review the
 
 ## Install
 
-```sh
-python -m pip install pyshacl-turbo
-```
-
 Requires Python 3.11+. Wheels are available for Linux x86-64/ARM64 (glibc
 2.28+), macOS Intel/Apple Silicon, and Windows x86-64. Rust is only needed when
 building from source. This is an experimental release; the compatibility
 measurements and remaining limits above still apply.
 
-For optional PyOxigraph Store input:
+For a [uv project](https://docs.astral.sh/uv/guides/projects/), run these from
+the directory containing `pyproject.toml` (create a project with `uv init` if needed):
 
 ```sh
+uv add pyshacl-turbo
+```
+
+For optional PyOxigraph Store input, use:
+
+```sh
+uv add 'pyshacl-turbo[oxigraph]'
+```
+
+For a virtual environment managed with uv's pip interface:
+
+```sh
+uv venv --python 3.13
+uv pip install pyshacl-turbo
+```
+
+Or use pip in your Python environment:
+
+```sh
+python -m pip install pyshacl-turbo
+```
+
+The same optional Store extra is available with either installer:
+
+```sh
+uv pip install 'pyshacl-turbo[oxigraph]'
+# Or, with pip:
 python -m pip install 'pyshacl-turbo[oxigraph]'
 ```
+
+## Command line
+
+Run directly in an isolated [uv tool environment](https://docs.astral.sh/uv/guides/tools/):
+
+```sh
+uvx pyshacl-turbo data.ttl -s shapes.ttl
+uvx --from pyshacl-turbo pyshacl-turbo-rules data.ttl -s rules.ttl
+```
+
+In a uv project where you have added the package:
+
+```sh
+uv run pyshacl-turbo data.ttl -s shapes.ttl
+uv run pyshacl-turbo-rules data.ttl -s rules.ttl
+```
+
+To install both commands for regular use:
+
+```sh
+uv tool install pyshacl-turbo
+pyshacl-turbo data.ttl -s shapes.ttl
+```
+
+If uv reports that its tool directory is missing from `PATH`, run
+`uv tool update-shell` and restart your shell. Tool environments are isolated;
+use `uv add`, `uv pip install` or pip for Python imports in your own project.
+Validation exits with status 0 for conforming data and 1 for violations.
 
 ## Build
 
@@ -110,8 +162,11 @@ atomically only with `inplace=True`, after successful execution. Only new quads
 are committed; concurrent deletion of input quads is not undone.
 
 RDFS and OWL-RL inference are implemented natively and selected with
-`inference="rdfs"`, `"owlrl"` or `"both"`. Coverage is still being expanded;
-current inferred graphs do not always match the reference's complete closure.
+`inference="rdfs"`, `"owlrl"` or `"both"`. Inferred graphs contain standard RDF:
+literal values remain objects, and triples with literal subjects are intentionally
+excluded. This is a documented
+[inference contract](https://github.com/legra-ai/pyshacl-turbo/blob/main/docs/adr/0021-standard-rdf-inference-output.md);
+differences involving valid RDF remain subject to compatibility testing.
 `owlrl` is installed only by the reference-test extra, not as a runtime backend.
 
 Core and SPARQL patterns support Python-compatible regexes, including
@@ -195,7 +250,7 @@ pull requests, daily, and on manual dispatch:
 
 | Workflow | What it verifies |
 | --- | --- |
-| Tests and wheels | Python and Rust regressions, formatting and lint on Linux Python 3.11/3.13 and macOS Python 3.13; SPARQL evaluator tests with compatibility features disabled and enabled; source archive rebuilt into Linux x86-64/ARM64, macOS Intel/Apple Silicon, and Windows x86-64 wheels, installed with only runtime dependencies. The release also requires Compatibility and Regex at the same prepared revision. |
+| Tests and wheels | Python and Rust regressions, formatting and lint on Linux Python 3.11/3.13 and macOS Python 3.13; SPARQL evaluator tests with compatibility features disabled and enabled; source archive rebuilt into all five platform wheels. Every wheel is checked with `uv pip`, locked `uv add`/`uv run` projects, the optional Store extra, `uvx` and `uv tool install`, including both CLIs and validation exit codes. The release also requires Compatibility and Regex at the same prepared revision. |
 | Compatibility | Pinned W3C Core/SPARQL cases through document and Graph APIs, the adapted non-JS pySHACL suite, and direct API/CLI comparisons. Suite adaptations are independently checked against both engines. Detailed reports are uploaded as artifacts. |
 | Regex | The patched matcher's full upstream suite, unit tests with Turbo's base features, Python-mode VM regressions, and formatting, using its own pinned test dependencies. |
 

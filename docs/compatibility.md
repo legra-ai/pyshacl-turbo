@@ -151,17 +151,19 @@ concurrent deletions. Neither path introduces Tokio or asynchronous I/O.
 - Report formatting is substantially closer but not byte-for-byte identical.
   The upstream blank-node description case and issue 286 now pass; see
   [ADR 0011](adr/0011-literal-identity-and-report-graph-scope.md).
-- Native inference does not yet reproduce the reference's complete closure.
-  Some reference closure triples also use literal subjects, which RDF datasets
-  cannot represent. See the measured inference differences in the benchmark.
+- Native inference deliberately emits standard RDF only. Reference-generated
+  triples with literal subjects are excluded; supporting them is not a remaining
+  feature goal. See the [inference contract](adr/0021-standard-rdf-inference-output.md).
+  Differences involving valid RDF remain compatibility work.
   Native keys require a common value for every key property; the pinned reference
   reasoner omits the last property from its comparison. Turbo does not reproduce
   that incorrect identity inference. Empty key lists are inactive in both.
-  Benchmarks compare ordinary RDF and generalized triples separately; a matching
-  ordinary portion never counts as a matching complete closure.
+  Benchmarks compare ordinary RDF and generalized triples separately, retaining
+  the raw full-output comparison rather than claiming identical reference output.
   The current RDFS and OWL-RL cases match on all ordinary RDF triples. The
   reference additionally produces 901 and 902 literal-subject triples respectively
-  on the 1,000-node cases, so both full-closure comparisons still fail.
+  on the 1,000-node cases. Those full-output differences record the intentional
+  boundary; the ordinary RDF comparisons pass for those measured cases.
 - Core and SPARQL patterns support Python constructs, but exhaustive parser/error
   parity and Unicode database alignment remain unproven. The native backtracking
   limit raises a hard error;
@@ -193,8 +195,9 @@ validation report parity gates every timed path. Inference speedups are
 provisional wherever complete inferred graphs differ. Raw samples and source
 hashes identify the exact measured checkpoint.
 The [current performance report](../benchmarks/current.md) also compares
-the ordinary RDF portion separately, while retaining the full-closure failure
-when generalized triples differ. This diagnostic never counts as full parity.
+the ordinary RDF portion separately, while retaining the full-output difference
+when generalized triples differ. That difference is intentional under ADR 0021;
+ordinary RDF agreement never implies identical generalized reference output.
 The matrix predates ADR 0012's recursion and undefined-function changes; source
 hashes identify its measured checkpoint.
 A [new Core-only matrix](../benchmarks/pattern-core.md) measures the ADR 0013
