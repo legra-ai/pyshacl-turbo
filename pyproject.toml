@@ -1,5 +1,5 @@
 [build-system]
-requires = ["maturin>=1.9,<2"]
+requires = ["maturin==1.15.0"]
 build-backend = "maturin"
 
 [project]
@@ -8,8 +8,18 @@ version = "0.1.0"
 description = "A Rust SHACL engine with Python bindings; experimental compatibility milestone"
 readme = "README.md"
 requires-python = ">=3.11"
-license = "Apache-2.0 OR MIT"
+license = "MIT OR Apache-2.0"
 license-files = ["LICENSE-APACHE", "LICENSE-MIT", "vendor/**/LICENSE*"]
+authors = [{name = "DataRoad Inc, Delaware, USA, trading as Legra"}]
+keywords = ["shacl", "rdf", "validation", "sparql", "rust"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Rust",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
 dependencies = ["rdflib>=7.3,<8"]
 
 [project.urls]
@@ -18,7 +28,7 @@ Issues = "https://github.com/legra-ai/pyshacl-turbo/issues"
 
 [project.optional-dependencies]
 oxigraph = ["pyoxigraph>=0.5,<0.6"]
-test = ["pytest>=8,<9", "pytest-cov>=7.1,<8", "pyshacl[oxigraph]==0.40.1", "ruff>=0.12"]
+test = ["pytest>=8,<9", "pytest-cov>=7.1,<8", "pyshacl[oxigraph]==0.40.1", "ruff>=0.12", "pyyaml>=6,<7"]
 
 [project.scripts]
 pyshacl-turbo = "pyshacl_turbo.cli:entrypoint"
@@ -29,6 +39,20 @@ manifest-path = "crates/python/Cargo.toml"
 python-source = "python"
 module-name = "pyshacl_turbo._native"
 features = ["pyo3/extension-module"]
+include = [
+    {path = "vendor/**/*", format = "sdist"},
+    {path = "tests/**/*", format = "sdist"},
+    {path = "scripts/**/*", format = "sdist"},
+    {path = "docs/**/*", format = "sdist"},
+    {path = "benchmarks/**/*", format = "sdist"},
+    {path = ".github/**/*", format = "sdist"},
+    {path = ".githooks/**/*", format = "sdist"},
+    {path = "rust-toolchain.toml", format = "sdist"},
+    {path = "rustfmt-toolchain", format = "sdist"},
+    {path = "requirements-test.lock", format = "sdist"},
+    {path = "Makefile", format = "sdist"},
+]
+exclude = ["**/target/**/*", "**/__pycache__/**/*", "**/.pytest_cache/**/*", "**/.ruff_cache/**/*", "**/CHANGELOG*", "crates/engine/build.rs", ".cargo/**/*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

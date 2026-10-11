@@ -36,7 +36,7 @@ test-coverage:
 	$(VENV_PYTHON) scripts/coverage_badge.py --input python-coverage.json --output htmlcov/coverage.svg
 
 lint:
-	cargo fmt --all -- --check
+	./scripts/fmt.sh --check
 	PYO3_PYTHON=$(VENV_PYTHON) cargo clippy --workspace --all-targets --locked -- -D warnings
 	.venv/bin/ruff check python tests benchmarks scripts
 	.venv/bin/ruff format --check python tests benchmarks scripts

@@ -3,6 +3,19 @@ name = "pyshacl-turbo-engine"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+repository.workspace = true
+description = "Native SHACL compilation, validation, rules and inference"
+publish = false
+include = ["src/**", "tests/**", "Cargo.toml", "LICENSE-MIT", "LICENSE-APACHE"]
+
+[build-dependencies]
+rhusky = "=0.0.6"
+
+[package.metadata.version-info]
+pre_bump_hooks = ["python3 scripts/sync_version.py {{version}}"]
+additional_files = ["pyproject.toml"]
 
 [dependencies]
 oxigraph.workspace = true

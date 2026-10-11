@@ -1,8 +1,8 @@
 # pyshacl-turbo
 
 [![Python 3.11+](https://img.shields.io/badge/Python-3.11%2B-3776AB?logo=python&logoColor=white)](pyproject.toml)
-[![Rust stable](https://img.shields.io/badge/Rust-stable-DEA584?logo=rust&logoColor=black)](.github/workflows/ci.yml)
-[![License: Apache-2.0 OR MIT](https://img.shields.io/badge/license-Apache--2.0%20OR%20MIT-blue)](#verification-and-architecture)
+[![Rust](https://img.shields.io/badge/Rust-1.98%2B-DEA584?logo=rust&logoColor=black)](rust-toolchain.toml)
+[![License: MIT OR Apache-2.0](https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-blue)](LICENSE-MIT)
 [![Python coverage measured by pytest-cov](https://legra-ai.github.io/pyshacl-turbo/coverage.svg)](https://legra-ai.github.io/pyshacl-turbo/)
 [![pySHACL non-JS suite: 100% (403/403)](https://img.shields.io/badge/pySHACL%20non--JS%20suite-100%25-brightgreen)](docs/compatibility.md#measurements)
 
@@ -42,6 +42,7 @@ for integer and qualified-count behavior.
 ## Build
 
 Requires Rust/Cargo, Python 3.11+ and uv. Development uses Python 3.13.
+The repository pins Rust 1.98.0 for compilation and formatting.
 
 ```sh
 make dev
@@ -177,7 +178,7 @@ pull requests, daily, and on manual dispatch:
 
 | Workflow | What it verifies |
 | --- | --- |
-| Tests and wheels | Python and Rust regressions, formatting and lint on Linux Python 3.11/3.13 and macOS Python 3.13; SPARQL evaluator tests with compatibility features disabled and enabled; built wheels installed with only runtime dependencies, without pySHACL or owlrl. |
+| Tests and wheels | Python and Rust regressions, formatting and lint on Linux Python 3.11/3.13 and macOS Python 3.13; SPARQL evaluator tests with compatibility features disabled and enabled; source archive rebuilt into Linux x86-64/ARM64, macOS Intel/Apple Silicon, and Windows x86-64 wheels, installed with only runtime dependencies. The release also requires Compatibility and Regex at the same prepared revision. |
 | Compatibility | All pinned W3C Core/SPARQL cases through both document and Graph APIs, the complete locally corrected non-JS pySHACL inventory, and the corrected geometry test with both engines and full report comparison. Case-level JSON and W3C JUnit XML are uploaded as artifacts. |
 | Regex | The patched matcher's full upstream suite, unit tests with Turbo's base features, Python-mode VM regressions, and formatting, using its own pinned test dependencies. |
 
@@ -205,11 +206,17 @@ has not been tested.
 
 Architectural decisions are in [docs/adr](docs/adr). The exact-term dataset avoids
 premature literal canonicalization. Documented local Rust dependency patches
-preserve RDFLib string identity and SHACL SPARQL prebinding. Original project code
-is dual-licensed under [Apache-2.0](LICENSE-APACHE) or [MIT](LICENSE-MIT), at your
-option. Vendored code and assets retain their licenses and provenance.
+preserve RDFLib string identity and SHACL SPARQL prebinding.
 
 PRs use conventional titles and squash merges; `main` requires signed commits,
 passing `test`, `compatibility`, `regex`, and `Conventional Commit` checks, and
-the configured owner review. Repository settings follow the maintained public
-`legra-ai/reqwest-embedded-roots` baseline, with check names adapted to this CI.
+the configured owner review. Repository maintenance follows the public Legra
+release policy and the shared `legra-ai/github-actions` pipeline. Release
+artifacts and recovery are described in [releasing](docs/releasing.md).
+
+## License
+
+Original project code is dual-licensed under [MIT](LICENSE-MIT) or
+[Apache-2.0](LICENSE-APACHE), at your option (`MIT OR Apache-2.0`).
+Copyright 2026 DataRoad Inc, Delaware, USA, trading as Legra.
+Vendored code and assets retain their licenses and provenance.

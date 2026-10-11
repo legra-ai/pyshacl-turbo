@@ -3,6 +3,12 @@ name = "pyshacl-turbo-python"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+repository.workspace = true
+description = "Python bindings for the pyshacl-turbo Rust engine"
+publish = false
+include = ["src/**", "Cargo.toml", "LICENSE-MIT", "LICENSE-APACHE"]
 
 [lib]
 name = "_native"

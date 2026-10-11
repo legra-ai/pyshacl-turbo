@@ -5,11 +5,16 @@ on:
     branches: [main]
   pull_request:
   workflow_dispatch:
+  workflow_call:
+    inputs:
+      revision:
+        required: true
+        type: string
   schedule:
     - cron: '37 4 * * *'
 
 concurrency:
-  group: regex-${{ github.ref }}
+  group: regex-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: false
 
 permissions:
@@ -26,7 +31,9 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7
-      - uses: dtolnay/rust-toolchain@stable
+        with:
+          ref: ${{ inputs.revision || github.sha }}
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
           components: rustfmt
       - name: Upstream matcher tests and Python-mode VM regressions

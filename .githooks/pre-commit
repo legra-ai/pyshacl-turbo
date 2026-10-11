@@ -1,0 +1,9 @@
+#!/bin/sh
+if ! ./scripts/fmt.sh --check; then
+    printf 'Pinned Rust formatting check failed\n' >&2
+    exit 1
+fi
+if ! cargo clippy --workspace --all-targets --locked -- -D warnings; then
+    printf 'Rust lint check failed\n' >&2
+    exit 1
+fi

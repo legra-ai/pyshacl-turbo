@@ -20,7 +20,46 @@ defaults:
     shell: bash {0}
 
 jobs:
+  prepare:
+    name: prepare
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      revision: ${{ steps.release.outputs.revision }}
+      version: ${{ steps.release.outputs.version }}
+      release: ${{ steps.release.outputs.release }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/create-github-app-token@v2
+        id: writer
+        if: github.ref == 'refs/heads/main'
+        with:
+          app-id: ${{ secrets.RELEASE_WRITER_APP_ID }}
+          private-key: ${{ secrets.RELEASE_WRITER_APP_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: ${{ github.event.repository.name }}
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
+      - uses: legra-ai/github-actions/.github/actions/prepare-cargo-release@42049e5750b05a59356fc6756424ca32c2834eb6
+        id: release
+        with:
+          token: ${{ steps.writer.outputs.token || github.token }}
+
+  compatibility:
+    needs: prepare
+    uses: ./.github/workflows/compatibility.yml
+    with:
+      revision: ${{ needs.prepare.outputs.revision }}
+
+  regex:
+    needs: prepare
+    uses: ./.github/workflows/regex.yml
+    with:
+      revision: ${{ needs.prepare.outputs.revision }}
+
   verify:
+    needs: [prepare]
     strategy:
       fail-fast: false
       matrix:
@@ -35,11 +74,13 @@ jobs:
     timeout-minutes: 25
     steps:
       - uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.prepare.outputs.revision }}
       - uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.python }}
       - uses: astral-sh/setup-uv@v10.3.0
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
           components: rustfmt, clippy
       - name: Build native extension and install pinned test dependencies
@@ -69,35 +110,177 @@ jobs:
         uses: actions/upload-pages-artifact@v5
         with:
           path: htmlcov
-      - name: Build wheel
-        run: .venv/bin/maturin build --release --locked --out dist
-      - name: Create isolated wheel environment
-        run: uv venv --python ${{ matrix.python }} .wheel-venv
-      - name: Install wheel with only runtime dependencies
-        run: uv pip install --python .wheel-venv/bin/python dist/*.whl
-      - name: Test installed wheel without pySHACL or owlrl
-        run: .wheel-venv/bin/python scripts/smoke_wheel.py
-      - uses: actions/upload-artifact@v7
-        if: always()
-        with:
-          name: verification-${{ matrix.os }}-py${{ matrix.python }}
-          path: dist/*.whl
-          if-no-files-found: error
 
   test:
     name: test
-    needs: verify
+    needs: [prepare, verify, compatibility, regex, sdist, wheels]
     if: always()
     runs-on: ubuntu-latest
     steps:
       - name: Require every platform to pass
         env:
-          VERIFY_RESULT: ${{ needs.verify.result }}
+          RESULTS: ${{ toJSON(needs) }}
         shell: python
         run: |
-          import os
-          if os.environ['VERIFY_RESULT'] != 'success':
-              raise SystemExit('One or more required verification jobs did not pass')
+          import json, os
+          results = json.loads(os.environ['RESULTS'])
+          failed = [name for name, job in results.items() if job['result'] != 'success']
+          if failed:
+              raise SystemExit(f'Required release gates did not pass: {failed}')
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.prepare.outputs.revision }}
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.13'
+      - uses: actions/download-artifact@v8
+        with:
+          pattern: release-*
+          merge-multiple: true
+          path: dist
+      - name: Verify complete release artifact inventory before tagging is allowed
+        run: python scripts/release_packages.py check-build
+
+  sdist:
+    needs: [prepare]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.prepare.outputs.revision }}
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.13'
+      - uses: astral-sh/setup-uv@v10.3.0
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
+      - name: Build source distribution
+        run: uv build --sdist --out-dir dist
+      - name: Check source inventory, patched dependencies and license texts
+        run: python scripts/check_package.py dist/*.tar.gz
+      - name: Check PyPI metadata rendering
+        run: uvx --from twine==6.2.0 twine check --strict dist/*
+      - uses: actions/upload-artifact@v7
+        with:
+          name: release-sdist
+          path: dist/*.tar.gz
+          if-no-files-found: error
+
+  wheels:
+    needs: [prepare, sdist]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-24.04
+            target: x86_64-unknown-linux-gnu
+            args: --zig --compatibility manylinux_2_28
+          - os: ubuntu-24.04-arm
+            target: aarch64-unknown-linux-gnu
+            args: --zig --compatibility manylinux_2_28
+          - os: macos-15-intel
+            target: x86_64-apple-darwin
+            args: --compatibility pypi
+            deployment_target: '10.12'
+          - os: macos-15
+            target: aarch64-apple-darwin
+            args: --compatibility pypi
+            deployment_target: '11.0'
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            args: --compatibility pypi
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.prepare.outputs.revision }}
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.13'
+      - uses: astral-sh/setup-uv@v10.3.0
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          target: ${{ matrix.target }}
+      - uses: mlugg/setup-zig@v2
+        if: runner.os == 'Linux'
+        with:
+          version: '0.14.1'
+      - uses: actions/download-artifact@v8
+        with:
+          name: release-sdist
+          path: source-dist
+      - name: Build release wheel from the verified source archive
+        env:
+          MACOSX_DEPLOYMENT_TARGET: ${{ matrix.deployment_target }}
+        run: uv build --wheel --out-dir dist -C 'maturin.build-args=--locked --target ${{ matrix.target }} ${{ matrix.args }}' source-dist/*.tar.gz
+      - name: Check wheel metadata, native extension and licenses
+        run: python scripts/check_package.py dist/*.whl
+      - name: Check PyPI metadata rendering
+        run: uvx --from twine==6.2.0 twine check --strict dist/*
+      - name: Install and verify the wheel with only runtime dependencies
+        run: python scripts/test_wheel.py dist
+      - uses: actions/upload-artifact@v7
+        with:
+          name: release-wheel-${{ matrix.target }}
+          path: dist/*.whl
+          if-no-files-found: error
+
+  publish:
+    needs: [prepare, test]
+    if: github.ref == 'refs/heads/main' && needs.prepare.outputs.release == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment:
+      name: pypi
+      url: https://pypi.org/project/pyshacl-turbo/
+    permissions:
+      contents: write
+      id-token: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      RELEASE_VERSION: ${{ needs.prepare.outputs.version }}
+      RELEASE_REVISION: ${{ needs.prepare.outputs.revision }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.prepare.outputs.revision }}
+          fetch-depth: 0
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.13'
+      - uses: legra-ai/github-actions/.github/actions/tag-tested-release@42049e5750b05a59356fc6756424ca32c2834eb6
+        with:
+          version: ${{ needs.prepare.outputs.version }}
+          revision: ${{ needs.prepare.outputs.revision }}
+      - uses: legra-ai/github-actions/.github/actions/generate-changelog@42049e5750b05a59356fc6756424ca32c2834eb6
+        with:
+          revision: ${{ needs.prepare.outputs.revision }}
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ needs.prepare.outputs.version }}
+          target_commitish: ${{ needs.prepare.outputs.revision }}
+          body_path: CHANGELOG.md
+          draft: true
+      - uses: actions/download-artifact@v8
+        with:
+          pattern: release-*
+          merge-multiple: true
+          path: dist
+      - name: Persist original tested archives for interrupted-release recovery
+        run: python scripts/release_packages.py stage
+      - name: Verify existing registry files and select only missing archives
+        id: pending
+        run: python scripts/release_packages.py filter
+      - name: Publish through PyPI trusted publishing
+        if: steps.pending.outputs.missing == 'true'
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: pending-packages/
+      - name: Verify complete PyPI release against original hashes
+        run: python scripts/release_packages.py verify
+      - name: Publish the completed GitHub release
+        run: gh release edit "v$RELEASE_VERSION" --draft=false
 
   publish-coverage:
     name: Publish Python coverage
