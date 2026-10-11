@@ -25,6 +25,16 @@ input-dependent pySHACL behavior. These are separate measurements;
 see [compatibility](docs/compatibility.md) and the case-level
 [upstream report](docs/upstream-coverage.json).
 
+Core and SPARQL patterns execute Python-compatible regexes natively, including
+lookarounds and backreferences. SPARQL REPLACE retains the pinned RDFLib
+replacement behavior; native callbacks and query results preserve exact literal
+terms. See [ADR 0015](docs/adr/0015-native-sparql-patterns.md) for the contract and
+remaining regex limits.
+
+Count and length bounds retain exact arbitrary-precision values, with pySHACL's
+parameter-specific datatype rules. See [ADR 0016](docs/adr/0016-exact-integer-parameters.md)
+for integer and qualified-count behavior.
+
 ## Build
 
 Requires Rust/Cargo, Python 3.11+ and uv. Development uses Python 3.13.
@@ -115,10 +125,18 @@ undefined-function changes in ADR 0012; its recorded source hashes identify
 the measured checkpoint. Earlier matrices remain in `benchmarks/`.
 The [newer Core measurements](benchmarks/pattern-core.md) include the Python
 pattern compatibility changes in ADR 0013, at 100, 1,000 and 10,000 nodes.
+The [SPARQL pattern measurements](benchmarks/sparql-patterns.md) exercise native
+REGEX and REPLACE at 100 and 1,000 nodes through both RDFLib and Store inputs.
+The report records concurrent build load alongside the raw interleaved samples.
+These measurements precede ADR 0016's integer-parameter changes; their source
+hashes identify the measured implementation.
 
 ```sh
 # Run alone, separately from builds and other tests.
 .venv/bin/python benchmarks/check_core.py
+
+# Full-report-gated SPARQL regex and replacement comparison.
+.venv/bin/python benchmarks/matrix.py --kinds sparql-patterns --repeats 7 --output benchmarks/sparql-patterns.json
 
 # Original SPARQL pipeline comparison, including both reference backends.
 make benchmark-pipeline
@@ -134,6 +152,7 @@ assets live under tests/w3c and vendor/pyshacl respectively.
 make coverage
 make test-compatibility
 make test-regex
+make test-sparql-evaluator
 make test-coverage
 .venv/bin/python scripts/run_upstream.py
 .venv/bin/python scripts/run_upstream.py --reference
@@ -145,7 +164,7 @@ pull requests, daily, and on manual dispatch:
 
 | Workflow | What it verifies |
 | --- | --- |
-| Tests and wheels | Python and Rust regressions, formatting and lint on Linux Python 3.11/3.13 and macOS Python 3.13; built wheels installed with only runtime dependencies, without pySHACL or owlrl. |
+| Tests and wheels | Python and Rust regressions, formatting and lint on Linux Python 3.11/3.13 and macOS Python 3.13; SPARQL evaluator tests with compatibility features disabled and enabled; built wheels installed with only runtime dependencies, without pySHACL or owlrl. |
 | Compatibility | All pinned W3C Core/SPARQL cases through both document and Graph APIs, the complete non-JS pySHACL inventory, and an independent audit of the known reference-fixture defect. Case-level JSON and W3C JUnit XML are uploaded as artifacts. |
 | Regex | The patched matcher's full upstream suite, unit tests with Turbo's base features, Python-mode VM regressions, and formatting, using its own pinned test dependencies. |
 

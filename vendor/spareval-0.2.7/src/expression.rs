@@ -54,6 +54,10 @@ pub trait ExpressionEvaluatorContext<'a> {
     fn build_externalize_expression_term(
         &mut self,
     ) -> impl Fn(Self::Term) -> Option<ExpressionTerm> + 'a; // TODO: return result
+    #[cfg(feature = "exact-custom-function-terms")]
+    fn build_internalize_term(&mut self) -> impl Fn(Term) -> Option<Self::Term> + 'a;
+    #[cfg(feature = "exact-custom-function-terms")]
+    fn build_externalize_term(&mut self) -> impl Fn(Self::Term) -> Option<Term> + 'a;
     fn now(&mut self) -> DateTime;
     fn base_iri(&mut self) -> Option<Arc<Iri<String>>>;
     fn custom_functions(&mut self) -> &CustomFunctionRegistry;
@@ -1346,18 +1350,34 @@ pub fn build_expression_evaluator<'a, C: ExpressionEvaluatorContext<'a>>(
                 Rc::new(move |tuple| Some(matches!(e(tuple)?, ExpressionTerm::Triple(_)).into()))
             }
             Function::Custom(function_name) => {
-                if let Some(function) = context.custom_functions().get(function_name).cloned() {
-                    let args = parameters
-                        .iter()
-                        .map(|e| build_expression_evaluator(e, context))
-                        .collect::<Result<Vec<_>, _>>()?;
-                    return Ok(Rc::new(move |tuple| {
-                        let args = args
+                if context.custom_functions().contains_key(function_name) {
+                    #[cfg(feature = "exact-custom-function-terms")]
+                    {
+                        let evaluator =
+                            try_build_internal_expression_evaluator(expression, context)?
+                                .expect("registered custom function has an internal evaluator");
+                        let externalize = context.build_externalize_expression_term();
+                        return Ok(Rc::new(move |tuple| externalize(evaluator(tuple)?)));
+                    }
+                    #[cfg(not(feature = "exact-custom-function-terms"))]
+                    {
+                        let function = context
+                            .custom_functions()
+                            .get(function_name)
+                            .cloned()
+                            .expect("registered custom function");
+                        let args = parameters
                             .iter()
-                            .map(|f| Some(f(tuple)?.into()))
-                            .collect::<Option<Vec<_>>>()?;
-                        Some(function(&args)?.into())
-                    }));
+                            .map(|e| build_expression_evaluator(e, context))
+                            .collect::<Result<Vec<_>, _>>()?;
+                        return Ok(Rc::new(move |tuple| {
+                            let args = args
+                                .iter()
+                                .map(|f| Some(f(tuple)?.into()))
+                                .collect::<Option<Vec<_>>>()?;
+                            Some(function(&args)?.into())
+                        }));
+                    }
                 }
 
                 macro_rules! cast_fn {
@@ -1618,6 +1638,36 @@ pub fn try_build_internal_expression_evaluator<'a, C: ExpressionEvaluatorContext
 ) -> Result<Option<ExpressionEvaluator<'a, C::Tuple, C::Term>>, ExpressionEvaluationError<C::Error>>
 {
     Ok(Some(match expression {
+        #[cfg(feature = "exact-custom-function-terms")]
+        Expression::FunctionCall(Function::Custom(name), parameters) => {
+            let Some(function) = context.custom_functions().get(name).cloned() else {
+                return Ok(None);
+            };
+            let args = parameters
+                .iter()
+                .map(|arg| {
+                    let evaluator: ExpressionEvaluator<'a, C::Tuple, Term> =
+                        if let Some(evaluator) =
+                            try_build_internal_expression_evaluator(arg, context)?
+                        {
+                            let externalize = context.build_externalize_term();
+                            Rc::new(move |tuple| externalize(evaluator(tuple)?))
+                        } else {
+                            let evaluator = build_expression_evaluator(arg, context)?;
+                            Rc::new(move |tuple| Some(evaluator(tuple)?.into()))
+                        };
+                    Ok(evaluator)
+                })
+                .collect::<Result<Vec<_>, ExpressionEvaluationError<C::Error>>>()?;
+            let internalize = context.build_internalize_term();
+            Rc::new(move |tuple| {
+                let args = args
+                    .iter()
+                    .map(|arg| arg(tuple))
+                    .collect::<Option<Vec<_>>>()?;
+                internalize(function(&args)?)
+            })
+        }
         Expression::NamedNode(t) => {
             let t = context
                 .internalize_named_node(t)

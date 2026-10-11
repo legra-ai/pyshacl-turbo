@@ -1,7 +1,7 @@
 [workspace]
 members = ["crates/engine", "crates/python"]
-# Test the vendored matcher independently, without unifying its Python feature.
-exclude = ["vendor/fancy-regex-0.19.2"]
+# Test vendored crates independently, without unifying Turbo's opt-in features.
+exclude = ["vendor/fancy-regex-0.19.2", "vendor/spareval-0.2.7"]
 resolver = "2"
 
 [workspace.package]

@@ -1,7 +1,11 @@
 use std::collections::{HashMap, HashSet};
+use std::fmt;
+use std::sync::OnceLock;
 
+use num_bigint::{BigInt, Sign};
 use oxigraph::model::*;
 use oxigraph::sparql::{PreparedSparqlQuery, SparqlEvaluator};
+use regex_syntax::hir::{Class, ClassUnicode, HirKind};
 
 use crate::graph::*;
 use crate::path::rdf_list;
@@ -52,7 +56,7 @@ pub(crate) enum Constraint {
     Sparql(Box<crate::sparql::SparqlConstraint>),
     Count {
         minimum: bool,
-        count: u64,
+        count: IntegerParameter,
     },
     HasValue(Term),
     Class(Term),
@@ -65,7 +69,7 @@ pub(crate) enum Constraint {
     },
     Length {
         minimum: bool,
-        count: u64,
+        count: IntegerParameter,
     },
     LanguageIn(Vec<String>),
     UniqueLang,
@@ -82,8 +86,8 @@ pub(crate) enum Constraint {
     Node(usize),
     Qualified {
         shape: usize,
-        minimum: Option<u64>,
-        maximum: Option<u64>,
+        minimum: Option<IntegerParameter>,
+        maximum: Option<IntegerParameter>,
         disjoint: bool,
         siblings: Vec<usize>,
     },
@@ -97,16 +101,136 @@ pub(crate) fn named(term: Term, context: &str) -> Result<NamedNode> {
     }
 }
 
-fn integer(term: Term, name: &str) -> Result<u64> {
-    if let Term::Literal(v) = term
-        && v.datatype() == iri(XSD, "integer").as_ref()
-        && let Ok(n) = v.value().parse()
-    {
-        return Ok(n);
+/// Keep the exact declaration alongside its arbitrary-precision comparison value.
+pub(crate) struct IntegerParameter {
+    pub literal: Literal,
+    pub number: BigInt,
+}
+
+impl IntegerParameter {
+    pub fn allows(&self, size: usize, minimum: bool) -> bool {
+        let size = BigInt::from(size);
+        if minimum {
+            size >= self.number
+        } else {
+            size <= self.number
+        }
     }
-    Err(Error::Invalid(format!(
-        "sh:{name} requires a nonnegative 64-bit xsd:integer"
-    )))
+
+    pub fn is_zero(&self) -> bool {
+        self.number.sign() == Sign::NoSign
+    }
+}
+
+impl fmt::Display for IntegerParameter {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        // Python bool is an int subclass in qualified-count declarations.
+        if self.literal.datatype() == iri(XSD, "boolean").as_ref() {
+            f.write_str(if self.is_zero() { "False" } else { "True" })
+        } else {
+            self.number.fmt(f)
+        }
+    }
+}
+
+fn integer(term: Term, name: &str) -> Result<IntegerParameter> {
+    let invalid = || Error::Invalid(format!("Invalid integer parameter sh:{name}: {term}"));
+    let Term::Literal(literal) = &term else {
+        return Err(invalid());
+    };
+    let kind = literal.datatype().as_str().strip_prefix(XSD);
+    let qualified = matches!(name, "qualifiedMinCount" | "qualifiedMaxCount");
+    let length = matches!(name, "minLength" | "maxLength");
+    let number = if qualified && kind == Some("boolean") {
+        match literal.value() {
+            "true" | "1" => BigInt::from(1),
+            "false" | "0" => BigInt::from(0),
+            _ => return Err(invalid()),
+        }
+    } else {
+        let integer_kind = matches!(
+            kind,
+            Some(
+                "integer"
+                    | "int"
+                    | "long"
+                    | "short"
+                    | "byte"
+                    | "unsignedLong"
+                    | "unsignedInt"
+                    | "unsignedShort"
+                    | "unsignedByte"
+                    | "nonNegativeInteger"
+                    | "positiveInteger"
+                    | "nonPositiveInteger"
+                    | "negativeInteger"
+            )
+        );
+        if !integer_kind
+            || (!qualified && !length && kind != Some("integer"))
+            // The pinned reference's length whitelist excludes xsd:byte as
+            // well as the negative/nonpositive datatypes, even for zero.
+            || (length && matches!(kind, Some("byte" | "negativeInteger" | "nonPositiveInteger")))
+        {
+            return Err(invalid());
+        }
+        integer_lexical(literal.value()).ok_or_else(invalid)?
+    };
+    if !qualified && number.sign() == Sign::Minus {
+        return Err(invalid());
+    }
+    Ok(IntegerParameter {
+        literal: literal.clone(),
+        number,
+    })
+}
+
+fn integer_lexical(text: &str) -> Option<BigInt> {
+    // RDFLib uses Python int for these literals: decimal digits may be Unicode,
+    // with one underscore between digits. BigInt's own parser is more lenient
+    // about underscores, so validate and normalize before parsing its value.
+    let mut chars = text.trim().chars().peekable();
+    let mut normalized = String::with_capacity(text.len());
+    if chars.peek().is_some_and(|ch| matches!(ch, '+' | '-')) {
+        normalized.push(chars.next()?);
+    }
+    let mut after_digit = false;
+    for ch in chars {
+        if ch == '_' {
+            if !after_digit {
+                return None;
+            }
+            after_digit = false;
+        } else {
+            normalized.push(char::from(b'0' + decimal_digit(ch)?));
+            after_digit = true;
+        }
+    }
+    if !after_digit {
+        return None;
+    }
+    normalized.parse().ok()
+}
+
+fn decimal_digit(ch: char) -> Option<u8> {
+    if ch.is_ascii_digit() {
+        return Some(ch as u8 - b'0');
+    }
+    static DIGITS: OnceLock<ClassUnicode> = OnceLock::new();
+    let digits = DIGITS.get_or_init(|| {
+        let hir = regex_syntax::Parser::new()
+            .parse(r"\p{Nd}")
+            .expect("Unicode decimal-digit class is valid");
+        let HirKind::Class(Class::Unicode(class)) = hir.kind() else {
+            unreachable!("decimal digits form a Unicode class");
+        };
+        class.clone()
+    });
+    let ranges = digits.ranges();
+    let range = ranges.get(ranges.partition_point(|range| range.end() < ch))?;
+    // Unicode Nd digits occur in consecutive runs of 0 through 9; adjacent
+    // digit alphabets may share a range, hence the modulo operation.
+    (range.start() <= ch).then(|| ((ch as u32 - range.start() as u32) % 10) as u8)
 }
 
 fn string(term: Term, name: &str) -> Result<String> {
@@ -371,4 +495,17 @@ pub(crate) fn compile(
         result.push(Constraint::Closed(allowed));
     }
     Ok(result)
+}
+
+#[cfg(test)]
+mod integer_tests {
+    use super::*;
+
+    #[test]
+    fn invalid_integer_parameters_return_errors_without_panicking() {
+        for lexical in ["no", "²", "١٢x", "1.0"] {
+            let term = Literal::new_typed_literal(lexical, iri(XSD, "integer"));
+            assert!(integer(term.into(), "minCount").is_err());
+        }
+    }
 }

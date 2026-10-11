@@ -12,6 +12,9 @@
   explained in [ADR 0004](../docs/adr/0004-sparql-prebinding.md). The spareval
   opt-in undefined scalar-function feature is documented in its `TURBO-PATCH.md`
   and [ADR 0012](../docs/adr/0012-reference-recursion-and-expression-errors.md).
+  Its opt-in exact callback-term feature is documented in the same patch note
+  and [ADR 0015](../docs/adr/0015-native-sparql-patterns.md). CI tests default
+  behavior and both enabled features using `make test-sparql-evaluator`.
 - `spargebra-0.4.7/`: projection parsing accepts explicitly supplied external
   variables for SHACL prebindings; see its `TURBO-PATCH.md`.
 - `oxrdf-0.3.4/`: optional exact string term identity, documented in its

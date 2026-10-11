@@ -11,3 +11,4 @@ crate-type = ["cdylib"]
 [dependencies]
 pyo3.workspace = true
 pyshacl-turbo-engine = { path = "../engine" }
+serde_json = "1"

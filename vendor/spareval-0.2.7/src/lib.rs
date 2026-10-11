@@ -443,6 +443,16 @@ impl QueryEvaluator {
                 |t| Some(t.into())
             }
 
+            #[cfg(feature = "exact-custom-function-terms")]
+            fn build_internalize_term(&mut self) -> impl Fn(Term) -> Option<Term> + 'a {
+                Some
+            }
+
+            #[cfg(feature = "exact-custom-function-terms")]
+            fn build_externalize_term(&mut self) -> impl Fn(Term) -> Option<Term> + 'a {
+                Some
+            }
+
             fn now(&mut self) -> DateTime {
                 *self.now.get_or_insert_with(DateTime::now)
             }
@@ -678,7 +688,10 @@ impl PreparedQuery<'_> {
             } => {
                 let mut pattern = GraphPattern::from(pattern);
                 if !self.evaluator.without_optimizations {
-                    pattern = Optimizer::optimize_graph_pattern_with_bound_variables(pattern, self.substitutions.keys().cloned());
+                    pattern = Optimizer::optimize_graph_pattern_with_bound_variables(
+                        pattern,
+                        self.substitutions.keys().cloned(),
+                    );
                 }
                 let planning_duration = start_planning.elapsed();
                 let (results, explanation) =
@@ -700,7 +713,10 @@ impl PreparedQuery<'_> {
             } => {
                 let mut pattern = GraphPattern::from(pattern);
                 if !self.evaluator.without_optimizations {
-                    pattern = Optimizer::optimize_graph_pattern_with_bound_variables(pattern, self.substitutions.keys().cloned());
+                    pattern = Optimizer::optimize_graph_pattern_with_bound_variables(
+                        pattern,
+                        self.substitutions.keys().cloned(),
+                    );
                 }
                 let planning_duration = start_planning.elapsed();
                 let (results, explanation) =
@@ -725,7 +741,10 @@ impl PreparedQuery<'_> {
             } => {
                 let mut pattern = GraphPattern::from(pattern);
                 if !self.evaluator.without_optimizations {
-                    pattern = Optimizer::optimize_graph_pattern_with_bound_variables(pattern, self.substitutions.keys().cloned());
+                    pattern = Optimizer::optimize_graph_pattern_with_bound_variables(
+                        pattern,
+                        self.substitutions.keys().cloned(),
+                    );
                 }
                 let planning_duration = start_planning.elapsed();
                 let (results, explanation) =
@@ -749,7 +768,10 @@ impl PreparedQuery<'_> {
             } => {
                 let mut pattern = GraphPattern::from(pattern);
                 if !self.evaluator.without_optimizations {
-                    pattern = Optimizer::optimize_graph_pattern_with_bound_variables(pattern, self.substitutions.keys().cloned());
+                    pattern = Optimizer::optimize_graph_pattern_with_bound_variables(
+                        pattern,
+                        self.substitutions.keys().cloned(),
+                    );
                 }
                 let planning_duration = start_planning.elapsed();
                 let (results, explanation) =
@@ -1080,6 +1102,54 @@ mod tests {
     use oxrdf::vocab::xsd;
     use oxrdf::{Literal, Term};
     use sparopt::algebra::{Expression, GraphPattern};
+
+    fn check_custom_function_term_policy(exact: bool) {
+        let name = NamedNode::new("urn:test:identity").unwrap();
+        for input in [
+            Literal::new_typed_literal("01", xsd::INTEGER),
+            Literal::new_typed_literal("value", xsd::STRING),
+        ] {
+            let input = Term::Literal(input);
+            let expected = if exact {
+                input.clone()
+            } else {
+                ExpressionTerm::from(input.clone()).into()
+            };
+            let expected_arg = expected.clone();
+            let evaluator = QueryEvaluator::new().with_custom_function(name.clone(), move |args| {
+                assert_eq!(args, &[expected_arg.clone()]);
+                Some(args[0].clone())
+            });
+            let data = oxrdf::Dataset::from_iter([oxrdf::Quad::new(
+                NamedNode::new("urn:s").unwrap(),
+                NamedNode::new("urn:p").unwrap(),
+                input,
+                GraphName::DefaultGraph,
+            )]);
+            let query = spargebra::SparqlParser::new().parse_query(
+                "SELECT (<urn:test:identity>(?value) AS ?result) WHERE { <urn:s> <urn:p> ?value }"
+            ).unwrap();
+            let QueryResults::Solutions(mut rows) =
+                evaluator.prepare(&query).execute(&data).unwrap()
+            else {
+                panic!("expected SELECT results");
+            };
+            assert_eq!(rows.next().unwrap().unwrap().get("result"), Some(&expected));
+            assert!(rows.next().is_none());
+        }
+    }
+
+    #[test]
+    #[cfg(feature = "exact-custom-function-terms")]
+    fn custom_function_exact_terms_opt_in() {
+        check_custom_function_term_policy(true);
+    }
+
+    #[test]
+    #[cfg(not(feature = "exact-custom-function-terms"))]
+    fn custom_function_upstream_terms_default() {
+        check_custom_function_term_policy(false);
+    }
 
     #[test]
     fn evaluate_expression_literal_and_arithmetic() {
