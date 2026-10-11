@@ -1,0 +1,3087 @@
+{
+  "schema": 1,
+  "reference_version": "0.40.1",
+  "turbo_version": "0.1.0",
+  "measured_at": "2026-10-11T17:40:02.622306+00:00",
+  "build_kind": "working-tree release build (see source and native binary hashes)",
+  "platform": "macOS-27.0.1-arm64-arm-64bit-Mach-O",
+  "python": "3.13.16",
+  "source_sha256": "886645896d5995ef763c3f560c289d49a5497f69a2f4d85326033b4767ec1b32",
+  "native_binary_sha256": "dabb9d867c84091926a18b9834412eb951f7699b936685bcc1c9e8122139cb0c",
+  "repeats": 5,
+  "timeout_seconds": 10,
+  "summary": {
+    "equal": 45,
+    "different": 15,
+    "reference_error": 1,
+    "reference_timeout": 1
+  },
+  "unmeasured": [
+    "unchanged pyshacl imports and command names",
+    "public class behavior",
+    "remote SPARQL endpoints",
+    "HTTP server",
+    "SHACL-JS (planned)",
+    "complete inference/regex/datatype/AF feature space",
+    "private motivating workload"
+  ],
+  "cases": [
+    {
+      "id": "validate/graph/violation",
+      "status": "equal",
+      "speedup": 0.6798620246367467,
+      "pyshacl": {
+        "state": "ok",
+        "observation": {
+          "type": "tuple",
+          "conforms": false,
+          "text": "Validation Report\nConforms: False\nResults (1):\nConstraint Violation in MinCountConstraintComponent (http://www.w3.org/ns/shacl#MinCountConstraintComponent):\n\tSeverity: sh:Violation\n\tSource Shape: ex:S\n\tFocus Node: ex:a\n\tResult Path: ex:p\n\tMessage: Less than 1 values on ex:a->ex:p\n",
+          "report": {
+            "statements": 10,
+            "digest": "e0fc218dce86d6512e0abe28fbfc5bddf90c14a3b7f4fc6000a2182e726106f68"
+          },
+          "mutation": {
+            "statements": 3,
+            "digest": "3bdba9b330cd40bc3157f1989c5a0954e6dba7c7bec8819a9e22f076ed7a48ad1"
+          },
+          "warnings": []
+        },
+        "samples_ns": [
+          487750,
+          340583,
+          305333,
+          297125,
+          469459
+        ]
+      },
+      "pyshacl_turbo": {
+        "state": "ok",
+        "observation": {
+          "type": "tuple",
+          "conforms": false,
+          "text": "Validation Report\nConforms: False\nResults (1):\nConstraint Violation in MinCountConstraintComponent (http://www.w3.org/ns/shacl#MinCountConstraintComponent):\n\tSeverity: sh:Violation\n\tSource Shape: ex:S\n\tFocus Node: ex:a\n\tResult Path: ex:p\n\tMessage: Less than 1 values on ex:a->ex:p\n",
+          "report": {
+            "statements": 10,
+            "digest": "e0fc218dce86d6512e0abe28fbfc5bddf90c14a3b7f4fc6000a2182e726106f68"
+          },
+          "mutation": {
+            "statements": 3,
+            "digest": "3bdba9b330cd40bc3157f1989c5a0954e6dba7c7bec8819a9e22f076ed7a48ad1"
+          },
+          "warnings": []
+        },
+        "samples_ns": [
+          500959,
+          483334,
+          464333,
+          553041,
+          675792
+        ]
+      }
+    },
+    {
+      "id": "validate/graph/conforming",
+      "status": "equal",
+      "speedup": 0.7225250214707983,
+      "pyshacl": {
+        "state": "ok",
+        "observation": {
+          "type": "tuple",
+          "conforms": true,
+          "text": "Validation Report\nConforms: True\n",
+          "report": {
+            "statements": 2,
+            "digest": "3535d9d60f0b84bc130269949c4491cdec99a73177d4b8d314b637ae23807b4b8"
+          },
+          "mutation": {
+            "statements": 4,
+            "digest": "60250dbeeaecc2d38831e97e0b25df11c944042fae2b2bb3232edcf4feec21ec3"
+          },
+          "warnings": []
+        },
+        "samples_ns": [
+          264917,
+          259958,
+          225417,
+          388334,
+          226584
+        ]
+      },
+      "pyshacl_turbo": {
+        "state": "ok",
+        "observation": {
+          "type": "tuple",
+          "conforms": true,
+          "text": "Validation Report\nConforms: True\n",
+          "report": {
+            "statements": 2,
+            "digest": "3535d9d60f0b84bc130269949c4491cdec99a73177d4b8d314b637ae23807b4b8"
+          },
+          "mutation": {
+            "statements": 4,
+            "digest": "60250dbeeaecc2d38831e97e0b25df11c944042fae2b2bb3232edcf4feec21ec3"
+          },
+          "warnings": []
+        },
+        "samples_ns": [
+          374708,
+          338500,
+          414500,
+          355375,
+          359791
+        ]
+      }
+    },
+    {
+      "id": "validate/dataset/violation",
+      "status": "equal",
+      "speedup": 0.572930518548883,
+      "pyshacl": {
+        "state": "ok",
+        "observation": {
+          "type": "tuple",
+          "conforms": false,
+          "text": "Validation Report\nConforms: False\nResults (1):\nConstraint Violation in MinCountConstraintComponent (http://www.w3.org/ns/shacl#MinCountConstraintComponent):\n\tSeverity: sh:Violation\n\tSource Shape: ex:S\n\tFocus Node: ex:a\n\tResult Path: ex:p\n\tMessage: Less than 1 values on ex:a->ex:p\n",
+          "report": {
+            "statements": 10,
+            "digest": "e0fc218dce86d6512e0abe28fbfc5bddf90c14a3b7f4fc6000a2182e726106f68"
+          },
+          "mutation": {
+            "statements": 3,
+            "digest": "5003748402655bf55e74655fa9eb6a7b8915e0c04ce57a9be4aa3435b362a1b50"
+          },
+          "warnings": []
+        },
+        "samples_ns": [
+          349416,
+          350458,
+          304833,
+          302750,
+          469208
+        ]
+      },
+      "pyshacl_turbo": {
+        "state": "ok",
+        "observation": {
+          "type": "tuple",
+          "conforms": false,
+          "text": "Validation Report\nConforms: False\nResults (1):\nConstraint Violation in MinCountConstraintComponent (http://www.w3.org/ns/shacl#MinCountConstraintComponent):\n\tSeverity: sh:Violation\n\tSource Shape: ex:S\n\tFocus Node: ex:a\n\tResult Path: ex:p\n\tMessage: Less than 1 values on ex:a->ex:p\n",
+          "report": {
+            "statements": 10,
+            "digest": "e0fc218dce86d6512e0abe28fbfc5bddf90c14a3b7f4fc6000a2182e726106f68"
+          },
+          "mutation": {
+            "statements": 3,
+            "digest": "5003748402655bf55e74655fa9eb6a7b8915e0c04ce57a9be4aa3435b362a1b50"
+          },
+          "warnings": []
+        },
+        "samples_ns": [
+          699375,
+          639333,
+          609875,
+          604459,
+          575500
+        ]
+      }
+    },
+    {
+      "id": "validate/dataset/conforming",
+      "status": "equal",
+      "speedup": 0.42059514544039456,
+      "pyshacl": {
+        "state": "ok",
+        "observation": {
+          "type": "tuple",
+          "conforms": true,
+          "text": "Validation Report\nConforms: True\n",
+          "report": {
+            "statements": 2,
+            "digest": "3535d9d60f0b84bc130269949c4491cdec99a73177d4b8d314b637ae23807b4b8"
+          },
+          "mutation": {
+            "statements": 4,
+            "digest": "6f77eeee1a58e6a3f4c314689645738ddf3b8f165e92be9e4bf377780b4d5e04a"
+          },
+          "warnings": []
+        },
+        "samples_ns": [
+          270750,
+          320959,
+          231292,
+          220625,
+          208208
+        ]
+      },
+      "pyshacl_turbo": {
+        "state": "ok",
+        "observation": {
+          "type": "tuple",
+          "conforms": true,
+          "text": "Validation Report\nConforms: True\n",
+          "report": {
+            "statements": 2,
+            "digest": "3535d9d60f0b84bc130269949c4491cdec99a73177d4b8d314b637ae23807b4b8"
+          },
+          "mutation": {
+            "statements": 4,
+            "digest": "6f77eeee1a58e6a3f4c314689645738ddf3b8f165e92be9e4bf377780b4d5e04a"
+          },
+          "warnings": []
+        },
+        "samples_ns": [
+          1112042,
+          549916,
+          507833,
+          513083,
+          564541
+        ]
+      }
+    },
+    {
+      "id": "validate/store/violation",
+      "status": "equal",
+      "speedup": 0.8685393013100436,
+      "pyshacl": {
+        "state": "ok",
+        "observation": {
+          "type": "tuple",
+          "conforms": false,
+          "text": "Validation Report\nConforms: False\nResults (1):\nConstraint Violation in MinCountConstraintComponent (http://www.w3.org/ns/shacl#MinCountConstraintComponent):\n\tSeverity: sh:Violation\n\tSource Shape: ex:S\n\tFocus Node: <urn:example:a>\n\tResult Path: ex:p\n\tMessage: Less than 1 values on <urn:example:a>->ex:p\n",
+          "report": {
+            "statements": 10,
+            "digest": "d7b46a17dab6f695e77bd2bec7a5b645669c63bf43168211a535a649ea8623840"
+          },
+          "mutation": {
+            "statements": 3,
+            "digest": "3bdba9b330cd40bc3157f1989c5a0954e6dba7c7bec8819a9e22f076ed7a48ad1"
+          },
+          "warnings": []
+        },
+        "samples_ns": [
+          484000,
+          397791,
+          363416,
+          372958,
+          464834
+        ]
+      },
+      "pyshacl_turbo": {
+        "state": "ok",
+        "observation": {
+          "type": "tuple",
+          "conforms": false,
+          "text": "Validation Report\nConforms: False\nResults (1):\nConstraint Violation in MinCountConstraintComponent (http://www.w3.org/ns/shacl#MinCountConstraintComponent):\n\tSeverity: sh:Violation\n\tSource Shape: ex:S\n\tFocus Node: <urn:example:a>\n\tResult Path: ex:p\n\tMessage: Less than 1 values on <urn:example:a>->ex:p\n",
+          "report": {
+            "statements": 10,
+            "digest": "d7b46a17dab6f695e77bd2bec7a5b645669c63bf43168211a535a649ea8623840"
+          },
+          "mutation": {
+            "statements": 3,
+            "digest": "3bdba9b330cd40bc3157f1989c5a0954e6dba7c7bec8819a9e22f076ed7a48ad1"
+          },
+          "warnings": []
+        },
+        "samples_ns": [
+          473666,
+          458000,
+          441709,
+          429334,
+          730916
+        ]
+      }
+    },
+    {
+      "id": "validate/store/conforming",
+      "status": "equal",
+      "speedup": 0.6737505226480837,
+      "pyshacl_turbo": {
+        "state": "ok",
+        "observation": {
+          "type": "tuple",
+          "conforms": true,
+          "text": "Validation Report\nConforms: True\n",
+          "report": {
+            "statements": 2,
+            "digest": "3535d9d60f0b84bc130269949c4491cdec99a73177d4b8d314b637ae23807b4b8"
+          },
+          "mutation": {
+            "statements": 4,
+            "digest": "60250dbeeaecc2d38831e97e0b25df11c944042fae2b2bb3232edcf4feec21ec3"
+          },
+          "warnings": []
+        },
+        "samples_ns": [
+          358750,
+          323375,
+          386666,
+          1917708,
+          348584
+        ]
+      },
+      "pyshacl": {
+        "state": "ok",
+        "observation": {
+          "type": "tuple",
+          "conforms": true,
+          "text": "Validation Report\nConforms: True\n",
+          "report": {
+            "statements": 2,
+            "digest": "3535d9d60f0b84bc130269949c4491cdec99a73177d4b8d314b637ae23807b4b8"
+          },
+          "mutation": {
+            "statements": 4,
+            "digest": "60250dbeeaecc2d38831e97e0b25df11c944042fae2b2bb3232edcf4feec21ec3"
+          },
+          "warnings": []
+        },
+        "samples_ns": [
+          304708,
+          241708,
+          226250,
+          394291,
+          216084
+        ]
+      }
+    },
+    {
+      "id": "validate/text/violation",
+      "status": "equal",
+      "speedup": 0.8262618230085095,
+      "pyshacl_turbo": {
+        "state": "ok",
+        "observation": {
+          "type": "tuple",
+          "conforms": false,
+          "text": "Validation Report\nConforms: False\nResults (1):\nConstraint Violation in MinCountConstraintComponent (http://www.w3.org/ns/shacl#MinCountConstraintComponent):\n\tSeverity: sh:Violation\n\tSource Shape: ex:S\n\tFocus Node: ex:a\n\tResult Path: ex:p\n\tMessage: Less than 1 values on ex:a->ex:p\n",
+          "report": {
+            "statements": 10,
+            "digest": "e0fc218dce86d6512e0abe28fbfc5bddf90c14a3b7f4fc6000a2182e726106f68"
+          },
+          "mutation": null,
+          "warnings": []
+        },
+        "samples_ns": [
+          717667,
+          676541,
+          2196125,
+          610083,
+          603542
+        ]
+      },
+      "pyshacl": {
+        "state": "ok",
+        "observation": {
+          "type": "tuple",
+          "conforms": false,
+          "text": "Validation Report\nConforms: False\nResults (1):\nConstraint Violation in MinCountConstraintComponent (http://www.w3.org/ns/shacl#MinCountConstraintComponent):\n\tSeverity: sh:Violation\n\tSource Shape: ex:S\n\tFocus Node: ex:a\n\tResult Path: ex:p\n\tMessage: Less than 1 values on ex:a->ex:p\n",
+          "report": {
+            "statements": 10,
+            "digest": "e0fc218dce86d6512e0abe28fbfc5bddf90c14a3b7f4fc6000a2182e726106f68"
+          },
+          "mutation": null,
+          "warnings": []
+        },
+        "samples_ns": [
+          567167,
+          486083,
+          637625,
+          559000,
+          506125
+        ]
+      }
+    },
+    {
+      "id": "validate/text/conforming",
+      "status": "equal",
+      "speedup": 1.2185966624950915,
+      "pyshacl": {
+        "state": "ok",
+        "observation": {
+          "type": "tuple",
+          "conforms": true,
+          "text": "Validation Report\nConforms: True\n",
+          "report": {
+            "statements": 2,
+            "digest": "3535d9d60f0b84bc130269949c4491cdec99a73177d4b8d314b637ae23807b4b8"
+          },
+          "mutation": null,
+          "warnings": []
+        },
+        "samples_ns": [
+          664084,
+          408834,
+          1046250,
+          413708,
+          786917
+        ]
+      },
+      "pyshacl_turbo": {
+        "state": "ok",
+        "observation": {
+          "type": "tuple",
+          "conforms": true,
+          "text": "Validation Report\nConforms: True\n",
+          "report": {
+            "statements": 2,
+            "digest": "3535d9d60f0b84bc130269949c4491cdec99a73177d4b8d314b637ae23807b4b8"
+          },
+          "mutation": null,
+          "warnings": []
+        },
+        "samples_ns": [
+          830083,
+          544958,
+          536292,
+          507292,
+          2188458
+        ]
+      }
+    },
+    {
+      "id": "validate/bytes/violation",
+      "status": "equal",
+      "speedup": 0.6913270233726097,
+      "pyshacl": {
+        "state": "ok",
+        "observation": {
+          "type": "tuple",
+          "conforms": false,
+          "text": "Validation Report\nConforms: False\nResults (1):\nConstraint Violation in MinCountConstraintComponent (http://www.w3.org/ns/shacl#MinCountConstraintComponent):\n\tSeverity: sh:Violation\n\tSource Shape: ex:S\n\tFocus Node: ex:a\n\tResult Path: ex:p\n\tMessage: Less than 1 values on ex:a->ex:p\n",
+          "report": {
+            "statements": 10,
+            "digest": "e0fc218dce86d6512e0abe28fbfc5bddf90c14a3b7f4fc6000a2182e726106f68"
+          },
+          "mutation": null,
+          "warnings": []
+        },
+        "samples_ns": [
+          510291,
+          456667,
+          444208,
+          447375,
+          429625
+        ]
+      },
+      "pyshacl_turbo": {
+        "state": "ok",
+        "observation": {
+          "type": "tuple",
+          "conforms": false,
+          "text": "Validation Report\nConforms: False\nResults (1):\nConstraint Violation in MinCountConstraintComponent (http://www.w3.org/ns/shacl#MinCountConstraintComponent):\n\tSeverity: sh:Violation\n\tSource Shape: ex:S\n\tFocus Node: ex:a\n\tResult Path: ex:p\n\tMessage: Less than 1 values on ex:a->ex:p\n",
+          "report": {
+            "statements": 10,
+            "digest": "e0fc218dce86d6512e0abe28fbfc5bddf90c14a3b7f4fc6000a2182e726106f68"
+          },
+          "mutation": null,
+          "warnings": []
+        },
+        "samples_ns": [
+          688042,
+          647125,
+          2192458,
+          635375,
+          627208
+        ]
+      }
+    },
+    {
+      "id": "validate/bytes/conforming",
+      "status": "equal",
+      "speedup": 0.5534968174697823,
+      "pyshacl_turbo": {
+        "state": "ok",
+        "observation": {
+          "type": "tuple",
+          "conforms": true,
+          "text": "Validation Report\nConforms: True\n",
+          "report": {
+            "statements": 2,
+            "digest": "3535d9d60f0b84bc130269949c4491cdec99a73177d4b8d314b637ae23807b4b8"
+          },
+          "mutation": null,
+          "warnings": []
+        },
+        "samples_ns": [
+          706042,
+          726375,
+          558792,
+          524917,
+          2010916
+        ]
+      },
+      "pyshacl": {
+        "state": "ok",
+        "observation": {
+          "type": "tuple",
+          "conforms": true,
+          "text": "Validation Report\nConforms: True\n",
+          "report": {
+            "statements": 2,
+            "digest": "3535d9d60f0b84bc130269949c4491cdec99a73177d4b8d314b637ae23807b4b8"
+          },
+          "mutation": null,
+          "warnings": []
+        },
+        "samples_ns": [
+          624167,
+          399750,
+          390792,
+          389625,
+          379167
+        ]
+      }
+    },
+    {
+      "id": "validate/list",
+      "status": "equal",
+      "speedup": 0.6980508190371534,
+      "pyshacl_turbo": {
+        "state": "ok",
+        "observation": {
+          "type": "dict",
+          "items": [
+            [
+              0,
+              {
+                "type": "tuple",
+                "conforms": false,
+                "text": "Validation Report\nConforms: False\nResults (1):\nConstraint Violation in MinCountConstraintComponent (http://www.w3.org/ns/shacl#MinCountConstraintComponent):\n\tSeverity: sh:Violation\n\tSource Shape: ex:S\n\tFocus Node: ex:a\n\tResult Path: ex:p\n\tMessage: Less than 1 values on ex:a->ex:p\n",
+                "report": {
+                  "statements": 10,
+                  "digest": "e0fc218dce86d6512e0abe28fbfc5bddf90c14a3b7f4fc6000a2182e726106f68"
+                }
+              }
+            ],
+            [
+              1,
+              {
+                "type": "tuple",
+                "conforms": true,
+                "text": "Validation Report\nConforms: True\n",
+                "report": {
+                  "statements": 2,
+                  "digest": "3535d9d60f0b84bc130269949c4491cdec99a73177d4b8d314b637ae23807b4b8"
+                }
+              }
+            ]
+          ],
+          "mutation": [
+            {
+              "statements": 3,
+              "digest": "3bdba9b330cd40bc3157f1989c5a0954e6dba7c7bec8819a9e22f076ed7a48ad1"
+            },
+            {
+              "statements": 4,
+              "digest": "60250dbeeaecc2d38831e97e0b25df11c944042fae2b2bb3232edcf4feec21ec3"
+            }
+          ],
+          "warnings": []
+        },
+        "samples_ns": [
+          808083,
+          769833,
+          939709,
+          760750,
+          881291
+        ]
+      },
+      "pyshacl": {
+        "state": "ok",
+        "observation": {
+          "type": "dict",
+          "items": [
+            [
+              0,
+              {
+                "type": "tuple",
+                "conforms": false,
+                "text": "Validation Report\nConforms: False\nResults (1):\nConstraint Violation in MinCountConstraintComponent (http://www.w3.org/ns/shacl#MinCountConstraintComponent):\n\tSeverity: sh:Violation\n\tSource Shape: ex:S\n\tFocus Node: ex:a\n\tResult Path: ex:p\n\tMessage: Less than 1 values on ex:a->ex:p\n",
+                "report": {
+                  "statements": 10,
+                  "digest": "e0fc218dce86d6512e0abe28fbfc5bddf90c14a3b7f4fc6000a2182e726106f68"
+                }
+              }
+            ],
+            [
+              1,
+              {
+                "type": "tuple",
+                "conforms": true,
+                "text": "Validation Report\nConforms: True\n",
+                "report": {
+                  "statements": 2,
+                  "digest": "3535d9d60f0b84bc130269949c4491cdec99a73177d4b8d314b637ae23807b4b8"
+                }
+              }
+            ]
+          ],
+          "mutation": [
+            {
+              "statements": 3,
+              "digest": "3bdba9b330cd40bc3157f1989c5a0954e6dba7c7bec8819a9e22f076ed7a48ad1"
+            },
+            {
+              "statements": 4,
+              "digest": "60250dbeeaecc2d38831e97e0b25df11c944042fae2b2bb3232edcf4feec21ec3"
+            }
+          ],
+          "warnings": []
+        },
+        "samples_ns": [
+          564083,
+          715917,
+          533833,
+          1806292,
+          522250
+        ]
+      }
+    },
+    {
+      "id": "validate_each/list",
+      "status": "equal",
+      "speedup": 0.6649591872297588,
+      "pyshacl": {
+        "state": "ok",
+        "observation": {
+          "type": "dict",
+          "items": [
+            [
+              0,
+              {
+                "type": "tuple",
+                "conforms": false,
+                "text": "Validation Report\nConforms: False\nResults (1):\nConstraint Violation in MinCountConstraintComponent (http://www.w3.org/ns/shacl#MinCountConstraintComponent):\n\tSeverity: sh:Violation\n\tSource Shape: ex:S\n\tFocus Node: ex:a\n\tResult Path: ex:p\n\tMessage: Less than 1 values on ex:a->ex:p\n",
+                "report": {
+                  "statements": 10,
+                  "digest": "e0fc218dce86d6512e0abe28fbfc5bddf90c14a3b7f4fc6000a2182e726106f68"
+                }
+              }
+            ],
+            [
+              1,
+              {
+                "type": "tuple",
+                "conforms": true,
+                "text": "Validation Report\nConforms: True\n",
+                "report": {
+                  "statements": 2,
+                  "digest": "3535d9d60f0b84bc130269949c4491cdec99a73177d4b8d314b637ae23807b4b8"
+                }
+              }
+            ]
+          ],
+          "mutation": [
+            {
+              "statements": 3,
+              "digest": "3bdba9b330cd40bc3157f1989c5a0954e6dba7c7bec8819a9e22f076ed7a48ad1"
+            },
+            {
+              "statements": 4,
+              "digest": "60250dbeeaecc2d38831e97e0b25df11c944042fae2b2bb3232edcf4feec21ec3"
+            }
+          ],
+          "warnings": []
+        },
+        "samples_ns": [
+          770292,
+          530416,
+          652291,
+          514208,
+          483875
+        ]
+      },
+      "pyshacl_turbo": {
+        "state": "ok",
+        "observation": {
+          "type": "dict",
+          "items": [
+            [
+              0,
+              {
+                "type": "tuple",
+                "conforms": false,
+                "text": "Validation Report\nConforms: False\nResults (1):\nConstraint Violation in MinCountConstraintComponent (http://www.w3.org/ns/shacl#MinCountConstraintComponent):\n\tSeverity: sh:Violation\n\tSource Shape: ex:S\n\tFocus Node: ex:a\n\tResult Path: ex:p\n\tMessage: Less than 1 values on ex:a->ex:p\n",
+                "report": {
+                  "statements": 10,
+                  "digest": "e0fc218dce86d6512e0abe28fbfc5bddf90c14a3b7f4fc6000a2182e726106f68"
+                }
+              }
+            ],
+            [
+              1,
+              {
+                "type": "tuple",
+                "conforms": true,
+                "text": "Validation Report\nConforms: True\n",
+                "report": {
+                  "statements": 2,
+                  "digest": "3535d9d60f0b84bc130269949c4491cdec99a73177d4b8d314b637ae23807b4b8"
+                }
+              }
+            ]
+          ],
+          "mutation": [
+            {
+              "statements": 3,
+              "digest": "3bdba9b330cd40bc3157f1989c5a0954e6dba7c7bec8819a9e22f076ed7a48ad1"
+            },
+            {
+              "statements": 4,
+              "digest": "60250dbeeaecc2d38831e97e0b25df11c944042fae2b2bb3232edcf4feec21ec3"
+            }
+          ],
+          "warnings": []
+        },
+        "samples_ns": [
+          826750,
+          797667,
+          981875,
+          773333,
+          746167
+        ]
+      }
+    },
+    {
+      "id": "validate/tuple",
+      "status": "equal",
+      "speedup": 0.6449856325652205,
+      "pyshacl_turbo": {
+        "state": "ok",
+        "observation": {
+          "type": "dict",
+          "items": [
+            [
+              0,
+              {
+                "type": "tuple",
+                "conforms": false,
+                "text": "Validation Report\nConforms: False\nResults (1):\nConstraint Violation in MinCountConstraintComponent (http://www.w3.org/ns/shacl#MinCountConstraintComponent):\n\tSeverity: sh:Violation\n\tSource Shape: ex:S\n\tFocus Node: ex:a\n\tResult Path: ex:p\n\tMessage: Less than 1 values on ex:a->ex:p\n",
+                "report": {
+                  "statements": 10,
+                  "digest": "e0fc218dce86d6512e0abe28fbfc5bddf90c14a3b7f4fc6000a2182e726106f68"
+                }
+              }
+            ],
+            [
+              1,
+              {
+                "type": "tuple",
+                "conforms": true,
+                "text": "Validation Report\nConforms: True\n",
+                "report": {
+                  "statements": 2,
+                  "digest": "3535d9d60f0b84bc130269949c4491cdec99a73177d4b8d314b637ae23807b4b8"
+                }
+              }
+            ]
+          ],
+          "mutation": [
+            {
+              "statements": 3,
+              "digest": "3bdba9b330cd40bc3157f1989c5a0954e6dba7c7bec8819a9e22f076ed7a48ad1"
+            },
+            {
+              "statements": 4,
+              "digest": "60250dbeeaecc2d38831e97e0b25df11c944042fae2b2bb3232edcf4feec21ec3"
+            }
+          ],
+          "warnings": []
+        },
+        "samples_ns": [
+          828958,
+          791167,
+          945958,
+          1200250,
+          789458
+        ]
+      },
+      "pyshacl": {
+        "state": "ok",
+        "observation": {
+          "type": "dict",
+          "items": [
+            [
+              0,
+              {
+                "type": "tuple",
+                "conforms": false,
+                "text": "Validation Report\nConforms: False\nResults (1):\nConstraint Violation in MinCountConstraintComponent (http://www.w3.org/ns/shacl#MinCountConstraintComponent):\n\tSeverity: sh:Violation\n\tSource Shape: ex:S\n\tFocus Node: ex:a\n\tResult Path: ex:p\n\tMessage: Less than 1 values on ex:a->ex:p\n",
+                "report": {
+                  "statements": 10,
+                  "digest": "e0fc218dce86d6512e0abe28fbfc5bddf90c14a3b7f4fc6000a2182e726106f68"
+                }
+              }
+            ],
+            [
+              1,
+              {
+                "type": "tuple",
+                "conforms": true,
+                "text": "Validation Report\nConforms: True\n",
+                "report": {
+                  "statements": 2,
+                  "digest": "3535d9d60f0b84bc130269949c4491cdec99a73177d4b8d314b637ae23807b4b8"
+                }
+              }
+            ]
+          ],
+          "mutation": [
+            {
+              "statements": 3,
+              "digest": "3bdba9b330cd40bc3157f1989c5a0954e6dba7c7bec8819a9e22f076ed7a48ad1"
+            },
+            {
+              "statements": 4,
+              "digest": "60250dbeeaecc2d38831e97e0b25df11c944042fae2b2bb3232edcf4feec21ec3"
+            }
+          ],
+          "warnings": []
+        },
+        "samples_ns": [
+          753250,
+          536042,
+          515375,
+          499583,
+          534666
+        ]
+      }
+    },
+    {
+      "id": "validate_each/tuple",
+      "status": "equal",
+      "speedup": 0.6111072368067552,
+      "pyshacl_turbo": {
+        "state": "ok",
+        "observation": {
+          "type": "dict",
+          "items": [
+            [
+              0,
+              {
+                "type": "tuple",
+                "conforms": false,
+                "text": "Validation Report\nConforms: False\nResults (1):\nConstraint Violation in MinCountConstraintComponent (http://www.w3.org/ns/shacl#MinCountConstraintComponent):\n\tSeverity: sh:Violation\n\tSource Shape: ex:S\n\tFocus Node: ex:a\n\tResult Path: ex:p\n\tMessage: Less than 1 values on ex:a->ex:p\n",
+                "report": {
+                  "statements": 10,
+                  "digest": "e0fc218dce86d6512e0abe28fbfc5bddf90c14a3b7f4fc6000a2182e726106f68"
+                }
+              }
+            ],
+            [
+              1,
+              {
+                "type": "tuple",
+                "conforms": true,
+                "text": "Validation Report\nConforms: True\n",
+                "report": {
+                  "statements": 2,
+                  "digest": "3535d9d60f0b84bc130269949c4491cdec99a73177d4b8d314b637ae23807b4b8"
+                }
+              }
+            ]
+          ],
+          "mutation": [
+            {
+              "statements": 3,
+              "digest": "3bdba9b330cd40bc3157f1989c5a0954e6dba7c7bec8819a9e22f076ed7a48ad1"
+            },
+            {
+              "statements": 4,
+              "digest": "60250dbeeaecc2d38831e97e0b25df11c944042fae2b2bb3232edcf4feec21ec3"
+            }
+          ],
+          "warnings": []
+        },
+        "samples_ns": [
+          1077000,
+          817000,
+          950500,
+          874709,
+          799167
+        ]
+      },
+      "pyshacl": {
+        "state": "ok",
+        "observation": {
+          "type": "dict",
+          "items": [
+            [
+              0,
+              {
+                "type": "tuple",
+                "conforms": false,
+                "text": "Validation Report\nConforms: False\nResults (1):\nConstraint Violation in MinCountConstraintComponent (http://www.w3.org/ns/shacl#MinCountConstraintComponent):\n\tSeverity: sh:Violation\n\tSource Shape: ex:S\n\tFocus Node: ex:a\n\tResult Path: ex:p\n\tMessage: Less than 1 values on ex:a->ex:p\n",
+                "report": {
+                  "statements": 10,
+                  "digest": "e0fc218dce86d6512e0abe28fbfc5bddf90c14a3b7f4fc6000a2182e726106f68"
+                }
+              }
+            ],
+            [
+              1,
+              {
+                "type": "tuple",
+                "conforms": true,
+                "text": "Validation Report\nConforms: True\n",
+                "report": {
+                  "statements": 2,
+                  "digest": "3535d9d60f0b84bc130269949c4491cdec99a73177d4b8d314b637ae23807b4b8"
+                }
+              }
+            ]
+          ],
+          "mutation": [
+            {
+              "statements": 3,
+              "digest": "3bdba9b330cd40bc3157f1989c5a0954e6dba7c7bec8819a9e22f076ed7a48ad1"
+            },
+            {
+              "statements": 4,
+              "digest": "60250dbeeaecc2d38831e97e0b25df11c944042fae2b2bb3232edcf4feec21ec3"
+            }
+          ],
+          "warnings": []
+        },
+        "samples_ns": [
+          534541,
+          548167,
+          592500,
+          521208,
+          490083
+        ]
+      }
+    },
+    {
+      "id": "validate/user-list",
+      "status": "equal",
+      "speedup": 0.6803048307473086,
+      "pyshacl": {
+        "state": "ok",
+        "observation": {
+          "type": "dict",
+          "items": [
+            [
+              0,
+              {
+                "type": "tuple",
+                "conforms": false,
+                "text": "Validation Report\nConforms: False\nResults (1):\nConstraint Violation in MinCountConstraintComponent (http://www.w3.org/ns/shacl#MinCountConstraintComponent):\n\tSeverity: sh:Violation\n\tSource Shape: ex:S\n\tFocus Node: ex:a\n\tResult Path: ex:p\n\tMessage: Less than 1 values on ex:a->ex:p\n",
+                "report": {
+                  "statements": 10,
+                  "digest": "e0fc218dce86d6512e0abe28fbfc5bddf90c14a3b7f4fc6000a2182e726106f68"
+                }
+              }
+            ],
+            [
+              1,
+              {
+                "type": "tuple",
+                "conforms": true,
+                "text": "Validation Report\nConforms: True\n",
+                "report": {
+                  "statements": 2,
+                  "digest": "3535d9d60f0b84bc130269949c4491cdec99a73177d4b8d314b637ae23807b4b8"
+                }
+              }
+            ]
+          ],
+          "mutation": [
+            {
+              "statements": 3,
+              "digest": "3bdba9b330cd40bc3157f1989c5a0954e6dba7c7bec8819a9e22f076ed7a48ad1"
+            },
+            {
+              "statements": 4,
+              "digest": "60250dbeeaecc2d38831e97e0b25df11c944042fae2b2bb3232edcf4feec21ec3"
+            }
+          ],
+          "warnings": []
+        },
+        "samples_ns": [
+          620000,
+          532792,
+          834334,
+          537583,
+          510000
+        ]
+      },
+      "pyshacl_turbo": {
+        "state": "ok",
+        "observation": {
+          "type": "dict",
+          "items": [
+            [
+              0,
+              {
+                "type": "tuple",
+                "conforms": false,
+                "text": "Validation Report\nConforms: False\nResults (1):\nConstraint Violation in MinCountConstraintComponent (http://www.w3.org/ns/shacl#MinCountConstraintComponent):\n\tSeverity: sh:Violation\n\tSource Shape: ex:S\n\tFocus Node: ex:a\n\tResult Path: ex:p\n\tMessage: Less than 1 values on ex:a->ex:p\n",
+                "report": {
+                  "statements": 10,
+                  "digest": "e0fc218dce86d6512e0abe28fbfc5bddf90c14a3b7f4fc6000a2182e726106f68"
+                }
+              }
+            ],
+            [
+              1,
+              {
+                "type": "tuple",
+                "conforms": true,
+                "text": "Validation Report\nConforms: True\n",
+                "report": {
+                  "statements": 2,
+                  "digest": "3535d9d60f0b84bc130269949c4491cdec99a73177d4b8d314b637ae23807b4b8"
+                }
+              }
+            ]
+          ],
+          "mutation": [
+            {
+              "statements": 3,
+              "digest": "3bdba9b330cd40bc3157f1989c5a0954e6dba7c7bec8819a9e22f076ed7a48ad1"
+            },
+            {
+              "statements": 4,
+              "digest": "60250dbeeaecc2d38831e97e0b25df11c944042fae2b2bb3232edcf4feec21ec3"
+            }
+          ],
+          "warnings": []
+        },
+        "samples_ns": [
+          834167,
+          790209,
+          945083,
+          767875,
+          759625
+        ]
+      }
+    },
+    {
+      "id": "validate_each/user-list",
+      "status": "equal",
+      "speedup": 0.6264147784757149,
+      "pyshacl_turbo": {
+        "state": "ok",
+        "observation": {
+          "type": "dict",
+          "items": [
+            [
+              0,
+              {
+                "type": "tuple",
+                "conforms": false,
+                "text": "Validation Report\nConforms: False\nResults (1):\nConstraint Violation in MinCountConstraintComponent (http://www.w3.org/ns/shacl#MinCountConstraintComponent):\n\tSeverity: sh:Violation\n\tSource Shape: ex:S\n\tFocus Node: ex:a\n\tResult Path: ex:p\n\tMessage: Less than 1 values on ex:a->ex:p\n",
+                "report": {
+                  "statements": 10,
+                  "digest": "e0fc218dce86d6512e0abe28fbfc5bddf90c14a3b7f4fc6000a2182e726106f68"
+                }
+              }
+            ],
+            [
+              1,
+              {
+                "type": "tuple",
+                "conforms": true,
+                "text": "Validation Report\nConforms: True\n",
+                "report": {
+                  "statements": 2,
+                  "digest": "3535d9d60f0b84bc130269949c4491cdec99a73177d4b8d314b637ae23807b4b8"
+                }
+              }
+            ]
+          ],
+          "mutation": [
+            {
+              "statements": 3,
+              "digest": "3bdba9b330cd40bc3157f1989c5a0954e6dba7c7bec8819a9e22f076ed7a48ad1"
+            },
+            {
+              "statements": 4,
+              "digest": "60250dbeeaecc2d38831e97e0b25df11c944042fae2b2bb3232edcf4feec21ec3"
+            }
+          ],
+          "warnings": []
+        },
+        "samples_ns": [
+          824334,
+          838708,
+          947417,
+          757500,
+          753875
+        ]
+      },
+      "pyshacl": {
+        "state": "ok",
+        "observation": {
+          "type": "dict",
+          "items": [
+            [
+              0,
+              {
+                "type": "tuple",
+                "conforms": false,
+                "text": "Validation Report\nConforms: False\nResults (1):\nConstraint Violation in MinCountConstraintComponent (http://www.w3.org/ns/shacl#MinCountConstraintComponent):\n\tSeverity: sh:Violation\n\tSource Shape: ex:S\n\tFocus Node: ex:a\n\tResult Path: ex:p\n\tMessage: Less than 1 values on ex:a->ex:p\n",
+                "report": {
+                  "statements": 10,
+                  "digest": "e0fc218dce86d6512e0abe28fbfc5bddf90c14a3b7f4fc6000a2182e726106f68"
+                }
+              }
+            ],
+            [
+              1,
+              {
+                "type": "tuple",
+                "conforms": true,
+                "text": "Validation Report\nConforms: True\n",
+                "report": {
+                  "statements": 2,
+                  "digest": "3535d9d60f0b84bc130269949c4491cdec99a73177d4b8d314b637ae23807b4b8"
+                }
+              }
+            ]
+          ],
+          "mutation": [
+            {
+              "statements": 3,
+              "digest": "3bdba9b330cd40bc3157f1989c5a0954e6dba7c7bec8819a9e22f076ed7a48ad1"
+            },
+            {
+              "statements": 4,
+              "digest": "60250dbeeaecc2d38831e97e0b25df11c944042fae2b2bb3232edcf4feec21ec3"
+            }
+          ],
+          "warnings": []
+        },
+        "samples_ns": [
+          525291,
+          545000,
+          516375,
+          481000,
+          487916
+        ]
+      }
+    },
+    {
+      "id": "validate_each/reject-empty-list",
+      "status": "equal",
+      "pyshacl_turbo": {
+        "state": "ok",
+        "observation": {
+          "error": {
+            "class": "ReportableRuntimeError",
+            "bases": [
+              "RuntimeError",
+              "Exception",
+              "BaseException",
+              "object"
+            ],
+            "message": "No data graphs were provided for validate_each.",
+            "args_type": "list",
+            "args": [
+              "No data graphs were provided for validate_each."
+            ]
+          },
+          "mutation": [],
+          "warnings": []
+        },
+        "samples_ns": [
+          3042,
+          2000,
+          2584,
+          1625,
+          1500
+        ]
+      },
+      "pyshacl": {
+        "state": "ok",
+        "observation": {
+          "error": {
+            "class": "ReportableRuntimeError",
+            "bases": [
+              "RuntimeError",
+              "Exception",
+              "BaseException",
+              "object"
+            ],
+            "message": "No data graphs were provided for validate_each.",
+            "args_type": "list",
+            "args": [
+              "No data graphs were provided for validate_each."
+            ]
+          },
+          "mutation": [],
+          "warnings": []
+        },
+        "samples_ns": [
+          5292,
+          3833,
+          3250,
+          4542,
+          2000
+        ]
+      }
+    },
+    {
+      "id": "validate_each/reject-graph",
+      "status": "equal",
+      "pyshacl_turbo": {
+        "state": "ok",
+        "observation": {
+          "error": {
+            "class": "ReportableRuntimeError",
+            "bases": [
+              "RuntimeError",
+              "Exception",
+              "BaseException",
+              "object"
+            ],
+            "message": "validate_each expects a sequence of data graphs to validate.",
+            "args_type": "list",
+            "args": [
+              "validate_each expects a sequence of data graphs to validate."
+            ]
+          },
+          "mutation": {
+            "statements": 3,
+            "digest": "3bdba9b330cd40bc3157f1989c5a0954e6dba7c7bec8819a9e22f076ed7a48ad1"
+          },
+          "warnings": []
+        },
+        "samples_ns": [
+          2792,
+          2000,
+          1334,
+          3333,
+          1875
+        ]
+      },
+      "pyshacl": {
+        "state": "ok",
+        "observation": {
+          "error": {
+            "class": "ReportableRuntimeError",
+            "bases": [
+              "RuntimeError",
+              "Exception",
+              "BaseException",
+              "object"
+            ],
+            "message": "validate_each expects a sequence of data graphs to validate.",
+            "args_type": "list",
+            "args": [
+              "validate_each expects a sequence of data graphs to validate."
+            ]
+          },
+          "mutation": {
+            "statements": 3,
+            "digest": "3bdba9b330cd40bc3157f1989c5a0954e6dba7c7bec8819a9e22f076ed7a48ad1"
+          },
+          "warnings": []
+        },
+        "samples_ns": [
+          4834,
+          2208,
+          3667,
+          3084,
+          3041
+        ]
+      }
+    },
+    {
+      "id": "validate_each/reject-text",
+      "status": "equal",
+      "pyshacl_turbo": {
+        "state": "ok",
+        "observation": {
+          "error": {
+            "class": "ReportableRuntimeError",
+            "bases": [
+              "RuntimeError",
+              "Exception",
+              "BaseException",
+              "object"
+            ],
+            "message": "validate_each expects a sequence of data graphs to validate.",
+            "args_type": "list",
+            "args": [
+              "validate_each expects a sequence of data graphs to validate."
+            ]
+          },
+          "mutation": null,
+          "warnings": []
+        },
+        "samples_ns": [
+          2291,
+          1459,
+          1166,
+          1083,
+          1084
+        ]
+      },
+      "pyshacl": {
+        "state": "ok",
+        "observation": {
+          "error": {
+            "class": "ReportableRuntimeError",
+            "bases": [
+              "RuntimeError",
+              "Exception",
+              "BaseException",
+              "object"
+            ],
+            "message": "validate_each expects a sequence of data graphs to validate.",
+            "args_type": "list",
+            "args": [
+              "validate_each expects a sequence of data graphs to validate."
+            ]
+          },
+          "mutation": null,
+          "warnings": []
+        },
+        "samples_ns": [
+          2416,
+          3166,
+          1334,
+          1209,
+          3208
+        ]
+      }
+    },
+    {
+      "id": "validate/legacy-positional",
+      "status": "equal",
+      "speedup": 0.6444797742238947,
+      "pyshacl_turbo": {
+        "state": "ok",
+        "observation": {
+          "type": "tuple",
+          "conforms": false,
+          "text": "Validation Report\nConforms: False\nResults (1):\nConstraint Violation in MinCountConstraintComponent (http://www.w3.org/ns/shacl#MinCountConstraintComponent):\n\tSeverity: sh:Violation\n\tSource Shape: ex:S\n\tFocus Node: ex:a\n\tResult Path: ex:p\n\tMessage: Less than 1 values on ex:a->ex:p\n",
+          "report": {
+            "statements": 10,
+            "digest": "e0fc218dce86d6512e0abe28fbfc5bddf90c14a3b7f4fc6000a2182e726106f68"
+          },
+          "mutation": {
+            "statements": 3,
+            "digest": "3bdba9b330cd40bc3157f1989c5a0954e6dba7c7bec8819a9e22f076ed7a48ad1"
+          },
+          "warnings": []
+        },
+        "samples_ns": [
+          531500,
+          550500,
+          468916,
+          463542,
+          655042
+        ]
+      },
+      "pyshacl": {
+        "state": "ok",
+        "observation": {
+          "type": "tuple",
+          "conforms": false,
+          "text": "Validation Report\nConforms: False\nResults (1):\nConstraint Violation in MinCountConstraintComponent (http://www.w3.org/ns/shacl#MinCountConstraintComponent):\n\tSeverity: sh:Violation\n\tSource Shape: ex:S\n\tFocus Node: ex:a\n\tResult Path: ex:p\n\tMessage: Less than 1 values on ex:a->ex:p\n",
+          "report": {
+            "statements": 10,
+            "digest": "e0fc218dce86d6512e0abe28fbfc5bddf90c14a3b7f4fc6000a2182e726106f68"
+          },
+          "mutation": {
+            "statements": 3,
+            "digest": "3bdba9b330cd40bc3157f1989c5a0954e6dba7c7bec8819a9e22f076ed7a48ad1"
+          },
+          "warnings": []
+        },
+        "samples_ns": [
+          342541,
+          370292,
+          303375,
+          302125,
+          480500
+        ]
+      }
+    },
+    {
+      "id": "validate_each/legacy-positional",
+      "status": "equal",
+      "speedup": 0.6489124032739606,
+      "pyshacl_turbo": {
+        "state": "ok",
+        "observation": {
+          "type": "dict",
+          "items": [
+            [
+              0,
+              {
+                "type": "tuple",
+                "conforms": false,
+                "text": "Validation Report\nConforms: False\nResults (1):\nConstraint Violation in MinCountConstraintComponent (http://www.w3.org/ns/shacl#MinCountConstraintComponent):\n\tSeverity: sh:Violation\n\tSource Shape: ex:S\n\tFocus Node: ex:a\n\tResult Path: ex:p\n\tMessage: Less than 1 values on ex:a->ex:p\n",
+                "report": {
+                  "statements": 10,
+                  "digest": "e0fc218dce86d6512e0abe28fbfc5bddf90c14a3b7f4fc6000a2182e726106f68"
+                }
+              }
+            ],
+            [
+              1,
+              {
+                "type": "tuple",
+                "conforms": true,
+                "text": "Validation Report\nConforms: True\n",
+                "report": {
+                  "statements": 2,
+                  "digest": "3535d9d60f0b84bc130269949c4491cdec99a73177d4b8d314b637ae23807b4b8"
+                }
+              }
+            ]
+          ],
+          "mutation": [
+            {
+              "statements": 3,
+              "digest": "3bdba9b330cd40bc3157f1989c5a0954e6dba7c7bec8819a9e22f076ed7a48ad1"
+            },
+            {
+              "statements": 4,
+              "digest": "60250dbeeaecc2d38831e97e0b25df11c944042fae2b2bb3232edcf4feec21ec3"
+            }
+          ],
+          "warnings": []
+        },
+        "samples_ns": [
+          847000,
+          787792,
+          926792,
+          753458,
+          751541
+        ]
+      },
+      "pyshacl": {
+        "state": "ok",
+        "observation": {
+          "type": "dict",
+          "items": [
+            [
+              0,
+              {
+                "type": "tuple",
+                "conforms": false,
+                "text": "Validation Report\nConforms: False\nResults (1):\nConstraint Violation in MinCountConstraintComponent (http://www.w3.org/ns/shacl#MinCountConstraintComponent):\n\tSeverity: sh:Violation\n\tSource Shape: ex:S\n\tFocus Node: ex:a\n\tResult Path: ex:p\n\tMessage: Less than 1 values on ex:a->ex:p\n",
+                "report": {
+                  "statements": 10,
+                  "digest": "e0fc218dce86d6512e0abe28fbfc5bddf90c14a3b7f4fc6000a2182e726106f68"
+                }
+              }
+            ],
+            [
+              1,
+              {
+                "type": "tuple",
+                "conforms": true,
+                "text": "Validation Report\nConforms: True\n",
+                "report": {
+                  "statements": 2,
+                  "digest": "3535d9d60f0b84bc130269949c4491cdec99a73177d4b8d314b637ae23807b4b8"
+                }
+              }
+            ]
+          ],
+          "mutation": [
+            {
+              "statements": 3,
+              "digest": "3bdba9b330cd40bc3157f1989c5a0954e6dba7c7bec8819a9e22f076ed7a48ad1"
+            },
+            {
+              "statements": 4,
+              "digest": "60250dbeeaecc2d38831e97e0b25df11c944042fae2b2bb3232edcf4feec21ec3"
+            }
+          ],
+          "warnings": []
+        },
+        "samples_ns": [
+          531333,
+          540667,
+          511208,
+          488583,
+          476708
+        ]
+      }
+    },
+    {
+      "id": "shacl_rules/legacy-positional",
+      "status": "different",
+      "different_fields": [
+        "context_aware",
+        "identifier_type"
+      ],
+      "pyshacl": {
+        "state": "ok",
+        "observation": {
+          "type": "graph",
+          "graph": {
+            "statements": 3,
+            "digest": "3bdba9b330cd40bc3157f1989c5a0954e6dba7c7bec8819a9e22f076ed7a48ad1"
+          },
+          "context_aware": true,
+          "identifier_type": "str",
+          "identifier": "urn:contract:input",
+          "mutation": {
+            "statements": 3,
+            "digest": "3bdba9b330cd40bc3157f1989c5a0954e6dba7c7bec8819a9e22f076ed7a48ad1"
+          },
+          "warnings": []
+        },
+        "samples_ns": [
+          214917,
+          196500,
+          184458,
+          329708,
+          175541
+        ]
+      },
+      "pyshacl_turbo": {
+        "state": "ok",
+        "observation": {
+          "type": "graph",
+          "graph": {
+            "statements": 3,
+            "digest": "3bdba9b330cd40bc3157f1989c5a0954e6dba7c7bec8819a9e22f076ed7a48ad1"
+          },
+          "context_aware": false,
+          "identifier_type": "URIRef",
+          "identifier": "urn:contract:input",
+          "mutation": {
+            "statements": 3,
+            "digest": "3bdba9b330cd40bc3157f1989c5a0954e6dba7c7bec8819a9e22f076ed7a48ad1"
+          },
+          "warnings": []
+        },
+        "samples_ns": [
+          356250,
+          325625,
+          327708,
+          313291,
+          326166
+        ]
+      }
+    },
+    {
+      "id": "validate/rules-focus",
+      "status": "equal",
+      "speedup": 0.5584006505929727,
+      "pyshacl": {
+        "state": "ok",
+        "observation": {
+          "type": "tuple",
+          "conforms": true,
+          "text": "Validation Report\nConforms: True\n",
+          "report": {
+            "statements": 2,
+            "digest": "3535d9d60f0b84bc130269949c4491cdec99a73177d4b8d314b637ae23807b4b8"
+          },
+          "mutation": {
+            "statements": 4,
+            "digest": "5b833b49c040b2d09b6d917c581274be7c2fe1466cee56a480fc116be0e28a0f3"
+          },
+          "warnings": []
+        },
+        "samples_ns": [
+          372708,
+          311041,
+          298000,
+          292084,
+          282542
+        ]
+      },
+      "pyshacl_turbo": {
+        "state": "ok",
+        "observation": {
+          "type": "tuple",
+          "conforms": true,
+          "text": "Validation Report\nConforms: True\n",
+          "report": {
+            "statements": 2,
+            "digest": "3535d9d60f0b84bc130269949c4491cdec99a73177d4b8d314b637ae23807b4b8"
+          },
+          "mutation": {
+            "statements": 4,
+            "digest": "5b833b49c040b2d09b6d917c581274be7c2fe1466cee56a480fc116be0e28a0f3"
+          },
+          "warnings": []
+        },
+        "samples_ns": [
+          550792,
+          533667,
+          2308167,
+          530500,
+          495083
+        ]
+      }
+    },
+    {
+      "id": "shacl_rules/rules-focus",
+      "status": "different",
+      "different_fields": [
+        "context_aware",
+        "identifier_type"
+      ],
+      "pyshacl": {
+        "state": "ok",
+        "observation": {
+          "type": "graph",
+          "graph": {
+            "statements": 4,
+            "digest": "5b833b49c040b2d09b6d917c581274be7c2fe1466cee56a480fc116be0e28a0f3"
+          },
+          "context_aware": true,
+          "identifier_type": "str",
+          "identifier": "urn:contract:input",
+          "mutation": {
+            "statements": 4,
+            "digest": "5b833b49c040b2d09b6d917c581274be7c2fe1466cee56a480fc116be0e28a0f3"
+          },
+          "warnings": []
+        },
+        "samples_ns": [
+          206458,
+          187167,
+          166792,
+          154250,
+          149250
+        ]
+      },
+      "pyshacl_turbo": {
+        "state": "ok",
+        "observation": {
+          "type": "graph",
+          "graph": {
+            "statements": 4,
+            "digest": "5b833b49c040b2d09b6d917c581274be7c2fe1466cee56a480fc116be0e28a0f3"
+          },
+          "context_aware": false,
+          "identifier_type": "URIRef",
+          "identifier": "urn:contract:input",
+          "mutation": {
+            "statements": 4,
+            "digest": "5b833b49c040b2d09b6d917c581274be7c2fe1466cee56a480fc116be0e28a0f3"
+          },
+          "warnings": []
+        },
+        "samples_ns": [
+          550167,
+          510458,
+          517708,
+          483750,
+          488875
+        ]
+      }
+    },
+    {
+      "id": "validate/rules-shape",
+      "status": "equal",
+      "speedup": 0.5955480875525094,
+      "pyshacl_turbo": {
+        "state": "ok",
+        "observation": {
+          "type": "tuple",
+          "conforms": true,
+          "text": "Validation Report\nConforms: True\n",
+          "report": {
+            "statements": 2,
+            "digest": "3535d9d60f0b84bc130269949c4491cdec99a73177d4b8d314b637ae23807b4b8"
+          },
+          "mutation": {
+            "statements": 5,
+            "digest": "6b8f5a10f86de59e1bff4d0728de42796bcc84a0e7bd2bb2c9ac928655e089bbf"
+          },
+          "warnings": []
+        },
+        "samples_ns": [
+          565500,
+          565375,
+          2240042,
+          523041,
+          511250
+        ]
+      },
+      "pyshacl": {
+        "state": "ok",
+        "observation": {
+          "type": "tuple",
+          "conforms": true,
+          "text": "Validation Report\nConforms: True\n",
+          "report": {
+            "statements": 2,
+            "digest": "3535d9d60f0b84bc130269949c4491cdec99a73177d4b8d314b637ae23807b4b8"
+          },
+          "mutation": {
+            "statements": 5,
+            "digest": "6b8f5a10f86de59e1bff4d0728de42796bcc84a0e7bd2bb2c9ac928655e089bbf"
+          },
+          "warnings": []
+        },
+        "samples_ns": [
+          336708,
+          337958,
+          476041,
+          272083,
+          271167
+        ]
+      }
+    },
+    {
+      "id": "shacl_rules/rules-shape",
+      "status": "different",
+      "different_fields": [
+        "context_aware",
+        "identifier_type"
+      ],
+      "pyshacl_turbo": {
+        "state": "ok",
+        "observation": {
+          "type": "graph",
+          "graph": {
+            "statements": 5,
+            "digest": "6b8f5a10f86de59e1bff4d0728de42796bcc84a0e7bd2bb2c9ac928655e089bbf"
+          },
+          "context_aware": false,
+          "identifier_type": "URIRef",
+          "identifier": "urn:contract:input",
+          "mutation": {
+            "statements": 5,
+            "digest": "6b8f5a10f86de59e1bff4d0728de42796bcc84a0e7bd2bb2c9ac928655e089bbf"
+          },
+          "warnings": []
+        },
+        "samples_ns": [
+          579375,
+          607584,
+          575542,
+          541458,
+          713208
+        ]
+      },
+      "pyshacl": {
+        "state": "ok",
+        "observation": {
+          "type": "graph",
+          "graph": {
+            "statements": 5,
+            "digest": "6b8f5a10f86de59e1bff4d0728de42796bcc84a0e7bd2bb2c9ac928655e089bbf"
+          },
+          "context_aware": true,
+          "identifier_type": "str",
+          "identifier": "urn:contract:input",
+          "mutation": {
+            "statements": 5,
+            "digest": "6b8f5a10f86de59e1bff4d0728de42796bcc84a0e7bd2bb2c9ac928655e089bbf"
+          },
+          "warnings": []
+        },
+        "samples_ns": [
+          186875,
+          159083,
+          135209,
+          139625,
+          134958
+        ]
+      }
+    },
+    {
+      "id": "validate/rules-untargeted",
+      "status": "equal",
+      "speedup": 0.515590887057683,
+      "pyshacl": {
+        "state": "ok",
+        "observation": {
+          "type": "tuple",
+          "conforms": true,
+          "text": "Validation Report\nConforms: True\n",
+          "report": {
+            "statements": 2,
+            "digest": "3535d9d60f0b84bc130269949c4491cdec99a73177d4b8d314b637ae23807b4b8"
+          },
+          "mutation": {
+            "statements": 4,
+            "digest": "53c6eb2787948aa2099d3c5a0dd01ee6a0d061d8961f9188825f6578bc2bd6671"
+          },
+          "warnings": []
+        },
+        "samples_ns": [
+          315583,
+          276750,
+          265916,
+          242583,
+          240958
+        ]
+      },
+      "pyshacl_turbo": {
+        "state": "ok",
+        "observation": {
+          "type": "tuple",
+          "conforms": true,
+          "text": "Validation Report\nConforms: True\n",
+          "report": {
+            "statements": 2,
+            "digest": "3535d9d60f0b84bc130269949c4491cdec99a73177d4b8d314b637ae23807b4b8"
+          },
+          "mutation": {
+            "statements": 4,
+            "digest": "53c6eb2787948aa2099d3c5a0dd01ee6a0d061d8961f9188825f6578bc2bd6671"
+          },
+          "warnings": []
+        },
+        "samples_ns": [
+          547792,
+          515750,
+          2283709,
+          495959,
+          483583
+        ]
+      }
+    },
+    {
+      "id": "shacl_rules/rules-untargeted",
+      "status": "different",
+      "different_fields": [
+        "context_aware",
+        "identifier_type"
+      ],
+      "pyshacl": {
+        "state": "ok",
+        "observation": {
+          "type": "graph",
+          "graph": {
+            "statements": 4,
+            "digest": "53c6eb2787948aa2099d3c5a0dd01ee6a0d061d8961f9188825f6578bc2bd6671"
+          },
+          "context_aware": true,
+          "identifier_type": "str",
+          "identifier": "urn:contract:input",
+          "mutation": {
+            "statements": 4,
+            "digest": "53c6eb2787948aa2099d3c5a0dd01ee6a0d061d8961f9188825f6578bc2bd6671"
+          },
+          "warnings": []
+        },
+        "samples_ns": [
+          148834,
+          121083,
+          112542,
+          185583,
+          126917
+        ]
+      },
+      "pyshacl_turbo": {
+        "state": "ok",
+        "observation": {
+          "type": "graph",
+          "graph": {
+            "statements": 4,
+            "digest": "53c6eb2787948aa2099d3c5a0dd01ee6a0d061d8961f9188825f6578bc2bd6671"
+          },
+          "context_aware": false,
+          "identifier_type": "URIRef",
+          "identifier": "urn:contract:input",
+          "mutation": {
+            "statements": 4,
+            "digest": "53c6eb2787948aa2099d3c5a0dd01ee6a0d061d8961f9188825f6578bc2bd6671"
+          },
+          "warnings": []
+        },
+        "samples_ns": [
+          535917,
+          506708,
+          547583,
+          494833,
+          489458
+        ]
+      }
+    },
+    {
+      "id": "validate/rules-override-target",
+      "status": "equal",
+      "speedup": 0.4798205769008841,
+      "pyshacl": {
+        "state": "ok",
+        "observation": {
+          "type": "tuple",
+          "conforms": true,
+          "text": "Validation Report\nConforms: True\n",
+          "report": {
+            "statements": 2,
+            "digest": "3535d9d60f0b84bc130269949c4491cdec99a73177d4b8d314b637ae23807b4b8"
+          },
+          "mutation": {
+            "statements": 4,
+            "digest": "5ba4108fd503f0ba0ef3c5e96532be06ae7ad88a47a333ae3bfc476c527088bfd"
+          },
+          "warnings": []
+        },
+        "samples_ns": [
+          305000,
+          253750,
+          253625,
+          232791,
+          227834
+        ]
+      },
+      "pyshacl_turbo": {
+        "state": "ok",
+        "observation": {
+          "type": "tuple",
+          "conforms": true,
+          "text": "Validation Report\nConforms: True\n",
+          "report": {
+            "statements": 2,
+            "digest": "3535d9d60f0b84bc130269949c4491cdec99a73177d4b8d314b637ae23807b4b8"
+          },
+          "mutation": {
+            "statements": 4,
+            "digest": "5ba4108fd503f0ba0ef3c5e96532be06ae7ad88a47a333ae3bfc476c527088bfd"
+          },
+          "warnings": []
+        },
+        "samples_ns": [
+          528583,
+          619292,
+          2133250,
+          524542,
+          497208
+        ]
+      }
+    },
+    {
+      "id": "shacl_rules/rules-override-target",
+      "status": "different",
+      "different_fields": [
+        "context_aware",
+        "identifier_type"
+      ],
+      "pyshacl_turbo": {
+        "state": "ok",
+        "observation": {
+          "type": "graph",
+          "graph": {
+            "statements": 4,
+            "digest": "5ba4108fd503f0ba0ef3c5e96532be06ae7ad88a47a333ae3bfc476c527088bfd"
+          },
+          "context_aware": false,
+          "identifier_type": "URIRef",
+          "identifier": "urn:contract:input",
+          "mutation": {
+            "statements": 4,
+            "digest": "5ba4108fd503f0ba0ef3c5e96532be06ae7ad88a47a333ae3bfc476c527088bfd"
+          },
+          "warnings": []
+        },
+        "samples_ns": [
+          537500,
+          515833,
+          546750,
+          516333,
+          565292
+        ]
+      },
+      "pyshacl": {
+        "state": "ok",
+        "observation": {
+          "type": "graph",
+          "graph": {
+            "statements": 4,
+            "digest": "5ba4108fd503f0ba0ef3c5e96532be06ae7ad88a47a333ae3bfc476c527088bfd"
+          },
+          "context_aware": true,
+          "identifier_type": "str",
+          "identifier": "urn:contract:input",
+          "mutation": {
+            "statements": 4,
+            "digest": "5ba4108fd503f0ba0ef3c5e96532be06ae7ad88a47a333ae3bfc476c527088bfd"
+          },
+          "warnings": []
+        },
+        "samples_ns": [
+          186875,
+          130500,
+          116375,
+          110125,
+          106917
+        ]
+      }
+    },
+    {
+      "id": "shacl_rules/serialize-trig",
+      "status": "equal",
+      "speedup": 0.8638306329660834,
+      "pyshacl": {
+        "state": "ok",
+        "observation": {
+          "type": "str",
+          "graph": {
+            "statements": 6,
+            "digest": "d11d6a18c7221a6f587f9f1f6822fbf29975c0d07cbc15d8c950e90295656beec"
+          },
+          "mutation": {
+            "statements": 3,
+            "digest": "3bdba9b330cd40bc3157f1989c5a0954e6dba7c7bec8819a9e22f076ed7a48ad1"
+          },
+          "warnings": []
+        },
+        "samples_ns": [
+          504667,
+          591291,
+          413000,
+          499834,
+          447209
+        ]
+      },
+      "pyshacl_turbo": {
+        "state": "ok",
+        "observation": {
+          "type": "str",
+          "graph": {
+            "statements": 6,
+            "digest": "d11d6a18c7221a6f587f9f1f6822fbf29975c0d07cbc15d8c950e90295656beec"
+          },
+          "mutation": {
+            "statements": 3,
+            "digest": "3bdba9b330cd40bc3157f1989c5a0954e6dba7c7bec8819a9e22f076ed7a48ad1"
+          },
+          "warnings": []
+        },
+        "samples_ns": [
+          666792,
+          578625,
+          580208,
+          565625,
+          548875
+        ]
+      }
+    },
+    {
+      "id": "shacl_rules/serialize-turtle",
+      "status": "equal",
+      "speedup": 0.6900447665742911,
+      "pyshacl_turbo": {
+        "state": "ok",
+        "observation": {
+          "type": "str",
+          "graph": {
+            "statements": 6,
+            "digest": "adf231ad7f1a707cb9f324deefd60bf48f66131bc6017f2778dd3c3782bb9e8f3"
+          },
+          "mutation": {
+            "statements": 3,
+            "digest": "3bdba9b330cd40bc3157f1989c5a0954e6dba7c7bec8819a9e22f076ed7a48ad1"
+          },
+          "warnings": []
+        },
+        "samples_ns": [
+          753291,
+          586375,
+          584334,
+          690000,
+          575166
+        ]
+      },
+      "pyshacl": {
+        "state": "ok",
+        "observation": {
+          "type": "str",
+          "graph": {
+            "statements": 6,
+            "digest": "adf231ad7f1a707cb9f324deefd60bf48f66131bc6017f2778dd3c3782bb9e8f3"
+          },
+          "mutation": {
+            "statements": 3,
+            "digest": "3bdba9b330cd40bc3157f1989c5a0954e6dba7c7bec8819a9e22f076ed7a48ad1"
+          },
+          "warnings": []
+        },
+        "samples_ns": [
+          476500,
+          404625,
+          422375,
+          388583,
+          385167
+        ]
+      }
+    },
+    {
+      "id": "shacl_rules/serialize-nt",
+      "status": "equal",
+      "speedup": 0.6942703839337404,
+      "pyshacl": {
+        "state": "ok",
+        "observation": {
+          "type": "str",
+          "graph": {
+            "statements": 6,
+            "digest": "adf231ad7f1a707cb9f324deefd60bf48f66131bc6017f2778dd3c3782bb9e8f3"
+          },
+          "mutation": {
+            "statements": 3,
+            "digest": "3bdba9b330cd40bc3157f1989c5a0954e6dba7c7bec8819a9e22f076ed7a48ad1"
+          },
+          "warnings": []
+        },
+        "samples_ns": [
+          363791,
+          313000,
+          290166,
+          306458,
+          478459
+        ]
+      },
+      "pyshacl_turbo": {
+        "state": "ok",
+        "observation": {
+          "type": "str",
+          "graph": {
+            "statements": 6,
+            "digest": "adf231ad7f1a707cb9f324deefd60bf48f66131bc6017f2778dd3c3782bb9e8f3"
+          },
+          "mutation": {
+            "statements": 3,
+            "digest": "3bdba9b330cd40bc3157f1989c5a0954e6dba7c7bec8819a9e22f076ed7a48ad1"
+          },
+          "warnings": []
+        },
+        "samples_ns": [
+          547833,
+          450833,
+          471792,
+          440583,
+          436292
+        ]
+      }
+    },
+    {
+      "id": "shacl_rules/serialize-json-ld",
+      "status": "equal",
+      "speedup": 0.5151578876533033,
+      "pyshacl_turbo": {
+        "state": "ok",
+        "observation": {
+          "type": "str",
+          "graph": {
+            "statements": 6,
+            "digest": "d11d6a18c7221a6f587f9f1f6822fbf29975c0d07cbc15d8c950e90295656beec"
+          },
+          "mutation": {
+            "statements": 3,
+            "digest": "3bdba9b330cd40bc3157f1989c5a0954e6dba7c7bec8819a9e22f076ed7a48ad1"
+          },
+          "warnings": []
+        },
+        "samples_ns": [
+          760084,
+          713292,
+          713458,
+          695334,
+          676500
+        ]
+      },
+      "pyshacl": {
+        "state": "ok",
+        "observation": {
+          "type": "str",
+          "graph": {
+            "statements": 6,
+            "digest": "d11d6a18c7221a6f587f9f1f6822fbf29975c0d07cbc15d8c950e90295656beec"
+          },
+          "mutation": {
+            "statements": 3,
+            "digest": "3bdba9b330cd40bc3157f1989c5a0954e6dba7c7bec8819a9e22f076ed7a48ad1"
+          },
+          "warnings": []
+        },
+        "samples_ns": [
+          448125,
+          375458,
+          345375,
+          367458,
+          350417
+        ]
+      }
+    },
+    {
+      "id": "shacl_rules/serialize-xml",
+      "status": "reference_error",
+      "turbo_state": "ok",
+      "pyshacl_turbo": {
+        "state": "ok",
+        "observation": {
+          "type": "str",
+          "graph": {
+            "statements": 6,
+            "digest": "adf231ad7f1a707cb9f324deefd60bf48f66131bc6017f2778dd3c3782bb9e8f3"
+          },
+          "mutation": {
+            "statements": 3,
+            "digest": "3bdba9b330cd40bc3157f1989c5a0954e6dba7c7bec8819a9e22f076ed7a48ad1"
+          },
+          "warnings": []
+        },
+        "samples_ns": [
+          563875,
+          2064250,
+          513666,
+          494625,
+          484834
+        ]
+      },
+      "pyshacl": {
+        "state": "error",
+        "exception": {
+          "class": "TypeError",
+          "bases": [
+            "Exception",
+            "BaseException",
+            "object"
+          ],
+          "message": "RdfLibDataGraph.subjects() missing 2 required positional arguments: 'predicate' and 'object_'",
+          "args_type": "tuple",
+          "args": [
+            "RdfLibDataGraph.subjects() missing 2 required positional arguments: 'predicate' and 'object_'"
+          ]
+        }
+      }
+    },
+    {
+      "id": "inference/rdfs/complete-closure",
+      "status": "different",
+      "different_fields": [
+        "mutation"
+      ],
+      "pyshacl": {
+        "state": "ok",
+        "observation": {
+          "type": "tuple",
+          "conforms": false,
+          "text": "Validation Report\nConforms: False\nResults (1):\nConstraint Violation in MinCountConstraintComponent (http://www.w3.org/ns/shacl#MinCountConstraintComponent):\n\tSeverity: sh:Violation\n\tSource Shape: ex:S\n\tFocus Node: ex:a\n\tResult Path: ex:p\n\tMessage: Less than 1 values on ex:a->ex:p\n",
+          "report": {
+            "statements": 10,
+            "digest": "e0fc218dce86d6512e0abe28fbfc5bddf90c14a3b7f4fc6000a2182e726106f68"
+          },
+          "mutation": {
+            "statements": 13,
+            "digest": "1246e86aea6d5045886143357566b0f3d3ec29782a26629d0e89513d0409cfef00"
+          },
+          "warnings": []
+        },
+        "samples_ns": [
+          943916,
+          874709,
+          856583,
+          860708,
+          847125
+        ]
+      },
+      "pyshacl_turbo": {
+        "state": "ok",
+        "observation": {
+          "type": "tuple",
+          "conforms": false,
+          "text": "Validation Report\nConforms: False\nResults (1):\nConstraint Violation in MinCountConstraintComponent (http://www.w3.org/ns/shacl#MinCountConstraintComponent):\n\tSeverity: sh:Violation\n\tSource Shape: ex:S\n\tFocus Node: ex:a\n\tResult Path: ex:p\n\tMessage: Less than 1 values on ex:a->ex:p\n",
+          "report": {
+            "statements": 10,
+            "digest": "e0fc218dce86d6512e0abe28fbfc5bddf90c14a3b7f4fc6000a2182e726106f68"
+          },
+          "mutation": {
+            "statements": 12,
+            "digest": "1132f93788b104e9fc1c00e7b10a64b8eeb8a35e31657d8a1d0b606991e42021b5"
+          },
+          "warnings": []
+        },
+        "samples_ns": [
+          1805542,
+          1713542,
+          1818209,
+          1878708,
+          1705708
+        ]
+      }
+    },
+    {
+      "id": "inference/owlrl/complete-closure",
+      "status": "different",
+      "different_fields": [
+        "mutation"
+      ],
+      "pyshacl_turbo": {
+        "state": "ok",
+        "observation": {
+          "type": "tuple",
+          "conforms": false,
+          "text": "Validation Report\nConforms: False\nResults (1):\nConstraint Violation in MinCountConstraintComponent (http://www.w3.org/ns/shacl#MinCountConstraintComponent):\n\tSeverity: sh:Violation\n\tSource Shape: ex:S\n\tFocus Node: ex:a\n\tResult Path: ex:p\n\tMessage: Less than 1 values on ex:a->ex:p\n",
+          "report": {
+            "statements": 10,
+            "digest": "e0fc218dce86d6512e0abe28fbfc5bddf90c14a3b7f4fc6000a2182e726106f68"
+          },
+          "mutation": {
+            "statements": 113,
+            "digest": "acbd3d66f5f0fc92106db802867a996b5df7c2f4a41ccf88cc6528f55ef03fd03b"
+          },
+          "warnings": []
+        },
+        "samples_ns": [
+          8195208,
+          8268875,
+          8185083,
+          7856250,
+          9306083
+        ]
+      },
+      "pyshacl": {
+        "state": "ok",
+        "observation": {
+          "type": "tuple",
+          "conforms": false,
+          "text": "Validation Report\nConforms: False\nResults (1):\nConstraint Violation in MinCountConstraintComponent (http://www.w3.org/ns/shacl#MinCountConstraintComponent):\n\tSeverity: sh:Violation\n\tSource Shape: ex:S\n\tFocus Node: ex:a\n\tResult Path: ex:p\n\tMessage: Less than 1 values on ex:a->ex:p\n",
+          "report": {
+            "statements": 10,
+            "digest": "e0fc218dce86d6512e0abe28fbfc5bddf90c14a3b7f4fc6000a2182e726106f68"
+          },
+          "mutation": {
+            "statements": 116,
+            "digest": "b204fe402fa2276d73e17767c1a9b3f3f1c81b77efbddfeba297d0f1e84cc8a801"
+          },
+          "warnings": []
+        },
+        "samples_ns": [
+          10851583,
+          10279042,
+          10253167,
+          10473125,
+          10246875
+        ]
+      }
+    },
+    {
+      "id": "inference/both/complete-closure",
+      "status": "different",
+      "different_fields": [
+        "mutation"
+      ],
+      "pyshacl": {
+        "state": "ok",
+        "observation": {
+          "type": "tuple",
+          "conforms": false,
+          "text": "Validation Report\nConforms: False\nResults (1):\nConstraint Violation in MinCountConstraintComponent (http://www.w3.org/ns/shacl#MinCountConstraintComponent):\n\tSeverity: sh:Violation\n\tSource Shape: ex:S\n\tFocus Node: ex:a\n\tResult Path: ex:p\n\tMessage: Less than 1 values on ex:a->ex:p\n",
+          "report": {
+            "statements": 10,
+            "digest": "e0fc218dce86d6512e0abe28fbfc5bddf90c14a3b7f4fc6000a2182e726106f68"
+          },
+          "mutation": {
+            "statements": 356,
+            "digest": "21ffd54eef44e78298aad49f056cc657ad2a5efc86149dd777735bac25369c0b90c"
+          },
+          "warnings": []
+        },
+        "samples_ns": [
+          67852084,
+          69949791,
+          68747083,
+          67953958,
+          71172625
+        ]
+      },
+      "pyshacl_turbo": {
+        "state": "ok",
+        "observation": {
+          "type": "tuple",
+          "conforms": false,
+          "text": "Validation Report\nConforms: False\nResults (1):\nConstraint Violation in MinCountConstraintComponent (http://www.w3.org/ns/shacl#MinCountConstraintComponent):\n\tSeverity: sh:Violation\n\tSource Shape: ex:S\n\tFocus Node: ex:a\n\tResult Path: ex:p\n\tMessage: Less than 1 values on ex:a->ex:p\n",
+          "report": {
+            "statements": 10,
+            "digest": "e0fc218dce86d6512e0abe28fbfc5bddf90c14a3b7f4fc6000a2182e726106f68"
+          },
+          "mutation": {
+            "statements": 350,
+            "digest": "216f0d976cbc255e0523fa4daf77822bd93b94a54bb0ab8758d7deba76f0e2de2b4"
+          },
+          "warnings": []
+        },
+        "samples_ns": [
+          25739042,
+          25165083,
+          27617208,
+          25409500,
+          25427125
+        ]
+      }
+    },
+    {
+      "id": "errors/shape-load",
+      "status": "different",
+      "different_fields": [
+        "error"
+      ],
+      "pyshacl": {
+        "state": "ok",
+        "observation": {
+          "error": {
+            "class": "ShapeLoadError",
+            "bases": [
+              "ReportableRuntimeError",
+              "RuntimeError",
+              "Exception",
+              "BaseException",
+              "object"
+            ],
+            "message": "A shape defined as a NodeShape cannot be the subject of a 'sh:path' predicate.\nFor reference, see https://www.w3.org/TR/shacl/#node-shapes",
+            "args_type": "list",
+            "args": [
+              "A shape defined as a NodeShape cannot be the subject of a 'sh:path' predicate.",
+              "https://www.w3.org/TR/shacl/#node-shapes"
+            ]
+          },
+          "mutation": {
+            "statements": 3,
+            "digest": "3bdba9b330cd40bc3157f1989c5a0954e6dba7c7bec8819a9e22f076ed7a48ad1"
+          },
+          "warnings": []
+        },
+        "samples_ns": [
+          199375,
+          171167,
+          175292,
+          165375,
+          230750
+        ]
+      },
+      "pyshacl_turbo": {
+        "state": "ok",
+        "observation": {
+          "error": {
+            "class": "ValueError",
+            "bases": [
+              "Exception",
+              "BaseException",
+              "object"
+            ],
+            "message": "NodeShape <urn:example:S> cannot have sh:path",
+            "args_type": "tuple",
+            "args": [
+              "NodeShape <urn:example:S> cannot have sh:path"
+            ]
+          },
+          "mutation": {
+            "statements": 3,
+            "digest": "3bdba9b330cd40bc3157f1989c5a0954e6dba7c7bec8819a9e22f076ed7a48ad1"
+          },
+          "warnings": []
+        },
+        "samples_ns": [
+          108209,
+          82875,
+          76542,
+          75042,
+          70458
+        ]
+      }
+    },
+    {
+      "id": "errors/constraint-load",
+      "status": "different",
+      "different_fields": [
+        "error"
+      ],
+      "pyshacl": {
+        "state": "ok",
+        "observation": {
+          "error": {
+            "class": "ConstraintLoadError",
+            "bases": [
+              "ReportableRuntimeError",
+              "RuntimeError",
+              "Exception",
+              "BaseException",
+              "object"
+            ],
+            "message": "MinCountConstraintComponent sh:minCount must be a literal with datatype xsd:integer.\nFor reference, see https://www.w3.org/TR/shacl/#MinCountConstraintComponent",
+            "args_type": "list",
+            "args": [
+              "MinCountConstraintComponent sh:minCount must be a literal with datatype xsd:integer.",
+              "https://www.w3.org/TR/shacl/#MinCountConstraintComponent"
+            ]
+          },
+          "mutation": {
+            "statements": 3,
+            "digest": "3bdba9b330cd40bc3157f1989c5a0954e6dba7c7bec8819a9e22f076ed7a48ad1"
+          },
+          "warnings": []
+        },
+        "samples_ns": [
+          303584,
+          279791,
+          261375,
+          263417,
+          427625
+        ]
+      },
+      "pyshacl_turbo": {
+        "state": "ok",
+        "observation": {
+          "error": {
+            "class": "ValueError",
+            "bases": [
+              "Exception",
+              "BaseException",
+              "object"
+            ],
+            "message": "Invalid integer parameter sh:minCount: \"one\"",
+            "args_type": "tuple",
+            "args": [
+              "Invalid integer parameter sh:minCount: \"one\""
+            ]
+          },
+          "mutation": {
+            "statements": 3,
+            "digest": "3bdba9b330cd40bc3157f1989c5a0954e6dba7c7bec8819a9e22f076ed7a48ad1"
+          },
+          "warnings": []
+        },
+        "samples_ns": [
+          105583,
+          88833,
+          80125,
+          88042,
+          78583
+        ]
+      }
+    },
+    {
+      "id": "errors/rule-load",
+      "status": "different",
+      "different_fields": [
+        "error"
+      ],
+      "pyshacl": {
+        "state": "ok",
+        "observation": {
+          "error": {
+            "class": "RuntimeError",
+            "bases": [
+              "Exception",
+              "BaseException",
+              "object"
+            ],
+            "message": "No sh:predicate",
+            "args_type": "tuple",
+            "args": [
+              "No sh:predicate"
+            ]
+          },
+          "mutation": {
+            "statements": 3,
+            "digest": "3bdba9b330cd40bc3157f1989c5a0954e6dba7c7bec8819a9e22f076ed7a48ad1"
+          },
+          "warnings": []
+        },
+        "samples_ns": [
+          222500,
+          226500,
+          198833,
+          195542,
+          327791
+        ]
+      },
+      "pyshacl_turbo": {
+        "state": "ok",
+        "observation": {
+          "error": {
+            "class": "ValueError",
+            "bases": [
+              "Exception",
+              "BaseException",
+              "object"
+            ],
+            "message": "TripleRule requires sh:predicate",
+            "args_type": "tuple",
+            "args": [
+              "TripleRule requires sh:predicate"
+            ]
+          },
+          "mutation": {
+            "statements": 3,
+            "digest": "3bdba9b330cd40bc3157f1989c5a0954e6dba7c7bec8819a9e22f076ed7a48ad1"
+          },
+          "warnings": []
+        },
+        "samples_ns": [
+          105000,
+          137542,
+          93208,
+          91959,
+          84291
+        ]
+      }
+    },
+    {
+      "id": "reference/empty-document-autodetection",
+      "status": "reference_timeout",
+      "turbo_state": "ok",
+      "pyshacl": {
+        "state": "timeout",
+        "timeout_seconds": 10
+      },
+      "pyshacl_turbo": {
+        "state": "ok",
+        "observation": {
+          "type": "tuple",
+          "conforms": false,
+          "text": "Validation Report\nConforms: False\nResults (1):\nConstraint Violation in MinCountConstraintComponent (http://www.w3.org/ns/shacl#MinCountConstraintComponent):\n\tSeverity: sh:Violation\n\tSource Shape: ex:S\n\tFocus Node: <urn:example:a>\n\tResult Path: ex:p\n\tMessage: Less than 1 values on <urn:example:a>->ex:p\n",
+          "report": {
+            "statements": 10,
+            "digest": "d7b46a17dab6f695e77bd2bec7a5b645669c63bf43168211a535a649ea8623840"
+          },
+          "mutation": null,
+          "warnings": []
+        },
+        "samples_ns": [
+          673875,
+          643875,
+          3343083,
+          698625,
+          711750
+        ]
+      }
+    },
+    {
+      "id": "exports/validate",
+      "status": "equal",
+      "pyshacl": {
+        "state": "ok",
+        "observation": {
+          "present": true
+        }
+      },
+      "pyshacl_turbo": {
+        "state": "ok",
+        "observation": {
+          "present": true
+        }
+      }
+    },
+    {
+      "id": "exports/validate_each",
+      "status": "equal",
+      "pyshacl": {
+        "state": "ok",
+        "observation": {
+          "present": true
+        }
+      },
+      "pyshacl_turbo": {
+        "state": "ok",
+        "observation": {
+          "present": true
+        }
+      }
+    },
+    {
+      "id": "exports/shacl_rules",
+      "status": "equal",
+      "pyshacl_turbo": {
+        "state": "ok",
+        "observation": {
+          "present": true
+        }
+      },
+      "pyshacl": {
+        "state": "ok",
+        "observation": {
+          "present": true
+        }
+      }
+    },
+    {
+      "id": "exports/Validator",
+      "status": "different",
+      "different_fields": [
+        "present"
+      ],
+      "pyshacl_turbo": {
+        "state": "ok",
+        "observation": {
+          "present": false
+        }
+      },
+      "pyshacl": {
+        "state": "ok",
+        "observation": {
+          "present": true
+        }
+      }
+    },
+    {
+      "id": "exports/RuleExpandRunner",
+      "status": "different",
+      "different_fields": [
+        "present"
+      ],
+      "pyshacl_turbo": {
+        "state": "ok",
+        "observation": {
+          "present": false
+        }
+      },
+      "pyshacl": {
+        "state": "ok",
+        "observation": {
+          "present": true
+        }
+      }
+    },
+    {
+      "id": "exports/Shape",
+      "status": "different",
+      "different_fields": [
+        "present"
+      ],
+      "pyshacl_turbo": {
+        "state": "ok",
+        "observation": {
+          "present": false
+        }
+      },
+      "pyshacl": {
+        "state": "ok",
+        "observation": {
+          "present": true
+        }
+      }
+    },
+    {
+      "id": "exports/ShapesGraph",
+      "status": "different",
+      "different_fields": [
+        "present"
+      ],
+      "pyshacl_turbo": {
+        "state": "ok",
+        "observation": {
+          "present": false
+        }
+      },
+      "pyshacl": {
+        "state": "ok",
+        "observation": {
+          "present": true
+        }
+      }
+    },
+    {
+      "id": "exports/__version__",
+      "status": "equal",
+      "pyshacl_turbo": {
+        "state": "ok",
+        "observation": {
+          "present": true
+        }
+      },
+      "pyshacl": {
+        "state": "ok",
+        "observation": {
+          "present": true
+        }
+      }
+    },
+    {
+      "id": "cli/shapes-alias",
+      "status": "equal",
+      "pyshacl_turbo": {
+        "state": "ok",
+        "observation": {
+          "exit_code": 1,
+          "stderr": "",
+          "report": {
+            "statements": 10,
+            "digest": "e0fc218dce86d6512e0abe28fbfc5bddf90c14a3b7f4fc6000a2182e726106f68"
+          }
+        }
+      },
+      "pyshacl": {
+        "state": "ok",
+        "observation": {
+          "exit_code": 1,
+          "stderr": "",
+          "report": {
+            "statements": 10,
+            "digest": "e0fc218dce86d6512e0abe28fbfc5bddf90c14a3b7f4fc6000a2182e726106f68"
+          }
+        }
+      }
+    },
+    {
+      "id": "cli/allow-infos-alias",
+      "status": "equal",
+      "pyshacl": {
+        "state": "ok",
+        "observation": {
+          "exit_code": 1,
+          "stderr": "",
+          "report": {
+            "statements": 10,
+            "digest": "e0fc218dce86d6512e0abe28fbfc5bddf90c14a3b7f4fc6000a2182e726106f68"
+          }
+        }
+      },
+      "pyshacl_turbo": {
+        "state": "ok",
+        "observation": {
+          "exit_code": 1,
+          "stderr": "",
+          "report": {
+            "statements": 10,
+            "digest": "e0fc218dce86d6512e0abe28fbfc5bddf90c14a3b7f4fc6000a2182e726106f68"
+          }
+        }
+      }
+    },
+    {
+      "id": "cli/allow-warnings-alias",
+      "status": "equal",
+      "pyshacl_turbo": {
+        "state": "ok",
+        "observation": {
+          "exit_code": 1,
+          "stderr": "",
+          "report": {
+            "statements": 10,
+            "digest": "e0fc218dce86d6512e0abe28fbfc5bddf90c14a3b7f4fc6000a2182e726106f68"
+          }
+        }
+      },
+      "pyshacl": {
+        "state": "ok",
+        "observation": {
+          "exit_code": 1,
+          "stderr": "",
+          "report": {
+            "statements": 10,
+            "digest": "e0fc218dce86d6512e0abe28fbfc5bddf90c14a3b7f4fc6000a2182e726106f68"
+          }
+        }
+      }
+    },
+    {
+      "id": "cli/warning-short",
+      "status": "equal",
+      "pyshacl": {
+        "state": "ok",
+        "observation": {
+          "exit_code": 1,
+          "stderr": "",
+          "report": {
+            "statements": 10,
+            "digest": "e0fc218dce86d6512e0abe28fbfc5bddf90c14a3b7f4fc6000a2182e726106f68"
+          }
+        }
+      },
+      "pyshacl_turbo": {
+        "state": "ok",
+        "observation": {
+          "exit_code": 1,
+          "stderr": "",
+          "report": {
+            "statements": 10,
+            "digest": "e0fc218dce86d6512e0abe28fbfc5bddf90c14a3b7f4fc6000a2182e726106f68"
+          }
+        }
+      }
+    },
+    {
+      "id": "cli/max-depth",
+      "status": "equal",
+      "pyshacl": {
+        "state": "ok",
+        "observation": {
+          "exit_code": 1,
+          "stderr": "",
+          "report": {
+            "statements": 10,
+            "digest": "e0fc218dce86d6512e0abe28fbfc5bddf90c14a3b7f4fc6000a2182e726106f68"
+          }
+        }
+      },
+      "pyshacl_turbo": {
+        "state": "ok",
+        "observation": {
+          "exit_code": 1,
+          "stderr": "",
+          "report": {
+            "statements": 10,
+            "digest": "e0fc218dce86d6512e0abe28fbfc5bddf90c14a3b7f4fc6000a2182e726106f68"
+          }
+        }
+      }
+    },
+    {
+      "id": "cli/automatic-format",
+      "status": "equal",
+      "pyshacl": {
+        "state": "ok",
+        "observation": {
+          "exit_code": 1,
+          "stderr": "",
+          "report": {
+            "statements": 10,
+            "digest": "e0fc218dce86d6512e0abe28fbfc5bddf90c14a3b7f4fc6000a2182e726106f68"
+          }
+        }
+      },
+      "pyshacl_turbo": {
+        "state": "ok",
+        "observation": {
+          "exit_code": 1,
+          "stderr": "",
+          "report": {
+            "statements": 10,
+            "digest": "e0fc218dce86d6512e0abe28fbfc5bddf90c14a3b7f4fc6000a2182e726106f68"
+          }
+        }
+      }
+    },
+    {
+      "id": "cli/focus-whitespace",
+      "status": "equal",
+      "pyshacl": {
+        "state": "ok",
+        "observation": {
+          "exit_code": 1,
+          "stderr": "",
+          "report": {
+            "statements": 10,
+            "digest": "e0fc218dce86d6512e0abe28fbfc5bddf90c14a3b7f4fc6000a2182e726106f68"
+          }
+        }
+      },
+      "pyshacl_turbo": {
+        "state": "ok",
+        "observation": {
+          "exit_code": 1,
+          "stderr": "",
+          "report": {
+            "statements": 10,
+            "digest": "e0fc218dce86d6512e0abe28fbfc5bddf90c14a3b7f4fc6000a2182e726106f68"
+          }
+        }
+      }
+    },
+    {
+      "id": "cli/shape-whitespace",
+      "status": "equal",
+      "pyshacl": {
+        "state": "ok",
+        "observation": {
+          "exit_code": 1,
+          "stderr": "",
+          "report": {
+            "statements": 10,
+            "digest": "e0fc218dce86d6512e0abe28fbfc5bddf90c14a3b7f4fc6000a2182e726106f68"
+          }
+        }
+      },
+      "pyshacl_turbo": {
+        "state": "ok",
+        "observation": {
+          "exit_code": 1,
+          "stderr": "",
+          "report": {
+            "statements": 10,
+            "digest": "e0fc218dce86d6512e0abe28fbfc5bddf90c14a3b7f4fc6000a2182e726106f68"
+          }
+        }
+      }
+    },
+    {
+      "id": "cli/validate-each",
+      "status": "equal",
+      "pyshacl_turbo": {
+        "state": "ok",
+        "observation": {
+          "exit_code": 1,
+          "stderr": "",
+          "stdout": "=== Validation result for 0 ===\nValidation Report\nConforms: False\nResults (1):\nConstraint Violation in MinCountConstraintComponent (http://www.w3.org/ns/shacl#MinCountConstraintComponent):\n\tSeverity: sh:Violation\n\tSource Shape: ex:S\n\tFocus Node: ex:a\n\tResult Path: ex:p\n\tMessage: Less than 1 values on ex:a->ex:p\n\n=== Validation result for 1 ===\nValidation Report\nConforms: True\n\n"
+        }
+      },
+      "pyshacl": {
+        "state": "ok",
+        "observation": {
+          "exit_code": 1,
+          "stderr": "",
+          "stdout": "=== Validation result for 0 ===\nValidation Report\nConforms: False\nResults (1):\nConstraint Violation in MinCountConstraintComponent (http://www.w3.org/ns/shacl#MinCountConstraintComponent):\n\tSeverity: sh:Violation\n\tSource Shape: ex:S\n\tFocus Node: ex:a\n\tResult Path: ex:p\n\tMessage: Less than 1 values on ex:a->ex:p\n\n=== Validation result for 1 ===\nValidation Report\nConforms: True\n\n"
+        }
+      }
+    },
+    {
+      "id": "cli/rules-selection",
+      "status": "equal",
+      "pyshacl": {
+        "state": "ok",
+        "observation": {
+          "exit_code": 0,
+          "stderr": "",
+          "report": {
+            "statements": 4,
+            "digest": "5b833b49c040b2d09b6d917c581274be7c2fe1466cee56a480fc116be0e28a0f3"
+          }
+        }
+      },
+      "pyshacl_turbo": {
+        "state": "ok",
+        "observation": {
+          "exit_code": 0,
+          "stderr": "",
+          "report": {
+            "statements": 4,
+            "digest": "5b833b49c040b2d09b6d917c581274be7c2fe1466cee56a480fc116be0e28a0f3"
+          }
+        }
+      }
+    },
+    {
+      "id": "cli/no-input",
+      "status": "equal",
+      "pyshacl": {
+        "state": "ok",
+        "observation": {
+          "exit_code": 1,
+          "stderr": "Input Error. No DataGraph file or endpoint supplied.",
+          "stdout": ""
+        }
+      },
+      "pyshacl_turbo": {
+        "state": "ok",
+        "observation": {
+          "exit_code": 1,
+          "stderr": "Input Error. No DataGraph file or endpoint supplied.",
+          "stdout": ""
+        }
+      }
+    },
+    {
+      "id": "cli/missing-input",
+      "status": "equal",
+      "pyshacl": {
+        "state": "ok",
+        "observation": {
+          "exit_code": 1,
+          "stderr": "Input Error. DataGraph file not found.\n",
+          "stdout": ""
+        }
+      },
+      "pyshacl_turbo": {
+        "state": "ok",
+        "observation": {
+          "exit_code": 1,
+          "stderr": "Input Error. DataGraph file not found.\n",
+          "stdout": ""
+        }
+      }
+    }
+  ]
+}

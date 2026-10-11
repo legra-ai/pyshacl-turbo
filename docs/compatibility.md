@@ -2,9 +2,30 @@
 
 The public Python module is `pyshacl_turbo`. Runtime validation, rules, SPARQL,
 report construction and inference execute in Rust. The pinned differential
-reference is pySHACL 0.40.1. SHACL-JS is excluded from this project's target.
+reference is pySHACL 0.40.1. The goal is complete drop-in compatibility, including
+SHACL-JS as future work. Current implementation work focuses on non-JS gaps.
+See [ADR 0020](adr/0020-measure-the-complete-public-contract.md).
 
 ## Measurements
+
+The [direct public-contract report](direct-contract.md) and
+[raw observations](direct-contract.json) call both installed engines without
+the upstream bridge. They compare API result structure, RDF graph scope, exact
+report text, error attributes, warnings, mutations, CLI behavior and public
+export availability. Timeouts and reference failures have their own outcomes.
+The catalogue is an expanding set of probes, not an overall compatibility
+percentage. Class availability is separate from class behavior.
+
+Reproduce it with:
+
+```sh
+.venv/bin/python scripts/compare_contract.py --output direct-contract.json
+```
+
+CI checks the committed inventory and rejects regressions from equal cases.
+It retains known differences as differences. Timings are diagnostic; they are
+not CI speed thresholds. See the [workload benchmark](../benchmarks/drop-in.md)
+for larger Core, rule, shape-count and SPARQL workloads.
 
 The latest Turbo run passes **403/403 cases (100%)** in the locally corrected
 upstream suite: 400 unchanged behavioral cases, one corrected fixture, and two
@@ -118,6 +139,14 @@ after successful execution. They do not replay the original snapshot over
 concurrent deletions. Neither path introduces Tokio or asynchronous I/O.
 
 ## Known limits
+
+- Existing applications still need to use `pyshacl_turbo` imports and
+  `pyshacl-turbo` commands. The reference's public `Validator`, `RuleExpandRunner`,
+  `Shape` and `ShapesGraph` classes are not yet available. Rule results expose
+  RDFLib objects rather than the reference's DataGraph wrapper, with observable
+  interface differences. Typed shape/constraint/rule load errors still differ.
+- SHACL-JS is planned and has not been implemented or measured. It is part of
+  the complete replacement target, separate from the current non-JS suite.
 
 - Report formatting is substantially closer but not byte-for-byte identical.
   The upstream blank-node description case and issue 286 now pass; see

@@ -2,14 +2,16 @@
 
 import logging
 import warnings
+from collections.abc import Sequence
 from dataclasses import replace
 from functools import wraps
+from importlib.metadata import version
 from pathlib import Path
 
-from rdflib import Graph
+from rdflib import Dataset, Graph
 
 from . import _native
-from .errors import ShapeRecursionWarning, ValidationWarning
+from .errors import ReportableRuntimeError, ShapeRecursionWarning, ValidationWarning
 from .rdf import (
     Input,
     commit_serialized,
@@ -22,12 +24,7 @@ from .rdf import decode as _graph
 from .rdf import input_graph as _input
 
 ValidationFailure = _native.ValidationFailure
-
-
-class ReportableRuntimeError(RuntimeError):
-    @property
-    def message(self):
-        return str(self)
+__version__ = version("pyshacl-turbo")
 
 
 def _failure_result(function):
@@ -52,6 +49,7 @@ __all__ = [
     "ShapeRecursionWarning",
     "ValidationFailure",
     "ValidationWarning",
+    "__version__",
     "compile_shapes",
     "evaluate_query_testcase",
     "extract_query_and_expected_result",
@@ -132,6 +130,8 @@ class CompiledShapes:
         iterate_rules=False,
         max_rule_iterations=100,
         max_validation_depth=15,
+        focus_nodes=None,
+        use_shapes=None,
     ):
         if inplace and not (
             isinstance(data_graph, (Graph, Input)) or is_oxigraph_store(data_graph)
@@ -145,9 +145,18 @@ class CompiledShapes:
             iterate_rules,
             max_rule_iterations,
             15 if max_validation_depth is None else max_validation_depth,
+            _expand_names(data.namespaces or dict(self.graph.namespaces()), focus_nodes),
+            _expand_names(self.graph, use_shapes),
         )
         _emit_recursion_warnings(recursion_warnings)
-        result = _graph(expanded, data.blank_nodes, preserve_ids=True)
+        result = _graph(
+            expanded,
+            data.blank_nodes,
+            preserve_ids=True,
+            identifier=getattr(data_graph, "identifier", None),
+        )
+        for prefix, namespace in data.namespaces.items():
+            result.bind(prefix, namespace)
         if inplace:
             commit_serialized(data_graph, expanded, data.blank_nodes, before=data)
             return data_graph if isinstance(data_graph, Graph) else result
@@ -161,7 +170,7 @@ def compile_shapes(shacl_graph, *, shacl_graph_format=None, advanced=False):
 @_failure_result
 def validate(
     data_graph,
-    *,
+    *args,
     shacl_graph=None,
     data_graph_format=None,
     shacl_graph_format=None,
@@ -199,12 +208,13 @@ def validate(
             )
         if isinstance(data_graph, str) and data_graph.startswith(("http:", "https:")):
             raise NotImplementedError("Remote SPARQL endpoint input")
-    if isinstance(data_graph, (list, tuple, set, frozenset)):
+    if _is_multi_data_graph_input(data_graph):
         if not data_graph:
             raise RuntimeError("No data graphs were provided for validation.")
         if multi_data_graphs_mode == "validate_each":
             return validate_each(
                 data_graph,
+                *args,
                 shacl_graph=shacl_graph,
                 advanced=advanced,
                 data_graph_format=data_graph_format,
@@ -301,7 +311,7 @@ def validate(
 
 def shacl_rules(
     data_graph,
-    *,
+    *args,
     shacl_graph=None,
     data_graph_format=None,
     shacl_graph_format=None,
@@ -316,6 +326,10 @@ def shacl_rules(
     debug=False,
     do_owl_imports=False,
     ont_graph_format=None,
+    focus_nodes=None,
+    use_shapes=None,
+    serialize_expanded_graph=False,
+    serialize_expanded_graph_format=None,
     **kwargs,
 ):
     _options(js, kwargs)
@@ -344,12 +358,24 @@ def shacl_rules(
         iterate_rules=iterate_rules,
         max_rule_iterations=max_rule_iterations,
         max_validation_depth=max_validation_depth,
+        focus_nodes=focus_nodes,
+        use_shapes=use_shapes,
     )
     if inplace and isinstance(original, Graph) and original is not data_graph:
         merge_graph(original, result)
-        return original
+        result = original
     elif inplace and is_oxigraph_store(original) and original is not data_graph:
         commit_serialized(original, _input(data_graph).source, before=original_snapshot)
+    if serialize_expanded_graph:
+        rdf_format = serialize_expanded_graph_format or "trig"
+        if rdf_format in {"json-ld", "nquads"} and not result.context_aware:
+            dataset = Dataset()
+            context = dataset.graph(result.identifier)
+            context += result
+            for prefix, namespace in result.namespaces():
+                dataset.bind(prefix, namespace)
+            result = dataset
+        return result.serialize(format=rdf_format)
     return result
 
 
@@ -414,10 +440,19 @@ def _prepare_data(data, rdf_format, ontology, ontology_format, inference, import
     return result
 
 
-def validate_each(data_graphs, **kwargs):
+def _is_multi_data_graph_input(value):
+    return not isinstance(value, (str, bytes, Graph)) and isinstance(
+        value, (Sequence, set, frozenset)
+    )
+
+
+def validate_each(data_graphs, *args, **kwargs):
+    if not _is_multi_data_graph_input(data_graphs):
+        raise ReportableRuntimeError("validate_each expects a sequence of data graphs to validate.")
+    data_graphs = list(data_graphs)
     if not data_graphs:
-        raise RuntimeError("No data graphs were provided for validation.")
-    return [validate(data, **kwargs) for data in data_graphs]
+        raise ReportableRuntimeError("No data graphs were provided for validate_each.")
+    return {index: validate(data, *args, **kwargs) for index, data in enumerate(data_graphs)}
 
 
 def meta_validate(shacl_graph, inference="rdfs", **kwargs):

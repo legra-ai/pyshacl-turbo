@@ -3,12 +3,13 @@
 import argparse
 import logging
 import sys
+from contextlib import ExitStack
 from importlib.metadata import version
 
 from rdflib import Dataset, Graph
 from rdflib.namespace import SH
 
-from . import shacl_rules, validate
+from . import shacl_rules, validate, validate_each
 
 
 def table(headers, rows):
@@ -86,8 +87,8 @@ def serialize_graph(graph, rdf_format):
 
 def main(argv=None):
     parser = argparse.ArgumentParser(prog="pyshacl-turbo")
-    parser.add_argument("data", nargs="+")
-    parser.add_argument("-s", "--shacl", dest="shacl_graph")
+    parser.add_argument("data", nargs="*")
+    parser.add_argument("-s", "--shapes", "--shacl", dest="shacl_graph")
     parser.add_argument("-e", "--ont-graph", dest="ont_graph")
     parser.add_argument(
         "-i", "--inference", choices=["none", "rdfs", "owlrl", "both"], default="none"
@@ -98,8 +99,12 @@ def main(argv=None):
     parser.add_argument("-im", "--imports", dest="do_owl_imports", action="store_true")
     parser.add_argument("-it", "--iterate-rules", action="store_true")
     parser.add_argument("--abort", dest="abort_on_first", action="store_true")
-    parser.add_argument("--allow-info", dest="allow_infos", action="store_true")
-    parser.add_argument("--allow-warning", dest="allow_warnings", action="store_true")
+    parser.add_argument("--allow-info", "--allow-infos", dest="allow_infos", action="store_true")
+    parser.add_argument(
+        "-w", "--allow-warning", "--allow-warnings", dest="allow_warnings", action="store_true"
+    )
+    parser.add_argument("--max-depth", dest="max_validation_depth", type=int)
+    parser.add_argument("--validate-each", action="store_true")
     parser.add_argument("--focus")
     parser.add_argument("--shape")
     parser.add_argument("-d", "--debug", action="store_true")
@@ -114,8 +119,12 @@ def main(argv=None):
         choices=["human", "table", "turtle", "trig", "xml", "json-ld", "nt", "n3", "nquads"],
     )
     parser.add_argument("-o", "--output")
-    parser.add_argument("--version", action="version", version=version("pyshacl-turbo"))
+    parser.add_argument("-V", "--version", action="version", version=version("pyshacl-turbo"))
     args = parser.parse_args(argv)
+    if not args.data:
+        print("Input Error. No DataGraph file or endpoint supplied.", file=sys.stderr)
+        parser.print_usage(sys.stderr)
+        return 1
     if args.debug:
         logging.basicConfig(level=logging.DEBUG)
     options = {
@@ -132,10 +141,44 @@ def main(argv=None):
             "shacl_graph_format",
             "ont_graph_format",
             "debug",
+            "max_validation_depth",
         ]
     }
-    data = [sys.stdin.buffer.read() if source == "-" else source for source in args.data]
-    data = data[0] if len(data) == 1 else data
+    for name in ("data_graph_format", "shacl_graph_format", "ont_graph_format"):
+        if options[name] == "auto":
+            options[name] = None
+    options.update(
+        focus_nodes=[name.strip() for name in args.focus.split(",")] if args.focus else None,
+        use_shapes=[name.strip() for name in args.shape.split(",")] if args.shape else None,
+    )
+    with ExitStack() as files:
+        try:
+            data = [
+                sys.stdin.buffer.read()
+                if source == "-"
+                else files.enter_context(open(source, "rb"))
+                for source in args.data
+            ]
+        except FileNotFoundError:
+            print("Input Error. DataGraph file not found.", file=sys.stderr)
+            return 1
+        except PermissionError:
+            print("Input Error. DataGraph file not readable.", file=sys.stderr)
+            return 1
+        return _run(args, data, options)
+
+
+def _validation_output(result, rdf_format):
+    conforms, report, text = result
+    if rdf_format == "table" and isinstance(report, Graph):
+        return report_table(conforms, report)
+    if rdf_format != "human" and isinstance(report, Graph):
+        return serialize_graph(report, rdf_format)
+    return text
+
+
+def _run(args, inputs, options):
+    data = inputs[0] if len(inputs) == 1 else inputs
     try:
         if args.rules:
             options["advanced"] = True
@@ -150,15 +193,19 @@ def main(argv=None):
                     for name in ["meta_shacl", "abort_on_first", "allow_infos", "allow_warnings"]
                 }
             )
-            options.update(
-                focus_nodes=args.focus.split(",") if args.focus else None,
-                use_shapes=args.shape.split(",") if args.shape else None,
-            )
-            conforms, report, text = validate(data, **options)
-            if args.format == "table" and isinstance(report, Graph):
-                text = report_table(conforms, report)
-            elif args.format != "human" and isinstance(report, Graph):
-                text = serialize_graph(report, args.format)
+            if args.validate_each:
+                results = validate_each(inputs, **options)
+                conforms = all(result[0] for result in results.values())
+                text = "".join(
+                    f"=== Validation result for {index} ===\n"
+                    + _validation_output(result, args.format)
+                    + "\n"
+                    for index, result in results.items()
+                )
+            else:
+                result = validate(data, **options)
+                conforms = result[0]
+                text = _validation_output(result, args.format)
         if args.output:
             with open(args.output, "w", encoding="utf-8") as output:
                 output.write(text)

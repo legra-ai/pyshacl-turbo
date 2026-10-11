@@ -40,7 +40,7 @@ jobs:
       - uses: actions-rust-lang/setup-rust-toolchain@v1
       - name: Build native extension and install pinned test dependencies
         run: make dev PYTHON=3.13
-      - name: W3C, corrected pySHACL suite, and two-engine fixture audit
+      - name: W3C, corrected suite, fixture audit and direct public contracts
         run: make test-compatibility
       - uses: actions/upload-artifact@v7
         if: always()
@@ -50,4 +50,6 @@ jobs:
             w3c-results.xml
             upstream-results.json
             reference-fixture-audit.json
+            direct-contract.json
+            direct-contract.md
           if-no-files-found: error

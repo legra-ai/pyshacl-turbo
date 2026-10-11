@@ -42,8 +42,9 @@ def test_validate_each_option_returns_independent_results_and_preserves_options(
         multi_data_graphs_mode="validate_each",
         allow_warnings=True,
     )
-    assert [result[0] for result in results] == [True, True]
-    assert [len(list(result[1].objects(None, SH.result))) for result in results] == [1, 0]
+    assert list(results) == [0, 1]
+    assert [result[0] for result in results.values()] == [True, True]
+    assert [len(list(result[1].objects(None, SH.result))) for result in results.values()] == [1, 0]
 
 
 def test_invalid_multi_graph_modes_and_empty_validate_each_are_errors():

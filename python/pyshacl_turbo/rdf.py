@@ -56,7 +56,7 @@ class _NativeBlankNodes(dict):
         return self.setdefault(key, BNode(key))
 
 
-def decode(source, blank_nodes=None, multigraph=False, preserve_ids=False):
+def decode(source, blank_nodes=None, multigraph=False, preserve_ids=False, identifier=None):
     dataset = Dataset(default_union=True)
     parser = _Parser()
     parser.sink = dataset
@@ -67,7 +67,7 @@ def decode(source, blank_nodes=None, multigraph=False, preserve_ids=False):
     named = any(g.identifier != dataset.default_graph.identifier for g in dataset.graphs())
     if multigraph or named:
         return dataset
-    graph = Graph()
+    graph = Graph(identifier=identifier)
     graph += dataset.default_graph
     return graph
 

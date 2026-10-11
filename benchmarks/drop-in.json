@@ -1,0 +1,1945 @@
+{
+  "environment": {
+    "date": "2026-10-11T17:32:08.791027+00:00",
+    "platform": "macOS-27.0.1-arm64-arm-64bit-Mach-O",
+    "python": "3.13.16",
+    "pyshacl": "0.40.1",
+    "rdflib": "7.6.0",
+    "owlrl_reference_only": "7.6.2",
+    "turbo": "0.1.0",
+    "pyoxigraph": "0.5.11",
+    "load_note": "Release build from the working tree with the public-contract fixes; see source hashes. This task ran no concurrent builds or tests during the matrix. Other workspace Rust compilation was observed, so these are descriptive local measurements under background activity, not isolated-machine capacity estimates."
+  },
+  "source_sha256": {
+    "Cargo.lock": "fce7d9d87aca9afe63107c55a8f40853510e738d767c9706f53841bb011570c9",
+    "Cargo.toml": "1027b70d73ae4ff43a995347a3d40f1b0516fb00857f3a69c792268ea4cb40e6",
+    "benchmarks/matrix.py": "4b2828e7a2ba6f8c87bd671f215004e71036b993cc79f282e8794d2228c523f2",
+    "crates/engine/Cargo.toml": "905165380c341cf648bc555fcac51192ba28f692645b62709f88644e64451036",
+    "crates/engine/build.rs": "a30dbddac36041ae3f4fec89da13245aa1e420a9dec7507297fbc7f8480d8188",
+    "crates/engine/src/compile.rs": "11bdd3be26aff7f77b02ff9bb6c9594e64d5cc4b9bbc198c8fe533327e721ec6",
+    "crates/engine/src/components.rs": "5bc1170631925335ca71ddd51e7ef031da06345bd4bf7354673d9210b5a40aad",
+    "crates/engine/src/constraints.rs": "15b300084961f5e7dd155385e91d2f1f197f4256f1815dfde7b6ddced8980494",
+    "crates/engine/src/display.rs": "fe07a8ba5c7c4f3ea58003e39dfc2e2f70bae66c48fe22a87a4d882f05eeb9bf",
+    "crates/engine/src/execute.rs": "3668b0ff2883d7816ceb87b2258ff4e1fa83b086e24f505ddbf1523e15cf1abb",
+    "crates/engine/src/expression.rs": "00134daaa9e9c1c18ff170e325faa022c59853c521a43a9939cb297106203e32",
+    "crates/engine/src/functions.rs": "8ead2a208def537230559d4494e15fe4c2f44ded32f19d7ae3e4f132a0613dfa",
+    "crates/engine/src/graph.rs": "15a18ee1a15f778f7f2de82d08b40ed76b2b994c4d7cac1be97a7d8263afdeac",
+    "crates/engine/src/inference/axioms.rs": "067dff6c54e846dabca7b29af1d2ebb9d43defa9802aeced8a2613d07fdc57d5",
+    "crates/engine/src/inference.rs": "57f320ae80cc6833ebbcffa1e874c7dbf2468f326212f46e99a835847b29b739",
+    "crates/engine/src/lib.rs": "a6cfc3b95efedbec4e10cf4e55c6f494c12f8a1bd266c4cad7fc9b0dc5a8885d",
+    "crates/engine/src/ontology.rs": "9b25fc852eddf681c9156a9d7f86446b3d5b8bcf9385edbf4af4670c128b9009",
+    "crates/engine/src/path.rs": "11f0dc9d8b58c28dcdb79db261eeb0b86ce816a4bb4ca9e686042f4c5c176fb6",
+    "crates/engine/src/pattern.rs": "0dcd2138431bfaa4a62c32b022779692894b31b049ff7172228ebf772a97f6dc",
+    "crates/engine/src/sparql.rs": "98abed95e743198a69a0d0efca6a5975569587bd24cd0d7dfa40af047eb537d6",
+    "crates/engine/src/sparql_regex.rs": "1d445a80f28f05312aea83566346fb273ecb74ea9706cad09eb30f9176fc730e",
+    "crates/engine/src/structural.rs": "576d1de4dfe14ef0972c2d77231abad73de95cb601c4d0468eb6925e09b7f157",
+    "crates/engine/src/structural_tests.rs": "8fe2c19fc33e21b02720b5d85bebb15e3af6376c40efef657fce729c72cdff2d",
+    "crates/engine/src/value.rs": "2db95f5a907aec248f2d03769e0e54502d8d546787c811cb3f9618a81ed1d73e",
+    "crates/engine/tests/pipeline.rs": "9ecd120b9058eaf8c070539f2e5137d7aad690f6c7c6d2e1ca5eb164918f72c7",
+    "crates/python/Cargo.toml": "2090a3847106ef768bf371d375b27929bdcca0e16bec4158e7cc5db73d5412b2",
+    "crates/python/src/lib.rs": "b54278dea50e622ea4c3a1b1dcf2a19de4deb859d8b15c5d0465062e51b910f2",
+    "python/pyshacl_turbo/__init__.py": "df1170f07ef0d948c1f415c26fb848ca600a25a5f1e4ef8c79ec0f3898f7f7c7",
+    "python/pyshacl_turbo/__main__.py": "0dd072ac4488f65bf8c5864ce7a52efa1498fe3fe980353e07f148507de7c735",
+    "python/pyshacl_turbo/cli.py": "c69b717f8bace8d02239e5b786cddbaaf9cbff9013f2f911fbc2dee7afa2e7c7",
+    "python/pyshacl_turbo/conformance.py": "1c99b8407c1b417783ae1676065ef012f1dea9df93d2eb0e4b75d2f3dd79aa4a",
+    "python/pyshacl_turbo/errors.py": "8c02ecc0f228dfd9facf1a70dfa4ac71392d04ab6d2ac472a9bfde5520b43ac9",
+    "python/pyshacl_turbo/rdf.py": "afe8831abdf114fce9b2ba4a097a125887ff7568fa6ebe8c431ddd0be6d7fd95",
+    "vendor/fancy-regex-0.19.2/Cargo.toml": "7b34cc77b382770b90268f32a12aff3f30389c3fcd64023f6f158b91f9c47419",
+    "vendor/fancy-regex-0.19.2/benches/bench.rs": "89f56c3fdde5316785e569779ca1b6497fac7a776f8df07271960b63efe89d18",
+    "vendor/fancy-regex-0.19.2/benches/compile.rs": "9423e086cbce5f6740501d379501ca8b1bdec9f529ebc12d066244a83b7b6966",
+    "vendor/fancy-regex-0.19.2/benches/regexset_vs_individual.rs": "b27bbbb0811a62e0e518ff6dceb5ec0d823d7182e2b10e709315ea1ffe0102b3",
+    "vendor/fancy-regex-0.19.2/examples/compile_mem.rs": "0b446f92d79987b4b5beaa83fb3f0155d40c976cb2177d1dba76f9077406557d",
+    "vendor/fancy-regex-0.19.2/examples/regexset_syntax_highlighting.rs": "c208e11065caa41da119a6b9a19ad34dcab83e2d411dc368b56f050f0886ec86",
+    "vendor/fancy-regex-0.19.2/examples/toy.rs": "2417690adf01af33fb6c0f01fa393d6833d68eb02dbfd854a84d6815541b2599",
+    "vendor/fancy-regex-0.19.2/src/analyze.rs": "85bef9567aee2e0923da211399b40eb9e64ad4cc91279fc2b5f6c8666124e5fa",
+    "vendor/fancy-regex-0.19.2/src/bytes/mod.rs": "a2193582ab47f077af679667cbdba5e8260124fb99819632ee6cc4243d813ef4",
+    "vendor/fancy-regex-0.19.2/src/compile.rs": "9d294f31780ae3eb5057c4efaaa47f018d12fa42281d2eecba6ffd50be67760f",
+    "vendor/fancy-regex-0.19.2/src/error.rs": "a1b68ff8a76227bdb3be20f847942fe99bbac70d1d6f97c696ee50647217d86a",
+    "vendor/fancy-regex-0.19.2/src/expand.rs": "57a62ab4a981a651cd7a5e98208164c56d630e5ad2ea2f904cfdd695df5484a2",
+    "vendor/fancy-regex-0.19.2/src/input.rs": "b63c92fb3f1f39ed9dae9c9a0a5cd645d2805685a8764de52f2b10d54266aec8",
+    "vendor/fancy-regex-0.19.2/src/lib.rs": "60464105e3f79289671d31dc9793366c566ebcc0ef3b1648e0c11b4b11058093",
+    "vendor/fancy-regex-0.19.2/src/optimize.rs": "6f89a0382d58cb162d0c57a2507453376e365b3839b4e3d231b066d82a7f7a9c",
+    "vendor/fancy-regex-0.19.2/src/parse.rs": "b334a3d0e3bccf607d52bbabdd5f52e745f15c02ccd92013612ae69f5b91ba4b",
+    "vendor/fancy-regex-0.19.2/src/parse_flags.rs": "279b3288f38f3baf3d38e8f713bad15857708f2d1463964045907678484354fc",
+    "vendor/fancy-regex-0.19.2/src/regexset.rs": "93fb42bf6cb21e57d974108e2f8ab1a7cce30b40a8ec35d4f351d754799e5d38",
+    "vendor/fancy-regex-0.19.2/src/replacer.rs": "8f4694c903194407089b1aa7d3d2f730fc99df7c4fb29010e2b59d7652240cde",
+    "vendor/fancy-regex-0.19.2/src/seek.rs": "b96b43893d761581a267395a45bc3fb42ec2325b278f643cd5766c77d6469d01",
+    "vendor/fancy-regex-0.19.2/src/to_hir.rs": "93da8d57672aabdd52edd9c7117d492ef127ed4a3b1779862d466156d0718d7b",
+    "vendor/fancy-regex-0.19.2/src/vm.rs": "0c09bafc2245b6e1241719fe2470a69fa45c29c23d706e208665ae63d0870434",
+    "vendor/fancy-regex-0.19.2/tests/bytes/captures.rs": "1aa67a83b53f0c76eabb4be4681fe94e8028275830c1ad7e037db03e58939786",
+    "vendor/fancy-regex-0.19.2/tests/bytes/main.rs": "f87c7903438500733e5ce6f6489a7c929b33ccfb3b02b75f4ebf8c0a68b604be",
+    "vendor/fancy-regex-0.19.2/tests/bytes/matching.rs": "11579641cce2380063c3422ae8f33eb8cee1757e8ca7744911e3909bbfd0d681",
+    "vendor/fancy-regex-0.19.2/tests/captures.rs": "339850d06fa641f7c7f4216dc9f81ccdb00a24464625593e5e48bc2578bf84c3",
+    "vendor/fancy-regex-0.19.2/tests/common/mod.rs": "0814457c1fa516bd89b25af13e02ef6cb359c51ea23e18d3e7c2e2ce5e52cd75",
+    "vendor/fancy-regex-0.19.2/tests/finding.rs": "005fbff438b0588da4405968d91ab9fe0e93d69d59221e1eda5557831f3fab31",
+    "vendor/fancy-regex-0.19.2/tests/leftmost_longest.rs": "d0533fa5687f0312ab2895551eb68f0c895c21abd4c8bb24a8c5cc5cdb78ae87",
+    "vendor/fancy-regex-0.19.2/tests/matching.rs": "fd4d0764688a9f76c12ee98a9f5a598522a78500e04bf42579249f8e75ed2cbc",
+    "vendor/fancy-regex-0.19.2/tests/oniguruma.rs": "80915459dfc0380f64fd2820fe4bcbd70c4b9fe9eb0c9847413ab23222f8a272",
+    "vendor/fancy-regex-0.19.2/tests/regex_options.rs": "3c51cf7ef2a58f098294d23b98d51eb9f47e40c3dcfca928dca7e14661a57088",
+    "vendor/fancy-regex-0.19.2/tests/replace.rs": "2290565e20263fc5318d8f154f27b90a155ca9c757fab4ab66c893f99f25fcdb",
+    "vendor/fancy-regex-0.19.2/tests/send_sync.rs": "5e209c9dfaab5aac0778d376eef2ed5017e518522d15faf6c48b5b4ec32e59ee",
+    "vendor/fancy-regex-0.19.2/tests/splitting.rs": "55a60e7953e92cf542fff8016c24607d3da4fdf9cbf68712348cc430b2bc0f3f",
+    "vendor/oxrdf-0.3.4/Cargo.toml": "b54827e961b655f77933cf5d77595e1a427c2e117d0be62e9c92948f9916622f",
+    "vendor/oxrdf-0.3.4/src/blank_node.rs": "cf7c6386a2ec6e4cbc39d3a91be11ff0f91fb9a72802454761cd5a47bfef70a1",
+    "vendor/oxrdf-0.3.4/src/dataset.rs": "692c68bea9a20db82a062311cd59bcfbc6138227c2cab4aa8f46810e7633eec9",
+    "vendor/oxrdf-0.3.4/src/graph.rs": "6f0d30c6e4418b9e3f0066f4125758e7bc293c55ddb97b9362258144540918b8",
+    "vendor/oxrdf-0.3.4/src/interning.rs": "983d8fec9883e9498ada56adaa022c6150df168f3bfca4ebdcd1653762286205",
+    "vendor/oxrdf-0.3.4/src/lib.rs": "c0b5b48c9e5de74b1ed9b74306047656517bb1ec1d2312f784b227d1070b9205",
+    "vendor/oxrdf-0.3.4/src/literal.rs": "d11c2bf9333f7cfdb4881d44138b5b23130dd6d0b4ef5a6cb32c9a74684c59db",
+    "vendor/oxrdf-0.3.4/src/named_node.rs": "bc4c86388f415d0393f9756043d336a48d73bf4fa0a98560455c1bc31fae422e",
+    "vendor/oxrdf-0.3.4/src/parser.rs": "e49e38fc6e642637dc25073613db36c1f3b1da25fd177c16071010863379a705",
+    "vendor/oxrdf-0.3.4/src/triple.rs": "912ac7910c1891676a20cb2417389cad68ef1b46c97f6941b4180475e3b876f0",
+    "vendor/oxrdf-0.3.4/src/variable.rs": "48447a50fb1da28d20ba61656f9497bfe68de06514a010333ba3ccb2f2eefae3",
+    "vendor/oxrdf-0.3.4/src/vocab.rs": "0b32eeecbc83fcb1ebb40d038ce0afe90b6e151860f43925b3da272abf23ebb5",
+    "vendor/spareval-0.2.7/Cargo.toml": "9d25de21992db4099a2e1765124b9f923250f74ad7d29481c59e2cbed66668d1",
+    "vendor/spareval-0.2.7/src/dataset.rs": "15fb9c27f65cf8e8fea342db7f34a29e05e9090098714914cb0b47e90de0e912",
+    "vendor/spareval-0.2.7/src/error.rs": "01468f9cc058e977130d5745072a96c270781f96fb43a738d47d00f1952a3b69",
+    "vendor/spareval-0.2.7/src/eval.rs": "69dae8e81a0406484c0f50ffd00de3d58695f1750fa1fa40bb821e74089bc61e",
+    "vendor/spareval-0.2.7/src/expression.rs": "afca22da53f68f3532093e85fff11715cf33313de640c28b2be33e08423fa0a1",
+    "vendor/spareval-0.2.7/src/lib.rs": "ac9df5b744b50ec58accce861ed1445a9174692c88a2f3129378a57bae3d3dfe",
+    "vendor/spareval-0.2.7/src/model.rs": "04863538ccae395e76d447b22fb988b347f69e82132918746dee0c175a73933e",
+    "vendor/spareval-0.2.7/src/service.rs": "2167e5f8ee75ab8a0a601c8b5dc5d431e09d01956e1d0ee1bdf34be0a4daa3c5",
+    "vendor/spareval-0.2.7/src/update.rs": "7c9a0c431bd79b20f4638e7b586ac1edd287cdb39e532fa042b30299cf2bf8ae",
+    "vendor/spargebra-0.4.7/Cargo.toml": "db5dffb7965acf11813429eb180ed341439154e7d43a15916b4b57a8dc959cfc",
+    "vendor/spargebra-0.4.7/src/algebra.rs": "81d04fe7678d3f76ffa743db33a41766407131e45015c0fbb0881e79bca3e908",
+    "vendor/spargebra-0.4.7/src/lib.rs": "e2e0f5ea800382085bda55b4943ca3185f5b82501afb0d56847333bd0e886eef",
+    "vendor/spargebra-0.4.7/src/parser.rs": "e838fe6f7cb2bbd82645ff1555b1232804e50d246a3714303cce4103dcc68b37",
+    "vendor/spargebra-0.4.7/src/query.rs": "2898f8381294337f29224b5d016cfcdd34e89c93d66a0c68140b4b3d2bb259b6",
+    "vendor/spargebra-0.4.7/src/term.rs": "9820ae59d3e51484081836cb56bf3dcc65ce1e9cc963e6484b681f8261aaca66",
+    "vendor/spargebra-0.4.7/src/update.rs": "2c1928995d0a2c889f653ccc2d6cbb108bfc3f40155c12b486982166e41aa110",
+    "vendor/sparopt-0.3.7/Cargo.toml": "67e10fb0d592db0ec74d724745a7cf67e8787504625bbd9a66dc52f673c1c3bc",
+    "vendor/sparopt-0.3.7/src/algebra.rs": "3d0198cce5c1480b26d93445fc71af6528b697bf2ec916c793e53facded56838",
+    "vendor/sparopt-0.3.7/src/lib.rs": "701879e1bc40a989ed8dc399de002186b28ed2dbb8756b0941f75aa104099799",
+    "vendor/sparopt-0.3.7/src/optimizer.rs": "1dfe355900cf392d6ef25835963ec8f15771bbde265bbe766cda83e85a90886c",
+    "vendor/sparopt-0.3.7/src/type_inference.rs": "e60680c7d1b9e4308158f314336522b67da6936f928b48bf0c1c9df7d044bc05"
+  },
+  "repeats": 5,
+  "runs": [
+    {
+      "name": "core-100-nodes-1-shapes",
+      "kind": "core",
+      "nodes": 100,
+      "shape_count": 1,
+      "options": {
+        "advanced": false,
+        "inference": "none"
+      },
+      "data_triples": 290,
+      "shape_triples": 10,
+      "result_count": 10,
+      "reports_isomorphic": true,
+      "measurements": {
+        "pyshacl": {
+          "median_ms": 3.76925,
+          "min_ms": 3.677917,
+          "max_ms": 3.82775,
+          "samples_ms": [
+            3.739917,
+            3.82775,
+            3.76925,
+            3.79225,
+            3.677917
+          ]
+        },
+        "turbo": {
+          "median_ms": 3.046125,
+          "min_ms": 2.877791,
+          "max_ms": 3.77225,
+          "samples_ms": [
+            3.046125,
+            3.77225,
+            3.124833,
+            2.877791,
+            3.036708
+          ]
+        },
+        "turbo_reused_shapes": {
+          "median_ms": 2.643333,
+          "min_ms": 2.557833,
+          "max_ms": 3.824125,
+          "samples_ms": [
+            2.557833,
+            2.643333,
+            2.942875,
+            2.641083,
+            3.824125
+          ]
+        },
+        "pyshacl_oxigraph": {
+          "median_ms": 7.246125,
+          "min_ms": 6.661917,
+          "max_ms": 8.407833,
+          "samples_ms": [
+            8.407833,
+            7.369917,
+            6.661917,
+            7.246125,
+            6.6735
+          ]
+        },
+        "turbo_oxigraph": {
+          "median_ms": 2.370375,
+          "min_ms": 2.093459,
+          "max_ms": 3.457416,
+          "samples_ms": [
+            2.594791,
+            2.370375,
+            2.249708,
+            3.457416,
+            2.093459
+          ]
+        },
+        "turbo_oxigraph_reused_shapes": {
+          "median_ms": 1.944167,
+          "min_ms": 1.908292,
+          "max_ms": 2.077333,
+          "samples_ms": [
+            1.929875,
+            1.908292,
+            2.077333,
+            2.013333,
+            1.944167
+          ]
+        }
+      },
+      "unavailable_backends": {},
+      "phases": {
+        "pyshacl_load_data": {
+          "median_ms": 4.253458,
+          "min_ms": 4.020958,
+          "max_ms": 4.278292,
+          "samples_ms": [
+            4.020958,
+            4.038208,
+            4.278292,
+            4.253458,
+            4.270917
+          ]
+        },
+        "turbo_load_data": {
+          "median_ms": 4.260375,
+          "min_ms": 4.207458,
+          "max_ms": 6.354958,
+          "samples_ms": [
+            4.245375,
+            4.296375,
+            6.354958,
+            4.260375,
+            4.207458
+          ]
+        },
+        "pyshacl_load_shapes": {
+          "median_ms": 0.390583,
+          "min_ms": 0.32925,
+          "max_ms": 0.419625,
+          "samples_ms": [
+            0.360292,
+            0.32925,
+            0.419625,
+            0.390583,
+            0.396541
+          ]
+        },
+        "turbo_load_shapes": {
+          "median_ms": 0.315666,
+          "min_ms": 0.277,
+          "max_ms": 0.351,
+          "samples_ms": [
+            0.277,
+            0.291625,
+            0.315666,
+            0.351,
+            0.331625
+          ]
+        },
+        "turbo_compile_shapes": {
+          "median_ms": 0.245417,
+          "min_ms": 0.177209,
+          "max_ms": 0.260875,
+          "samples_ms": [
+            0.177209,
+            0.23475,
+            0.245417,
+            0.260875,
+            0.257042
+          ]
+        },
+        "oxigraph_store_handoff": {
+          "median_ms": 0.093625,
+          "min_ms": 0.071125,
+          "max_ms": 0.098416,
+          "samples_ms": [
+            0.07625,
+            0.093625,
+            0.095708,
+            0.071125,
+            0.098416
+          ]
+        }
+      },
+      "inference_graphs": null,
+      "speedup": 1.2373917682301285,
+      "reused_speedup": 1.4259459553525795
+    },
+    {
+      "name": "core-1000-nodes-1-shapes",
+      "kind": "core",
+      "nodes": 1000,
+      "shape_count": 1,
+      "options": {
+        "advanced": false,
+        "inference": "none"
+      },
+      "data_triples": 2900,
+      "shape_triples": 10,
+      "result_count": 100,
+      "reports_isomorphic": true,
+      "measurements": {
+        "pyshacl": {
+          "median_ms": 36.863667,
+          "min_ms": 35.822792,
+          "max_ms": 53.687542,
+          "samples_ms": [
+            36.759458,
+            37.146209,
+            53.687542,
+            36.863667,
+            35.822792
+          ]
+        },
+        "turbo": {
+          "median_ms": 26.342958,
+          "min_ms": 25.575625,
+          "max_ms": 28.423708,
+          "samples_ms": [
+            28.423708,
+            25.870084,
+            26.660917,
+            26.342958,
+            25.575625
+          ]
+        },
+        "turbo_reused_shapes": {
+          "median_ms": 25.650083,
+          "min_ms": 25.365167,
+          "max_ms": 28.458667,
+          "samples_ms": [
+            25.650083,
+            28.458667,
+            26.981084,
+            25.365167,
+            25.460542
+          ]
+        },
+        "pyshacl_oxigraph": {
+          "median_ms": 255.792583,
+          "min_ms": 252.061666,
+          "max_ms": 261.344208,
+          "samples_ms": [
+            261.344208,
+            252.061666,
+            253.120667,
+            255.792583,
+            258.567875
+          ]
+        },
+        "turbo_oxigraph": {
+          "median_ms": 20.64475,
+          "min_ms": 18.731666,
+          "max_ms": 21.131541,
+          "samples_ms": [
+            18.731666,
+            20.64475,
+            20.946,
+            21.131541,
+            19.273625
+          ]
+        },
+        "turbo_oxigraph_reused_shapes": {
+          "median_ms": 18.928583,
+          "min_ms": 18.170708,
+          "max_ms": 21.332208,
+          "samples_ms": [
+            19.011916,
+            18.214125,
+            18.928583,
+            18.170708,
+            21.332208
+          ]
+        }
+      },
+      "unavailable_backends": {},
+      "phases": {
+        "pyshacl_load_data": {
+          "median_ms": 40.575209,
+          "min_ms": 39.811,
+          "max_ms": 69.910791,
+          "samples_ms": [
+            49.794292,
+            40.057667,
+            69.910791,
+            40.575209,
+            39.811
+          ]
+        },
+        "turbo_load_data": {
+          "median_ms": 43.080666,
+          "min_ms": 42.724,
+          "max_ms": 44.221917,
+          "samples_ms": [
+            42.724,
+            43.603334,
+            44.221917,
+            42.843125,
+            43.080666
+          ]
+        },
+        "pyshacl_load_shapes": {
+          "median_ms": 0.455375,
+          "min_ms": 0.426834,
+          "max_ms": 0.702917,
+          "samples_ms": [
+            0.491208,
+            0.702917,
+            0.455375,
+            0.437834,
+            0.426834
+          ]
+        },
+        "turbo_load_shapes": {
+          "median_ms": 0.34325,
+          "min_ms": 0.285083,
+          "max_ms": 0.420458,
+          "samples_ms": [
+            0.285083,
+            0.399375,
+            0.34325,
+            0.420458,
+            0.317542
+          ]
+        },
+        "turbo_compile_shapes": {
+          "median_ms": 0.273208,
+          "min_ms": 0.170958,
+          "max_ms": 0.310041,
+          "samples_ms": [
+            0.170958,
+            0.294334,
+            0.273208,
+            0.268208,
+            0.310041
+          ]
+        },
+        "oxigraph_store_handoff": {
+          "median_ms": 0.760459,
+          "min_ms": 0.696792,
+          "max_ms": 0.77375,
+          "samples_ms": [
+            0.705584,
+            0.760791,
+            0.77375,
+            0.696792,
+            0.760459
+          ]
+        }
+      },
+      "inference_graphs": null,
+      "speedup": 1.3993746260385793,
+      "reused_speedup": 1.437175349491072
+    },
+    {
+      "name": "core-10000-nodes-1-shapes",
+      "kind": "core",
+      "nodes": 10000,
+      "shape_count": 1,
+      "options": {
+        "advanced": false,
+        "inference": "none"
+      },
+      "data_triples": 29000,
+      "shape_triples": 10,
+      "result_count": 1000,
+      "reports_isomorphic": true,
+      "measurements": {
+        "pyshacl": {
+          "median_ms": 385.033042,
+          "min_ms": 360.630959,
+          "max_ms": 520.67425,
+          "samples_ms": [
+            389.666792,
+            360.630959,
+            385.033042,
+            374.36,
+            520.67425
+          ]
+        },
+        "turbo": {
+          "median_ms": 418.677833,
+          "min_ms": 305.347959,
+          "max_ms": 516.197625,
+          "samples_ms": [
+            305.347959,
+            322.075083,
+            418.677833,
+            516.197625,
+            469.62925
+          ]
+        },
+        "turbo_reused_shapes": {
+          "median_ms": 337.25,
+          "min_ms": 316.9015,
+          "max_ms": 502.790792,
+          "samples_ms": [
+            398.579583,
+            329.184833,
+            502.790792,
+            337.25,
+            316.9015
+          ]
+        },
+        "pyshacl_oxigraph": {
+          "median_ms": 29939.423459,
+          "min_ms": 27586.097375,
+          "max_ms": 30113.553667,
+          "samples_ms": [
+            29121.746416,
+            29939.423459,
+            27586.097375,
+            30008.167625,
+            30113.553667
+          ]
+        },
+        "turbo_oxigraph": {
+          "median_ms": 231.023833,
+          "min_ms": 220.221375,
+          "max_ms": 246.103834,
+          "samples_ms": [
+            246.103834,
+            220.221375,
+            231.023833,
+            230.8525,
+            243.339375
+          ]
+        },
+        "turbo_oxigraph_reused_shapes": {
+          "median_ms": 229.665458,
+          "min_ms": 205.58325,
+          "max_ms": 373.864459,
+          "samples_ms": [
+            373.864459,
+            314.721625,
+            229.665458,
+            205.58325,
+            222.82475
+          ]
+        }
+      },
+      "unavailable_backends": {},
+      "phases": {
+        "pyshacl_load_data": {
+          "median_ms": 550.621708,
+          "min_ms": 532.242542,
+          "max_ms": 574.72375,
+          "samples_ms": [
+            566.544875,
+            550.621708,
+            574.72375,
+            536.616459,
+            532.242542
+          ]
+        },
+        "turbo_load_data": {
+          "median_ms": 570.980333,
+          "min_ms": 559.156875,
+          "max_ms": 602.186833,
+          "samples_ms": [
+            570.980333,
+            559.156875,
+            580.209875,
+            602.186833,
+            567.222708
+          ]
+        },
+        "pyshacl_load_shapes": {
+          "median_ms": 0.470583,
+          "min_ms": 0.460417,
+          "max_ms": 0.547208,
+          "samples_ms": [
+            0.506416,
+            0.460792,
+            0.460417,
+            0.547208,
+            0.470583
+          ]
+        },
+        "turbo_load_shapes": {
+          "median_ms": 0.424291,
+          "min_ms": 0.3255,
+          "max_ms": 0.534584,
+          "samples_ms": [
+            0.424291,
+            0.446292,
+            0.3255,
+            0.534584,
+            0.335542
+          ]
+        },
+        "turbo_compile_shapes": {
+          "median_ms": 0.288709,
+          "min_ms": 0.255375,
+          "max_ms": 0.31,
+          "samples_ms": [
+            0.255375,
+            0.303041,
+            0.262834,
+            0.288709,
+            0.31
+          ]
+        },
+        "oxigraph_store_handoff": {
+          "median_ms": 9.307584,
+          "min_ms": 8.219875,
+          "max_ms": 13.110125,
+          "samples_ms": [
+            8.219875,
+            8.532958,
+            13.110125,
+            9.951417,
+            9.307584
+          ]
+        }
+      },
+      "inference_graphs": null,
+      "speedup": 0.9196403813430457,
+      "reused_speedup": 1.1416843350630097
+    },
+    {
+      "name": "sparql-patterns-100-nodes-1-shapes",
+      "kind": "sparql-patterns",
+      "nodes": 100,
+      "shape_count": 1,
+      "options": {
+        "advanced": false,
+        "inference": "none"
+      },
+      "data_triples": 300,
+      "shape_triples": 7,
+      "result_count": 10,
+      "reports_isomorphic": true,
+      "measurements": {
+        "pyshacl": {
+          "median_ms": 622.140666,
+          "min_ms": 583.411959,
+          "max_ms": 874.54,
+          "samples_ms": [
+            584.250208,
+            874.54,
+            622.140666,
+            583.411959,
+            641.2925
+          ]
+        },
+        "turbo": {
+          "median_ms": 5.054625,
+          "min_ms": 4.661958,
+          "max_ms": 5.440834,
+          "samples_ms": [
+            5.440834,
+            5.054625,
+            5.106792,
+            4.661958,
+            4.708291
+          ]
+        },
+        "turbo_reused_shapes": {
+          "median_ms": 4.784083,
+          "min_ms": 4.530917,
+          "max_ms": 5.186959,
+          "samples_ms": [
+            4.530917,
+            4.784083,
+            4.591041,
+            5.186959,
+            4.795125
+          ]
+        },
+        "pyshacl_oxigraph": {
+          "median_ms": 17.097958,
+          "min_ms": 16.100833,
+          "max_ms": 17.696959,
+          "samples_ms": [
+            16.100833,
+            17.222125,
+            17.097958,
+            16.359958,
+            17.696959
+          ]
+        },
+        "turbo_oxigraph": {
+          "median_ms": 4.221583,
+          "min_ms": 3.820125,
+          "max_ms": 5.211625,
+          "samples_ms": [
+            4.221583,
+            4.322125,
+            4.096417,
+            3.820125,
+            5.211625
+          ]
+        },
+        "turbo_oxigraph_reused_shapes": {
+          "median_ms": 3.684541,
+          "min_ms": 3.568542,
+          "max_ms": 3.914917,
+          "samples_ms": [
+            3.697042,
+            3.568542,
+            3.684541,
+            3.583583,
+            3.914917
+          ]
+        }
+      },
+      "unavailable_backends": {},
+      "phases": {
+        "pyshacl_load_data": {
+          "median_ms": 4.534875,
+          "min_ms": 4.476041,
+          "max_ms": 7.243834,
+          "samples_ms": [
+            4.534875,
+            5.327583,
+            4.476041,
+            7.243834,
+            4.485292
+          ]
+        },
+        "turbo_load_data": {
+          "median_ms": 4.729167,
+          "min_ms": 4.574458,
+          "max_ms": 4.953542,
+          "samples_ms": [
+            4.940541,
+            4.574458,
+            4.668625,
+            4.953542,
+            4.729167
+          ]
+        },
+        "pyshacl_load_shapes": {
+          "median_ms": 0.330333,
+          "min_ms": 0.308292,
+          "max_ms": 0.386875,
+          "samples_ms": [
+            0.330333,
+            0.308292,
+            0.327333,
+            0.386875,
+            0.340875
+          ]
+        },
+        "turbo_load_shapes": {
+          "median_ms": 0.276958,
+          "min_ms": 0.252791,
+          "max_ms": 0.563625,
+          "samples_ms": [
+            0.563625,
+            0.252791,
+            0.257417,
+            0.276958,
+            0.287625
+          ]
+        },
+        "turbo_compile_shapes": {
+          "median_ms": 0.236916,
+          "min_ms": 0.220208,
+          "max_ms": 0.269833,
+          "samples_ms": [
+            0.236916,
+            0.241625,
+            0.220208,
+            0.235042,
+            0.269833
+          ]
+        },
+        "oxigraph_store_handoff": {
+          "median_ms": 0.095667,
+          "min_ms": 0.071375,
+          "max_ms": 0.099917,
+          "samples_ms": [
+            0.091166,
+            0.095667,
+            0.099917,
+            0.071375,
+            0.099583
+          ]
+        }
+      },
+      "inference_graphs": null,
+      "speedup": 123.08344654647972,
+      "reused_speedup": 130.04386964022154
+    },
+    {
+      "name": "sparql-patterns-1000-nodes-1-shapes",
+      "kind": "sparql-patterns",
+      "nodes": 1000,
+      "shape_count": 1,
+      "options": {
+        "advanced": false,
+        "inference": "none"
+      },
+      "data_triples": 3000,
+      "shape_triples": 7,
+      "result_count": 100,
+      "reports_isomorphic": true,
+      "measurements": {
+        "pyshacl": {
+          "median_ms": 6023.015208,
+          "min_ms": 5888.403959,
+          "max_ms": 6061.023875,
+          "samples_ms": [
+            6037.974125,
+            5986.724667,
+            6023.015208,
+            6061.023875,
+            5888.403959
+          ]
+        },
+        "turbo": {
+          "median_ms": 47.977041,
+          "min_ms": 43.417125,
+          "max_ms": 62.042,
+          "samples_ms": [
+            47.977041,
+            62.042,
+            47.097,
+            61.827875,
+            43.417125
+          ]
+        },
+        "turbo_reused_shapes": {
+          "median_ms": 45.401208,
+          "min_ms": 42.620708,
+          "max_ms": 57.421167,
+          "samples_ms": [
+            57.421167,
+            46.770208,
+            42.620708,
+            43.061125,
+            45.401208
+          ]
+        },
+        "pyshacl_oxigraph": {
+          "median_ms": 458.143958,
+          "min_ms": 453.589583,
+          "max_ms": 544.348292,
+          "samples_ms": [
+            453.589583,
+            458.143958,
+            454.289125,
+            544.348292,
+            480.311208
+          ]
+        },
+        "turbo_oxigraph": {
+          "median_ms": 36.083917,
+          "min_ms": 35.337916,
+          "max_ms": 40.042208,
+          "samples_ms": [
+            35.534958,
+            36.188708,
+            36.083917,
+            35.337916,
+            40.042208
+          ]
+        },
+        "turbo_oxigraph_reused_shapes": {
+          "median_ms": 36.352916,
+          "min_ms": 34.837583,
+          "max_ms": 38.298542,
+          "samples_ms": [
+            37.895042,
+            36.351916,
+            38.298542,
+            34.837583,
+            36.352916
+          ]
+        }
+      },
+      "unavailable_backends": {},
+      "phases": {
+        "pyshacl_load_data": {
+          "median_ms": 46.459084,
+          "min_ms": 44.667416,
+          "max_ms": 50.982291,
+          "samples_ms": [
+            50.982291,
+            46.099709,
+            46.459084,
+            46.844833,
+            44.667416
+          ]
+        },
+        "turbo_load_data": {
+          "median_ms": 48.985584,
+          "min_ms": 46.458709,
+          "max_ms": 94.817125,
+          "samples_ms": [
+            51.943209,
+            48.985584,
+            46.458709,
+            94.817125,
+            48.074375
+          ]
+        },
+        "pyshacl_load_shapes": {
+          "median_ms": 0.405084,
+          "min_ms": 0.339291,
+          "max_ms": 0.4265,
+          "samples_ms": [
+            0.412875,
+            0.339291,
+            0.405084,
+            0.4265,
+            0.402333
+          ]
+        },
+        "turbo_load_shapes": {
+          "median_ms": 0.372083,
+          "min_ms": 0.298417,
+          "max_ms": 0.404292,
+          "samples_ms": [
+            0.404292,
+            0.381917,
+            0.298417,
+            0.372083,
+            0.301708
+          ]
+        },
+        "turbo_compile_shapes": {
+          "median_ms": 0.250333,
+          "min_ms": 0.202625,
+          "max_ms": 0.282417,
+          "samples_ms": [
+            0.202625,
+            0.282417,
+            0.226791,
+            0.250333,
+            0.265625
+          ]
+        },
+        "oxigraph_store_handoff": {
+          "median_ms": 0.807,
+          "min_ms": 0.728,
+          "max_ms": 0.8665,
+          "samples_ms": [
+            0.790375,
+            0.8665,
+            0.863333,
+            0.728,
+            0.807
+          ]
+        }
+      },
+      "inference_graphs": null,
+      "speedup": 125.5395306267429,
+      "reused_speedup": 132.6620033546244
+    },
+    {
+      "name": "shapes-1000-nodes-10-shapes",
+      "kind": "shapes",
+      "nodes": 1000,
+      "shape_count": 10,
+      "options": {
+        "advanced": false,
+        "inference": "none"
+      },
+      "data_triples": 2900,
+      "shape_triples": 82,
+      "result_count": 1,
+      "reports_isomorphic": true,
+      "measurements": {
+        "pyshacl": {
+          "median_ms": 1.117709,
+          "min_ms": 0.996292,
+          "max_ms": 2.265834,
+          "samples_ms": [
+            1.316792,
+            1.117709,
+            2.265834,
+            1.117375,
+            0.996292
+          ]
+        },
+        "turbo": {
+          "median_ms": 14.307917,
+          "min_ms": 14.006041,
+          "max_ms": 14.703042,
+          "samples_ms": [
+            14.227833,
+            14.006041,
+            14.703042,
+            14.307917,
+            14.319125
+          ]
+        },
+        "turbo_reused_shapes": {
+          "median_ms": 12.962709,
+          "min_ms": 12.745834,
+          "max_ms": 13.551708,
+          "samples_ms": [
+            12.862166,
+            12.962709,
+            12.745834,
+            13.551708,
+            13.204458
+          ]
+        },
+        "pyshacl_oxigraph": {
+          "median_ms": 3.455542,
+          "min_ms": 3.332334,
+          "max_ms": 3.584625,
+          "samples_ms": [
+            3.332334,
+            3.414292,
+            3.506334,
+            3.455542,
+            3.584625
+          ]
+        },
+        "turbo_oxigraph": {
+          "median_ms": 6.721125,
+          "min_ms": 6.646833,
+          "max_ms": 7.286542,
+          "samples_ms": [
+            6.721125,
+            6.6625,
+            6.646833,
+            7.286542,
+            6.941292
+          ]
+        },
+        "turbo_oxigraph_reused_shapes": {
+          "median_ms": 5.616416,
+          "min_ms": 5.417625,
+          "max_ms": 6.208791,
+          "samples_ms": [
+            5.417625,
+            5.577875,
+            6.208791,
+            5.722584,
+            5.616416
+          ]
+        }
+      },
+      "unavailable_backends": {},
+      "phases": {
+        "pyshacl_load_data": {
+          "median_ms": 40.75175,
+          "min_ms": 39.7745,
+          "max_ms": 42.204375,
+          "samples_ms": [
+            39.7745,
+            42.204375,
+            40.9775,
+            40.246625,
+            40.75175
+          ]
+        },
+        "turbo_load_data": {
+          "median_ms": 44.360709,
+          "min_ms": 42.565083,
+          "max_ms": 105.258416,
+          "samples_ms": [
+            43.290084,
+            105.258416,
+            42.565083,
+            44.360709,
+            46.937459
+          ]
+        },
+        "pyshacl_load_shapes": {
+          "median_ms": 1.444583,
+          "min_ms": 1.353042,
+          "max_ms": 1.526541,
+          "samples_ms": [
+            1.526541,
+            1.444583,
+            1.484,
+            1.413667,
+            1.353042
+          ]
+        },
+        "turbo_load_shapes": {
+          "median_ms": 1.368584,
+          "min_ms": 1.247875,
+          "max_ms": 1.578959,
+          "samples_ms": [
+            1.578959,
+            1.323,
+            1.247875,
+            1.368584,
+            1.373542
+          ]
+        },
+        "turbo_compile_shapes": {
+          "median_ms": 1.15875,
+          "min_ms": 1.137959,
+          "max_ms": 1.2875,
+          "samples_ms": [
+            1.2875,
+            1.205625,
+            1.137959,
+            1.15875,
+            1.157416
+          ]
+        },
+        "oxigraph_store_handoff": {
+          "median_ms": 0.791417,
+          "min_ms": 0.702584,
+          "max_ms": 0.863708,
+          "samples_ms": [
+            0.805542,
+            0.785541,
+            0.791417,
+            0.702584,
+            0.863708
+          ]
+        }
+      },
+      "inference_graphs": null,
+      "speedup": 0.07811821944452152,
+      "reused_speedup": 0.08622495498433237
+    },
+    {
+      "name": "shapes-1000-nodes-100-shapes",
+      "kind": "shapes",
+      "nodes": 1000,
+      "shape_count": 100,
+      "options": {
+        "advanced": false,
+        "inference": "none"
+      },
+      "data_triples": 2900,
+      "shape_triples": 802,
+      "result_count": 10,
+      "reports_isomorphic": true,
+      "measurements": {
+        "pyshacl": {
+          "median_ms": 8.8635,
+          "min_ms": 8.598459,
+          "max_ms": 8.976959,
+          "samples_ms": [
+            8.598459,
+            8.913709,
+            8.844833,
+            8.8635,
+            8.976959
+          ]
+        },
+        "turbo": {
+          "median_ms": 24.320334,
+          "min_ms": 24.112041,
+          "max_ms": 25.443375,
+          "samples_ms": [
+            24.200833,
+            24.784833,
+            24.112041,
+            24.320334,
+            25.443375
+          ]
+        },
+        "turbo_reused_shapes": {
+          "median_ms": 14.141375,
+          "min_ms": 13.493542,
+          "max_ms": 15.715291,
+          "samples_ms": [
+            13.844334,
+            14.141375,
+            15.715291,
+            13.493542,
+            14.472584
+          ]
+        },
+        "pyshacl_oxigraph": {
+          "median_ms": 30.9555,
+          "min_ms": 30.361833,
+          "max_ms": 31.107834,
+          "samples_ms": [
+            30.361833,
+            30.525167,
+            31.107834,
+            30.9555,
+            30.966958
+          ]
+        },
+        "turbo_oxigraph": {
+          "median_ms": 17.404584,
+          "min_ms": 16.927542,
+          "max_ms": 17.560875,
+          "samples_ms": [
+            17.458792,
+            17.404584,
+            17.560875,
+            17.270875,
+            16.927542
+          ]
+        },
+        "turbo_oxigraph_reused_shapes": {
+          "median_ms": 6.807583,
+          "min_ms": 6.450291,
+          "max_ms": 6.884917,
+          "samples_ms": [
+            6.450291,
+            6.884917,
+            6.815625,
+            6.807583,
+            6.517375
+          ]
+        }
+      },
+      "unavailable_backends": {},
+      "phases": {
+        "pyshacl_load_data": {
+          "median_ms": 41.018625,
+          "min_ms": 40.101458,
+          "max_ms": 81.099042,
+          "samples_ms": [
+            42.178875,
+            40.76575,
+            40.101458,
+            81.099042,
+            41.018625
+          ]
+        },
+        "turbo_load_data": {
+          "median_ms": 43.5425,
+          "min_ms": 42.865792,
+          "max_ms": 44.148916,
+          "samples_ms": [
+            42.923708,
+            43.866,
+            44.148916,
+            43.5425,
+            42.865792
+          ]
+        },
+        "pyshacl_load_shapes": {
+          "median_ms": 10.991416,
+          "min_ms": 10.740542,
+          "max_ms": 13.218625,
+          "samples_ms": [
+            10.740542,
+            10.991416,
+            11.231,
+            13.218625,
+            10.971292
+          ]
+        },
+        "turbo_load_shapes": {
+          "median_ms": 10.546916,
+          "min_ms": 10.257459,
+          "max_ms": 12.367,
+          "samples_ms": [
+            10.733083,
+            10.546916,
+            10.5025,
+            10.257459,
+            12.367
+          ]
+        },
+        "turbo_compile_shapes": {
+          "median_ms": 9.804459,
+          "min_ms": 9.797458,
+          "max_ms": 9.935584,
+          "samples_ms": [
+            9.804459,
+            9.872083,
+            9.803792,
+            9.935584,
+            9.797458
+          ]
+        },
+        "oxigraph_store_handoff": {
+          "median_ms": 0.790917,
+          "min_ms": 0.697667,
+          "max_ms": 0.818834,
+          "samples_ms": [
+            0.804083,
+            0.818834,
+            0.790917,
+            0.697667,
+            0.785375
+          ]
+        }
+      },
+      "inference_graphs": null,
+      "speedup": 0.3644481198325648,
+      "reused_speedup": 0.6267778062599995
+    },
+    {
+      "name": "shapes-1000-nodes-1000-shapes",
+      "kind": "shapes",
+      "nodes": 1000,
+      "shape_count": 1000,
+      "options": {
+        "advanced": false,
+        "inference": "none"
+      },
+      "data_triples": 2900,
+      "shape_triples": 8002,
+      "result_count": 100,
+      "reports_isomorphic": true,
+      "measurements": {
+        "pyshacl": {
+          "median_ms": 88.26925,
+          "min_ms": 85.079375,
+          "max_ms": 130.419792,
+          "samples_ms": [
+            88.26925,
+            130.419792,
+            88.545291,
+            86.809083,
+            85.079375
+          ]
+        },
+        "turbo": {
+          "median_ms": 134.521333,
+          "min_ms": 132.556208,
+          "max_ms": 134.837458,
+          "samples_ms": [
+            133.220042,
+            134.837458,
+            132.556208,
+            134.521333,
+            134.558333
+          ]
+        },
+        "turbo_reused_shapes": {
+          "median_ms": 24.430542,
+          "min_ms": 23.957,
+          "max_ms": 28.192791,
+          "samples_ms": [
+            23.957,
+            28.192791,
+            24.055166,
+            24.430542,
+            27.211625
+          ]
+        },
+        "pyshacl_oxigraph": {
+          "median_ms": 311.192875,
+          "min_ms": 305.474375,
+          "max_ms": 314.721333,
+          "samples_ms": [
+            305.474375,
+            311.192875,
+            314.721333,
+            311.303666,
+            310.641167
+          ]
+        },
+        "turbo_oxigraph": {
+          "median_ms": 125.857625,
+          "min_ms": 124.046125,
+          "max_ms": 131.72175,
+          "samples_ms": [
+            131.72175,
+            125.857625,
+            125.670584,
+            127.825917,
+            124.046125
+          ]
+        },
+        "turbo_oxigraph_reused_shapes": {
+          "median_ms": 16.887792,
+          "min_ms": 16.783042,
+          "max_ms": 20.224958,
+          "samples_ms": [
+            16.783042,
+            16.836666,
+            19.442167,
+            16.887792,
+            20.224958
+          ]
+        }
+      },
+      "unavailable_backends": {},
+      "phases": {
+        "pyshacl_load_data": {
+          "median_ms": 40.0225,
+          "min_ms": 38.876125,
+          "max_ms": 42.57325,
+          "samples_ms": [
+            40.253125,
+            38.876125,
+            40.0225,
+            42.57325,
+            39.050084
+          ]
+        },
+        "turbo_load_data": {
+          "median_ms": 46.561583,
+          "min_ms": 41.874,
+          "max_ms": 117.165875,
+          "samples_ms": [
+            95.827416,
+            46.561583,
+            41.874,
+            117.165875,
+            43.917834
+          ]
+        },
+        "pyshacl_load_shapes": {
+          "median_ms": 113.400958,
+          "min_ms": 110.322167,
+          "max_ms": 168.523792,
+          "samples_ms": [
+            113.984,
+            110.322167,
+            168.523792,
+            113.400958,
+            110.532167
+          ]
+        },
+        "turbo_load_shapes": {
+          "median_ms": 107.455791,
+          "min_ms": 106.338791,
+          "max_ms": 110.781708,
+          "samples_ms": [
+            106.911791,
+            107.455791,
+            107.591208,
+            106.338791,
+            110.781708
+          ]
+        },
+        "turbo_compile_shapes": {
+          "median_ms": 102.527667,
+          "min_ms": 101.470084,
+          "max_ms": 103.877292,
+          "samples_ms": [
+            102.255958,
+            101.470084,
+            103.571417,
+            103.877292,
+            102.527667
+          ]
+        },
+        "oxigraph_store_handoff": {
+          "median_ms": 0.799333,
+          "min_ms": 0.712042,
+          "max_ms": 0.829666,
+          "samples_ms": [
+            0.803625,
+            0.799333,
+            0.829666,
+            0.712042,
+            0.786042
+          ]
+        }
+      },
+      "inference_graphs": null,
+      "speedup": 0.6561728763124879,
+      "reused_speedup": 3.6130696568254606
+    },
+    {
+      "name": "rules-100-nodes-1-shapes",
+      "kind": "rules",
+      "nodes": 100,
+      "shape_count": 1,
+      "options": {
+        "advanced": true,
+        "inference": "none"
+      },
+      "data_triples": 290,
+      "shape_triples": 22,
+      "result_count": 10,
+      "reports_isomorphic": true,
+      "measurements": {
+        "pyshacl": {
+          "median_ms": 120.446166,
+          "min_ms": 114.860666,
+          "max_ms": 128.63175,
+          "samples_ms": [
+            127.008958,
+            114.860666,
+            117.335334,
+            128.63175,
+            120.446166
+          ]
+        },
+        "turbo": {
+          "median_ms": 4.458667,
+          "min_ms": 4.256375,
+          "max_ms": 4.710792,
+          "samples_ms": [
+            4.463542,
+            4.256375,
+            4.299084,
+            4.710792,
+            4.458667
+          ]
+        },
+        "turbo_reused_shapes": {
+          "median_ms": 3.969708,
+          "min_ms": 3.873583,
+          "max_ms": 4.231625,
+          "samples_ms": [
+            4.036833,
+            3.943417,
+            3.969708,
+            3.873583,
+            4.231625
+          ]
+        },
+        "pyshacl_oxigraph": {
+          "median_ms": 27.417917,
+          "min_ms": 26.247041,
+          "max_ms": 29.231917,
+          "samples_ms": [
+            28.092417,
+            29.231917,
+            27.417917,
+            26.247041,
+            26.274958
+          ]
+        },
+        "turbo_oxigraph": {
+          "median_ms": 3.573375,
+          "min_ms": 3.42125,
+          "max_ms": 4.01275,
+          "samples_ms": [
+            3.583166,
+            3.573375,
+            4.01275,
+            3.556375,
+            3.42125
+          ]
+        },
+        "turbo_oxigraph_reused_shapes": {
+          "median_ms": 3.1895,
+          "min_ms": 3.041792,
+          "max_ms": 4.222375,
+          "samples_ms": [
+            3.1895,
+            4.222375,
+            3.112125,
+            3.041792,
+            3.434917
+          ]
+        }
+      },
+      "unavailable_backends": {},
+      "phases": {
+        "pyshacl_load_data": {
+          "median_ms": 4.042625,
+          "min_ms": 4.010333,
+          "max_ms": 6.231208,
+          "samples_ms": [
+            4.0395,
+            4.010333,
+            4.317833,
+            4.042625,
+            6.231208
+          ]
+        },
+        "turbo_load_data": {
+          "median_ms": 4.296708,
+          "min_ms": 4.138916,
+          "max_ms": 4.407875,
+          "samples_ms": [
+            4.160583,
+            4.401416,
+            4.138916,
+            4.296708,
+            4.407875
+          ]
+        },
+        "pyshacl_load_shapes": {
+          "median_ms": 0.578,
+          "min_ms": 0.521292,
+          "max_ms": 0.641834,
+          "samples_ms": [
+            0.641834,
+            0.521292,
+            0.578,
+            0.534375,
+            0.586084
+          ]
+        },
+        "turbo_load_shapes": {
+          "median_ms": 0.490916,
+          "min_ms": 0.453334,
+          "max_ms": 0.591083,
+          "samples_ms": [
+            0.453334,
+            0.490916,
+            0.591083,
+            0.468958,
+            0.505875
+          ]
+        },
+        "turbo_compile_shapes": {
+          "median_ms": 0.356375,
+          "min_ms": 0.273708,
+          "max_ms": 0.376542,
+          "samples_ms": [
+            0.273708,
+            0.365333,
+            0.356375,
+            0.322209,
+            0.376542
+          ]
+        },
+        "oxigraph_store_handoff": {
+          "median_ms": 0.091834,
+          "min_ms": 0.069459,
+          "max_ms": 0.099708,
+          "samples_ms": [
+            0.074375,
+            0.091834,
+            0.099708,
+            0.069459,
+            0.097375
+          ]
+        }
+      },
+      "inference_graphs": null,
+      "speedup": 27.0139407136707,
+      "reused_speedup": 30.341316288250926
+    },
+    {
+      "name": "rules-1000-nodes-1-shapes",
+      "kind": "rules",
+      "nodes": 1000,
+      "shape_count": 1,
+      "options": {
+        "advanced": true,
+        "inference": "none"
+      },
+      "data_triples": 2900,
+      "shape_triples": 22,
+      "result_count": 100,
+      "reports_isomorphic": true,
+      "measurements": {
+        "pyshacl": {
+          "median_ms": 1247.069125,
+          "min_ms": 1196.098709,
+          "max_ms": 1447.747792,
+          "samples_ms": [
+            1247.069125,
+            1196.098709,
+            1213.441417,
+            1253.194667,
+            1447.747792
+          ]
+        },
+        "turbo": {
+          "median_ms": 40.812959,
+          "min_ms": 40.307166,
+          "max_ms": 42.254292,
+          "samples_ms": [
+            40.455625,
+            42.032167,
+            42.254292,
+            40.307166,
+            40.812959
+          ]
+        },
+        "turbo_reused_shapes": {
+          "median_ms": 40.009375,
+          "min_ms": 39.234542,
+          "max_ms": 42.199166,
+          "samples_ms": [
+            40.009375,
+            39.234542,
+            39.288166,
+            42.199166,
+            41.71
+          ]
+        },
+        "pyshacl_oxigraph": {
+          "median_ms": 552.282208,
+          "min_ms": 518.4395,
+          "max_ms": 577.690083,
+          "samples_ms": [
+            560.805083,
+            522.785208,
+            552.282208,
+            518.4395,
+            577.690083
+          ]
+        },
+        "turbo_oxigraph": {
+          "median_ms": 32.842167,
+          "min_ms": 32.45275,
+          "max_ms": 39.754709,
+          "samples_ms": [
+            33.394541,
+            32.842167,
+            32.670708,
+            32.45275,
+            39.754709
+          ]
+        },
+        "turbo_oxigraph_reused_shapes": {
+          "median_ms": 32.456833,
+          "min_ms": 32.077208,
+          "max_ms": 34.633333,
+          "samples_ms": [
+            32.701375,
+            32.456833,
+            32.077208,
+            32.346833,
+            34.633333
+          ]
+        }
+      },
+      "unavailable_backends": {},
+      "phases": {
+        "pyshacl_load_data": {
+          "median_ms": 41.533,
+          "min_ms": 40.794291,
+          "max_ms": 46.405417,
+          "samples_ms": [
+            41.078916,
+            40.794291,
+            46.405417,
+            41.533,
+            41.677875
+          ]
+        },
+        "turbo_load_data": {
+          "median_ms": 45.167375,
+          "min_ms": 42.514375,
+          "max_ms": 95.487333,
+          "samples_ms": [
+            42.514375,
+            45.167375,
+            95.487333,
+            45.35375,
+            43.559833
+          ]
+        },
+        "pyshacl_load_shapes": {
+          "median_ms": 0.662458,
+          "min_ms": 0.587625,
+          "max_ms": 0.784917,
+          "samples_ms": [
+            0.784917,
+            0.587625,
+            0.647375,
+            0.667833,
+            0.662458
+          ]
+        },
+        "turbo_load_shapes": {
+          "median_ms": 0.618583,
+          "min_ms": 0.51675,
+          "max_ms": 0.644209,
+          "samples_ms": [
+            0.589792,
+            0.644209,
+            0.51675,
+            0.618583,
+            0.643583
+          ]
+        },
+        "turbo_compile_shapes": {
+          "median_ms": 0.40725,
+          "min_ms": 0.3185,
+          "max_ms": 0.434417,
+          "samples_ms": [
+            0.3185,
+            0.433209,
+            0.390916,
+            0.40725,
+            0.434417
+          ]
+        },
+        "oxigraph_store_handoff": {
+          "median_ms": 0.818583,
+          "min_ms": 0.69825,
+          "max_ms": 0.862917,
+          "samples_ms": [
+            0.7245,
+            0.862917,
+            0.827375,
+            0.69825,
+            0.818583
+          ]
+        }
+      },
+      "inference_graphs": null,
+      "speedup": 30.555714546450798,
+      "reused_speedup": 31.169422791533236
+    },
+    {
+      "name": "rules-5000-nodes-1-shapes",
+      "kind": "rules",
+      "nodes": 5000,
+      "shape_count": 1,
+      "options": {
+        "advanced": true,
+        "inference": "none"
+      },
+      "data_triples": 14500,
+      "shape_triples": 22,
+      "result_count": 500,
+      "reports_isomorphic": true,
+      "measurements": {
+        "pyshacl": {
+          "median_ms": 6291.951833,
+          "min_ms": 6269.154542,
+          "max_ms": 6364.985416,
+          "samples_ms": [
+            6291.951833,
+            6283.357833,
+            6360.529875,
+            6364.985416,
+            6269.154542
+          ]
+        },
+        "turbo": {
+          "median_ms": 220.283542,
+          "min_ms": 217.391584,
+          "max_ms": 402.865167,
+          "samples_ms": [
+            402.865167,
+            217.391584,
+            238.518917,
+            220.283542,
+            219.127291
+          ]
+        },
+        "turbo_reused_shapes": {
+          "median_ms": 231.794917,
+          "min_ms": 217.24625,
+          "max_ms": 394.559458,
+          "samples_ms": [
+            223.701125,
+            231.794917,
+            388.405542,
+            217.24625,
+            394.559458
+          ]
+        },
+        "pyshacl_oxigraph": {
+          "median_ms": 9514.754666,
+          "min_ms": 8931.099583,
+          "max_ms": 9662.114958,
+          "samples_ms": [
+            9514.754666,
+            9662.114958,
+            9537.248625,
+            9463.354333,
+            8931.099583
+          ]
+        },
+        "turbo_oxigraph": {
+          "median_ms": 194.592167,
+          "min_ms": 177.847667,
+          "max_ms": 349.934166,
+          "samples_ms": [
+            194.592167,
+            349.934166,
+            295.53975,
+            177.847667,
+            184.162084
+          ]
+        },
+        "turbo_oxigraph_reused_shapes": {
+          "median_ms": 179.721291,
+          "min_ms": 177.170458,
+          "max_ms": 280.878375,
+          "samples_ms": [
+            177.170458,
+            197.847959,
+            178.554291,
+            179.721291,
+            280.878375
+          ]
+        }
+      },
+      "unavailable_backends": {},
+      "phases": {
+        "pyshacl_load_data": {
+          "median_ms": 217.411708,
+          "min_ms": 200.142625,
+          "max_ms": 328.472083,
+          "samples_ms": [
+            200.142625,
+            265.311917,
+            217.411708,
+            328.472083,
+            203.158125
+          ]
+        },
+        "turbo_load_data": {
+          "median_ms": 294.802042,
+          "min_ms": 219.682709,
+          "max_ms": 365.705875,
+          "samples_ms": [
+            365.705875,
+            299.965584,
+            294.802042,
+            219.682709,
+            290.764958
+          ]
+        },
+        "pyshacl_load_shapes": {
+          "median_ms": 0.624916,
+          "min_ms": 0.554709,
+          "max_ms": 0.760334,
+          "samples_ms": [
+            0.760334,
+            0.554709,
+            0.602208,
+            0.644708,
+            0.624916
+          ]
+        },
+        "turbo_load_shapes": {
+          "median_ms": 0.619625,
+          "min_ms": 0.505583,
+          "max_ms": 1.39475,
+          "samples_ms": [
+            1.39475,
+            0.662375,
+            0.505583,
+            0.619625,
+            0.509834
+          ]
+        },
+        "turbo_compile_shapes": {
+          "median_ms": 0.387666,
+          "min_ms": 0.346083,
+          "max_ms": 0.4085,
+          "samples_ms": [
+            0.346083,
+            0.4085,
+            0.371458,
+            0.387666,
+            0.399125
+          ]
+        },
+        "oxigraph_store_handoff": {
+          "median_ms": 4.075958,
+          "min_ms": 3.730333,
+          "max_ms": 4.950083,
+          "samples_ms": [
+            3.730333,
+            4.075958,
+            3.972292,
+            4.950083,
+            4.175333
+          ]
+        }
+      },
+      "inference_graphs": null,
+      "speedup": 28.56296832652164,
+      "reused_speedup": 27.144477171602517
+    }
+  ]
+}

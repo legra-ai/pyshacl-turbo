@@ -7,15 +7,19 @@ use oxigraph::model::*;
 use crate::graph::*;
 
 pub(crate) struct Display<'a> {
-    pub namespaces: Vec<(String, String)>,
+    pub shape_namespaces: Vec<(String, String)>,
+    pub data_namespaces: Vec<(String, String)>,
     pub data: &'a Dataset,
     pub shapes: &'a Dataset,
 }
 
 impl Display<'_> {
     pub fn iri(&self, node: &NamedNode) -> String {
-        let mut candidates: Vec<_> = self
-            .namespaces
+        Self::iri_in(node, &self.shape_namespaces)
+    }
+
+    fn iri_in(node: &NamedNode, namespaces: &[(String, String)]) -> String {
+        let mut candidates: Vec<_> = namespaces
             .iter()
             .filter_map(|(p, ns)| {
                 node.as_str()
@@ -39,6 +43,11 @@ impl Display<'_> {
 
     pub fn term(&self, term: &Term, shapes: bool) -> String {
         let graph = if shapes { self.shapes } else { self.data };
+        let namespaces = if shapes {
+            &self.shape_namespaces
+        } else {
+            &self.data_namespaces
+        };
         let context = if let Term::BlankNode(node) = term {
             let mut contexts: Vec<_> = graph
                 .quads_for_subject(node.as_ref())
@@ -65,18 +74,18 @@ impl Display<'_> {
         } else {
             GraphName::DefaultGraph
         };
-        self.inner(term, graph, &context, &mut HashSet::new())
+        Self::inner(term, graph, &context, namespaces, &mut HashSet::new())
     }
 
     fn inner(
-        &self,
         term: &Term,
         graph: &Dataset,
         context: &GraphName,
+        namespaces: &[(String, String)],
         stack: &mut HashSet<Term>,
     ) -> String {
         match term {
-            Term::NamedNode(n) => self.iri(n),
+            Term::NamedNode(n) => Self::iri_in(n, namespaces),
             Term::Literal(l) => {
                 let text = Literal::new_simple_literal(l.value()).to_string();
                 if let Some(language) = l.language() {
@@ -84,7 +93,10 @@ impl Display<'_> {
                 } else if l.datatype() == iri(XSD, "string").as_ref() {
                     text
                 } else {
-                    format!("{text}^^{}", self.iri(&l.datatype().into_owned()))
+                    format!(
+                        "{text}^^{}",
+                        Self::iri_in(&l.datatype().into_owned(), namespaces)
+                    )
                 }
             }
             Term::BlankNode(_) => {
@@ -97,9 +109,15 @@ impl Display<'_> {
                         continue;
                     }
                     properties
-                        .entry(self.iri(&q.predicate.into_owned()))
+                        .entry(Self::iri_in(&q.predicate.into_owned(), namespaces))
                         .or_default()
-                        .push(self.inner(&q.object.into_owned(), graph, context, stack));
+                        .push(Self::inner(
+                            &q.object.into_owned(),
+                            graph,
+                            context,
+                            namespaces,
+                            stack,
+                        ));
                 }
                 let mut descriptions = Vec::new();
                 for (p, mut values) in properties {
