@@ -59,6 +59,14 @@ struct Evaluation {
     path: Vec<EvaluationStep>,
     max_depth: usize,
     warnings: Vec<String>,
+    batch: Option<EvaluationBatch>,
+}
+
+#[derive(Clone, Copy)]
+struct EvaluationBatch {
+    shape: usize,
+    depth: usize,
+    has_values: bool,
 }
 
 impl Evaluation {
@@ -67,6 +75,7 @@ impl Evaluation {
             path: Vec::new(),
             max_depth,
             warnings: Vec::new(),
+            batch: None,
         }
     }
 
@@ -241,8 +250,58 @@ impl CompiledShapes {
             shape: parent,
             component,
         });
-        let result = self.evaluate_inner(index, focus, data, results, evaluation);
+        let result = self.evaluate_batch(
+            index,
+            std::slice::from_ref(focus),
+            data,
+            results,
+            evaluation,
+        );
         evaluation.path.pop();
+        result
+    }
+
+    fn evaluate_batch(
+        &self,
+        index: usize,
+        focus: &[Term],
+        data: &Dataset,
+        results: &mut Vec<Violation>,
+        evaluation: &mut Evaluation,
+    ) -> Result<()> {
+        let shape = &self.shapes[index];
+        let batch = if focus.len() > 1
+            && !shape.deactivated
+            && shape
+                .constraints
+                .iter()
+                .any(|constraint| matches!(constraint, Constraint::Qualified { .. }))
+        {
+            // pySHACL's qualified-count empty-input shortcut applies to the
+            // whole focus batch. Nested property validations receive one
+            // focus each, so their scopes must not inherit this batch.
+            let mut has_values = shape.path.is_none();
+            if let Some(path) = &shape.path {
+                for node in focus {
+                    if !path.values(data, node)?.is_empty() {
+                        has_values = true;
+                        break;
+                    }
+                }
+            }
+            Some(EvaluationBatch {
+                shape: index,
+                depth: evaluation.path.len(),
+                has_values,
+            })
+        } else {
+            None
+        };
+        let previous = std::mem::replace(&mut evaluation.batch, batch);
+        let result = focus
+            .iter()
+            .try_for_each(|node| self.evaluate_inner(index, node, data, results, evaluation));
+        evaluation.batch = previous;
         result
     }
 
@@ -356,11 +415,7 @@ impl CompiledShapes {
                     }
                 }
                 Constraint::Count { minimum, count } => {
-                    if if *minimum {
-                        (values.len() as u64) < *count
-                    } else {
-                        (values.len() as u64) > *count
-                    } {
+                    if !count.allows(values.len(), *minimum) {
                         results.push(violation(
                             if *minimum {
                                 "MinCountConstraintComponent"
@@ -428,14 +483,9 @@ impl CompiledShapes {
                 }
                 Constraint::Length { minimum, count } => {
                     for value in &values {
-                        let valid = crate::value::lexical(value).is_some_and(|s| {
-                            let length = s.chars().count() as u64;
-                            if *minimum {
-                                length >= *count
-                            } else {
-                                length <= *count
-                            }
-                        });
+                        let valid = (*minimum && count.is_zero())
+                            || crate::value::lexical(value)
+                                .is_some_and(|s| count.allows(s.chars().count(), *minimum));
                         if !valid {
                             results.push(violation(
                                 if *minimum {
@@ -591,17 +641,27 @@ impl CompiledShapes {
                     disjoint,
                     siblings,
                 } => {
-                    if (!values.is_empty() || *disjoint || minimum.is_some_and(|n| n > 0))
-                        && evaluation.skip_recursive(
-                            index,
-                            "QualifiedValueShapeConstraintComponent",
-                            *target,
-                            &self.shapes,
-                        )
+                    let has_values = evaluation
+                        .batch
+                        .filter(|batch| {
+                            batch.shape == index && batch.depth == evaluation.path.len()
+                        })
+                        .map_or(!values.is_empty(), |batch| batch.has_values);
+                    if !has_values
+                        && !disjoint
+                        && minimum.as_ref().is_none_or(|min| min.allows(0, true))
                     {
                         continue;
                     }
-                    let mut count = 0u64;
+                    if evaluation.skip_recursive(
+                        index,
+                        "QualifiedValueShapeConstraintComponent",
+                        *target,
+                        &self.shapes,
+                    ) {
+                        continue;
+                    }
+                    let mut count = 0usize;
                     for value in &values {
                         let mut nested = Vec::new();
                         self.evaluate_child(
@@ -633,12 +693,15 @@ impl CompiledShapes {
                                 break;
                             }
                         }
-                        count += u64::from(disjoint);
+                        count += usize::from(disjoint);
                     }
-                    if minimum.is_some_and(|min| count < min) {
+                    if minimum.as_ref().is_some_and(|min| !min.allows(count, true)) {
                         results.push(violation("QualifiedMinCountConstraintComponent", None));
                     }
-                    if maximum.is_some_and(|max| count > max) {
+                    if maximum
+                        .as_ref()
+                        .is_some_and(|max| !max.allows(count, false))
+                    {
                         results.push(violation("QualifiedMaxCountConstraintComponent", None));
                     }
                 }
@@ -740,9 +803,9 @@ impl CompiledShapes {
                     for node in focus {
                         let mut condition_results = Vec::new();
                         for &condition in &rule.conditions {
-                            self.evaluate_inner(
+                            self.evaluate_batch(
                                 condition,
-                                &node,
+                                std::slice::from_ref(&node),
                                 data,
                                 &mut condition_results,
                                 &mut evaluation,
@@ -754,7 +817,13 @@ impl CompiledShapes {
                         if let Some(expressions) = &rule.triple {
                             let mut filter = |i, n: &Term| {
                                 let mut results = Vec::new();
-                                self.evaluate_inner(i, n, data, &mut results, &mut evaluation)?;
+                                self.evaluate_batch(
+                                    i,
+                                    std::slice::from_ref(n),
+                                    data,
+                                    &mut results,
+                                    &mut evaluation,
+                                )?;
                                 Ok(results.is_empty())
                             };
                             let subjects = expressions[0].evaluate(
@@ -859,9 +928,7 @@ impl CompiledShapes {
             if !options.focus_nodes.is_empty() {
                 focus_nodes.retain(|n| options.focus_nodes.contains(n));
             }
-            for focus in focus_nodes {
-                self.evaluate_inner(index, &focus, data, &mut violations, &mut evaluation)?;
-            }
+            self.evaluate_batch(index, &focus_nodes, data, &mut violations, &mut evaluation)?;
             if options.abort_on_first && !violations.is_empty() {
                 break;
             }
@@ -1008,6 +1075,59 @@ impl CompiledShapes {
                             focus
                         };
                         format!("{direction} than {count} values on {location}")
+                    }
+                    "MinLengthConstraintComponent" | "MaxLengthConstraintComponent" => {
+                        let minimum = component == "MinLengthConstraintComponent";
+                        let count = shape
+                            .constraints
+                            .iter()
+                            .find_map(|constraint| match constraint {
+                                Constraint::Length {
+                                    minimum: is_minimum,
+                                    count,
+                                } if *is_minimum == minimum => Some(count),
+                                _ => None,
+                            })
+                            .expect("length violation requires a compiled length constraint");
+                        let number = count.number.to_string();
+                        let lexical = count.literal.value();
+                        let value = if lexical == number {
+                            format!("\"{lexical}\"")
+                        } else {
+                            format!("\"{lexical}\" = {number}")
+                        };
+                        let operator = if minimum { ">=" } else { "<=" };
+                        format!(
+                            "String length not {operator} Literal({value}, datatype={})",
+                            display.iri(&count.literal.datatype().into_owned())
+                        )
+                    }
+                    "QualifiedMinCountConstraintComponent"
+                    | "QualifiedMaxCountConstraintComponent" => {
+                        let (target, minimum, maximum) = shape
+                            .constraints
+                            .iter()
+                            .find_map(|constraint| match constraint {
+                                Constraint::Qualified {
+                                    shape,
+                                    minimum,
+                                    maximum,
+                                    ..
+                                } => Some((*shape, minimum, maximum)),
+                                _ => None,
+                            })
+                            .expect("qualified violation requires a compiled qualified constraint");
+                        let mut counts = String::new();
+                        if let Some(minimum) = minimum {
+                            counts.push_str(&format!(" MinCount {minimum}"));
+                        }
+                        if let Some(maximum) = maximum {
+                            counts.push_str(&format!(" MaxCount {maximum}"));
+                        }
+                        format!(
+                            "Focus node does not conform to shape{counts}: {}",
+                            display.term(&self.shapes[target].node, true)
+                        )
                     }
                     "PatternConstraintComponent" => {
                         let patterns = values(&self.graph, &shape.node, "pattern")?
