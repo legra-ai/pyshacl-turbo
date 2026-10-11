@@ -49,6 +49,8 @@ def check(path):
     assert metadata["License-Expression"] == "MIT OR Apache-2.0"
     for name in ["LICENSE-MIT", "LICENSE-APACHE"]:
         assert files[prefix + name] == (Path(__file__).parents[1] / name).read_bytes()
+        for vendor in ["oxrdf-0.3.4", "spargebra-0.4.7", "sparopt-0.3.7", "spareval-0.2.7"]:
+            assert prefix + f"vendor/{vendor}/{name}" in files, f"Missing {vendor} attribution"
     assert not any("CHANGELOG" in name for name in files), "Generated changelog must not ship"
     assert not any("/target/" in name or "/.venv/" in name for name in files)
     print(f"Verified {path.name}: metadata, licenses and packaged files")
