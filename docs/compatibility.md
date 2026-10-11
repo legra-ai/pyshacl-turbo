@@ -143,9 +143,13 @@ concurrent deletions. Neither path introduces Tokio or asynchronous I/O.
 - Multiple custom parameter values produce all combinations; pySHACL chooses an
   arbitrary single value. Referenced cyclic blank-node descriptions are retained
   in report graphs rather than truncated at a fixed depth.
-- Remote SPARQL endpoint inputs, HTTP server behavior, Windows wheels and
+- Remote SPARQL endpoint inputs are unsupported. HTTP server behavior and
   the private workload from the motivating screenshot remain unverified or
   unsupported. A supported local Store is not a remote SPARQL endpoint.
+
+All five published platform wheels, including Windows, pass installation and
+public API/CLI smoke checks. See [release evidence](releasing.md#initial-publication-evidence--2026-10-11).
+These checks do not establish full platform-specific compatibility.
 
 Performance is workload-specific. The matrix includes input transfer, report
 construction, shape reuse, reasoning and both RDFLib and Store baselines. Full
