@@ -40,7 +40,7 @@ jobs:
           private-key: ${{ secrets.RELEASE_WRITER_APP_KEY }}
           owner: ${{ github.repository_owner }}
           repositories: ${{ github.event.repository.name }}
-      - uses: actions-rust-lang/setup-rust-toolchain@v1
+      - uses: actions-rust-lang/setup-rust-toolchain@v2
       - uses: legra-ai/github-actions/.github/actions/prepare-cargo-release@42049e5750b05a59356fc6756424ca32c2834eb6
         id: release
         with:
@@ -80,7 +80,7 @@ jobs:
         with:
           python-version: ${{ matrix.python }}
       - uses: astral-sh/setup-uv@v10.3.0
-      - uses: actions-rust-lang/setup-rust-toolchain@v1
+      - uses: actions-rust-lang/setup-rust-toolchain@v2
         with:
           components: rustfmt, clippy
       - name: Build native extension and install pinned test dependencies
@@ -153,7 +153,7 @@ jobs:
         with:
           python-version: '3.13'
       - uses: astral-sh/setup-uv@v10.3.0
-      - uses: actions-rust-lang/setup-rust-toolchain@v1
+      - uses: actions-rust-lang/setup-rust-toolchain@v2
       - name: Build source distribution
         run: uv build --sdist --out-dir dist
       - name: Check source inventory, patched dependencies and license texts
@@ -199,7 +199,7 @@ jobs:
         with:
           python-version: '3.13'
       - uses: astral-sh/setup-uv@v10.3.0
-      - uses: actions-rust-lang/setup-rust-toolchain@v1
+      - uses: actions-rust-lang/setup-rust-toolchain@v2
         with:
           target: ${{ matrix.target }}
       - uses: mlugg/setup-zig@v2
