@@ -96,11 +96,20 @@ values and `oxigraph::Store` inputs. `CompiledShapes::validate_store` and
 Their `inplace` flag controls atomic addition of derived quads to the Store.
 Compiled programs are shareable across threads; parallelism is caller-controlled.
 
+Shape compilation uses [shacl-structural-model](https://github.com/legra-ai/shacl-structural-model)
+with Turbo's exact RDF terms, then prepares native queries, regexes and indexes
+for execution. The original graph remains available for reports and source
+identity. See [ADR 0017](docs/adr/0017-shared-structural-compiler.md).
+
 ## Performance
 
 ```sh
 make benchmark
 ```
+
+The [compiler integration comparison](benchmarks/structural-model.md) records
+before/after compilation and validation timings, including reused shapes, with
+complete report parity required before timing.
 
 The [performance report](benchmarks/current.md) compares RDFLib inputs and
 already loaded PyOxigraph Stores, including conversion and report construction.

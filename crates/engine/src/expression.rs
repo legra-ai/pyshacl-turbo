@@ -18,57 +18,58 @@ pub(crate) enum NodeExpression {
 }
 
 impl NodeExpression {
-    pub fn compile(
+    pub fn read(
         graph: &Dataset,
         node: &Term,
-        shapes: &HashMap<Term, usize>,
         functions: &Functions,
-    ) -> Result<Self> {
-        Self::compile_inner(graph, node, shapes, functions, &mut HashSet::new())
+    ) -> Result<shacl_structural_model::NodeExpression<Term>> {
+        Self::read_inner(graph, node, functions, &mut HashSet::new())
     }
 
-    fn compile_inner(
+    fn read_inner(
         graph: &Dataset,
         node: &Term,
-        shapes: &HashMap<Term, usize>,
         functions: &Functions,
         stack: &mut HashSet<Term>,
-    ) -> Result<Self> {
+    ) -> Result<shacl_structural_model::NodeExpression<Term>> {
+        use shacl_structural_model::{ExpressionKind as K, NodeExpression as E};
         if node == &Term::from(iri(SH, "this")) {
-            return Ok(Self::This);
+            return Ok(E::new(node.clone(), K::This));
         }
         if !matches!(node, Term::BlankNode(_)) {
-            return Ok(Self::Constant(node.clone()));
+            return Ok(E::new(node.clone(), K::Constant));
         }
         if !stack.insert(node.clone()) {
             return Err(Error::Invalid("Cyclic SHACL node expression".into()));
         }
-        let expression = if let Some(path) = one(graph, node, "path")? {
-            Self::Path(Path::compile(graph, &path)?)
+        let kind = if let Some(path) = one(graph, node, "path")? {
+            K::Path {
+                path: Path::read(graph, &path)?,
+                path_node: Some(path),
+                // pySHACL 0.40.1 evaluates sh:path from the focus, even when
+                // sh:nodes is present. Preserve that established behavior.
+                nodes: None,
+            }
         } else if let Some(list) = one(graph, node, "union")? {
-            Self::Union(
+            K::Union(
                 rdf_list(graph, &list)?
                     .iter()
-                    .map(|n| Self::compile_inner(graph, n, shapes, functions, stack))
+                    .map(|n| Self::read_inner(graph, n, functions, stack))
                     .collect::<Result<_>>()?,
             )
         } else if let Some(list) = one(graph, node, "intersection")? {
-            Self::Intersection(
+            K::Intersection(
                 rdf_list(graph, &list)?
                     .iter()
-                    .map(|n| Self::compile_inner(graph, n, shapes, functions, stack))
+                    .map(|n| Self::read_inner(graph, n, functions, stack))
                     .collect::<Result<_>>()?,
             )
         } else if let Some(shape) = one(graph, node, "filterShape")? {
             let nodes = one(graph, node, "nodes")?
                 .ok_or_else(|| Error::Invalid("sh:filterShape requires sh:nodes".into()))?;
-            Self::Filter {
-                shape: *shapes
-                    .get(&shape)
-                    .ok_or_else(|| Error::Invalid("Unknown filter shape".into()))?,
-                nodes: Box::new(Self::compile_inner(
-                    graph, &nodes, shapes, functions, stack,
-                )?),
+            K::Filter {
+                shape,
+                nodes: Box::new(Self::read_inner(graph, &nodes, functions, stack)?),
             }
         } else {
             let calls: Vec<_> = graph
@@ -87,16 +88,60 @@ impl NodeExpression {
                 )));
             }
             let (name, list) = &calls[0];
-            Self::Function {
-                name: name.clone(),
+            K::Function {
+                name: crate::structural::iri_value(name.clone().into(), "SHACL function")?,
                 args: rdf_list(graph, list)?
                     .iter()
-                    .map(|n| Self::compile_inner(graph, n, shapes, functions, stack))
+                    .map(|n| Self::read_inner(graph, n, functions, stack))
                     .collect::<Result<_>>()?,
             }
         };
         stack.remove(node);
-        Ok(expression)
+        Ok(E::new(node.clone(), kind))
+    }
+
+    pub fn lower(
+        expression: shacl_structural_model::NodeExpression<Term>,
+        shapes: &HashMap<Term, usize>,
+    ) -> Result<Self> {
+        use shacl_structural_model::ExpressionKind as K;
+        Ok(match expression.kind {
+            K::This => Self::This,
+            K::Constant => Self::Constant(expression.node),
+            K::Path {
+                path, nodes: None, ..
+            } => Self::Path(Path::from(path)),
+            K::Path { nodes: Some(_), .. } => {
+                return Err(Error::Unsupported(
+                    "Nested path inputs are outside pySHACL's expression semantics".into(),
+                ));
+            }
+            K::Union(parts) => Self::Union(
+                parts
+                    .into_iter()
+                    .map(|e| Self::lower(e, shapes))
+                    .collect::<Result<_>>()?,
+            ),
+            K::Intersection(parts) => Self::Intersection(
+                parts
+                    .into_iter()
+                    .map(|e| Self::lower(e, shapes))
+                    .collect::<Result<_>>()?,
+            ),
+            K::Filter { shape, nodes } => Self::Filter {
+                shape: *shapes
+                    .get(&shape)
+                    .ok_or_else(|| Error::Invalid("Unknown filter shape".into()))?,
+                nodes: Box::new(Self::lower(*nodes, shapes)?),
+            },
+            K::Function { name, args } => Self::Function {
+                name: crate::structural::named_iri(name),
+                args: args
+                    .into_iter()
+                    .map(|e| Self::lower(e, shapes))
+                    .collect::<Result<_>>()?,
+            },
+        })
     }
 
     pub fn evaluate(

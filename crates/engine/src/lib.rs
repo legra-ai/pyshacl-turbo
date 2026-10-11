@@ -15,7 +15,11 @@ mod path;
 mod pattern;
 mod sparql;
 mod sparql_regex;
+mod structural;
 mod value;
+
+#[cfg(test)]
+mod structural_tests;
 
 pub use compile::CompiledShapes;
 pub use execute::{Options, RuleExpansion, ValidationReport};

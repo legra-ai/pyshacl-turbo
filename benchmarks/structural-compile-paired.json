@@ -1,0 +1,316 @@
+{
+  "date": "2026-10-11T13:48:39.936963+00:00",
+  "platform": "macOS-27.0.1-arm64-arm-64bit-Mach-O",
+  "python": "3.13.16",
+  "workload": "1,000 node shapes plus 1,000 attached property shapes; 1,000 data nodes",
+  "load_note": "No concurrent task builds/tests. Other-workspace builds remain active; samples are descriptive.",
+  "harness_sha256": "64462c7a50f7126282198ac2c2ce7497bee0cc9aeddfd4c7a7922f9bcf72f88e",
+  "rounds": [
+    {
+      "round": 0,
+      "variant": "before",
+      "native_path": "/private/tmp/pyshacl-turbo-structural-baseline/pyshacl_turbo/_native.abi3.so",
+      "native_sha256": "5111f2de78d073ae9f3871428c35f4aadd512ce2369935efda9927a4d7cfc132",
+      "reports_isomorphic": true,
+      "phases": {
+        "python_api_compile": {
+          "median_ms": 104.84325,
+          "min_ms": 102.376167,
+          "max_ms": 106.043333,
+          "samples_ms": [
+            105.065042,
+            104.84325,
+            106.043333,
+            105.277459,
+            103.181458,
+            102.67725,
+            102.376167
+          ]
+        },
+        "native_compile": {
+          "median_ms": 81.691333,
+          "min_ms": 80.788375,
+          "max_ms": 82.976417,
+          "samples_ms": [
+            81.808792,
+            80.920792,
+            81.874291,
+            80.788375,
+            81.691333,
+            81.583125,
+            82.976417
+          ]
+        }
+      }
+    },
+    {
+      "round": 0,
+      "variant": "after",
+      "native_path": "/Users/jgeluk/Work/pyshacl-turbo/python/pyshacl_turbo/_native.abi3.so",
+      "native_sha256": "c565053e3076db540396b2d7be400339669de5e2ecb02864691e12213c0a1eab",
+      "reports_isomorphic": true,
+      "phases": {
+        "python_api_compile": {
+          "median_ms": 103.8555,
+          "min_ms": 102.345291,
+          "max_ms": 107.288709,
+          "samples_ms": [
+            107.288709,
+            103.8555,
+            103.604583,
+            103.641708,
+            103.993792,
+            102.345291,
+            105.16675
+          ]
+        },
+        "native_compile": {
+          "median_ms": 81.421834,
+          "min_ms": 80.424375,
+          "max_ms": 82.972,
+          "samples_ms": [
+            82.972,
+            82.017042,
+            80.990959,
+            81.421834,
+            80.784708,
+            80.424375,
+            82.314167
+          ]
+        }
+      }
+    },
+    {
+      "round": 1,
+      "variant": "after",
+      "native_path": "/Users/jgeluk/Work/pyshacl-turbo/python/pyshacl_turbo/_native.abi3.so",
+      "native_sha256": "c565053e3076db540396b2d7be400339669de5e2ecb02864691e12213c0a1eab",
+      "reports_isomorphic": true,
+      "phases": {
+        "python_api_compile": {
+          "median_ms": 106.83475,
+          "min_ms": 103.296833,
+          "max_ms": 176.11725,
+          "samples_ms": [
+            103.296833,
+            104.240666,
+            176.11725,
+            125.844375,
+            130.125417,
+            103.936833,
+            106.83475
+          ]
+        },
+        "native_compile": {
+          "median_ms": 82.735583,
+          "min_ms": 81.860375,
+          "max_ms": 148.597417,
+          "samples_ms": [
+            82.735583,
+            81.860375,
+            83.008417,
+            148.597417,
+            83.927292,
+            82.235833,
+            82.131625
+          ]
+        }
+      }
+    },
+    {
+      "round": 1,
+      "variant": "before",
+      "native_path": "/private/tmp/pyshacl-turbo-structural-baseline/pyshacl_turbo/_native.abi3.so",
+      "native_sha256": "5111f2de78d073ae9f3871428c35f4aadd512ce2369935efda9927a4d7cfc132",
+      "reports_isomorphic": true,
+      "phases": {
+        "python_api_compile": {
+          "median_ms": 104.123292,
+          "min_ms": 102.824583,
+          "max_ms": 116.532167,
+          "samples_ms": [
+            102.824583,
+            116.532167,
+            104.063417,
+            103.93175,
+            104.217792,
+            104.123292,
+            104.251625
+          ]
+        },
+        "native_compile": {
+          "median_ms": 81.8805,
+          "min_ms": 80.674125,
+          "max_ms": 84.866083,
+          "samples_ms": [
+            84.866083,
+            82.123,
+            83.4105,
+            80.674125,
+            81.8805,
+            81.268666,
+            81.493583
+          ]
+        }
+      }
+    },
+    {
+      "round": 2,
+      "variant": "before",
+      "native_path": "/private/tmp/pyshacl-turbo-structural-baseline/pyshacl_turbo/_native.abi3.so",
+      "native_sha256": "5111f2de78d073ae9f3871428c35f4aadd512ce2369935efda9927a4d7cfc132",
+      "reports_isomorphic": true,
+      "phases": {
+        "python_api_compile": {
+          "median_ms": 103.147167,
+          "min_ms": 101.278125,
+          "max_ms": 106.449834,
+          "samples_ms": [
+            106.009084,
+            103.869292,
+            102.577916,
+            103.147167,
+            106.449834,
+            101.278125,
+            102.900291
+          ]
+        },
+        "native_compile": {
+          "median_ms": 80.641666,
+          "min_ms": 78.990083,
+          "max_ms": 84.352083,
+          "samples_ms": [
+            81.464125,
+            84.352083,
+            80.641666,
+            79.961958,
+            81.703458,
+            79.986458,
+            78.990083
+          ]
+        }
+      }
+    },
+    {
+      "round": 2,
+      "variant": "after",
+      "native_path": "/Users/jgeluk/Work/pyshacl-turbo/python/pyshacl_turbo/_native.abi3.so",
+      "native_sha256": "c565053e3076db540396b2d7be400339669de5e2ecb02864691e12213c0a1eab",
+      "reports_isomorphic": true,
+      "phases": {
+        "python_api_compile": {
+          "median_ms": 103.338125,
+          "min_ms": 102.330958,
+          "max_ms": 105.18825,
+          "samples_ms": [
+            105.18825,
+            103.338125,
+            103.630708,
+            102.330958,
+            102.75975,
+            103.280208,
+            104.614625
+          ]
+        },
+        "native_compile": {
+          "median_ms": 82.539833,
+          "min_ms": 81.117458,
+          "max_ms": 83.272041,
+          "samples_ms": [
+            81.117458,
+            81.885333,
+            83.272041,
+            82.539833,
+            81.80275,
+            82.737208,
+            82.93325
+          ]
+        }
+      }
+    },
+    {
+      "round": 3,
+      "variant": "after",
+      "native_path": "/Users/jgeluk/Work/pyshacl-turbo/python/pyshacl_turbo/_native.abi3.so",
+      "native_sha256": "c565053e3076db540396b2d7be400339669de5e2ecb02864691e12213c0a1eab",
+      "reports_isomorphic": true,
+      "phases": {
+        "python_api_compile": {
+          "median_ms": 109.982166,
+          "min_ms": 108.387375,
+          "max_ms": 113.002625,
+          "samples_ms": [
+            111.022084,
+            109.982166,
+            108.806833,
+            108.387375,
+            108.550291,
+            113.002625,
+            111.747333
+          ]
+        },
+        "native_compile": {
+          "median_ms": 85.786667,
+          "min_ms": 84.459958,
+          "max_ms": 95.423625,
+          "samples_ms": [
+            90.866417,
+            84.70675,
+            86.747125,
+            85.410625,
+            84.459958,
+            85.786667,
+            95.423625
+          ]
+        }
+      }
+    },
+    {
+      "round": 3,
+      "variant": "before",
+      "native_path": "/private/tmp/pyshacl-turbo-structural-baseline/pyshacl_turbo/_native.abi3.so",
+      "native_sha256": "5111f2de78d073ae9f3871428c35f4aadd512ce2369935efda9927a4d7cfc132",
+      "reports_isomorphic": true,
+      "phases": {
+        "python_api_compile": {
+          "median_ms": 263.378416,
+          "min_ms": 149.537375,
+          "max_ms": 446.268166,
+          "samples_ms": [
+            149.537375,
+            263.378416,
+            325.958125,
+            247.363584,
+            228.60275,
+            446.268166,
+            406.95825
+          ]
+        },
+        "native_compile": {
+          "median_ms": 228.3215,
+          "min_ms": 88.538125,
+          "max_ms": 292.944209,
+          "samples_ms": [
+            88.538125,
+            119.8615,
+            228.3215,
+            288.990333,
+            292.944209,
+            283.105083,
+            218.970083
+          ]
+        }
+      }
+    }
+  ],
+  "medians_ms": {
+    "before": {
+      "python_api_compile": 104.5474375,
+      "native_compile": 81.8415415
+    },
+    "after": {
+      "python_api_compile": 104.8906875,
+      "native_compile": 82.7363955
+    }
+  }
+}

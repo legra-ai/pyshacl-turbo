@@ -279,102 +279,91 @@ pub(crate) fn shape_references(store: &Dataset) -> Result<HashSet<Term>> {
     Ok(result)
 }
 
-pub(crate) fn compile(
+/// Read Core parameter values without compiling queries or resolving shape indexes.
+pub(crate) fn read(
     store: &Dataset,
     node: &Term,
     property: bool,
-    indices: &HashMap<Term, usize>,
-) -> Result<Vec<Constraint>> {
+) -> Result<Vec<shacl_structural_model::Component<Term>>> {
+    use crate::structural::iri_value;
+    use shacl_structural_model::{Component as C, NodeKind, ShaclPath};
     let mut result = Vec::new();
-    let reference = |n: &Term| -> Result<usize> {
-        indices
-            .get(n)
-            .copied()
-            .ok_or_else(|| Error::Invalid(format!("Unknown shape {n}")))
-    };
-    for (name, minimum) in [("minCount", true), ("maxCount", false)] {
+    for name in ["minCount", "maxCount"] {
         if let Some(value) = one(store, node, name)? {
             if !property {
                 return Err(Error::Invalid(format!(
                     "sh:{name} requires a property shape"
                 )));
             }
-            result.push(Constraint::Count {
-                minimum,
-                count: integer(value, name)?,
+            result.push(if name == "minCount" {
+                C::MinCount(value)
+            } else {
+                C::MaxCount(value)
             });
         }
     }
     result.extend(
         values(store, node, "hasValue")?
             .into_iter()
-            .map(Constraint::HasValue),
+            .map(C::HasValue),
     );
     for value in values(store, node, "class")? {
-        result.push(Constraint::Class(named(value, "sh:class")?.into()));
+        result.push(C::Class(iri_value(value, "sh:class")?));
     }
     if let Some(value) = one(store, node, "datatype")? {
-        result.push(Constraint::Datatype(named(value, "sh:datatype")?));
+        result.push(C::Datatype(iri_value(value, "sh:datatype")?));
     }
     if let Some(value) = one(store, node, "nodeKind")? {
         let kind = named(value, "sh:nodeKind")?;
-        let name = kind.as_str().strip_prefix(SH).unwrap_or("");
-        if ![
-            "IRI",
-            "BlankNode",
-            "Literal",
-            "BlankNodeOrIRI",
-            "BlankNodeOrLiteral",
-            "IRIOrLiteral",
-        ]
-        .contains(&name)
-        {
-            return Err(Error::Invalid(format!("Invalid sh:nodeKind {kind}")));
-        }
-        result.push(Constraint::NodeKind(name.to_owned()));
+        result.push(C::NodeKind(NodeKind::from_iri(kind.as_str()).map_err(
+            |_| Error::Invalid(format!("Invalid sh:nodeKind {kind}")),
+        )?));
     }
-    for (name, component, operator) in [
-        ("minExclusive", "MinExclusiveConstraintComponent", ">"),
-        ("minInclusive", "MinInclusiveConstraintComponent", ">="),
-        ("maxExclusive", "MaxExclusiveConstraintComponent", "<"),
-        ("maxInclusive", "MaxInclusiveConstraintComponent", "<="),
+    for name in [
+        "minExclusive",
+        "minInclusive",
+        "maxExclusive",
+        "maxInclusive",
     ] {
         if let Some(value) = one(store, node, name)? {
             if !matches!(value, Term::Literal(_)) {
                 return Err(Error::Invalid(format!("sh:{name} requires a literal")));
             }
-            result.push(Constraint::Expression {
-                component,
-                query: expression(&format!("?value {operator} {value}"))?,
+            result.push(match name {
+                "minExclusive" => C::MinExclusive(value),
+                "minInclusive" => C::MinInclusive(value),
+                "maxExclusive" => C::MaxExclusive(value),
+                "maxInclusive" => C::MaxInclusive(value),
+                _ => unreachable!(),
             });
         }
     }
-    for (name, minimum) in [("minLength", true), ("maxLength", false)] {
+    for name in ["minLength", "maxLength"] {
         if let Some(value) = one(store, node, name)? {
-            result.push(Constraint::Length {
-                minimum,
-                count: integer(value, name)?,
+            result.push(if name == "minLength" {
+                C::MinLength(value)
+            } else {
+                C::MaxLength(value)
             });
         }
     }
     let flags = one(store, node, "flags")?
         .map(|v| string(v, "flags"))
-        .transpose()?
-        .unwrap_or_default();
+        .transpose()?;
     for pattern in values(store, node, "pattern")? {
         let Term::Literal(pattern) = pattern else {
             return Err(Error::Invalid("sh:pattern requires a literal".into()));
         };
-        result.push(Constraint::Pattern(crate::pattern::Pattern::compile(
-            pattern.value(),
-            &flags,
-        )?));
+        result.push(C::Pattern {
+            pattern: pattern.value().to_owned(),
+            flags: flags.clone(),
+        });
     }
     if let Some(head) = one(store, node, "languageIn")? {
-        result.push(Constraint::LanguageIn(
+        result.push(C::LanguageIn(
             rdf_list(store, &head)?
                 .into_iter()
-                .map(|v| string(v, "languageIn").map(|v| v.to_ascii_lowercase()))
+                .map(|v| string(v, "languageIn"))
                 .collect::<Result<_>>()?,
         ));
     }
@@ -384,65 +373,42 @@ pub(crate) fn compile(
                 "sh:uniqueLang requires a property shape".into(),
             ));
         }
-        result.push(Constraint::UniqueLang);
+        result.push(C::UniqueLang(true));
     }
     if let Some(head) = one(store, node, "in")? {
-        result.push(Constraint::In(
-            rdf_list(store, &head)?.into_iter().collect(),
-        ));
+        result.push(C::In(rdf_list(store, &head)?));
     }
-    for (name, kind, operator) in [
-        ("equals", "EqualsConstraintComponent", None),
-        ("disjoint", "DisjointConstraintComponent", None),
-        ("lessThan", "LessThanConstraintComponent", Some("<")),
-        (
-            "lessThanOrEquals",
-            "LessThanOrEqualsConstraintComponent",
-            Some("<="),
-        ),
-    ] {
+    for name in ["equals", "disjoint", "lessThan", "lessThanOrEquals"] {
         for value in values(store, node, name)? {
-            if operator.is_some() && !property {
+            if ["lessThan", "lessThanOrEquals"].contains(&name) && !property {
                 return Err(Error::Invalid(format!(
                     "sh:{name} requires a property shape"
                 )));
             }
-            result.push(Constraint::Pair {
-                kind,
-                predicate: named(value, name)?,
-                query: operator
-                    .map(|op| expression(&format!("?value {op} ?other")))
-                    .transpose()?,
+            let path = ShaclPath::Predicate(iri_value(value, name)?);
+            result.push(match name {
+                "equals" => C::Equals(path),
+                "disjoint" => C::Disjoint(path),
+                "lessThan" => C::LessThan(path),
+                "lessThanOrEquals" => C::LessThanOrEquals(path),
+                _ => unreachable!(),
             });
         }
     }
-    for value in values(store, node, "node")? {
-        result.push(Constraint::Node(reference(&value)?));
-    }
-    for (name, kind) in [
-        ("not", "NotConstraintComponent"),
-        ("and", "AndConstraintComponent"),
-        ("or", "OrConstraintComponent"),
-        ("xone", "XoneConstraintComponent"),
-    ] {
+    result.extend(values(store, node, "node")?.into_iter().map(C::Node));
+    for name in ["not", "and", "or", "xone"] {
         for value in values(store, node, name)? {
-            let terms = if name == "not" {
-                vec![value]
-            } else {
-                rdf_list(store, &value)?
-            };
-            result.push(Constraint::Logical {
-                kind,
-                shapes: terms.iter().map(reference).collect::<Result<_>>()?,
+            result.push(match name {
+                "not" => C::Not(value),
+                "and" => C::And(rdf_list(store, &value)?),
+                "or" => C::Or(rdf_list(store, &value)?),
+                "xone" => C::Xone(rdf_list(store, &value)?),
+                _ => unreachable!(),
             });
         }
     }
-    let minimum = one(store, node, "qualifiedMinCount")?
-        .map(|n| integer(n, "qualifiedMinCount"))
-        .transpose()?;
-    let maximum = one(store, node, "qualifiedMaxCount")?
-        .map(|n| integer(n, "qualifiedMaxCount"))
-        .transpose()?;
+    let minimum = one(store, node, "qualifiedMinCount")?;
+    let maximum = one(store, node, "qualifiedMaxCount")?;
     let disjoint = boolean(store, node, "qualifiedValueShapesDisjoint")?;
     if let Some(value) = one(store, node, "qualifiedValueShape")? {
         if !property {
@@ -450,51 +416,201 @@ pub(crate) fn compile(
                 "sh:qualifiedValueShape requires a property shape".into(),
             ));
         }
-        let mut siblings = HashSet::new();
-        if disjoint {
-            for parent in subjects(store, &iri(SH, "property"), Some(node))? {
-                for sibling in values(store, &parent, "property")? {
-                    for qualified in values(store, &sibling, "qualifiedValueShape")? {
-                        if qualified != value {
-                            siblings.insert(reference(&qualified)?);
-                        }
-                    }
-                }
+        result.push(C::QualifiedValueShape {
+            shape: value,
+            min_count: minimum,
+            max_count: maximum,
+            disjoint,
+        });
+    } else {
+        // These parameters do not activate a constraint by themselves, but
+        // malformed integer declarations still fail under the existing contract.
+        for (value, name) in [
+            (minimum, "qualifiedMinCount"),
+            (maximum, "qualifiedMaxCount"),
+        ] {
+            if let Some(value) = value {
+                integer(value, name)?;
             }
         }
-        result.push(Constraint::Qualified {
-            shape: reference(&value)?,
-            minimum,
-            maximum,
-            disjoint,
-            siblings: siblings.into_iter().collect(),
-        });
-        // Qualified counts do not activate a constraint without qualifiedValueShape.
-        // W3C core/node/qualified-001 explicitly permits these parameters on a node shape.
     }
     let ignored = one(store, node, "ignoredProperties")?;
-    if ignored.is_some() && one(store, node, "closed")?.is_none() {
+    let closed = one(store, node, "closed")?;
+    if ignored.is_some() && closed.is_none() {
         return Err(Error::Invalid(
             "sh:ignoredProperties requires sh:closed".into(),
         ));
     }
-    let ignored = ignored
+    let ignored_properties = ignored
         .map(|head| rdf_list(store, &head))
         .transpose()?
-        .unwrap_or_default();
-    let mut allowed: HashSet<_> = ignored
+        .unwrap_or_default()
         .into_iter()
-        .map(|v| named(v, "sh:ignoredProperties"))
+        .map(|v| iri_value(v, "sh:ignoredProperties"))
         .collect::<Result<_>>()?;
-    if boolean(store, node, "closed")? {
-        for property in values(store, node, "property")? {
-            if let Some(Term::NamedNode(path)) = one(store, &property, "path")? {
-                allowed.insert(path);
-            }
-        }
-        result.push(Constraint::Closed(allowed));
+    let is_closed = boolean(store, node, "closed")?;
+    if closed.is_some() {
+        result.push(C::Closed {
+            is_closed,
+            ignored_properties,
+        });
     }
     Ok(result)
+}
+
+/// Lower an owned Core declaration; source lookups are only for cross-shape relationships.
+pub(crate) fn lower_one(
+    store: &Dataset,
+    node: &Term,
+    property: bool,
+    indices: &HashMap<Term, usize>,
+    declaration: shacl_structural_model::Component<Term>,
+) -> Result<Option<Constraint>> {
+    use crate::structural::named_iri;
+    use shacl_structural_model::{Component as C, ShaclPath};
+    let reference = |n: &Term| {
+        indices
+            .get(n)
+            .copied()
+            .ok_or_else(|| Error::Invalid(format!("Unknown shape {n}")))
+    };
+    let range = |value: Term, component, operator| -> Result<Constraint> {
+        Ok(Constraint::Expression {
+            component,
+            query: expression(&format!("?value {operator} {value}"))?,
+        })
+    };
+    let pair = |path: ShaclPath, kind, operator: Option<&str>| -> Result<Constraint> {
+        let ShaclPath::Predicate(predicate) = path else {
+            return Err(Error::Invalid(
+                "Pair constraints require a predicate IRI".into(),
+            ));
+        };
+        if operator.is_some() && !property {
+            return Err(Error::Invalid(
+                "Comparison requires a property shape".into(),
+            ));
+        }
+        Ok(Constraint::Pair {
+            kind,
+            predicate: named_iri(predicate),
+            query: operator
+                .map(|op| expression(&format!("?value {op} ?other")))
+                .transpose()?,
+        })
+    };
+    Ok(Some(match declaration {
+        C::MinCount(value) => Constraint::Count {
+            minimum: true,
+            count: integer(value, "minCount")?,
+        },
+        C::MaxCount(value) => Constraint::Count {
+            minimum: false,
+            count: integer(value, "maxCount")?,
+        },
+        C::MinLength(value) => Constraint::Length {
+            minimum: true,
+            count: integer(value, "minLength")?,
+        },
+        C::MaxLength(value) => Constraint::Length {
+            minimum: false,
+            count: integer(value, "maxLength")?,
+        },
+        C::HasValue(value) => Constraint::HasValue(value),
+        C::Class(value) => Constraint::Class(named_iri(value).into()),
+        C::Datatype(value) => Constraint::Datatype(named_iri(value)),
+        C::NodeKind(kind) => Constraint::NodeKind(
+            kind.as_iri()
+                .strip_prefix(SH)
+                .expect("SHACL node kind IRI")
+                .to_owned(),
+        ),
+        C::MinExclusive(value) => range(value, "MinExclusiveConstraintComponent", ">")?,
+        C::MinInclusive(value) => range(value, "MinInclusiveConstraintComponent", ">=")?,
+        C::MaxExclusive(value) => range(value, "MaxExclusiveConstraintComponent", "<")?,
+        C::MaxInclusive(value) => range(value, "MaxInclusiveConstraintComponent", "<=")?,
+        C::Pattern { pattern, flags } => Constraint::Pattern(crate::pattern::Pattern::compile(
+            &pattern,
+            flags.as_deref().unwrap_or_default(),
+        )?),
+        C::LanguageIn(values) => {
+            Constraint::LanguageIn(values.into_iter().map(|v| v.to_ascii_lowercase()).collect())
+        }
+        C::UniqueLang(true) => Constraint::UniqueLang,
+        C::UniqueLang(false) => return Ok(None),
+        C::In(values) => Constraint::In(values.into_iter().collect()),
+        C::Equals(path) => pair(path, "EqualsConstraintComponent", None)?,
+        C::Disjoint(path) => pair(path, "DisjointConstraintComponent", None)?,
+        C::LessThan(path) => pair(path, "LessThanConstraintComponent", Some("<"))?,
+        C::LessThanOrEquals(path) => pair(path, "LessThanOrEqualsConstraintComponent", Some("<="))?,
+        C::Node(value) => Constraint::Node(reference(&value)?),
+        C::Not(value) => Constraint::Logical {
+            kind: "NotConstraintComponent",
+            shapes: vec![reference(&value)?],
+        },
+        C::And(values) => Constraint::Logical {
+            kind: "AndConstraintComponent",
+            shapes: values.iter().map(reference).collect::<Result<_>>()?,
+        },
+        C::Or(values) => Constraint::Logical {
+            kind: "OrConstraintComponent",
+            shapes: values.iter().map(reference).collect::<Result<_>>()?,
+        },
+        C::Xone(values) => Constraint::Logical {
+            kind: "XoneConstraintComponent",
+            shapes: values.iter().map(reference).collect::<Result<_>>()?,
+        },
+        C::QualifiedValueShape {
+            shape,
+            min_count,
+            max_count,
+            disjoint,
+        } => {
+            let mut siblings = HashSet::new();
+            if disjoint {
+                for parent in subjects(store, &iri(SH, "property"), Some(node))? {
+                    for sibling in values(store, &parent, "property")? {
+                        for qualified in values(store, &sibling, "qualifiedValueShape")? {
+                            if qualified != shape {
+                                siblings.insert(reference(&qualified)?);
+                            }
+                        }
+                    }
+                }
+            }
+            Constraint::Qualified {
+                shape: reference(&shape)?,
+                minimum: min_count
+                    .map(|v| integer(v, "qualifiedMinCount"))
+                    .transpose()?,
+                maximum: max_count
+                    .map(|v| integer(v, "qualifiedMaxCount"))
+                    .transpose()?,
+                disjoint,
+                siblings: siblings.into_iter().collect(),
+            }
+        }
+        C::Closed {
+            is_closed,
+            ignored_properties,
+        } => {
+            if !is_closed {
+                return Ok(None);
+            }
+            let mut allowed: HashSet<_> = ignored_properties.into_iter().map(named_iri).collect();
+            for property in values(store, node, "property")? {
+                if let Some(Term::NamedNode(path)) = one(store, &property, "path")? {
+                    allowed.insert(path);
+                }
+            }
+            Constraint::Closed(allowed)
+        }
+        C::Sparql(_) | C::Expression(_) | C::Custom(_) => {
+            return Err(Error::Invalid(
+                "Advanced declaration requires the SPARQL/AF lowering context".into(),
+            ));
+        }
+    }))
 }
 
 #[cfg(test)]
