@@ -4,6 +4,7 @@ use oxigraph::model::*;
 
 use crate::graph::*;
 use crate::{Error, Result};
+use shacl_structural_model::ShaclPath;
 
 #[derive(Clone)]
 pub(crate) enum Path {
@@ -37,13 +38,16 @@ pub(crate) fn rdf_list(store: &Dataset, head: &Term) -> Result<Vec<Term>> {
 }
 
 impl Path {
-    pub fn compile(store: &Dataset, node: &Term) -> Result<Self> {
+    pub fn read(store: &Dataset, node: &Term) -> Result<ShaclPath> {
         Self::parse(store, node, &mut HashSet::new())
     }
 
-    fn parse(store: &Dataset, node: &Term, active: &mut HashSet<Term>) -> Result<Self> {
+    fn parse(store: &Dataset, node: &Term, active: &mut HashSet<Term>) -> Result<ShaclPath> {
         if let Term::NamedNode(p) = node {
-            return Ok(Self::Predicate(p.clone()));
+            return Ok(ShaclPath::Predicate(crate::structural::iri_value(
+                p.clone().into(),
+                "Path predicate",
+            )?));
         }
         if !matches!(node, Term::BlankNode(_)) {
             return Err(Error::Invalid(format!("Invalid SHACL path {node}")));
@@ -58,7 +62,7 @@ impl Path {
         // The sequence rule permits additional triples. Other path forms must
         // be the subject of exactly one triple, so cannot compete with a list.
         if sequence {
-            let path = Self::Sequence(Self::path_list(store, node, active)?);
+            let path = ShaclPath::Sequence(Self::path_list(store, node, active)?);
             active.remove(node);
             return Ok(path);
         }
@@ -80,18 +84,18 @@ impl Path {
             )));
         }
         let result = if sequence {
-            Self::Sequence(Self::path_list(store, node, active)?)
+            ShaclPath::Sequence(Self::path_list(store, node, active)?)
         } else {
             let (name, value) = &operators[0];
             if *name == "alternativePath" {
-                Self::Alternative(Self::path_list(store, value, active)?)
+                ShaclPath::Alternative(Self::path_list(store, value, active)?)
             } else {
                 let path = Box::new(Self::parse(store, value, active)?);
                 match *name {
-                    "inversePath" => Self::Inverse(path),
-                    "zeroOrMorePath" => Self::ZeroOrMore(path),
-                    "oneOrMorePath" => Self::OneOrMore(path),
-                    "zeroOrOnePath" => Self::ZeroOrOne(path),
+                    "inversePath" => ShaclPath::Inverse(path),
+                    "zeroOrMorePath" => ShaclPath::ZeroOrMore(path),
+                    "oneOrMorePath" => ShaclPath::OneOrMore(path),
+                    "zeroOrOnePath" => ShaclPath::ZeroOrOne(path),
                     _ => unreachable!(),
                 }
             }
@@ -100,7 +104,11 @@ impl Path {
         Ok(result)
     }
 
-    fn path_list(store: &Dataset, node: &Term, active: &mut HashSet<Term>) -> Result<Vec<Path>> {
+    fn path_list(
+        store: &Dataset,
+        node: &Term,
+        active: &mut HashSet<Term>,
+    ) -> Result<Vec<ShaclPath>> {
         let terms = rdf_list(store, node)?;
         if terms.len() < 2 {
             return Err(Error::Invalid(
@@ -175,6 +183,24 @@ impl Path {
                 }
                 Ok(found)
             }
+        }
+    }
+}
+
+impl From<ShaclPath> for Path {
+    fn from(path: ShaclPath) -> Self {
+        match path {
+            ShaclPath::Predicate(p) => Self::Predicate(crate::structural::named_iri(p)),
+            ShaclPath::Sequence(paths) => {
+                Self::Sequence(paths.into_iter().map(Self::from).collect())
+            }
+            ShaclPath::Alternative(paths) => {
+                Self::Alternative(paths.into_iter().map(Self::from).collect())
+            }
+            ShaclPath::Inverse(p) => Self::Inverse(Box::new(Self::from(*p))),
+            ShaclPath::ZeroOrMore(p) => Self::ZeroOrMore(Box::new(Self::from(*p))),
+            ShaclPath::OneOrMore(p) => Self::OneOrMore(Box::new(Self::from(*p))),
+            ShaclPath::ZeroOrOne(p) => Self::ZeroOrOne(Box::new(Self::from(*p))),
         }
     }
 }

@@ -1,6 +1,7 @@
 use std::collections::HashSet;
 
 use oxigraph::model::*;
+use shacl_structural_model as model;
 
 use crate::constraints::{Constraint, named};
 use crate::graph::*;
@@ -8,10 +9,8 @@ use crate::path::Path;
 use crate::{Error, Result};
 
 pub(crate) struct Parameter {
-    pub node: Term,
-    pub path: NamedNode,
+    pub declaration: model::Parameter<Term>,
     variable: Variable,
-    optional: bool,
 }
 
 pub(crate) struct Component {
@@ -95,14 +94,17 @@ impl Component {
                         "Invalid or duplicate parameter name {name}"
                     )));
                 }
+                let mut declaration = model::Parameter::new(
+                    parameter.clone(),
+                    crate::structural::iri_value(path.into(), "Parameter path")?,
+                );
+                declaration.optional = boolean(graph, &parameter, "optional")?;
                 parameters.push(Parameter {
-                    path,
+                    declaration,
                     variable,
-                    optional: boolean(graph, &parameter, "optional")?,
-                    node: parameter,
                 });
             }
-            if parameters.is_empty() || parameters.iter().all(|p| p.optional) {
+            if parameters.is_empty() || parameters.iter().all(|p| p.declaration.optional) {
                 return Err(Error::Invalid(
                     "Constraint component needs a required parameter".into(),
                 ));
@@ -127,25 +129,63 @@ impl Component {
         Ok(result)
     }
 
-    pub fn compile(
+    pub fn read_application(
         &self,
         graph: &Dataset,
         shape: &Term,
+    ) -> Result<Option<model::CustomConstraint<Term>>> {
+        let mut parameters = Vec::new();
+        for parameter in &self.parameters {
+            let p = &parameter.declaration;
+            let values = objects(graph, shape, &crate::structural::named_iri(p.path.clone()))?;
+            if values.is_empty() && !p.optional {
+                return Ok(None);
+            }
+            parameters.push(model::ParameterValues {
+                path: p.path.clone(),
+                values,
+            });
+        }
+        Ok(Some(model::CustomConstraint {
+            component: crate::structural::iri_value(
+                self.node.clone().into(),
+                "Constraint component",
+            )?,
+            parameters,
+        }))
+    }
+
+    pub fn lower(
+        &self,
+        graph: &Dataset,
+        application: model::CustomConstraint<Term>,
         path: Option<&Path>,
         namespaces: &[(String, String)],
     ) -> Result<Vec<Constraint>> {
         let mut combinations = vec![Vec::new()];
         for parameter in &self.parameters {
-            let values = objects(graph, shape, &parameter.path)?;
+            let values = &application
+                .parameters
+                .iter()
+                .find(|p| p.path == parameter.declaration.path)
+                .ok_or_else(|| {
+                    Error::Invalid(format!(
+                        "Missing parameter binding {}",
+                        parameter.declaration.path
+                    ))
+                })?
+                .values;
             if values.is_empty() {
-                if parameter.optional {
+                if parameter.declaration.optional {
                     continue;
                 }
-                return Ok(Vec::new());
+                return Err(Error::Invalid(
+                    "Active constraint component requires its parameter values".into(),
+                ));
             }
             let mut next = Vec::new();
             for combination in combinations {
-                for value in &values {
+                for value in values {
                     let mut bindings = combination.clone();
                     bindings.push((parameter.variable.clone(), value.clone()));
                     next.push(bindings);
@@ -168,15 +208,19 @@ impl Component {
                 self.node
             )));
         };
+        // Resolve only the active validator role. Unused validator resources
+        // may be incomplete metadata and must not activate query parsing.
+        let declaration = crate::structural::validator(graph, validator, ask)?;
+        let deactivated = boolean(graph, validator, "deactivated")?;
         combinations
             .iter()
             .map(|bindings| {
-                crate::sparql::compile_validator(
+                crate::sparql::lower_validator(
                     graph,
-                    validator,
+                    declaration.clone(),
                     path,
                     bindings,
-                    ask,
+                    deactivated,
                     Some(self.node.clone()),
                     namespaces,
                 )

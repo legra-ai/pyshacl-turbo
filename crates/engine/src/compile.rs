@@ -7,10 +7,11 @@ use oxigraph::model::*;
 use spargebra::algebra::GraphPattern;
 use spargebra::{Query, SparqlParser};
 
-use crate::constraints::{self, Constraint, named};
+use crate::constraints::{self, Constraint};
 use crate::graph::*;
-use crate::path::{Path, rdf_list};
+use crate::path::Path;
 use crate::{Error, Result};
+use shacl_structural_model as model;
 
 pub(crate) enum Target {
     Node(Term),
@@ -55,8 +56,8 @@ pub struct CompiledShapes {
     pub(crate) namespaces: Vec<(String, String)>,
 }
 
-fn order(store: &Dataset, node: &Term) -> Result<BigDecimal> {
-    match one(store, node, "order")? {
+fn order(value: Option<Term>, node: &Term) -> Result<BigDecimal> {
+    match value {
         None => Ok(BigDecimal::from(0)),
         Some(Term::Literal(v))
             if ["integer", "decimal", "float", "double"]
@@ -75,12 +76,11 @@ fn order(store: &Dataset, node: &Term) -> Result<BigDecimal> {
 
 fn query(
     store: &Dataset,
-    node: &Term,
-    term: &Term,
+    declaration: model::SparqlQuery<Term>,
     construct: bool,
     namespaces: &[(String, String)],
 ) -> Result<NativeQuery> {
-    let Term::Literal(text) = term else {
+    let Term::Literal(text) = declaration.text else {
         return Err(Error::Invalid(
             "SPARQL query must be a string literal".into(),
         ));
@@ -91,7 +91,7 @@ fn query(
     let mut parsed = SparqlParser::new()
         .parse_query(&format!(
             "{}\n{}",
-            crate::sparql::prefixes(store, node, namespaces)?,
+            crate::sparql::prefixes(store, declaration.prefixes, namespaces)?,
             text.value()
         ))
         .map_err(|e| Error::Invalid(format!("SPARQL parse error: {e}")))?;
@@ -128,6 +128,99 @@ fn query(
         _ => unreachable!("Query kind was checked above"),
     }
     Ok(NativeQuery::new(parsed))
+}
+
+fn lower_target(
+    graph: &Dataset,
+    target: model::Target<Term>,
+    namespaces: &[(String, String)],
+) -> Result<Target> {
+    use crate::structural::named_iri;
+    Ok(match target {
+        model::Target::Node(node) => Target::Node(node),
+        model::Target::Class(class) => Target::Class(named_iri(class).into()),
+        model::Target::ImplicitClass(class) => Target::Class(class),
+        model::Target::SubjectsOf(predicate) => Target::Subjects(named_iri(predicate)),
+        model::Target::ObjectsOf(predicate) => Target::Objects(named_iri(predicate)),
+        model::Target::Sparql(target) => Target::Sparql {
+            query: Box::new(query(graph, target.select, false, namespaces)?),
+            bindings: Vec::new(),
+        },
+        model::Target::Custom(target) => {
+            let definition = crate::structural::target_type(graph, &target.target_type)?;
+            let mut bindings = Vec::new();
+            for parameter in crate::functions::lower_parameters(definition.parameters)? {
+                let values = &target
+                    .parameters
+                    .iter()
+                    .find(|p| p.path.as_str() == parameter.path.as_str())
+                    .ok_or_else(|| {
+                        Error::Invalid(format!("Missing target parameter {}", parameter.path))
+                    })?
+                    .values;
+                if values.len() > 1 || (values.is_empty() && !parameter.optional) {
+                    return Err(Error::Invalid(format!(
+                        "Target {} requires one value for {}",
+                        target.id, parameter.path
+                    )));
+                }
+                if let Some(value) = values.first() {
+                    bindings.push((parameter.variable, value.clone()));
+                }
+            }
+            let mut parsed = query(graph, definition.select, false, namespaces)?.parsed;
+            crate::functions::project_bindings(
+                &mut parsed,
+                &bindings.iter().map(|(v, _)| v.clone()).collect::<Vec<_>>(),
+            );
+            Target::Sparql {
+                query: Box::new(NativeQuery::new(parsed)),
+                bindings,
+            }
+        }
+    })
+}
+
+fn lower_rule(
+    graph: &Dataset,
+    declaration: model::ShaclRule<Term>,
+    indices: &HashMap<Term, usize>,
+    namespaces: &[(String, String)],
+) -> Result<Rule> {
+    let mut queries = Vec::new();
+    let mut triple = None;
+    for kind in declaration.kinds {
+        match kind {
+            model::RuleKind::Sparql(body) => queries.push(query(graph, body, true, namespaces)?),
+            model::RuleKind::Triple(body) => {
+                if triple.is_some() {
+                    return Err(Error::Invalid("Multiple TripleRule bodies".into()));
+                }
+                triple = Some([
+                    NodeExpression::lower(body.subject, indices)?,
+                    NodeExpression::lower(body.predicate, indices)?,
+                    NodeExpression::lower(body.object, indices)?,
+                ]);
+            }
+        }
+    }
+    Ok(Rule {
+        order: order(declaration.order, &declaration.id)?,
+        node: declaration.id,
+        deactivated: declaration.deactivated,
+        conditions: declaration
+            .conditions
+            .iter()
+            .map(|n| {
+                indices
+                    .get(n)
+                    .copied()
+                    .ok_or_else(|| Error::Invalid("Unknown condition shape".into()))
+            })
+            .collect::<Result<_>>()?,
+        queries,
+        triple,
+    })
 }
 
 fn check_vocabulary(
@@ -274,7 +367,7 @@ impl CompiledShapes {
         for q in store.quads_for_pattern(None, Some(iri(SH, "path").as_ref()), None, None) {
             let node = q.object.into_owned();
             if let std::collections::hash_map::Entry::Vacant(entry) = paths.entry(node.clone()) {
-                entry.insert(Path::compile(&store, &node)?);
+                entry.insert(Path::read(&store, &node)?);
             }
         }
         let components = crate::components::Component::discover(&store)?;
@@ -331,7 +424,12 @@ impl CompiledShapes {
         }
         for component in &components {
             executable_nodes.insert(component.node.clone().into());
-            executable_nodes.extend(component.parameters.iter().map(|p| p.node.clone()));
+            executable_nodes.extend(
+                component
+                    .parameters
+                    .iter()
+                    .map(|p| p.declaration.id.clone()),
+            );
             executable_nodes.extend(component.validators.iter().cloned());
         }
         // Shape roles come from types, targets and shape-expecting predicates.
@@ -344,105 +442,87 @@ impl CompiledShapes {
         let indices: HashMap<_, _> = nodes.iter().cloned().zip(0..).collect();
         let mut shapes = Vec::new();
         for node in nodes {
-            subject(&node)?;
-            let path_node = one(&store, &node, "path")?;
-            let path = path_node.as_ref().map(|n| paths[n].clone());
-            let types = objects(&store, &node, &iri(RDF, "type"))?;
-            if types.contains(&iri(SH, "NodeShape").into()) && path.is_some() {
-                return Err(Error::Invalid(format!(
-                    "NodeShape {node} cannot have sh:path"
-                )));
-            }
-            if types.contains(&iri(SH, "PropertyShape").into()) && path.is_none() {
-                return Err(Error::Invalid(format!(
-                    "PropertyShape {node} requires sh:path"
-                )));
-            }
-            let mut targets = Vec::new();
-            targets.extend(
-                values(&store, &node, "targetNode")?
-                    .into_iter()
-                    .map(Target::Node),
-            );
-            for term in values(&store, &node, "targetClass")? {
-                targets.push(Target::Class(named(term, "sh:targetClass")?.into()));
-            }
-            if types.contains(&iri(RDFS, "Class").into())
-                || types.contains(&iri("http://www.w3.org/2002/07/owl#", "Class").into())
-            {
-                targets.push(Target::Class(node.clone()));
-            }
-            for term in values(&store, &node, "targetSubjectsOf")? {
-                targets.push(Target::Subjects(named(term, "sh:targetSubjectsOf")?));
-            }
-            for term in values(&store, &node, "targetObjectsOf")? {
-                targets.push(Target::Objects(named(term, "sh:targetObjectsOf")?));
-            }
-            for target in values(&store, &node, "target")? {
-                let types = objects(&store, &target, &iri(RDF, "type"))?;
-                let (definition, bindings) = if types.contains(&iri(SH, "SPARQLTarget").into()) {
-                    (target.clone(), Vec::new())
-                } else {
-                    let definition = types
-                        .iter()
-                        .find(|t| {
-                            objects(&store, t, &iri(RDF, "type"))
-                                .is_ok_and(|v| v.contains(&iri(SH, "SPARQLTargetType").into()))
+            let declaration = crate::structural::read_shape(
+                &store,
+                &node,
+                &paths,
+                advanced,
+                &functions,
+                &components,
+            )?;
+            let (declaration, path, path_node) = match declaration {
+                crate::structural::ShapeDeclaration::Node(shape) => (*shape, None, None),
+                crate::structural::ShapeDeclaration::Property(shape) => (
+                    model::NodeShape {
+                        id: shape.id,
+                        targets: shape.targets,
+                        components: shape.components,
+                        property_shapes: shape.property_shapes,
+                        deactivated: shape.deactivated,
+                        severity: shape.severity,
+                        messages: shape.messages,
+                        rules: shape.rules,
+                        order: shape.order,
+                    },
+                    Some(Path::from(shape.path)),
+                    shape.path_node,
+                ),
+            };
+            let targets = declaration
+                .targets
+                .into_iter()
+                .map(|target| lower_target(&store, target, namespaces))
+                .collect::<Result<Vec<_>>>()?;
+            let mut constraints = Vec::new();
+            for component in declaration.components {
+                match component {
+                    model::Component::Sparql(sparql) => {
+                        constraints.push(Constraint::Sparql(Box::new(crate::sparql::lower(
+                            &store,
+                            *sparql,
+                            path.as_ref(),
+                            namespaces,
+                        )?)))
+                    }
+                    model::Component::Expression(expression) => {
+                        constraints.push(Constraint::NodeExpression {
+                            node: expression.expression.node.clone(),
+                            expression: NodeExpression::lower(expression.expression, &indices)?,
+                            messages: expression.messages,
                         })
-                        .ok_or_else(|| Error::Unsupported(format!("target type on {target}")))?
-                        .clone();
-                    let mut bindings = Vec::new();
-                    for parameter in crate::functions::parameters(&store, &definition)? {
-                        let values = objects(&store, &target, &parameter.path)?;
-                        if values.len() > 1 || (values.is_empty() && !parameter.optional) {
-                            return Err(Error::Invalid(format!(
-                                "Target {target} requires one value for {}",
-                                parameter.path
-                            )));
-                        }
-                        if let Some(value) = values.into_iter().next() {
-                            bindings.push((parameter.variable, value));
+                    }
+                    model::Component::Custom(application) => {
+                        let definition = components
+                            .iter()
+                            .find(|c| c.node.as_str() == application.component.as_str())
+                            .ok_or_else(|| {
+                                Error::Invalid(format!(
+                                    "Unknown constraint component {}",
+                                    application.component
+                                ))
+                            })?;
+                        constraints.extend(definition.lower(
+                            &store,
+                            application,
+                            path.as_ref(),
+                            namespaces,
+                        )?);
+                    }
+                    core => {
+                        if let Some(constraint) = constraints::lower_one(
+                            &store,
+                            &declaration.id,
+                            path.is_some(),
+                            &indices,
+                            core,
+                        )? {
+                            constraints.push(constraint);
                         }
                     }
-                    (definition, bindings)
-                };
-                let text = one(&store, &definition, "select")?
-                    .ok_or_else(|| Error::Invalid(format!("Missing sh:select on {definition}")))?;
-                let mut parsed = query(&store, &definition, &text, false, namespaces)?.parsed;
-                crate::functions::project_bindings(
-                    &mut parsed,
-                    &bindings.iter().map(|(v, _)| v.clone()).collect::<Vec<_>>(),
-                );
-                targets.push(Target::Sparql {
-                    query: Box::new(NativeQuery::new(parsed)),
-                    bindings,
-                });
-            }
-            let mut constraints = constraints::compile(&store, &node, path.is_some(), &indices)?;
-            for expression in values(&store, &node, "expression")? {
-                if !advanced {
-                    return Err(Error::Unsupported(
-                        "sh:expression requires advanced=True".into(),
-                    ));
                 }
-                constraints.push(Constraint::NodeExpression {
-                    expression: NodeExpression::compile(&store, &expression, &indices, &functions)?,
-                    messages: values(&store, &expression, "message")?,
-                    node: expression,
-                });
             }
-            for constraint in values(&store, &node, "sparql")? {
-                constraints.push(Constraint::Sparql(Box::new(crate::sparql::compile(
-                    &store,
-                    &constraint,
-                    path.as_ref(),
-                    namespaces,
-                )?)));
-            }
-            for component in &components {
-                constraints.extend(component.compile(&store, &node, path.as_ref(), namespaces)?);
-            }
-            let properties: Vec<_> = values(&store, &node, "property")?
+            let properties = declaration
+                .property_shapes
                 .iter()
                 .map(|n| {
                     indices
@@ -451,87 +531,28 @@ impl CompiledShapes {
                         .ok_or_else(|| Error::Invalid("Unknown property shape".into()))
                 })
                 .collect::<Result<_>>()?;
-            let mut rules = Vec::new();
-            for rule in values(&store, &node, "rule")? {
-                let types = objects(&store, &rule, &iri(RDF, "type"))?;
-                let (queries, triple) = if types.contains(&iri(SH, "SPARQLRule").into()) {
-                    let queries = values(&store, &rule, "construct")?
-                        .iter()
-                        .map(|text| query(&store, &rule, text, true, namespaces))
-                        .collect::<Result<Vec<_>>>()?;
-                    if queries.is_empty() {
-                        return Err(Error::Invalid(format!("Missing sh:construct on {rule}")));
-                    }
-                    (queries, None)
-                } else if types.contains(&iri(SH, "TripleRule").into()) {
-                    let mut exprs = Vec::new();
-                    for p in ["subject", "predicate", "object"] {
-                        let n = one(&store, &rule, p)?
-                            .ok_or_else(|| Error::Invalid(format!("TripleRule requires sh:{p}")))?;
-                        exprs.push(NodeExpression::compile(&store, &n, &indices, &functions)?);
-                    }
-                    (
-                        Vec::new(),
-                        Some(exprs.try_into().unwrap_or_else(|_| unreachable!())),
-                    )
-                } else {
-                    return Err(Error::Unsupported(format!("rule type on {rule}")));
-                };
-                let mut condition_nodes = Vec::new();
-                for value in values(&store, &rule, "condition")? {
-                    if value == Term::from(iri(RDF, "nil"))
-                        || !objects(&store, &value, &iri(RDF, "first"))?.is_empty()
-                    {
-                        condition_nodes.extend(rdf_list(&store, &value)?);
-                    } else {
-                        condition_nodes.push(value);
-                    }
-                }
-                let conditions = condition_nodes
-                    .iter()
-                    .map(|n| {
-                        indices
-                            .get(n)
-                            .copied()
-                            .ok_or_else(|| Error::Invalid("Unknown condition shape".into()))
-                    })
-                    .collect::<Result<_>>()?;
-                rules.push(Rule {
-                    node: rule.clone(),
-                    order: order(&store, &rule)?,
-                    deactivated: boolean(&store, &rule, "deactivated")?,
-                    conditions,
-                    queries,
-                    triple,
-                });
-            }
+            let mut rules = declaration
+                .rules
+                .into_iter()
+                .map(|rule| lower_rule(&store, rule, &indices, namespaces))
+                .collect::<Result<Vec<_>>>()?;
             rules.sort_by(|a, b| {
                 a.order
                     .cmp(&b.order)
                     .then_with(|| a.node.to_string().cmp(&b.node.to_string()))
             });
-            let messages = values(&store, &node, "message")?;
-            if messages.iter().any(|m| !matches!(m, Term::Literal(_))) {
-                return Err(Error::Invalid(format!(
-                    "sh:message must be a literal on {node}"
-                )));
-            }
-            let severity = one(&store, &node, "severity")?
-                .map(|n| named(n, "sh:severity"))
-                .transpose()?
-                .unwrap_or_else(|| iri(SH, "Violation"));
             shapes.push(Shape {
-                order: order(&store, &node)?,
-                deactivated: boolean(&store, &node, "deactivated")?,
-                node,
+                order: order(declaration.order, &declaration.id)?,
+                deactivated: declaration.deactivated,
+                node: declaration.id,
                 path,
                 path_node,
                 targets,
                 constraints,
                 properties,
                 rules,
-                messages,
-                severity,
+                messages: declaration.messages,
+                severity: NamedNode::new_unchecked(declaration.severity.as_iri()),
             });
         }
         for shape in &shapes {
