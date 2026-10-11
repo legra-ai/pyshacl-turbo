@@ -46,6 +46,26 @@ jobs:
         run: make dev PYTHON=${{ matrix.python }}
       - name: Python, Rust, formatting and lint checks
         run: make check
+      - name: Python line and branch coverage with pytest-cov
+        if: matrix.os == 'ubuntu-latest' && matrix.python == '3.13'
+        run: make test-coverage
+      - name: Add coverage to the job summary
+        if: matrix.os == 'ubuntu-latest' && matrix.python == '3.13'
+        run: .venv/bin/python -m coverage report --format=markdown >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v7
+        if: always() && matrix.os == 'ubuntu-latest' && matrix.python == '3.13'
+        with:
+          name: python-coverage
+          path: |
+            python-coverage.xml
+            python-coverage.json
+            htmlcov/
+          if-no-files-found: error
+      - name: Package the coverage report and badge for GitHub Pages
+        if: github.ref == 'refs/heads/main' && matrix.os == 'ubuntu-latest' && matrix.python == '3.13'
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: htmlcov
       - name: Build wheel
         run: .venv/bin/maturin build --release --locked --out dist
       - name: Create isolated wheel environment
@@ -75,3 +95,20 @@ jobs:
           import os
           if os.environ['VERIFY_RESULT'] != 'success':
               raise SystemExit('One or more required verification jobs did not pass')
+
+  publish-coverage:
+    name: Publish Python coverage
+    needs: test
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Publish the measured coverage report and badge
+        id: deployment
+        uses: actions/deploy-pages@v5

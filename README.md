@@ -1,5 +1,10 @@
 # pyshacl-turbo
 
+[![Python 3.11+](https://img.shields.io/badge/Python-3.11%2B-3776AB?logo=python&logoColor=white)](pyproject.toml)
+[![Rust stable](https://img.shields.io/badge/Rust-stable-DEA584?logo=rust&logoColor=black)](.github/workflows/ci.yml)
+[![License: Apache-2.0 OR MIT](https://img.shields.io/badge/license-Apache--2.0%20OR%20MIT-blue)](#verification-and-architecture)
+[![Python coverage measured by pytest-cov](https://legra-ai.github.io/pyshacl-turbo/coverage.svg)](https://legra-ai.github.io/pyshacl-turbo/)
+
 [![Tests and wheels](https://github.com/legra-ai/pyshacl-turbo/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/legra-ai/pyshacl-turbo/actions/workflows/ci.yml)
 [![Compatibility](https://github.com/legra-ai/pyshacl-turbo/actions/workflows/compatibility.yml/badge.svg?branch=main)](https://github.com/legra-ai/pyshacl-turbo/actions/workflows/compatibility.yml)
 [![Regex](https://github.com/legra-ai/pyshacl-turbo/actions/workflows/regex.yml/badge.svg?branch=main)](https://github.com/legra-ai/pyshacl-turbo/actions/workflows/regex.yml)
@@ -127,12 +132,13 @@ assets live under tests/w3c and vendor/pyshacl respectively.
 make coverage
 make test-compatibility
 make test-regex
+make test-coverage
 .venv/bin/python scripts/run_upstream.py
 .venv/bin/python scripts/run_upstream.py --reference
 .venv/bin/python scripts/audit_reference_fixture.py
 ```
 
-The badges report three required CI checks on `main`. Each workflow also runs on
+The three workflow badges report required CI checks on `main`. Each workflow also runs on
 pull requests, daily, and on manual dispatch:
 
 | Workflow | What it verifies |
@@ -140,6 +146,15 @@ pull requests, daily, and on manual dispatch:
 | Tests and wheels | Python and Rust regressions, formatting and lint on Linux Python 3.11/3.13 and macOS Python 3.13; built wheels installed with only runtime dependencies, without pySHACL or owlrl. |
 | Compatibility | All pinned W3C Core/SPARQL cases, the complete non-JS pySHACL inventory, and an independent audit of the known reference-fixture defect. Case-level JSON and W3C JUnit XML are uploaded as artifacts. |
 | Regex | The patched matcher's full upstream suite, unit tests with Turbo's base features, Python-mode VM regressions, and formatting, using its own pinned test dependencies. |
+
+The [Python coverage report](https://legra-ai.github.io/pyshacl-turbo/) measures
+the complete `pyshacl_turbo` Python package with `pytest-cov`, including uncovered
+files and branches. CI requires at least **72% combined line-and-branch coverage**
+on Linux Python 3.13. XML, JSON and HTML reports are uploaded for each run; passing
+`main` runs publish the HTML report and measured percentage badge to GitHub Pages.
+`make test-coverage` generates the same report locally in `htmlcov/`.
+This measures Python API/CLI code coverage; it does not measure Rust code coverage
+or SHACL compatibility. No package files are omitted from the denominator.
 
 A green Compatibility badge means the documented baseline holds: **402/403**
 strict upstream passes and **119/120** W3C passes. The upstream fixture failure
