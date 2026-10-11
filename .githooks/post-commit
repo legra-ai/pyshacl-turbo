@@ -1,0 +1,9 @@
+#!/bin/sh
+if ! signature=$(git log -1 --format='%G?'); then
+    printf 'Cannot inspect commit signature\n' >&2
+    exit 1
+fi
+if [ "$signature" != G ]; then
+    printf 'Commit signature did not verify: %s\n' "$signature" >&2
+    exit 1
+fi
