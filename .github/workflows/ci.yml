@@ -256,7 +256,7 @@ jobs:
       - uses: legra-ai/github-actions/.github/actions/generate-changelog@42049e5750b05a59356fc6756424ca32c2834eb6
         with:
           revision: ${{ needs.prepare.outputs.revision }}
-      - uses: softprops/action-gh-release@v2
+      - uses: softprops/action-gh-release@v3
         with:
           tag_name: v${{ needs.prepare.outputs.version }}
           target_commitish: ${{ needs.prepare.outputs.revision }}
