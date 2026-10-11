@@ -12,7 +12,7 @@ from suite_harness import cases, compare
             case,
             id=case.id,
             marks=pytest.mark.xfail(
-                strict=True, reason="ADR 0003: pySHACL treats boolean lexical 1 as true"
+                strict=True, reason="ADR 0007: pySHACL Graph input treats boolean lexical 1 as true"
             ),
         )
         if case.path.stem == "uniqueLang-002"

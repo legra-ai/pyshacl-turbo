@@ -230,7 +230,10 @@ def validate(
             raise RuntimeError(f"Unknown multi_data_graphs_mode: {multi_data_graphs_mode}")
         combined = Graph()
         for source in data_graph:
-            combined += union(load_from_source(source, rdf_format=data_graph_format))
+            source_graph = union(load_from_source(source, rdf_format=data_graph_format))
+            combined += source_graph
+            for prefix, namespace in source_graph.namespaces():
+                combined.bind(prefix, namespace)
         data_graph, data_graph_format = combined, None
     if shacl_graph is None:
         shacl_graph, shacl_graph_format = data_graph, data_graph_format

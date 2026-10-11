@@ -19,7 +19,9 @@ The complete upstream run passes **402/403 cases (99.8%)**, including
 2 explicitly recorded native equivalents for Python implementation tests. The
 remaining failure is an audited incorrect assertion in the reference fixture;
 both engines produce equivalent reports. It remains recorded as failed.
-The pinned W3C run passed **119/120**. These are separate measurements;
+The pinned W3C suite passes **120/120 (100%) with document inputs** and
+**119/120 with RDFLib Graph inputs**. The latter retains a documented
+input-dependent pySHACL behavior. These are separate measurements;
 see [compatibility](docs/compatibility.md) and the case-level
 [upstream report](docs/upstream-coverage.json).
 
@@ -144,12 +146,12 @@ pull requests, daily, and on manual dispatch:
 | Workflow | What it verifies |
 | --- | --- |
 | Tests and wheels | Python and Rust regressions, formatting and lint on Linux Python 3.11/3.13 and macOS Python 3.13; built wheels installed with only runtime dependencies, without pySHACL or owlrl. |
-| Compatibility | All pinned W3C Core/SPARQL cases, the complete non-JS pySHACL inventory, and an independent audit of the known reference-fixture defect. Case-level JSON and W3C JUnit XML are uploaded as artifacts. |
+| Compatibility | All pinned W3C Core/SPARQL cases through both document and Graph APIs, the complete non-JS pySHACL inventory, and an independent audit of the known reference-fixture defect. Case-level JSON and W3C JUnit XML are uploaded as artifacts. |
 | Regex | The patched matcher's full upstream suite, unit tests with Turbo's base features, Python-mode VM regressions, and formatting, using its own pinned test dependencies. |
 
 The [Python coverage report](https://legra-ai.github.io/pyshacl-turbo/) measures
 the complete `pyshacl_turbo` Python package with `pytest-cov`, including uncovered
-files and branches. CI requires at least **72% combined line-and-branch coverage**
+files and branches. CI requires **100% line and branch coverage**
 on Linux Python 3.13. XML, JSON and HTML reports are uploaded for each run; passing
 `main` runs publish the HTML report and measured percentage badge to GitHub Pages.
 `make test-coverage` generates the same report locally in `htmlcov/`.
@@ -157,10 +159,11 @@ This measures Python API/CLI code coverage; it does not measure Rust code covera
 or SHACL compatibility. No package files are omitted from the denominator.
 
 A green Compatibility badge means the documented baseline holds: **402/403**
-strict upstream passes and **119/120** W3C passes. The upstream fixture failure
-remains failed in the report and must pass its independent audit; the W3C
-divergence remains a strict expected failure. New failures and unexpected W3C
-passes fail CI. These badges do not claim complete pySHACL compatibility.
+strict upstream passes, **120/120** W3C document passes and **119/120** W3C
+Graph passes. The upstream fixture failure remains failed in the report and must
+pass its independent audit; the W3C Graph divergence remains a strict expected
+failure. New failures and unexpected Graph passes fail CI. These badges do not
+claim complete pySHACL compatibility.
 
 Upstream allowances which turn failures into passes are disabled for both engines.
 The bridge blocks reference validation and rule execution. Original comparators
