@@ -4,6 +4,7 @@
 [![Rust stable](https://img.shields.io/badge/Rust-stable-DEA584?logo=rust&logoColor=black)](.github/workflows/ci.yml)
 [![License: Apache-2.0 OR MIT](https://img.shields.io/badge/license-Apache--2.0%20OR%20MIT-blue)](#verification-and-architecture)
 [![Python coverage measured by pytest-cov](https://legra-ai.github.io/pyshacl-turbo/coverage.svg)](https://legra-ai.github.io/pyshacl-turbo/)
+[![pySHACL non-JS suite: 100% (403/403)](https://img.shields.io/badge/pySHACL%20non--JS%20suite-100%25-brightgreen)](docs/compatibility.md#measurements)
 
 [![Tests and wheels](https://github.com/legra-ai/pyshacl-turbo/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/legra-ai/pyshacl-turbo/actions/workflows/ci.yml)
 [![Compatibility](https://github.com/legra-ai/pyshacl-turbo/actions/workflows/compatibility.yml/badge.svg?branch=main)](https://github.com/legra-ai/pyshacl-turbo/actions/workflows/compatibility.yml)
