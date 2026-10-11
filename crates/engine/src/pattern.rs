@@ -1,27 +1,52 @@
 //! pySHACL Core uses Python's `re`, including its non-SPARQL flag semantics.
 //! Translate lexical differences once; matching and captures remain in Rust.
 
-use fancy_regex::Regex;
+use fancy_regex::{Regex, RegexBuilder, RegexInput};
 use regex_syntax::hir::{Class, ClassUnicode, ClassUnicodeRange, HirKind};
 use std::collections::HashSet;
+use std::sync::OnceLock;
 
 use crate::{Error, Result};
 
-pub(crate) struct Pattern(Regex);
+pub(crate) struct Pattern {
+    regex: Regex,
+    translated: String,
+    nonempty: OnceLock<std::result::Result<Option<Regex>, String>>,
+}
 
 impl Pattern {
     pub(crate) fn compile(pattern: &str, flags: &str) -> Result<Self> {
         // pySHACL lowercases sh:flags and recognizes only i and m here. Its
         // SPARQL REGEX implementation has a different contract.
         let flags = flags.to_lowercase();
-        let mut parser = Translator {
-            input: pattern.chars().collect(),
-            offset: 0,
-            flags: Flags {
+        Self::compile_flags(
+            pattern,
+            Flags {
                 insensitive: flags.contains('i'),
                 multiline: flags.contains('m'),
                 ..Flags::default()
             },
+        )
+    }
+
+    pub(crate) fn compile_sparql(pattern: &str, flags: &str) -> Result<Self> {
+        Self::compile_flags(
+            pattern,
+            Flags {
+                insensitive: flags.contains('i'),
+                multiline: flags.contains('m'),
+                dotall: flags.contains('s'),
+                ..Flags::default()
+            },
+        )
+        .map_err(|e| Error::Invalid(e.to_string().replace("sh:pattern", "SPARQL pattern")))
+    }
+
+    fn compile_flags(pattern: &str, flags: Flags) -> Result<Self> {
+        let mut parser = Translator {
+            input: pattern.chars().collect(),
+            offset: 0,
+            flags,
             stack: Vec::new(),
             names: HashSet::new(),
             at_start: true,
@@ -29,16 +54,95 @@ impl Pattern {
             last_assertion: false,
         };
         let translated = parser.translate()?;
-        Regex::new(&translated)
-            .map(Self)
-            .map_err(|e| Error::Invalid(format!("Invalid sh:pattern: {e}")))
+        let regex = Regex::new(&translated)
+            .map_err(|e| Error::Invalid(format!("Invalid sh:pattern: {e}")))?;
+        Ok(Self {
+            regex,
+            translated,
+            nonempty: OnceLock::new(),
+        })
     }
 
     pub(crate) fn is_match(&self, text: &str) -> Result<bool> {
         // Backtracking exhaustion is an execution error, never a non-match.
-        self.0
+        self.regex
             .is_match(text)
             .map_err(|e| Error::Runtime(format!("sh:pattern matching failed: {e}")))
+    }
+
+    pub(crate) fn replace(&self, text: &str, replacement: &str, count: usize) -> Result<String> {
+        let template = crate::sparql_regex::replacement(replacement, &self.regex)?;
+        let mut output = String::new();
+        let (mut search, mut copied, mut replaced, mut after_empty) = (0, 0, 0, false);
+        while search <= text.len() && (count == 0 || replaced < count) {
+            // Since Python 3.7, a nonempty match may follow an empty match at
+            // the same position. Retry that position with empty matches barred
+            // before advancing by one Unicode scalar. Do not slice the input:
+            // anchors and lookbehind must still see the original string.
+            let captures = if after_empty {
+                let nonempty = self.nonempty.get_or_init(|| {
+                    match RegexBuilder::new(&self.translated)
+                        .find_not_empty(true)
+                        .build()
+                    {
+                        Ok(regex) => Ok(Some(regex)),
+                        Err(fancy_regex::Error::CompileError(error))
+                            if matches!(
+                                *error,
+                                fancy_regex::CompileError::PatternCanNeverMatch
+                            ) =>
+                        {
+                            Ok(None)
+                        }
+                        Err(error) => Err(error.to_string()),
+                    }
+                });
+                match nonempty {
+                    Ok(Some(regex)) => {
+                        regex.captures_input(RegexInput::new(text).from_pos(search).anchored(true))
+                    }
+                    Ok(None) => Ok(None),
+                    Err(error) => {
+                        return Err(Error::Runtime(format!(
+                            "SPARQL REPLACE matching failed: {error}"
+                        )));
+                    }
+                }
+            } else {
+                self.regex.captures_from_pos(text, search)
+            }
+            .map_err(|e| Error::Runtime(format!("SPARQL REPLACE matching failed: {e}")))?;
+            let Some(captures) = captures else {
+                if !after_empty || search == text.len() {
+                    break;
+                }
+                search += text[search..]
+                    .chars()
+                    .next()
+                    .expect("position before end")
+                    .len_utf8();
+                after_empty = false;
+                continue;
+            };
+            let matched = captures.get(0).expect("whole match exists");
+            output.push_str(&text[copied..matched.start()]);
+            for piece in &template {
+                match piece {
+                    crate::sparql_regex::Replacement::Text(value) => output.push_str(value),
+                    crate::sparql_regex::Replacement::Group(index) => {
+                        if let Some(value) = captures.get(*index) {
+                            output.push_str(value.as_str());
+                        }
+                    }
+                }
+            }
+            search = matched.end();
+            copied = search;
+            after_empty = matched.start() == matched.end();
+            replaced += 1;
+        }
+        output.push_str(&text[copied..]);
+        Ok(output)
     }
 }
 

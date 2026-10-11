@@ -50,8 +50,10 @@ This is bounded compatibility evidence against Python 3.11–3.13, not a claim
 that every Python expression is equivalent. Unicode database versions, parser
 resource limits, exact exception types and warning text are not fully aligned.
 Python 3.14's new end-anchor and empty-input non-boundary behavior need a
-separate version-aware contract. SPARQL REGEX/REPLACE still use Oxigraph's
-matcher. The strict upstream inventory retains its one audited fixture failure.
+separate version-aware contract. At this checkpoint SPARQL REGEX/REPLACE still
+used Oxigraph's matcher; [ADR 0015](0015-native-sparql-patterns.md) subsequently
+extends the native Python behavior to those functions. The strict upstream
+inventory retains its one audited fixture failure.
 
 See the [Python re reference](https://docs.python.org/3.13/library/re.html)
 and the [dependency syntax](https://docs.rs/fancy-regex/0.19.2/fancy_regex/).

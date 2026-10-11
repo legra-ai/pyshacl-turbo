@@ -12,32 +12,42 @@ use oxigraph::sparql::{
 use spargebra::{Query, SparqlParser, algebra::GraphPattern};
 
 use crate::graph::*;
+use crate::sparql_regex::RegexFunctions;
 use crate::{Error, Result};
 
 pub(crate) struct NativeQuery {
     pub parsed: Query,
     prepared: PreparedSparqlQuery,
+    regex: RegexFunctions,
 }
 
 impl NativeQuery {
-    pub fn new(parsed: Query) -> Self {
+    pub fn new(mut parsed: Query) -> Self {
+        let regex = RegexFunctions::lower(&mut parsed);
         Self {
             prepared: SparqlEvaluator::new().for_query(parsed.clone()),
             parsed,
+            regex,
         }
     }
 
     pub fn prepare(&self, functions: &Functions, data: &Dataset) -> NativePrepared {
-        if functions.0.is_empty() {
+        if functions.0.is_empty() && !self.regex.required() {
             NativePrepared {
                 query: self.prepared.clone(),
                 errors: None,
             }
         } else {
             let errors = Arc::new(Mutex::new(None));
+            let evaluator = if functions.0.is_empty() {
+                SparqlEvaluator::new()
+            } else {
+                functions.evaluator(Arc::new(data.clone()), 0, errors.clone())
+            };
             NativePrepared {
-                query: functions
-                    .evaluator(Arc::new(data.clone()), 0, errors.clone())
+                query: self
+                    .regex
+                    .register(evaluator, errors.clone())
                     .for_query(self.parsed.clone()),
                 errors: Some(errors),
             }
@@ -45,7 +55,7 @@ impl NativeQuery {
     }
 }
 
-type FunctionErrors = Arc<Mutex<Option<Error>>>;
+pub(crate) type FunctionErrors = Arc<Mutex<Option<Error>>>;
 
 pub(crate) struct NativePrepared {
     query: PreparedSparqlQuery,
@@ -216,7 +226,7 @@ pub(crate) fn project_bindings(query: &mut Query, bindings: &[Variable]) {
 }
 
 struct Function {
-    query: Query,
+    query: NativeQuery,
     parameters: Vec<Parameter>,
     output: Option<Variable>,
 }
@@ -281,7 +291,7 @@ impl Functions {
             functions.insert(
                 name,
                 Function {
-                    query,
+                    query: NativeQuery::new(query),
                     parameters,
                     output,
                 },
@@ -357,9 +367,14 @@ impl Functions {
         }
         let errors = Arc::new(Mutex::new(None));
         let mut query = NativePrepared {
-            query: self
-                .evaluator(data.clone(), depth, errors.clone())
-                .for_query(function.query.clone()),
+            query: function
+                .query
+                .regex
+                .register(
+                    self.evaluator(data.clone(), depth, errors.clone()),
+                    errors.clone(),
+                )
+                .for_query(function.query.parsed.clone()),
             errors: Some(errors),
         }
         .on_queryable_dataset(data.as_ref());

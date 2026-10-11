@@ -1,4 +1,5 @@
 /target/
+/vendor/spareval-0.2.7/target/
 /.venv/
 /.wheel-venv/
 /.pytest_cache/

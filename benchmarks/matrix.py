@@ -28,12 +28,17 @@ def make_case(kind, nodes, shape_count=1):
     for g in (data, shapes):
         g.bind("ex", EX)
         g.bind("sh", SH)
+    # The Store adapter exposes xsd:string explicitly. Use identical terms in
+    # both inputs when a SPARQL report includes the original string as sh:value.
+    email_datatype = XSD.string if kind == "sparql-patterns" else None
     for i in range(nodes):
         node = EX[f"person{i}"]
         data.add((node, RDF.type, EX.Employee if kind == "rdfs" else EX.Person))
         data.add((node, EX.enabled, Literal(True)))
         if i % 10:
-            data.add((node, EX.email, Literal(f"person{i}@example.com")))
+            data.add((node, EX.email, Literal(f"person{i}@example.com", datatype=email_datatype)))
+        elif kind == "sparql-patterns":
+            data.add((node, EX.email, Literal(f"person{i}@invalid", datatype=email_datatype)))
     if kind == "rdfs":
         data.add((EX.Employee, RDFS.subClassOf, EX.Person))
         data.add((EX.email, RDFS.domain, EX.Person))
@@ -41,6 +46,23 @@ def make_case(kind, nodes, shape_count=1):
         data.add((EX.Person, OWL.equivalentClass, EX.Eligible))
     if kind == "rules":
         shapes.parse(ROOT / "tests/fixtures/pipeline-shapes.ttl")
+    elif kind == "sparql-patterns":
+        shapes.add((EX.Shape, RDF.type, SH.NodeShape))
+        shapes.add((EX.Shape, SH.targetClass, EX.Person))
+        shapes.add((EX.Shape, SH.sparql, EX.PatternConstraint))
+        shapes.add((EX.PatternConstraint, SH.message, Literal("A valid email is required")))
+        shapes.add(
+            (
+                EX.PatternConstraint,
+                SH.select,
+                Literal(
+                    f"SELECT $this ?value WHERE {{ $this <{EX.email}> ?value . "
+                    'FILTER(!REGEX(?value, "^person[0-9]+@example[.]com$") || '
+                    'REPLACE(?value, "^([^@]+)@.*$", "$1") != '
+                    f'STRAFTER(STR($this), "{EX}")) }}'
+                ),
+            )
+        )
     else:
         for i in range(shape_count):
             shape, prop = EX[f"Shape{i}"], EX[f"Property{i}"]
@@ -268,6 +290,8 @@ def write_report(result, output):
         "| Workload | Data triples | Shape triples | Results | pySHACL ms | Turbo ms | Reused ms | Speedup | Reused speedup |",
         "|---|---:|---:|---:|---:|---:|---:|---:|---:|",
     ]
+    if note := result["environment"].get("load_note"):
+        lines[8:8] = [f"Load note: {note}", ""]
     for r in result["runs"]:
         m = r["measurements"]
         lines.append(
@@ -331,7 +355,12 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--repeats", type=int, default=5)
     parser.add_argument("--quick", action="store_true")
-    parser.add_argument("--kinds", nargs="+", choices=["core", "shapes", "rules", "rdfs", "owlrl"])
+    parser.add_argument("--load-note", help="Record known concurrent load or measurement limits")
+    parser.add_argument(
+        "--kinds",
+        nargs="+",
+        choices=["core", "shapes", "rules", "rdfs", "owlrl", "sparql-patterns"],
+    )
     parser.add_argument("--output", type=Path, default=ROOT / "benchmarks/performance.json")
     args = parser.parse_args()
     if args.repeats < 1:
@@ -340,6 +369,8 @@ def main():
         ("core", 100, 1),
         ("core", 1000, 1),
         ("core", 10000, 1),
+        ("sparql-patterns", 100, 1),
+        ("sparql-patterns", 1000, 1),
         ("shapes", 1000, 10),
         ("shapes", 1000, 100),
         ("shapes", 1000, 1000),
@@ -354,6 +385,7 @@ def main():
     if args.quick:
         cases = [
             ("core", 10, 1),
+            ("sparql-patterns", 10, 1),
             ("shapes", 10, 10),
             ("rules", 10, 1),
             ("rdfs", 10, 1),
@@ -379,6 +411,7 @@ def main():
             "owlrl_reference_only": version("owlrl"),
             "turbo": version("pyshacl-turbo"),
             "pyoxigraph": version("pyoxigraph"),
+            "load_note": args.load_note,
         },
         "source_sha256": {
             str(p.relative_to(ROOT)): hashlib.sha256(p.read_bytes()).hexdigest()

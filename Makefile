@@ -2,8 +2,9 @@ PYTHON ?= python3.13
 VENV_PYTHON := $(CURDIR)/.venv/bin/python
 MATURIN := $(CURDIR)/.venv/bin/maturin
 REGEX_MANIFEST := vendor/fancy-regex-0.19.2/Cargo.toml
+SPARQL_MANIFEST := vendor/spareval-0.2.7/Cargo.toml
 
-.PHONY: dev test test-compatibility test-regex test-coverage lint check benchmark benchmark-pipeline coverage
+.PHONY: dev test test-compatibility test-regex test-sparql-evaluator test-coverage lint check benchmark benchmark-pipeline coverage
 
 .venv/bin/python:
 	uv venv --python $(PYTHON) .venv
@@ -25,6 +26,10 @@ test-regex:
 	cargo test --manifest-path $(REGEX_MANIFEST) --locked --lib --no-default-features --features std,perf,unicode
 	cargo test --manifest-path $(REGEX_MANIFEST) --locked --lib --no-default-features --features std,perf,unicode,python-re python_re_tests
 	cargo fmt --manifest-path $(REGEX_MANIFEST) -- --check
+
+test-sparql-evaluator:
+	cargo test --manifest-path $(SPARQL_MANIFEST) --locked --lib
+	cargo test --manifest-path $(SPARQL_MANIFEST) --locked --lib --features exact-custom-function-terms,undefined-functions-as-expression-errors
 
 test-coverage:
 	$(VENV_PYTHON) -m pytest -q --cov --cov-context=test --cov-report=term-missing --cov-report=xml:python-coverage.xml --cov-report=json:python-coverage.json --cov-report=html:htmlcov

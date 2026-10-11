@@ -14,6 +14,7 @@ mod ontology;
 mod path;
 mod pattern;
 mod sparql;
+mod sparql_regex;
 mod value;
 
 pub use compile::CompiledShapes;

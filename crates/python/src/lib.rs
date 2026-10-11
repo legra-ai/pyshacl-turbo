@@ -155,9 +155,7 @@ fn inoculate(py: Python<'_>, source: &str, rdf_format: &str, ontology: &str) -> 
 #[pyfunction]
 fn query(py: Python<'_>, source: &str, rdf_format: &str, query: &str) -> PyResult<String> {
     use pyshacl_turbo_engine::oxigraph::sparql::QueryResults;
-    use pyshacl_turbo_engine::oxigraph::sparql::results::{
-        QueryResultsFormat, QueryResultsSerializer,
-    };
+    use serde_json::json;
     let rdf_format = format(rdf_format)?;
     py.detach(|| {
         let mut data = rdf_format.parse(source, None)?;
@@ -166,29 +164,52 @@ fn query(py: Python<'_>, source: &str, rdf_format: &str, query: &str) -> PyResul
             .map(|q| Quad::new(q.subject, q.predicate, q.object, GraphName::DefaultGraph))
             .collect();
         data.extend(default);
-        let serializer = QueryResultsSerializer::from_format(QueryResultsFormat::Json);
-        let bytes = match pyshacl_turbo_engine::evaluate_query(&data, &data, query, &[])? {
+        let result = match pyshacl_turbo_engine::evaluate_query(&data, &data, query, &[])? {
             QueryResults::Solutions(solutions) => {
-                let mut writer = serializer
-                    .serialize_solutions_to_writer(Vec::new(), solutions.variables().to_vec())
-                    .map_err(|e| Error::Runtime(e.to_string()))?;
+                let variables: Vec<_> = solutions
+                    .variables()
+                    .iter()
+                    .map(|v| v.as_str().to_owned())
+                    .collect();
+                let mut rows = Vec::new();
                 for solution in solutions {
-                    writer
-                        .serialize(&solution?)
-                        .map_err(|e| Error::Runtime(e.to_string()))?;
+                    let row: serde_json::Map<_, _> = solution?
+                        .iter()
+                        .map(|(variable, value)| {
+                            (variable.as_str().to_owned(), query_result_term(value))
+                        })
+                        .collect();
+                    rows.push(row);
                 }
-                writer.finish().map_err(|e| Error::Runtime(e.to_string()))?
+                json!({"head": {"vars": variables}, "results": {"bindings": rows}})
             }
-            QueryResults::Boolean(value) => serializer
-                .serialize_boolean_to_writer(Vec::new(), value)
-                .map_err(|e| Error::Runtime(e.to_string()))?,
+            QueryResults::Boolean(value) => json!({"head": {}, "boolean": value}),
             QueryResults::Graph(_) => {
                 return Err(Error::Invalid("SELECT or ASK query required".into()));
             }
         };
-        String::from_utf8(bytes).map_err(|e| Error::Runtime(e.to_string()))
+        Ok(result.to_string())
     })
     .map_err(error)
+}
+
+fn query_result_term(term: &Term) -> serde_json::Value {
+    use serde_json::json;
+    match term {
+        Term::NamedNode(value) => json!({"type": "uri", "value": value.as_str()}),
+        Term::BlankNode(value) => json!({"type": "bnode", "value": value.as_str()}),
+        Term::Literal(value) => {
+            let mut result = json!({"type": "literal", "value": value.value()});
+            if let Some(language) = value.language() {
+                result["xml:lang"] = json!(language);
+            } else if value.has_explicit_datatype() {
+                // The standard Oxigraph JSON writer omits xsd:string, losing
+                // the explicit datatype required by RDFLib term identity.
+                result["datatype"] = json!(value.datatype().as_str());
+            }
+            result
+        }
+    }
 }
 
 #[pyclass(frozen, name = "CompiledShapes")]

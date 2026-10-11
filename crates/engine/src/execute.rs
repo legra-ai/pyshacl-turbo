@@ -988,6 +988,27 @@ impl CompiledShapes {
                     .strip_prefix(SH)
                     .unwrap_or(violation.component.as_str());
                 match component {
+                    "MinCountConstraintComponent" | "MaxCountConstraintComponent" => {
+                        let minimum = component == "MinCountConstraintComponent";
+                        let count = shape
+                            .constraints
+                            .iter()
+                            .find_map(|constraint| match constraint {
+                                Constraint::Count {
+                                    minimum: is_minimum,
+                                    count,
+                                } if *is_minimum == minimum => Some(count),
+                                _ => None,
+                            })
+                            .expect("cardinality violation requires a compiled count constraint");
+                        let direction = if minimum { "Less" } else { "More" };
+                        let location = if let Some(path) = &violation.path {
+                            format!("{focus}->{}", display.term(path, true))
+                        } else {
+                            focus
+                        };
+                        format!("{direction} than {count} values on {location}")
+                    }
                     "PatternConstraintComponent" => {
                         let patterns = values(&self.graph, &shape.node, "pattern")?
                             .iter()
