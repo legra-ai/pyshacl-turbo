@@ -75,6 +75,7 @@ constraint selected, and Bob plus Jenny with both shapes selected. The port's
 two-focus-node, constraint-component and source-shape assertions are unchanged.
 
 The intentional inference differences in ADR 0010 remain actual differences.
-A future decision must resolve compatibility mode versus corrected semantics
-before claiming full replacement. This ADR does not silently reclassify those
-differences or add a Python fallback.
+[ADR 0021](0021-standard-rdf-inference-output.md) resolves the generalized-RDF
+portion of that decision: public output remains standard RDF, and literal-subject
+reference statements are intentionally excluded. Raw observed differences remain
+recorded. This does not waive valid-RDF differences or add a Python fallback.

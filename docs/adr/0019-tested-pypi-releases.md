@@ -27,6 +27,13 @@ wheel on its native platform without pySHACL or owlrl and run the public API
 and CLI smoke checks. This does not claim full platform-specific compatibility
 from those smoke checks alone.
 
+Exercise each exact wheel through uv's virtual-environment installer, a locked
+consumer project (`uv add`, `uv sync`, `uv run`), `uvx` and `uv tool install`.
+Check imports, both console commands, conforming/nonconforming exit codes, rule
+output and the optional PyOxigraph Store extra. Keep caches, project environments
+and installed tools temporary; never modify the developer's tool installation.
+Use ADR 0006's guarded macOS process launcher for these checks.
+
 Both Rust workspace members are implementation packages with `publish = false`.
 Their source remains in the Python source distribution. Separate crates.io
 publication would require a decision about the patched dependencies. Use a

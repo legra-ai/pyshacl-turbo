@@ -1,6 +1,7 @@
 import pyshacl
 import pyshacl_turbo as turbo
 import pytest
+from rdflib import BNode, Graph, Literal, URIRef
 from rdflib.compare import isomorphic
 from rdflib.namespace import OWL, RDF
 from test_compatibility import EX, PREFIXES, graph
@@ -116,6 +117,32 @@ def test_complete_inference_closure_without_literal_subjects(mode, body):
         "missing": sorted(map(str, set(expected) - set(actual))),
         "extra": sorted(map(str, set(actual) - set(expected))),
     }
+
+
+@pytest.mark.parametrize("mode", ["rdfs", "owlrl", "both"])
+def test_inference_returns_standard_rdf_with_literal_objects(mode):
+    source = PREFIX + 'ex:p rdfs:domain ex:C. ex:s ex:p "value"; ex:n 1.'
+    expected = turbo.load_from_source(source)
+    actual = turbo.load_from_source(source)
+    original = set(actual)
+    pyshacl.validate(expected, shacl_graph=graph(""), inference=mode, inplace=True)
+    turbo.validate(actual, shacl_graph=graph(""), inference=mode, inplace=True)
+
+    # Keep literal values in object position and all valid inferred statements.
+    assert original.issubset(actual)
+    assert (EX.s, RDF.type, EX.C) in actual
+    assert any(isinstance(o, Literal) for _, _, o in actual)
+    assert all(isinstance(s, (URIRef, BNode)) and isinstance(p, URIRef) for s, p, _ in actual)
+    ordinary = Graph()
+    for s, p, o in expected:
+        if isinstance(s, (URIRef, BNode)) and isinstance(p, URIRef):
+            ordinary.add((s, p, o))
+    assert len(ordinary) < len(expected), "The fixture must expose generalized reference output"
+    assert isomorphic(actual, ordinary)
+
+    # The public result must round-trip through a standard RDF serialization.
+    serialized = actual.serialize(format="nt")
+    assert isomorphic(actual, Graph().parse(data=serialized, format="nt"))
 
 
 def test_key_requires_a_common_value_for_every_property():

@@ -12,6 +12,12 @@ All release wheels are built from the tested source distribution. Rust and
 Python versions are synchronized through `cargo version-info`; do not edit
 versions in an independent publishing script.
 
+Every platform wheel is installed through uv's pip interface, added to a locked
+uv project, run through `uvx`, and installed as a uv tool. The checks exercise
+both console commands with valid and invalid data, rule output, Python imports
+and optional PyOxigraph Store input. Each run uses temporary environments,
+caches and tool directories, with no reference reasoner installed.
+
 The initial artifact matrix is CPython 3.11+ ABI3:
 
 | Platform | Architecture | Minimum platform |

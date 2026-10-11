@@ -218,7 +218,7 @@ jobs:
         run: python scripts/check_package.py dist/*.whl
       - name: Check PyPI metadata rendering
         run: uvx --from twine==6.2.0 twine check --strict dist/*
-      - name: Install and verify the wheel with only runtime dependencies
+      - name: Verify uv environments, locked projects, tools and optional Store input
         run: python scripts/test_wheel.py dist
       - uses: actions/upload-artifact@v7
         with:
