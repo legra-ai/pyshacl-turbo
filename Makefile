@@ -1,8 +1,9 @@
 PYTHON ?= python3.13
 VENV_PYTHON := $(CURDIR)/.venv/bin/python
 MATURIN := $(CURDIR)/.venv/bin/maturin
+REGEX_MANIFEST := vendor/fancy-regex-0.19.2/Cargo.toml
 
-.PHONY: dev test lint check benchmark benchmark-pipeline coverage
+.PHONY: dev test test-compatibility test-regex lint check benchmark benchmark-pipeline coverage
 
 .venv/bin/python:
 	uv venv --python $(PYTHON) .venv
@@ -14,6 +15,16 @@ dev: .venv/bin/python
 test:
 	$(VENV_PYTHON) -m pytest -q
 	PYO3_PYTHON=$(VENV_PYTHON) cargo test --workspace --locked
+
+test-compatibility:
+	$(VENV_PYTHON) -m pytest -q tests/test_w3c.py tests/test_sparql.py::test_w3c_sparql_constraint --junitxml=w3c-results.xml
+	$(VENV_PYTHON) scripts/check_upstream.py --output upstream-results.json
+
+test-regex:
+	cargo test --manifest-path $(REGEX_MANIFEST) --locked
+	cargo test --manifest-path $(REGEX_MANIFEST) --locked --lib --no-default-features --features std,perf,unicode
+	cargo test --manifest-path $(REGEX_MANIFEST) --locked --lib --no-default-features --features std,perf,unicode,python-re python_re_tests
+	cargo fmt --manifest-path $(REGEX_MANIFEST) -- --check
 
 lint:
 	cargo fmt --all -- --check
