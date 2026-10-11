@@ -32,7 +32,7 @@ jobs:
       - uses: actions/checkout@v7
         with:
           fetch-depth: 0
-      - uses: actions/create-github-app-token@v2
+      - uses: actions/create-github-app-token@v3
         id: writer
         if: github.ref == 'refs/heads/main'
         with:
