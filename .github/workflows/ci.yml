@@ -46,6 +46,9 @@ jobs:
         run: make dev PYTHON=${{ matrix.python }}
       - name: Python, Rust, formatting and lint checks
         run: make check
+      - name: SPARQL evaluator defaults and opt-in compatibility features
+        if: matrix.os == 'ubuntu-latest' && matrix.python == '3.13'
+        run: make test-sparql-evaluator
       - name: Python line and branch coverage with pytest-cov
         if: matrix.os == 'ubuntu-latest' && matrix.python == '3.13'
         run: make test-coverage
