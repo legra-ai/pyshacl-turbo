@@ -74,6 +74,16 @@ def report_table(conforms, report):
     )
 
 
+def serialize_graph(graph, rdf_format):
+    if rdf_format in {"trig", "nquads"} and not graph.context_aware:
+        dataset = Dataset()
+        dataset.default_graph += graph
+        for prefix, namespace in graph.namespaces():
+            dataset.bind(prefix, namespace)
+        graph = dataset
+    return graph.serialize(format=rdf_format)
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(prog="pyshacl-turbo")
     parser.add_argument("data", nargs="+")
@@ -131,11 +141,7 @@ def main(argv=None):
             options["advanced"] = True
             report = shacl_rules(data, **options)
             output_format = args.format if args.format not in {"human", "table"} else "trig"
-            if output_format in {"trig", "nquads"} and not report.context_aware:
-                dataset = Dataset()
-                dataset.default_graph += report
-                report = dataset
-            text = report.serialize(format=output_format)
+            text = serialize_graph(report, output_format)
             conforms = True
         else:
             options.update(
@@ -152,7 +158,7 @@ def main(argv=None):
             if args.format == "table" and isinstance(report, Graph):
                 text = report_table(conforms, report)
             elif args.format != "human" and isinstance(report, Graph):
-                text = report.serialize(format=args.format)
+                text = serialize_graph(report, args.format)
         if args.output:
             with open(args.output, "w", encoding="utf-8") as output:
                 output.write(text)

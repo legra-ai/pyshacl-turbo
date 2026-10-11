@@ -17,7 +17,7 @@ test:
 	PYO3_PYTHON=$(VENV_PYTHON) cargo test --workspace --locked
 
 test-compatibility:
-	$(VENV_PYTHON) -m pytest -q tests/test_w3c.py tests/test_sparql.py::test_w3c_sparql_constraint --junitxml=w3c-results.xml
+	$(VENV_PYTHON) -m pytest -q tests/test_w3c.py tests/test_w3c_documents.py tests/test_sparql.py::test_w3c_sparql_constraint --junitxml=w3c-results.xml
 	$(VENV_PYTHON) scripts/check_upstream.py --output upstream-results.json
 
 test-regex:

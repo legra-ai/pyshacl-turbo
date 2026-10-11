@@ -105,12 +105,14 @@ def path_expression(graph, node, active=frozenset()):
     raise ValueError(f"Unrecognized result path: {node}")
 
 
-def report_view(graph, root, *, messages, details):
+def report_view(graph, root, *, messages, details, preserve_input_ids=True):
     """Retain all report fields; copied input descriptions are not results.
 
     Optional messages/details are compared when prescribed by the fixture.
-    Source/focus/value blank nodes retain input identity. Path definitions are
-    compared structurally because fixtures can spell the same path twice.
+    Source/focus/value blank nodes retain input identity for supplied Graphs.
+    Independently parsed documents compare those nodes by their descriptions
+    and shared references instead. Path definitions compare structurally because
+    fixtures can spell the same path twice.
     """
     result = Graph()
     pending = [root]
@@ -129,15 +131,22 @@ def report_view(graph, root, *, messages, details):
                 obj = Literal(json.dumps(path_expression(graph, obj)))
             elif predicate in {SH.sourceShape, SH.focusNode, SH.value, SH.sourceConstraint}:
                 if isinstance(obj, BNode):
-                    obj = URIRef(f"urn:input-bnode:{obj}")
+                    if preserve_input_ids:
+                        obj = URIRef(f"urn:input-bnode:{obj}")
+                    else:
+                        pending.append(obj)
             elif isinstance(obj, BNode):
                 pending.append(obj)
             result.add((node, predicate, obj))
     return result
 
 
-def compare(case, validate):
+def compare(case, validate, *, documents=False):
     fixture, data, shapes = load(case)
+    if documents:
+        action = fixture.value(case.node, MF.action, any=False)
+        data = local_path(fixture.value(action, SHT.dataGraph, any=False))
+        shapes = local_path(fixture.value(action, SHT.shapesGraph, any=False))
     expected_root = fixture.value(case.node, MF.result, any=False)
     if expected_root == SHT.Failure:
         import pyshacl_turbo
@@ -155,8 +164,20 @@ def compare(case, validate):
         raise AssertionError("No ValidationReport returned")
     messages = any(fixture.triples((None, SH.resultMessage, None)))
     details = any(fixture.triples((None, SH.detail, None)))
-    actual = report_view(report, actual_root, messages=messages, details=details)
-    expected = report_view(fixture, expected_root, messages=messages, details=details)
+    actual = report_view(
+        report,
+        actual_root,
+        messages=messages,
+        details=details,
+        preserve_input_ids=not documents,
+    )
+    expected = report_view(
+        fixture,
+        expected_root,
+        messages=messages,
+        details=details,
+        preserve_input_ids=not documents,
+    )
     assert conforms == bool(fixture.value(expected_root, SH.conforms, any=False))
     assert isomorphic(actual, expected), (
         actual.serialize(format="turtle"),

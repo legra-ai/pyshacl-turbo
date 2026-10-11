@@ -39,7 +39,7 @@ branch = true
 relative_files = true
 
 [tool.coverage.report]
-fail_under = 72
+fail_under = 100
 precision = 1
 show_missing = true
 
