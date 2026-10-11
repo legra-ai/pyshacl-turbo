@@ -1,7 +1,9 @@
 """Vendor test data from immutable upstream revisions; never execute downloaded code."""
 
+import hashlib
 import io
 import json
+import subprocess
 import tarfile
 import urllib.request
 from pathlib import Path
@@ -49,6 +51,15 @@ def main():
                 destination.write_bytes(source.read())
                 files.append(str(relative))
         inventory[name] = {"repository": repository, "revision": revision, "files": sorted(files)}
+        if name == "pyshacl":
+            patch = ROOT / "vendor/pyshacl-issue-70.patch"
+            subprocess.run(["git", "apply", str(patch)], cwd=ROOT, check=True)
+            inventory[name]["local_patches"] = [
+                {
+                    "path": str(patch.relative_to(ROOT)),
+                    "sha256": hashlib.sha256(patch.read_bytes()).hexdigest(),
+                }
+            ]
         print(f"{name}: {len(files)} files from {revision}", flush=True)
     (ROOT / "tests/suite-sources.json").write_text(json.dumps(inventory, indent=2) + "\n")
 

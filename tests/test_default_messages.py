@@ -17,8 +17,8 @@ def test_class_violation_default_message_matches_reference(property_shape):
 
 
 def test_issue70_missing_geometry_class_is_a_real_violation():
-    # Reduced from bad_test_070's remote shape/data. The source asserts True,
-    # but no Geometry type or Point-to-Geometry subclass statement is supplied.
+    # Reduced from bad_test_070's remote shape/data: no Geometry type or
+    # Point-to-Geometry subclass statement is supplied.
     prefixes = """@prefix geo: <http://www.opengis.net/ont/geosparql#>.
       @prefix sf: <http://www.opengis.net/ont/sf#>."""
     data = graph(

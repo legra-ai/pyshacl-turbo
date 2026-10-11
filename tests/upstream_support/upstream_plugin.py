@@ -10,6 +10,7 @@ from redirect import configure_item, install
 ROWS = {}
 COLLECTION_ERRORS = []
 ROOT = Path(__file__).resolve().parents[2]
+CORRECTIONS = {"test/issues/bad_test_070.py::test_070": "vendor/pyshacl-issue-70.patch"}
 
 
 def pytest_configure(config):
@@ -25,6 +26,8 @@ def pytest_collection_modifyitems(items):
 
     for item in items:
         ROWS[item.nodeid] = {"id": portable_id(item.nodeid, ROOT), "status": "not_run"}
+        if correction := CORRECTIONS.get(ROWS[item.nodeid]["id"]):
+            ROWS[item.nodeid]["local_correction"] = correction
         if os.environ.get("PYSHACL_TURBO_TEST_REDIRECT") == "1" and item.nodeid in PORTS:
             port = PORTS[item.nodeid]
             module = item.module

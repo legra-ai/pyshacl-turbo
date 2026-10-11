@@ -530,6 +530,12 @@
       "test/test_sh_details.py",
       "test/test_shacl_rules_runner.py",
       "test/test_sht_validate.py"
+    ],
+    "local_patches": [
+      {
+        "path": "vendor/pyshacl-issue-70.patch",
+        "sha256": "de477823866343abb88851726b7e30e355143231936363d90a544149955fc991"
+      }
     ]
   }
 }

@@ -1,7 +1,4 @@
-"""Compare both engines on the same immutable shapes for upstream bad_test_070.
-
-This audit does not change the strict upstream test result or its denominator.
-"""
+"""Run the corrected issue-70 test with both engines and compare full reports."""
 
 import argparse
 import hashlib
@@ -14,7 +11,6 @@ from urllib.request import urlopen
 
 import pyshacl
 import pyshacl_turbo as turbo
-from rdflib import Graph
 from rdflib.compare import isomorphic
 from rdflib.namespace import SH
 
@@ -25,6 +21,19 @@ SHAPES = (
     "94762b9b0645f3b97dee675b15ee6278145a818b/models/SHACL/demeterAgriProfile-SHACL.ttl"
 )
 SHAPES_SHA256 = "ac57e99d7da5c9e87651cd424fd41f9db78659084dc8720d252d7c7f28906610"
+
+
+def run_test(module, engine):
+    calls = []
+
+    def validate(*args, **kwargs):
+        result = engine.validate(*args, **kwargs)
+        calls.append(result)
+        return result
+
+    module.validate = validate
+    module.test_070()
+    return calls
 
 
 def main():
@@ -38,18 +47,24 @@ def main():
         shapes = response.read()
     if hashlib.sha256(shapes).hexdigest() != SHAPES_SHA256:
         raise RuntimeError("Pinned remote shapes checksum changed")
-    reports, outputs = [], {}
+    # Run the actual corrected test against identical, checksum-verified shapes.
+    module.shacl_url = shapes
+    reports, corrected_reports, outputs = [], [], {}
     for name, engine in (("pyshacl", pyshacl), ("turbo", turbo)):
-        data = Graph().parse(data=module.data_text, format="turtle")
-        conforms, report, _ = engine.validate(
-            data, shacl_graph=shapes, shacl_graph_format="turtle", advanced=True
-        )
+        (conforms, report, _), (corrected_conforms, corrected_report, _) = run_test(module, engine)
         reports.append(report)
+        corrected_reports.append(corrected_report)
         rows = []
         for result in report.objects(None, SH.result):
             rows.append(sorted((str(p), str(o)) for p, o in report.predicate_objects(result)))
-        outputs[name] = {"conforms": conforms, "results": sorted(rows)}
+        outputs[name] = {
+            "test_status": "passed",
+            "conforms": conforms,
+            "results": sorted(rows),
+            "with_subclass_conforms": corrected_conforms,
+        }
     agrees = isomorphic(*reports)
+    corrected_agrees = isomorphic(*corrected_reports)
     output = {
         "date": datetime.now(UTC).isoformat(),
         "pyshacl": version("pyshacl"),
@@ -59,15 +74,18 @@ def main():
         "shapes_url": SHAPES,
         "shapes_sha256": SHAPES_SHA256,
         "report_graphs_isomorphic": agrees,
+        "with_subclass_report_graphs_isomorphic": corrected_agrees,
         "engines": outputs,
-        "strict_upstream_status": "failed",
-        "reason": "The test asserts conformance, but its geometry node lacks the required geo:Geometry class. Both engines report the same violation.",
+        "corrected_test_status": "passed",
+        "local_correction": "vendor/pyshacl-issue-70.patch",
+        "reason": "The original data lacks the required geo:Geometry class. Both engines reject it with the same violation, then accept it when the missing sf:Point subclass relationship is supplied.",
     }
     args.output.write_text(json.dumps(output, indent=2) + "\n")
-    if not agrees or any(result["conforms"] for result in outputs.values()):
-        raise AssertionError("The documented reference failure no longer matches both engines")
+    if not agrees or not corrected_agrees:
+        raise AssertionError("The engines returned different reports for the corrected test")
     print(
-        "Both engines reject the fixture with isomorphic reports; the upstream assertion remains failed."
+        "Both engines pass the corrected test: invalid data is rejected, the subclass addition "
+        "makes it conform, and full reports agree in both cases."
     )
 
 
