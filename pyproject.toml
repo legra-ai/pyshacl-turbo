@@ -18,7 +18,7 @@ Issues = "https://github.com/legra-ai/pyshacl-turbo/issues"
 
 [project.optional-dependencies]
 oxigraph = ["pyoxigraph>=0.5,<0.6"]
-test = ["pytest>=8,<9", "pyshacl[oxigraph]==0.40.1", "ruff>=0.12"]
+test = ["pytest>=8,<9", "pytest-cov>=7.1,<8", "pyshacl[oxigraph]==0.40.1", "ruff>=0.12"]
 
 [project.scripts]
 pyshacl-turbo = "pyshacl_turbo.cli:entrypoint"
@@ -32,6 +32,20 @@ features = ["pyo3/extension-module"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+
+[tool.coverage.run]
+source = ["pyshacl_turbo"]
+branch = true
+relative_files = true
+
+[tool.coverage.report]
+fail_under = 72
+precision = 1
+show_missing = true
+
+[tool.coverage.html]
+title = "pyshacl-turbo Python coverage (lines and branches)"
+show_contexts = true
 
 [tool.ruff]
 line-length = 100
