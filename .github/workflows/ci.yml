@@ -1,4 +1,4 @@
-name: CI
+name: Tests and wheels
 
 on:
   push:
@@ -46,9 +46,6 @@ jobs:
         run: make dev PYTHON=${{ matrix.python }}
       - name: Python, Rust, formatting and lint checks
         run: make check
-      - name: Strict upstream suite and independent reference-fixture audit
-        if: matrix.os == 'ubuntu-latest' && matrix.python == '3.13'
-        run: .venv/bin/python scripts/check_upstream.py --output upstream-results.json
       - name: Build wheel
         run: .venv/bin/maturin build --release --locked --out dist
       - name: Create isolated wheel environment
@@ -61,10 +58,7 @@ jobs:
         if: always()
         with:
           name: verification-${{ matrix.os }}-py${{ matrix.python }}
-          path: |
-            dist/*.whl
-            upstream-results.json
-            reference-fixture-audit.json
+          path: dist/*.whl
           if-no-files-found: error
 
   test:

@@ -19,3 +19,10 @@ the upstream case-folding approximation is not valid for Python backreferences.
 Regressions are in `../../tests/test_patterns.py` and the private VM unit tests
 in `src/vm.rs`. The full dependency test suite runs with default features; the
 VM regressions run with `--features python-re python_re_tests`.
+
+The root workspace explicitly excludes this crate so its tests can run directly
+with an independent feature selection. Its retained `Cargo.lock` pins the test
+dependencies. From the repository root, `make test-regex` runs the full upstream
+suite, the unit suite with Turbo's base features and Python mode disabled, and
+the Python-mode VM regressions. The Regex workflow runs these checks on every PR,
+main push, and daily schedule.

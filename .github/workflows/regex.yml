@@ -1,0 +1,33 @@
+name: Regex
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    - cron: '37 4 * * *'
+
+concurrency:
+  group: regex-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash {0}
+
+jobs:
+  regex:
+    name: regex
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt
+      - name: Upstream matcher tests and Python-mode VM regressions
+        run: make test-regex
