@@ -127,6 +127,19 @@ jobs:
           failed = [name for name, job in results.items() if job['result'] != 'success']
           if failed:
               raise SystemExit(f'Required release gates did not pass: {failed}')
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.prepare.outputs.revision }}
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.13'
+      - uses: actions/download-artifact@v8
+        with:
+          pattern: release-*
+          merge-multiple: true
+          path: dist
+      - name: Verify complete release artifact inventory before tagging is allowed
+        run: python scripts/release_packages.py check-build
 
   sdist:
     needs: [prepare]

@@ -6,6 +6,7 @@ import os
 import shutil
 import subprocess
 import sys
+import tomllib
 import zipfile
 from pathlib import Path
 from urllib.error import HTTPError
@@ -116,6 +117,11 @@ def stage(version, revision):
 
 def main():
     command = sys.argv[1]
+    if command == "check-build":
+        version = tomllib.loads(Path("pyproject.toml").read_text())["project"]["version"]
+        inventory(Path("dist"), version)
+        print("Verified one source archive and all five release wheel filenames")
+        return
     version = os.environ["RELEASE_VERSION"]
     if command == "stage":
         stage(version, os.environ["RELEASE_REVISION"])

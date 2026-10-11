@@ -14,7 +14,7 @@ def test_release_checks_and_builds_the_prepared_revision():
     workflow = yaml.safe_load((ROOT / ".github/workflows/ci.yml").read_text())
     jobs = workflow["jobs"]
     assert workflow["concurrency"]["cancel-in-progress"] is False
-    for name in ["verify", "sdist", "wheels", "publish"]:
+    for name in ["verify", "sdist", "wheels", "test", "publish"]:
         job = jobs[name]
         assert "prepare" in job["needs"]
         checkouts = [
@@ -33,6 +33,10 @@ def test_release_checks_and_builds_the_prepared_revision():
         "sdist",
         "wheels",
     }
+    assert any(
+        step.get("run") == "python scripts/release_packages.py check-build"
+        for step in jobs["test"]["steps"]
+    )
     publish = jobs["publish"]
     assert "test" in publish["needs"]
     assert publish["environment"]["name"] == "pypi"
