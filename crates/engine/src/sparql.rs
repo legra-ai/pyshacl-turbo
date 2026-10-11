@@ -2,6 +2,7 @@ use std::collections::{BTreeMap, HashSet};
 
 use crate::functions::{Functions, NativeQuery};
 use oxigraph::model::*;
+use shacl_structural_model as model;
 use spargebra::algebra::{
     AggregateExpression, Expression, GraphPattern, OrderExpression, PropertyPathExpression,
 };
@@ -23,29 +24,44 @@ pub(crate) struct SparqlConstraint {
     bindings: Vec<(Variable, Term)>,
 }
 
-pub(crate) fn compile(
+pub(crate) fn lower(
     graph: &Dataset,
-    node: &Term,
+    declaration: model::SparqlConstraint<Term>,
     path: Option<&Path>,
     namespaces: &[(String, String)],
 ) -> Result<SparqlConstraint> {
-    compile_validator(graph, node, path, &[], false, None, namespaces)
+    let validator = model::SparqlValidator {
+        id: declaration.id,
+        query: model::SparqlSelectOrAsk::Select(declaration.select),
+        messages: declaration.messages,
+        annotations: declaration.annotations,
+    };
+    lower_validator(
+        graph,
+        validator,
+        path,
+        &[],
+        declaration.deactivated,
+        None,
+        namespaces,
+    )
 }
 
 #[allow(clippy::too_many_arguments)]
-pub(crate) fn compile_validator(
+pub(crate) fn lower_validator(
     graph: &Dataset,
-    node: &Term,
+    declaration: model::SparqlValidator<Term>,
     path: Option<&Path>,
     bindings: &[(Variable, Term)],
-    ask: bool,
+    deactivated: bool,
     component: Option<NamedNode>,
     namespaces: &[(String, String)],
 ) -> Result<SparqlConstraint> {
-    let query_name = if ask { "ask" } else { "select" };
-    let text = one(graph, node, query_name)?
-        .ok_or_else(|| Error::Invalid(format!("Missing sh:{query_name} on {node}")))?;
-    let Term::Literal(text) = text else {
+    let (query, ask) = match declaration.query {
+        model::SparqlSelectOrAsk::Select(query) => (query, false),
+        model::SparqlSelectOrAsk::Ask(query) => (query, true),
+    };
+    let Term::Literal(text) = query.text else {
         return Err(Error::Invalid("sh:select requires an xsd:string".into()));
     };
     if text.datatype() != iri(XSD, "string").as_ref() {
@@ -66,7 +82,7 @@ pub(crate) fn compile_validator(
     let mut parsed = parser
         .parse_query(&format!(
             "{}\n{}",
-            prefixes(graph, node, namespaces)?,
+            prefixes(graph, query.prefixes, namespaces)?,
             text.value()
         ))
         .map_err(|e| Error::Invalid(format!("SPARQL parse error: {e}")))?;
@@ -139,15 +155,15 @@ pub(crate) fn compile_validator(
         inner: Box::new(pattern.clone()),
         variables,
     };
-    let messages = values(graph, node, "message")?;
+    let messages = declaration.messages;
     if messages.iter().any(|m| !matches!(m, Term::Literal(_))) {
         return Err(Error::Invalid("sh:message requires literals".into()));
     }
     Ok(SparqlConstraint {
-        node: node.clone(),
+        node: declaration.id,
         query: NativeQuery::new(parsed),
         messages,
-        deactivated: boolean(graph, node, "deactivated")?,
+        deactivated,
         shapes_graph: visitor.shapes_graph,
         component,
         per_value: ask,
@@ -157,26 +173,21 @@ pub(crate) fn compile_validator(
 
 pub(crate) fn prefixes(
     graph: &Dataset,
-    node: &Term,
+    mut pending: Vec<Term>,
     namespaces: &[(String, String)],
 ) -> Result<String> {
-    let mut pending = values(graph, node, "prefixes")?;
     let mut seen = HashSet::new();
     let mut prefixes = BTreeMap::new();
     while let Some(resource) = pending.pop() {
         if !seen.insert(resource.clone()) {
             continue;
         }
-        pending.extend(objects(
-            graph,
-            &resource,
-            &iri("http://www.w3.org/2002/07/owl#", "imports"),
-        )?);
-        for declaration in values(graph, &resource, "declare")? {
-            let (Some(Term::Literal(prefix)), Some(Term::Literal(namespace))) = (
-                one(graph, &declaration, "prefix")?,
-                one(graph, &declaration, "namespace")?,
-            ) else {
+        let resource = crate::structural::prefix_resource(graph, resource)?;
+        pending.extend(resource.imports);
+        for declaration in resource.declarations {
+            let (Term::Literal(prefix), Term::Literal(namespace)) =
+                (declaration.prefix, declaration.namespace)
+            else {
                 return Err(Error::Invalid(
                     "Prefix declaration requires sh:prefix and sh:namespace literals".into(),
                 ));

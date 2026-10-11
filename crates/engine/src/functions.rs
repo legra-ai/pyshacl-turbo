@@ -9,6 +9,7 @@ use oxigraph::sparql::{
     PreparedSparqlQuery, QueryEvaluationError, QueryResults, QuerySolutionIter, QueryTripleIter,
     SparqlEvaluator,
 };
+use shacl_structural_model as model;
 use spargebra::{Query, SparqlParser, algebra::GraphPattern};
 
 use crate::graph::*;
@@ -148,17 +149,37 @@ pub(crate) struct Parameter {
     pub optional: bool,
 }
 
-pub(crate) fn parameters(graph: &Dataset, node: &Term) -> Result<Vec<Parameter>> {
+pub(crate) fn read_parameters(graph: &Dataset, node: &Term) -> Result<Vec<model::Parameter<Term>>> {
+    values(graph, node, "parameter")?
+        .into_iter()
+        .map(|p| {
+            let path = crate::structural::iri_value(
+                one(graph, &p, "path")?
+                    .ok_or_else(|| Error::Invalid("SHACL parameter requires sh:path".into()))?,
+                "Parameter path",
+            )?;
+            let mut parameter = model::Parameter::new(p.clone(), path);
+            parameter.optional = boolean(graph, &p, "optional")?;
+            parameter.order = one(graph, &p, "order")?;
+            // Argument constraints are annotations, not executable shapes (ADR 0010).
+            // Their original triples remain in the source graph.
+            parameter.names = values(graph, &p, "name")?;
+            parameter.descriptions = values(graph, &p, "description")?;
+            Ok(parameter)
+        })
+        .collect()
+}
+
+pub(crate) fn lower_parameters(
+    declarations: Vec<model::Parameter<Term>>,
+) -> Result<Vec<Parameter>> {
     let mut parameters = Vec::new();
-    for p in values(graph, node, "parameter")? {
-        let path = crate::constraints::named(
-            one(graph, &p, "path")?
-                .ok_or_else(|| Error::Invalid("SHACL parameter requires sh:path".into()))?,
-            "Parameter path",
-        )?;
+    for declaration in declarations {
+        let path = crate::structural::named_iri(declaration.path);
         let name = path.as_str().rsplit(['#', '/']).next().unwrap();
         let variable = Variable::new(name).map_err(|e| Error::Invalid(e.to_string()))?;
-        let order = one(graph, &p, "order")?
+        let order = declaration
+            .order
             .map(|term| match term {
                 Term::Literal(l) => l
                     .value()
@@ -172,7 +193,7 @@ pub(crate) fn parameters(graph: &Dataset, node: &Term) -> Result<Vec<Parameter>>
             Parameter {
                 path,
                 variable,
-                optional: boolean(graph, &p, "optional")?,
+                optional: declaration.optional,
             },
         ));
     }
@@ -242,23 +263,37 @@ impl Functions {
             &iri(RDF, "type"),
             Some(&iri(SH, "SPARQLFunction").into()),
         )? {
-            let name = crate::constraints::named(node.clone(), "SHACL function")?;
+            let name = crate::structural::iri_value(node.clone(), "SHACL function")?;
             let select = one(graph, &node, "select")?;
             let ask = one(graph, &node, "ask")?;
-            let (text, is_ask) = match (select, ask) {
-                (Some(Term::Literal(l)), None) => (l, false),
-                (None, Some(Term::Literal(l))) => (l, true),
+            let query = match (select, ask) {
+                (Some(text @ Term::Literal(_)), None) => {
+                    model::SparqlSelectOrAsk::Select(crate::structural::query(graph, &node, text)?)
+                }
+                (None, Some(text @ Term::Literal(_))) => {
+                    model::SparqlSelectOrAsk::Ask(crate::structural::query(graph, &node, text)?)
+                }
                 _ => {
                     return Err(Error::Invalid(format!(
                         "Function {node} requires exactly one sh:select or sh:ask"
                     )));
                 }
             };
-            let parameters = parameters(graph, &node)?;
+            let mut declaration = model::ShaclFunction::new(name, query);
+            declaration.parameters = read_parameters(graph, &node)?;
+            let name = crate::structural::named_iri(declaration.id);
+            let parameters = lower_parameters(declaration.parameters)?;
+            let (query, is_ask) = match declaration.query {
+                model::SparqlSelectOrAsk::Select(query) => (query, false),
+                model::SparqlSelectOrAsk::Ask(query) => (query, true),
+            };
+            let Term::Literal(text) = query.text else {
+                unreachable!("Function query literal checked by reader")
+            };
             let mut query = SparqlParser::new()
                 .parse_query(&format!(
                     "{}\n{}",
-                    crate::sparql::prefixes(graph, &node, namespaces)?,
+                    crate::sparql::prefixes(graph, query.prefixes, namespaces)?,
                     text.value()
                 ))
                 .map_err(|e| Error::Invalid(format!("SPARQL function parse error: {e}")))?;
