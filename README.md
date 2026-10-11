@@ -1,5 +1,9 @@
 # pyshacl-turbo
 
+[![Tests and wheels](https://github.com/legra-ai/pyshacl-turbo/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/legra-ai/pyshacl-turbo/actions/workflows/ci.yml)
+[![Compatibility](https://github.com/legra-ai/pyshacl-turbo/actions/workflows/compatibility.yml/badge.svg?branch=main)](https://github.com/legra-ai/pyshacl-turbo/actions/workflows/compatibility.yml)
+[![Regex](https://github.com/legra-ai/pyshacl-turbo/actions/workflows/regex.yml/badge.svg?branch=main)](https://github.com/legra-ai/pyshacl-turbo/actions/workflows/regex.yml)
+
 A Rust SHACL engine with Python bindings. Shape compilation, Core
 validation, SPARQL constraints, targets, rules and inference execute in Rust.
 There is no runtime dependency on pySHACL or owlrl. Native execution releases
@@ -121,12 +125,27 @@ assets live under tests/w3c and vendor/pyshacl respectively.
 
 ```sh
 make coverage
+make test-compatibility
+make test-regex
 .venv/bin/python scripts/run_upstream.py
 .venv/bin/python scripts/run_upstream.py --reference
 .venv/bin/python scripts/audit_reference_fixture.py
-# CI gate: retain the one known failure and independently audit its reports.
-.venv/bin/python scripts/check_upstream.py --output /tmp/upstream-results.json
 ```
+
+The badges report three required CI checks on `main`. Each workflow also runs on
+pull requests, daily, and on manual dispatch:
+
+| Workflow | What it verifies |
+| --- | --- |
+| Tests and wheels | Python and Rust regressions, formatting and lint on Linux Python 3.11/3.13 and macOS Python 3.13; built wheels installed with only runtime dependencies, without pySHACL or owlrl. |
+| Compatibility | All pinned W3C Core/SPARQL cases, the complete non-JS pySHACL inventory, and an independent audit of the known reference-fixture defect. Case-level JSON and W3C JUnit XML are uploaded as artifacts. |
+| Regex | The patched matcher's full upstream suite, unit tests with Turbo's base features, Python-mode VM regressions, and formatting, using its own pinned test dependencies. |
+
+A green Compatibility badge means the documented baseline holds: **402/403**
+strict upstream passes and **119/120** W3C passes. The upstream fixture failure
+remains failed in the report and must pass its independent audit; the W3C
+divergence remains a strict expected failure. New failures and unexpected W3C
+passes fail CI. These badges do not claim complete pySHACL compatibility.
 
 Upstream allowances which turn failures into passes are disabled for both engines.
 The bridge blocks reference validation and rule execution. Original comparators
@@ -139,8 +158,7 @@ preserve RDFLib string identity and SHACL SPARQL prebinding. Original project co
 is dual-licensed under [Apache-2.0](LICENSE-APACHE) or [MIT](LICENSE-MIT), at your
 option. Vendored code and assets retain their licenses and provenance.
 
-GitHub CI builds and checks Linux Python 3.11/3.13 and macOS Python 3.13,
-including isolated wheel installs without pySHACL or owlrl. PRs use conventional
-titles and squash merges; `main` requires signed commits, passing checks and
+PRs use conventional titles and squash merges; `main` requires signed commits,
+passing `test`, `compatibility`, `regex`, and `Conventional Commit` checks, and
 the configured owner review. Repository settings follow the maintained public
 `legra-ai/reqwest-embedded-roots` baseline, with check names adapted to this CI.
