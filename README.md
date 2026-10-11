@@ -17,8 +17,8 @@ validation, SPARQL constraints, targets, rules and inference execute in Rust.
 There is no runtime dependency on pySHACL or owlrl. Native execution releases
 the Python GIL.
 
-Compatibility work targets **pySHACL 0.40.1, excluding SHACL-JS**. It is incomplete.
-The locally corrected upstream suite passes **403/403 cases (100%)**: 400
+Turbo targets **pySHACL 0.40.1, excluding SHACL-JS**, and passes **403/403 cases
+(100%)** in the locally corrected upstream suite: 400
 unchanged behavioral cases, one corrected fixture, and 2 explicitly recorded
 native equivalents for Python implementation tests. The corrected fixture
 checks that invalid geometry data is rejected and that supplying its missing
@@ -30,6 +30,11 @@ The pinned W3C suite passes **120/120 (100%) with document inputs** and
 input-dependent pySHACL behavior. These are separate measurements;
 see [compatibility](docs/compatibility.md) and the case-level
 [upstream report](docs/upstream-coverage.json).
+
+Beyond these suites, remote SPARQL endpoint inputs are unsupported, and complete
+inference output and exact report-text formatting still differ from pySHACL.
+See [known limits](docs/compatibility.md#known-limits) for the remaining gaps and
+intentional differences.
 
 Core and SPARQL patterns execute Python-compatible regexes natively, including
 lookarounds and backreferences. SPARQL REPLACE retains the pinned RDFLib
