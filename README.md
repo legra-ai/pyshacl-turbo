@@ -31,6 +31,10 @@ replacement behavior; native callbacks and query results preserve exact literal
 terms. See [ADR 0015](docs/adr/0015-native-sparql-patterns.md) for the contract and
 remaining regex limits.
 
+Count and length bounds retain exact arbitrary-precision values, with pySHACL's
+parameter-specific datatype rules. See [ADR 0016](docs/adr/0016-exact-integer-parameters.md)
+for integer and qualified-count behavior.
+
 ## Build
 
 Requires Rust/Cargo, Python 3.11+ and uv. Development uses Python 3.13.
@@ -124,6 +128,8 @@ pattern compatibility changes in ADR 0013, at 100, 1,000 and 10,000 nodes.
 The [SPARQL pattern measurements](benchmarks/sparql-patterns.md) exercise native
 REGEX and REPLACE at 100 and 1,000 nodes through both RDFLib and Store inputs.
 The report records concurrent build load alongside the raw interleaved samples.
+These measurements precede ADR 0016's integer-parameter changes; their source
+hashes identify the measured implementation.
 
 ```sh
 # Run alone, separately from builds and other tests.
