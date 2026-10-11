@@ -57,6 +57,10 @@ inputs, and acceptance of malformed DASH reports missing `sh:conforms`.
 ## Implemented
 
 - All Core constraint families and all seven property-path forms.
+- Count, length and qualified-count parameters use exact arbitrary-precision
+  integers with the reference's separate datatype rules. Default messages,
+  noncanonical integer forms and qualified empty-batch behavior have 141
+  additional regressions; see [ADR 0016](adr/0016-exact-integer-parameters.md).
 - Native Core pattern matching supports Python lookarounds, backreferences,
   conditionals, atomic groups, Unicode/ASCII modes and scoped flags. An additional
   82 regressions compare reports, syntax errors, reuse and mutation behavior;
