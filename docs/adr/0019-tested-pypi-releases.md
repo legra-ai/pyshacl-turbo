@@ -41,6 +41,12 @@ registry hashes for existing files, and upload only missing files. Different or
 unexpected files fail immediately. Publish the GitHub release only after all
 six files are verified on PyPI. Never use `skip-existing` to hide a mismatch.
 
+The initial release exposed delayed visibility in PyPI's release JSON API after
+successful uploads. Final verification therefore allows at most 31 reads, ten
+seconds apart, for missing archives to appear. Conflicting bytes, unexpected
+files and other HTTP errors still fail immediately; an exhausted visibility
+budget leaves the GitHub release in draft.
+
 Use PyPI trusted publishing for this repository, `ci.yml`, and the `pypi`
 environment restricted to `main`. No long-lived PyPI token is required. A
 manually dispatched run follows the same gates and resumes the original tag.

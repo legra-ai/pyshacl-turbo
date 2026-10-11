@@ -6,6 +6,7 @@ import os
 import shutil
 import subprocess
 import sys
+import time
 import tomllib
 import zipfile
 from pathlib import Path
@@ -44,6 +45,23 @@ def missing_packages(version, packages):
         elif published[package.name] != digest(package):
             raise ValueError(f"PyPI package identity differs from tested archive: {package.name}")
     return missing
+
+
+def verify_packages(version, packages, *, attempts=31, interval=10):
+    """Allow uploaded files to become visible; identity and service errors still fail."""
+    missing = packages
+    for attempt in range(attempts):
+        missing = missing_packages(version, packages)
+        if not missing:
+            return
+        if attempt + 1 < attempts:
+            print(
+                f"Waiting for PyPI to expose {len(missing)} uploaded archives "
+                f"(query {attempt + 1}/{attempts})",
+                flush=True,
+            )
+            time.sleep(interval)
+    raise ValueError(f"PyPI release incomplete: {[path.name for path in missing]}")
 
 
 def write_bundle(bundle, version, revision, packages):
@@ -126,11 +144,11 @@ def main():
     if command == "stage":
         stage(version, os.environ["RELEASE_REVISION"])
     elif command in ("filter", "verify"):
-        missing = missing_packages(version, inventory(Path("release-packages"), version))
+        packages = inventory(Path("release-packages"), version)
         if command == "verify":
-            if missing:
-                raise ValueError(f"PyPI release incomplete: {[path.name for path in missing]}")
+            verify_packages(version, packages)
             return
+        missing = missing_packages(version, packages)
         pending = Path("pending-packages")
         pending.mkdir()
         for package in missing:
