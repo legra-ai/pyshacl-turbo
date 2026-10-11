@@ -11,3 +11,8 @@ __pycache__/
 /upstream-results.json
 /reference-fixture-audit.json
 /w3c-results.xml
+/.coverage
+/.coverage.*
+/htmlcov/
+/python-coverage.json
+/python-coverage.xml
