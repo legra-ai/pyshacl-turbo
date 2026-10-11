@@ -255,9 +255,10 @@ def input_graph(source, rdf_format=None, *, flatten=False):
             )
             if isinstance(context.identifier, BNode):
                 nodes[str(context.identifier)] = context.identifier
+            # RDFLib's NT serializer emits one triple per line and no lines for
+            # an empty context; escaped literal newlines stay inside that line.
             for line in context.serialize(format="nt").splitlines():
-                if line.strip():
-                    lines.append(line.rstrip().removesuffix(".").rstrip() + suffix + " .")
+                lines.append(line.rstrip().removesuffix(".").rstrip() + suffix + " .")
         return Input("\n".join(lines), "nquads", None, nodes, dict(source.namespaces()))
     return Input(graph.serialize(format="nt"), "nt", None, nodes, dict(source.namespaces()))
 

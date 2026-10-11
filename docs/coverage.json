@@ -1021,6 +1021,491 @@
       "status": "pass"
     }
   ],
+  "w3c_document_summary": {
+    "pass": 120
+  },
+  "w3c_documents": [
+    {
+      "id": "core/complex/personexample.ttl::personexample",
+      "status": "pass"
+    },
+    {
+      "id": "core/complex/shacl-shacl.ttl::shacl-shacl",
+      "status": "pass"
+    },
+    {
+      "id": "core/misc/deactivated-001.ttl::deactivated-001",
+      "status": "pass"
+    },
+    {
+      "id": "core/misc/deactivated-002.ttl::deactivated-002",
+      "status": "pass"
+    },
+    {
+      "id": "core/misc/message-001.ttl::message-001",
+      "status": "pass"
+    },
+    {
+      "id": "core/misc/severity-001.ttl::severity-001",
+      "status": "pass"
+    },
+    {
+      "id": "core/misc/severity-002.ttl::severity-002",
+      "status": "pass"
+    },
+    {
+      "id": "core/node/and-001.ttl::and-001",
+      "status": "pass"
+    },
+    {
+      "id": "core/node/and-002.ttl::and-002",
+      "status": "pass"
+    },
+    {
+      "id": "core/node/class-001.ttl::class-001",
+      "status": "pass"
+    },
+    {
+      "id": "core/node/class-002.ttl::class-002",
+      "status": "pass"
+    },
+    {
+      "id": "core/node/class-003.ttl::class-003",
+      "status": "pass"
+    },
+    {
+      "id": "core/node/closed-001.ttl::closed-001",
+      "status": "pass"
+    },
+    {
+      "id": "core/node/closed-002.ttl::closed-002",
+      "status": "pass"
+    },
+    {
+      "id": "core/node/datatype-001.ttl::datatype-001",
+      "status": "pass"
+    },
+    {
+      "id": "core/node/datatype-002.ttl::datatype-002",
+      "status": "pass"
+    },
+    {
+      "id": "core/node/disjoint-001.ttl::disjoint-001",
+      "status": "pass"
+    },
+    {
+      "id": "core/node/equals-001.ttl::equals-001",
+      "status": "pass"
+    },
+    {
+      "id": "core/node/hasValue-001.ttl::hasValue-001",
+      "status": "pass"
+    },
+    {
+      "id": "core/node/in-001.ttl::in-001",
+      "status": "pass"
+    },
+    {
+      "id": "core/node/languageIn-001.ttl::languageIn-001",
+      "status": "pass"
+    },
+    {
+      "id": "core/node/maxExclusive-001.ttl::maxExclusive-001",
+      "status": "pass"
+    },
+    {
+      "id": "core/node/maxInclusive-001.ttl::maxInclusive-001",
+      "status": "pass"
+    },
+    {
+      "id": "core/node/maxLength-001.ttl::maxLength-001",
+      "status": "pass"
+    },
+    {
+      "id": "core/node/minExclusive-001.ttl::minExclusive-001",
+      "status": "pass"
+    },
+    {
+      "id": "core/node/minInclusive-001.ttl::minInclusive-001",
+      "status": "pass"
+    },
+    {
+      "id": "core/node/minInclusive-002.ttl::minInclusive-002",
+      "status": "pass"
+    },
+    {
+      "id": "core/node/minInclusive-003.ttl::minInclusive-003",
+      "status": "pass"
+    },
+    {
+      "id": "core/node/minLength-001.ttl::minLength-001",
+      "status": "pass"
+    },
+    {
+      "id": "core/node/node-001.ttl::node-001",
+      "status": "pass"
+    },
+    {
+      "id": "core/node/nodeKind-001.ttl::nodeKind-001",
+      "status": "pass"
+    },
+    {
+      "id": "core/node/not-001.ttl::not-001",
+      "status": "pass"
+    },
+    {
+      "id": "core/node/not-002.ttl::not-002",
+      "status": "pass"
+    },
+    {
+      "id": "core/node/or-001.ttl::or-001",
+      "status": "pass"
+    },
+    {
+      "id": "core/node/pattern-001.ttl::pattern-001",
+      "status": "pass"
+    },
+    {
+      "id": "core/node/pattern-002.ttl::pattern-002",
+      "status": "pass"
+    },
+    {
+      "id": "core/node/qualified-001.ttl::qualified-001",
+      "status": "pass"
+    },
+    {
+      "id": "core/node/xone-001.ttl::xone-001",
+      "status": "pass"
+    },
+    {
+      "id": "core/node/xone-duplicate.ttl::xone-duplicate",
+      "status": "pass"
+    },
+    {
+      "id": "core/path/path-alternative-001.ttl::path-alternative-001",
+      "status": "pass"
+    },
+    {
+      "id": "core/path/path-complex-001.ttl::path-complex-001",
+      "status": "pass"
+    },
+    {
+      "id": "core/path/path-complex-002.ttl::path-complex-002",
+      "status": "pass"
+    },
+    {
+      "id": "core/path/path-inverse-001.ttl::path-inverse-001",
+      "status": "pass"
+    },
+    {
+      "id": "core/path/path-oneOrMore-001.ttl::path-oneOrMore-001",
+      "status": "pass"
+    },
+    {
+      "id": "core/path/path-sequence-001.ttl::path-sequence-001",
+      "status": "pass"
+    },
+    {
+      "id": "core/path/path-sequence-002.ttl::path-sequence-002",
+      "status": "pass"
+    },
+    {
+      "id": "core/path/path-sequence-duplicate-001.ttl::path-sequence-duplicate-001",
+      "status": "pass"
+    },
+    {
+      "id": "core/path/path-strange-001.ttl::path-strange-001",
+      "status": "pass"
+    },
+    {
+      "id": "core/path/path-strange-002.ttl::path-strange-002",
+      "status": "pass"
+    },
+    {
+      "id": "core/path/path-unused-001.ttl::path-unused-001",
+      "status": "pass"
+    },
+    {
+      "id": "core/path/path-zeroOrMore-001.ttl::path-zeroOrMore-001",
+      "status": "pass"
+    },
+    {
+      "id": "core/path/path-zeroOrOne-001.ttl::path-zeroOrOne-001",
+      "status": "pass"
+    },
+    {
+      "id": "core/property/and-001.ttl::and-001",
+      "status": "pass"
+    },
+    {
+      "id": "core/property/class-001.ttl::class-001",
+      "status": "pass"
+    },
+    {
+      "id": "core/property/datatype-001.ttl::datatype-001",
+      "status": "pass"
+    },
+    {
+      "id": "core/property/datatype-002.ttl::datatype-002",
+      "status": "pass"
+    },
+    {
+      "id": "core/property/datatype-003.ttl::datatype-003",
+      "status": "pass"
+    },
+    {
+      "id": "core/property/datatype-ill-formed.ttl::datatype-ill-formed",
+      "status": "pass"
+    },
+    {
+      "id": "core/property/disjoint-001.ttl::disjoint-001",
+      "status": "pass"
+    },
+    {
+      "id": "core/property/equals-001.ttl::equals-001",
+      "status": "pass"
+    },
+    {
+      "id": "core/property/hasValue-001.ttl::hasValue-001",
+      "status": "pass"
+    },
+    {
+      "id": "core/property/in-001.ttl::in-001",
+      "status": "pass"
+    },
+    {
+      "id": "core/property/languageIn-001.ttl::languageIn-001",
+      "status": "pass"
+    },
+    {
+      "id": "core/property/lessThan-001.ttl::lessThan-001",
+      "status": "pass"
+    },
+    {
+      "id": "core/property/lessThan-002.ttl::lessThan-002",
+      "status": "pass"
+    },
+    {
+      "id": "core/property/lessThanOrEquals-001.ttl::lessThanOrEquals-001",
+      "status": "pass"
+    },
+    {
+      "id": "core/property/maxCount-001.ttl::maxCount-001",
+      "status": "pass"
+    },
+    {
+      "id": "core/property/maxCount-002.ttl::maxCount-002",
+      "status": "pass"
+    },
+    {
+      "id": "core/property/maxExclusive-001.ttl::maxExclusive-001",
+      "status": "pass"
+    },
+    {
+      "id": "core/property/maxInclusive-001.ttl::maxInclusive-001",
+      "status": "pass"
+    },
+    {
+      "id": "core/property/maxLength-001.ttl::maxLength-001",
+      "status": "pass"
+    },
+    {
+      "id": "core/property/minCount-001.ttl::minCount-001",
+      "status": "pass"
+    },
+    {
+      "id": "core/property/minCount-002.ttl::minCount-002",
+      "status": "pass"
+    },
+    {
+      "id": "core/property/minExclusive-001.ttl::minExclusive-001",
+      "status": "pass"
+    },
+    {
+      "id": "core/property/minExclusive-002.ttl::minExclusive-002",
+      "status": "pass"
+    },
+    {
+      "id": "core/property/minLength-001.ttl::minLength-001",
+      "status": "pass"
+    },
+    {
+      "id": "core/property/node-001.ttl::node-001",
+      "status": "pass"
+    },
+    {
+      "id": "core/property/node-002.ttl::node-002",
+      "status": "pass"
+    },
+    {
+      "id": "core/property/nodeKind-001.ttl::nodeKind-001",
+      "status": "pass"
+    },
+    {
+      "id": "core/property/not-001.ttl::not-001",
+      "status": "pass"
+    },
+    {
+      "id": "core/property/or-001.ttl::or-001",
+      "status": "pass"
+    },
+    {
+      "id": "core/property/or-datatypes-001.ttl::or-datatypes-001",
+      "status": "pass"
+    },
+    {
+      "id": "core/property/pattern-001.ttl::pattern-001",
+      "status": "pass"
+    },
+    {
+      "id": "core/property/pattern-002.ttl::pattern-002",
+      "status": "pass"
+    },
+    {
+      "id": "core/property/property-001.ttl::property-001",
+      "status": "pass"
+    },
+    {
+      "id": "core/property/qualifiedMinCountDisjoint-001.ttl::qualifiedMinCountDisjoint-001",
+      "status": "pass"
+    },
+    {
+      "id": "core/property/qualifiedValueShape-001.ttl::qualifiedValueShape-001",
+      "status": "pass"
+    },
+    {
+      "id": "core/property/qualifiedValueShapesDisjoint-001.ttl::qualifiedValueShapesDisjoint-001",
+      "status": "pass"
+    },
+    {
+      "id": "core/property/uniqueLang-001.ttl::uniqueLang-001",
+      "status": "pass"
+    },
+    {
+      "id": "core/property/uniqueLang-002.ttl::uniqueLang-002",
+      "status": "pass"
+    },
+    {
+      "id": "core/targets/multipleTargets-001.ttl::multipleTargets-001",
+      "status": "pass"
+    },
+    {
+      "id": "core/targets/targetClass-001.ttl::targetClass-001",
+      "status": "pass"
+    },
+    {
+      "id": "core/targets/targetClassImplicit-001.ttl::targetClassImplicit-001",
+      "status": "pass"
+    },
+    {
+      "id": "core/targets/targetNode-001.ttl::targetNode-001",
+      "status": "pass"
+    },
+    {
+      "id": "core/targets/targetObjectsOf-001.ttl::targetObjectsOf-001",
+      "status": "pass"
+    },
+    {
+      "id": "core/targets/targetSubjectsOf-001.ttl::targetSubjectsOf-001",
+      "status": "pass"
+    },
+    {
+      "id": "core/targets/targetSubjectsOf-002.ttl::targetSubjectsOf-002",
+      "status": "pass"
+    },
+    {
+      "id": "core/validation-reports/shared.ttl::shared",
+      "status": "pass"
+    },
+    {
+      "id": "sparql/component/optional-001.ttl::optional-001",
+      "status": "pass"
+    },
+    {
+      "id": "sparql/component/propertyValidator-select-001.ttl::propertyValidator-select-001",
+      "status": "pass"
+    },
+    {
+      "id": "sparql/component/validator-001.ttl::validator-001",
+      "status": "pass"
+    },
+    {
+      "id": "sparql/node/prefixes-001.ttl::prefixes-001",
+      "status": "pass"
+    },
+    {
+      "id": "sparql/node/sparql-001.ttl::sparql-001",
+      "status": "pass"
+    },
+    {
+      "id": "sparql/node/sparql-002.ttl::sparql-002",
+      "status": "pass"
+    },
+    {
+      "id": "sparql/node/sparql-003.ttl::sparql-003",
+      "status": "pass"
+    },
+    {
+      "id": "sparql/pre-binding/pre-binding-001.ttl::pre-binding-001",
+      "status": "pass"
+    },
+    {
+      "id": "sparql/pre-binding/pre-binding-002.ttl::pre-binding-002",
+      "status": "pass"
+    },
+    {
+      "id": "sparql/pre-binding/pre-binding-003.ttl::pre-binding-003",
+      "status": "pass"
+    },
+    {
+      "id": "sparql/pre-binding/pre-binding-004.ttl::pre-binding-004",
+      "status": "pass"
+    },
+    {
+      "id": "sparql/pre-binding/pre-binding-005.ttl::pre-binding-005",
+      "status": "pass"
+    },
+    {
+      "id": "sparql/pre-binding/pre-binding-006.ttl::pre-binding-006",
+      "status": "pass"
+    },
+    {
+      "id": "sparql/pre-binding/pre-binding-007.ttl::pre-binding-007",
+      "status": "pass"
+    },
+    {
+      "id": "sparql/pre-binding/shapesGraph-001.ttl::shapesGraph-001",
+      "status": "pass"
+    },
+    {
+      "id": "sparql/pre-binding/unsupported-sparql-001.ttl::unsupported-sparql-001",
+      "status": "pass"
+    },
+    {
+      "id": "sparql/pre-binding/unsupported-sparql-002.ttl::unsupported-sparql-002",
+      "status": "pass"
+    },
+    {
+      "id": "sparql/pre-binding/unsupported-sparql-003.ttl::unsupported-sparql-003",
+      "status": "pass"
+    },
+    {
+      "id": "sparql/pre-binding/unsupported-sparql-004.ttl::unsupported-sparql-004",
+      "status": "pass"
+    },
+    {
+      "id": "sparql/pre-binding/unsupported-sparql-005.ttl::unsupported-sparql-005",
+      "status": "pass"
+    },
+    {
+      "id": "sparql/pre-binding/unsupported-sparql-006.ttl::unsupported-sparql-006",
+      "status": "pass"
+    },
+    {
+      "id": "sparql/property/sparql-001.ttl::sparql-001",
+      "status": "pass"
+    }
+  ],
   "upstream": [
     {
       "file": "vendor/pyshacl/test/issues/bad_test_070.py",

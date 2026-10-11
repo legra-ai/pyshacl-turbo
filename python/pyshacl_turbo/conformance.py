@@ -81,7 +81,11 @@ def report_subgraph(graph, root, messages, details):
 
 def compare_reports(actual, expected, expected_root):
     actual_root = actual.value(None, RDF.type, SH.ValidationReport, any=False)
-    if actual_root is None or expected.value(expected_root, SH.conforms) is None:
+    if (
+        actual_root is None
+        or actual.value(actual_root, SH.conforms) is None
+        or expected.value(expected_root, SH.conforms) is None
+    ):
         raise RuntimeError("Expected and actual reports must declare sh:conforms")
     expected_results = list(expected.objects(expected_root, SH.result))
     messages = any(expected.value(node, SH.resultMessage) is not None for node in expected_results)

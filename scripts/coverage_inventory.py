@@ -13,13 +13,12 @@ import pyshacl_turbo as turbo
 from suite_harness import cases, compare
 
 
-def main():
-    output = Path(sys.argv[1]) if len(sys.argv) > 1 else ROOT / "docs/coverage.json"
+def w3c_results(*, documents=False):
     rows = []
     for case in cases():
         row = {"id": case.id}
         try:
-            compare(case, turbo.validate)
+            compare(case, turbo.validate, documents=documents)
         except NotImplementedError as error:
             row.update(status="unsupported", reason=str(error))
         except AssertionError as error:
@@ -29,6 +28,13 @@ def main():
         else:
             row["status"] = "pass"
         rows.append(row)
+    return rows
+
+
+def main():
+    output = Path(sys.argv[1]) if len(sys.argv) > 1 else ROOT / "docs/coverage.json"
+    rows = w3c_results()
+    documents = w3c_results(documents=True)
     upstream = []
     report_path = ROOT / "docs/upstream-coverage.json"
     executed = json.loads(report_path.read_text()) if report_path.exists() else None
@@ -61,12 +67,22 @@ def main():
         "sources": json.loads((ROOT / "tests/suite-sources.json").read_text()),
         "w3c_summary": dict(Counter(row["status"] for row in rows)),
         "w3c": rows,
+        "w3c_document_summary": dict(Counter(row["status"] for row in documents)),
+        "w3c_documents": documents,
         "upstream": upstream,
         "upstream_run": executed,
         "upstream_note": "Function inventory; execution counts use parametrized cases in upstream_run. Unexecuted and excluded cases are not passes.",
     }
     output.write_text(json.dumps(result, indent=2) + "\n")
-    print(json.dumps({"w3c": result["w3c_summary"], "upstream_functions": len(upstream)}))
+    print(
+        json.dumps(
+            {
+                "w3c_graphs": result["w3c_summary"],
+                "w3c_documents": result["w3c_document_summary"],
+                "upstream_functions": len(upstream),
+            }
+        )
+    )
 
 
 if __name__ == "__main__":

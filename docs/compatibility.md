@@ -36,11 +36,23 @@ its geometry node lacks the required `geo:Geometry` class. The fixture's
 `assert conforms` is wrong for the supplied data and shapes. It remains a strict
 upstream failure; the audit does not turn it into a pass.
 
-The separate pinned W3C run passes 119/120: 97/98 Core and 22/22 SPARQL. The
-`uniqueLang-002` discrepancy is retained as a strict expected failure for RDFLib
-Graph input. pySHACL's document loader and ordinary Graph input interpret the
-numeric boolean spelling differently; see ADR 0007. A finite passing suite does
+The pinned W3C suite now runs through both public input paths. Document inputs
+pass **120/120 (100%)**: 98 Core and 22 SPARQL. RDFLib Graph inputs still pass
+**119/120**: 97/98 Core and 22/22 SPARQL. The `uniqueLang-002` discrepancy remains
+a strict expected failure for Graph input. pySHACL's document loader and ordinary
+Graph input interpret the numeric boolean spelling differently; see ADR 0007.
+The document run adds API coverage without changing engine semantics or the
+original Graph measurement. Both runs compare report fields, result multiplicity
+and paths. Graph inputs require exact input blank-node identity; document inputs
+compare their descriptions and shared references across independent parses.
+See [ADR 0014](adr/0014-complete-python-coverage.md). A finite passing suite does
 not prove universal compatibility.
+
+The complete Python package has **100% line and branch coverage**, enforced by
+CI with no omitted package files. This measures executed Python API/CLI code,
+not Rust coverage or universal SHACL compatibility. The coverage expansion found
+and fixed N-Quads CLI report serialization, lost namespace bindings in combined
+inputs, and acceptance of malformed DASH reports missing `sh:conforms`.
 
 ## Implemented
 
