@@ -4,7 +4,12 @@
   `469cca7a22a078b36c167c1e8dadecf5e5ec6c75` (v0.40.1). This is an inventory for
   compatibility work, not a production dependency. The complete non-JS inventory
   executes 403 parametrized cases, including two explicitly documented native
-  equivalents; case-level results are in `../docs/upstream-coverage.json`.
+  equivalents and the local fixture correction in `pyshacl-issue-70.patch`.
+  That correction pins the remote shapes, verifies the missing geometry-class
+  violation, then verifies that adding the missing subclass relationship makes
+  the input conform. It applies to both reference and Turbo runs; case-level
+  results identify it in `../docs/upstream-coverage.json`. It has not been
+  submitted upstream. See [ADR 0018](../docs/adr/0018-correct-upstream-geometry-fixture.md).
 - `sparopt-0.3.7/`, `spareval-0.2.7/`: published Oxigraph crate sources, from
   revision `0e81a29d27575ab69e7f85ea9c7f1058b277fcd0`. Original archive checksums
   are in `rust-sources.json`; MIT and Apache license texts are retained.
@@ -26,4 +31,6 @@
 No upstream PRs have been submitted for these local Rust patches.
 
 `../scripts/sync_suites.py` refreshes the pinned W3C and pySHACL test assets.
+It reapplies the local pySHACL patch, fails if the patch cannot apply, and records
+its checksum in `../tests/suite-sources.json`.
 It does not overwrite the patched Rust dependencies.

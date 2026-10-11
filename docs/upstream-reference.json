@@ -5,15 +5,15 @@
     "SHACL-JS"
   ],
   "summary": {
-    "failed": 3,
-    "passed": 400
+    "passed": 401,
+    "failed": 2
   },
   "collection_errors": [],
   "cases": [
     {
       "id": "test/issues/bad_test_070.py::test_070",
-      "status": "failed",
-      "reason": "test/issues/bad_test_070.py:62: in test_070\n    assert conforms\nE   assert False"
+      "status": "passed",
+      "local_correction": "vendor/pyshacl-issue-70.patch"
     },
     {
       "id": "test/issues/issue_102.py::test_102",
@@ -300,123 +300,123 @@
       "status": "passed"
     },
     {
-      "id": "test/test_dash_validate.py::test_dash_validate_all_core[/Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/dash_tests/core/node/datatype-002.test.ttl-None]",
+      "id": "test/test_dash_validate.py::test_dash_validate_all_core[vendor/pyshacl/test/resources/dash_tests/core/node/datatype-002.test.ttl-None]",
       "status": "passed"
     },
     {
-      "id": "test/test_dash_validate.py::test_dash_validate_all_core_sparql_mode[/Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/dash_tests/core/node/datatype-002.test.ttl-None]",
+      "id": "test/test_dash_validate.py::test_dash_validate_all_core_sparql_mode[vendor/pyshacl/test/resources/dash_tests/core/node/datatype-002.test.ttl-None]",
       "status": "passed"
     },
     {
-      "id": "test/test_dash_validate.py::test_dash_validate_all_sparql[/Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/dash_tests/sparql/property/sparql-001.test.ttl-None]",
+      "id": "test/test_dash_validate.py::test_dash_validate_all_sparql[vendor/pyshacl/test/resources/dash_tests/sparql/property/sparql-001.test.ttl-None]",
       "status": "passed"
     },
     {
-      "id": "test/test_dash_validate.py::test_dash_validate_all_sparql[/Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/dash_tests/sparql/component/propertyValidator-select-001.test.ttl-None]",
+      "id": "test/test_dash_validate.py::test_dash_validate_all_sparql[vendor/pyshacl/test/resources/dash_tests/sparql/component/propertyValidator-select-001.test.ttl-None]",
       "status": "passed"
     },
     {
-      "id": "test/test_dash_validate.py::test_dash_validate_all_sparql[/Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/dash_tests/sparql/component/nodeValidator-001.test.ttl-None]",
+      "id": "test/test_dash_validate.py::test_dash_validate_all_sparql[vendor/pyshacl/test/resources/dash_tests/sparql/component/nodeValidator-001.test.ttl-None]",
       "status": "passed"
     },
     {
-      "id": "test/test_dash_validate.py::test_dash_validate_all_sparql[/Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/dash_tests/sparql/component/optional-001.test.ttl-None]",
+      "id": "test/test_dash_validate.py::test_dash_validate_all_sparql[vendor/pyshacl/test/resources/dash_tests/sparql/component/optional-001.test.ttl-None]",
       "status": "passed"
     },
     {
-      "id": "test/test_dash_validate.py::test_dash_validate_all_sparql[/Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/dash_tests/sparql/component/validator-001.test.ttl-None]",
+      "id": "test/test_dash_validate.py::test_dash_validate_all_sparql[vendor/pyshacl/test/resources/dash_tests/sparql/component/validator-001.test.ttl-None]",
       "status": "passed"
     },
     {
-      "id": "test/test_dash_validate.py::test_dash_validate_all_sparql[/Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/dash_tests/sparql/node/sparql-001.test.ttl-None]",
+      "id": "test/test_dash_validate.py::test_dash_validate_all_sparql[vendor/pyshacl/test/resources/dash_tests/sparql/node/sparql-001.test.ttl-None]",
       "status": "passed"
     },
     {
-      "id": "test/test_dash_validate.py::test_dash_validate_all_sparql[/Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/dash_tests/sparql/node/sparql-002.test.ttl-None]",
+      "id": "test/test_dash_validate.py::test_dash_validate_all_sparql[vendor/pyshacl/test/resources/dash_tests/sparql/node/sparql-002.test.ttl-None]",
       "status": "passed"
     },
     {
-      "id": "test/test_dash_validate.py::test_dash_validate_all_sparql[/Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/dash_tests/sparql/node/prefixes-001.test.ttl-None]",
+      "id": "test/test_dash_validate.py::test_dash_validate_all_sparql[vendor/pyshacl/test/resources/dash_tests/sparql/node/prefixes-001.test.ttl-None]",
       "status": "passed"
     },
     {
-      "id": "test/test_dash_validate.py::test_dash_validate_all_sparql_sparql_mode[/Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/dash_tests/sparql/property/sparql-001.test.ttl-None]",
+      "id": "test/test_dash_validate.py::test_dash_validate_all_sparql_sparql_mode[vendor/pyshacl/test/resources/dash_tests/sparql/property/sparql-001.test.ttl-None]",
       "status": "passed"
     },
     {
-      "id": "test/test_dash_validate.py::test_dash_validate_all_sparql_sparql_mode[/Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/dash_tests/sparql/component/propertyValidator-select-001.test.ttl-None]",
+      "id": "test/test_dash_validate.py::test_dash_validate_all_sparql_sparql_mode[vendor/pyshacl/test/resources/dash_tests/sparql/component/propertyValidator-select-001.test.ttl-None]",
       "status": "passed"
     },
     {
-      "id": "test/test_dash_validate.py::test_dash_validate_all_sparql_sparql_mode[/Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/dash_tests/sparql/component/nodeValidator-001.test.ttl-None]",
+      "id": "test/test_dash_validate.py::test_dash_validate_all_sparql_sparql_mode[vendor/pyshacl/test/resources/dash_tests/sparql/component/nodeValidator-001.test.ttl-None]",
       "status": "passed"
     },
     {
-      "id": "test/test_dash_validate.py::test_dash_validate_all_sparql_sparql_mode[/Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/dash_tests/sparql/component/optional-001.test.ttl-None]",
+      "id": "test/test_dash_validate.py::test_dash_validate_all_sparql_sparql_mode[vendor/pyshacl/test/resources/dash_tests/sparql/component/optional-001.test.ttl-None]",
       "status": "passed"
     },
     {
-      "id": "test/test_dash_validate.py::test_dash_validate_all_sparql_sparql_mode[/Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/dash_tests/sparql/component/validator-001.test.ttl-None]",
+      "id": "test/test_dash_validate.py::test_dash_validate_all_sparql_sparql_mode[vendor/pyshacl/test/resources/dash_tests/sparql/component/validator-001.test.ttl-None]",
       "status": "passed"
     },
     {
-      "id": "test/test_dash_validate.py::test_dash_validate_all_sparql_sparql_mode[/Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/dash_tests/sparql/node/sparql-001.test.ttl-None]",
+      "id": "test/test_dash_validate.py::test_dash_validate_all_sparql_sparql_mode[vendor/pyshacl/test/resources/dash_tests/sparql/node/sparql-001.test.ttl-None]",
       "status": "passed"
     },
     {
-      "id": "test/test_dash_validate.py::test_dash_validate_all_sparql_sparql_mode[/Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/dash_tests/sparql/node/sparql-002.test.ttl-None]",
+      "id": "test/test_dash_validate.py::test_dash_validate_all_sparql_sparql_mode[vendor/pyshacl/test/resources/dash_tests/sparql/node/sparql-002.test.ttl-None]",
       "status": "passed"
     },
     {
-      "id": "test/test_dash_validate.py::test_dash_validate_all_sparql_sparql_mode[/Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/dash_tests/sparql/node/prefixes-001.test.ttl-None]",
+      "id": "test/test_dash_validate.py::test_dash_validate_all_sparql_sparql_mode[vendor/pyshacl/test/resources/dash_tests/sparql/node/prefixes-001.test.ttl-None]",
       "status": "passed"
     },
     {
-      "id": "test/test_dash_validate.py::test_dash_validate_all_sparql_rules[/Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/dash_tests/rules/sparql/rectangle.test.ttl-None]",
+      "id": "test/test_dash_validate.py::test_dash_validate_all_sparql_rules[vendor/pyshacl/test/resources/dash_tests/rules/sparql/rectangle.test.ttl-None]",
       "status": "passed"
     },
     {
-      "id": "test/test_dash_validate.py::test_dash_validate_all_sparql_rules[/Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/dash_tests/rules/sparql/classify-square.test.ttl-None]",
+      "id": "test/test_dash_validate.py::test_dash_validate_all_sparql_rules[vendor/pyshacl/test/resources/dash_tests/rules/sparql/classify-square.test.ttl-None]",
       "status": "passed"
     },
     {
-      "id": "test/test_dash_validate.py::test_dash_validate_all_triple_rules[/Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/dash_tests/rules/triple/rectangle.test.ttl-None]",
+      "id": "test/test_dash_validate.py::test_dash_validate_all_triple_rules[vendor/pyshacl/test/resources/dash_tests/rules/triple/rectangle.test.ttl-None]",
       "status": "passed"
     },
     {
-      "id": "test/test_dash_validate.py::test_dash_validate_all_triple_rules[/Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/dash_tests/rules/triple/schema2person.test.ttl-None]",
+      "id": "test/test_dash_validate.py::test_dash_validate_all_triple_rules[vendor/pyshacl/test/resources/dash_tests/rules/triple/schema2person.test.ttl-None]",
       "status": "passed"
     },
     {
-      "id": "test/test_dash_validate.py::test_dash_validate_all_triple_rules[/Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/dash_tests/rules/triple/square.test.ttl-None]",
+      "id": "test/test_dash_validate.py::test_dash_validate_all_triple_rules[vendor/pyshacl/test/resources/dash_tests/rules/triple/square.test.ttl-None]",
       "status": "passed"
     },
     {
-      "id": "test/test_dash_validate.py::test_dash_validate_all_triple_rules[/Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/dash_tests/rules/triple/functions-permutations.test.ttl-None]",
+      "id": "test/test_dash_validate.py::test_dash_validate_all_triple_rules[vendor/pyshacl/test/resources/dash_tests/rules/triple/functions-permutations.test.ttl-None]",
       "status": "passed"
     },
     {
-      "id": "test/test_dash_validate.py::test_dash_validate_all_triple_rules[/Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/dash_tests/rules/triple/person.ttl-/Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/dash_tests/rules/triple/person2schema.test.ttl]",
+      "id": "test/test_dash_validate.py::test_dash_validate_all_triple_rules[vendor/pyshacl/test/resources/dash_tests/rules/triple/person.ttl-vendor/pyshacl/test/resources/dash_tests/rules/triple/person2schema.test.ttl]",
       "status": "passed"
     },
     {
-      "id": "test/test_dash_validate.py::test_dash_validate_target[/Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/dash_tests/target/sparqlTarget-001.test.ttl-None]",
+      "id": "test/test_dash_validate.py::test_dash_validate_target[vendor/pyshacl/test/resources/dash_tests/target/sparqlTarget-001.test.ttl-None]",
       "status": "passed"
     },
     {
-      "id": "test/test_dash_validate.py::test_dash_validate_target[/Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/dash_tests/target/sparqlTargetType-001.test.ttl-None]",
+      "id": "test/test_dash_validate.py::test_dash_validate_target[vendor/pyshacl/test/resources/dash_tests/target/sparqlTargetType-001.test.ttl-None]",
       "status": "passed"
     },
     {
-      "id": "test/test_dash_validate.py::test_dash_validate_target_sparql_mode[/Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/dash_tests/target/sparqlTarget-001.test.ttl-None]",
+      "id": "test/test_dash_validate.py::test_dash_validate_target_sparql_mode[vendor/pyshacl/test/resources/dash_tests/target/sparqlTarget-001.test.ttl-None]",
       "status": "passed"
     },
     {
-      "id": "test/test_dash_validate.py::test_dash_validate_target_sparql_mode[/Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/dash_tests/target/sparqlTargetType-001.test.ttl-None]",
+      "id": "test/test_dash_validate.py::test_dash_validate_target_sparql_mode[vendor/pyshacl/test/resources/dash_tests/target/sparqlTargetType-001.test.ttl-None]",
       "status": "passed"
     },
     {
-      "id": "test/test_dash_validate.py::test_dash_validate_expression[/Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/dash_tests/expression/booleans-001.test.ttl-None]",
+      "id": "test/test_dash_validate.py::test_dash_validate_expression[vendor/pyshacl/test/resources/dash_tests/expression/booleans-001.test.ttl-None]",
       "status": "passed"
     },
     {
@@ -424,75 +424,75 @@
       "status": "passed"
     },
     {
-      "id": "test/test_dash_validate.py::test_evaluate_query_testcase[/Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/dash_tests/query/malformed_json_result.test.ttl-None]",
+      "id": "test/test_dash_validate.py::test_evaluate_query_testcase[vendor/pyshacl/test/resources/dash_tests/query/malformed_json_result.test.ttl-None]",
       "status": "passed"
     },
     {
-      "id": "test/test_dash_validate.py::test_evaluate_query_testcase[/Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/dash_tests/query/failing-003.test.ttl-None]",
+      "id": "test/test_dash_validate.py::test_evaluate_query_testcase[vendor/pyshacl/test/resources/dash_tests/query/failing-003.test.ttl-None]",
       "status": "passed"
     },
     {
-      "id": "test/test_dash_validate.py::test_evaluate_query_testcase[/Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/dash_tests/query/failing-002.test.ttl-None]",
+      "id": "test/test_dash_validate.py::test_evaluate_query_testcase[vendor/pyshacl/test/resources/dash_tests/query/failing-002.test.ttl-None]",
       "status": "passed"
     },
     {
-      "id": "test/test_dash_validate.py::test_evaluate_query_testcase[/Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/dash_tests/query/passing-002.test.ttl-None]",
+      "id": "test/test_dash_validate.py::test_evaluate_query_testcase[vendor/pyshacl/test/resources/dash_tests/query/passing-002.test.ttl-None]",
       "status": "passed"
     },
     {
-      "id": "test/test_dash_validate.py::test_evaluate_query_testcase[/Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/dash_tests/query/failing-001.test.ttl-None]",
+      "id": "test/test_dash_validate.py::test_evaluate_query_testcase[vendor/pyshacl/test/resources/dash_tests/query/failing-001.test.ttl-None]",
       "status": "passed"
     },
     {
-      "id": "test/test_dash_validate.py::test_evaluate_query_testcase[/Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/dash_tests/query/invalid_query.test.ttl-None]",
+      "id": "test/test_dash_validate.py::test_evaluate_query_testcase[vendor/pyshacl/test/resources/dash_tests/query/invalid_query.test.ttl-None]",
       "status": "passed"
     },
     {
-      "id": "test/test_dash_validate.py::test_evaluate_query_testcase[/Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/dash_tests/query/passing-001.test.ttl-None]",
+      "id": "test/test_dash_validate.py::test_evaluate_query_testcase[vendor/pyshacl/test/resources/dash_tests/query/passing-001.test.ttl-None]",
       "status": "passed"
     },
     {
-      "id": "test/test_dash_validate.py::test_evaluate_query_testcase[/Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/dash_tests/query/malformed_json.test.ttl-None]",
+      "id": "test/test_dash_validate.py::test_evaluate_query_testcase[vendor/pyshacl/test/resources/dash_tests/query/malformed_json.test.ttl-None]",
       "status": "passed"
     },
     {
-      "id": "test/test_dash_validate.py::test_dash_validate_query_cases[/Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/dash_tests/query/malformed_json_result.test.ttl-None]",
+      "id": "test/test_dash_validate.py::test_dash_validate_query_cases[vendor/pyshacl/test/resources/dash_tests/query/malformed_json_result.test.ttl-None]",
       "status": "passed"
     },
     {
-      "id": "test/test_dash_validate.py::test_dash_validate_query_cases[/Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/dash_tests/query/failing-003.test.ttl-None]",
+      "id": "test/test_dash_validate.py::test_dash_validate_query_cases[vendor/pyshacl/test/resources/dash_tests/query/failing-003.test.ttl-None]",
       "status": "passed"
     },
     {
-      "id": "test/test_dash_validate.py::test_dash_validate_query_cases[/Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/dash_tests/query/failing-002.test.ttl-None]",
+      "id": "test/test_dash_validate.py::test_dash_validate_query_cases[vendor/pyshacl/test/resources/dash_tests/query/failing-002.test.ttl-None]",
       "status": "passed"
     },
     {
-      "id": "test/test_dash_validate.py::test_dash_validate_query_cases[/Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/dash_tests/query/passing-002.test.ttl-None]",
+      "id": "test/test_dash_validate.py::test_dash_validate_query_cases[vendor/pyshacl/test/resources/dash_tests/query/passing-002.test.ttl-None]",
       "status": "passed"
     },
     {
-      "id": "test/test_dash_validate.py::test_dash_validate_query_cases[/Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/dash_tests/query/failing-001.test.ttl-None]",
+      "id": "test/test_dash_validate.py::test_dash_validate_query_cases[vendor/pyshacl/test/resources/dash_tests/query/failing-001.test.ttl-None]",
       "status": "passed"
     },
     {
-      "id": "test/test_dash_validate.py::test_dash_validate_query_cases[/Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/dash_tests/query/invalid_query.test.ttl-None]",
+      "id": "test/test_dash_validate.py::test_dash_validate_query_cases[vendor/pyshacl/test/resources/dash_tests/query/invalid_query.test.ttl-None]",
       "status": "passed"
     },
     {
-      "id": "test/test_dash_validate.py::test_dash_validate_query_cases[/Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/dash_tests/query/passing-001.test.ttl-None]",
+      "id": "test/test_dash_validate.py::test_dash_validate_query_cases[vendor/pyshacl/test/resources/dash_tests/query/passing-001.test.ttl-None]",
       "status": "passed"
     },
     {
-      "id": "test/test_dash_validate.py::test_dash_validate_query_cases[/Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/dash_tests/query/malformed_json.test.ttl-None]",
+      "id": "test/test_dash_validate.py::test_dash_validate_query_cases[vendor/pyshacl/test/resources/dash_tests/query/malformed_json.test.ttl-None]",
       "status": "passed"
     },
     {
-      "id": "test/test_dash_validate.py::test_dash_validate_functions[/Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/dash_tests/function/callSPARQLFunction.test.ttl-None]",
+      "id": "test/test_dash_validate.py::test_dash_validate_functions[vendor/pyshacl/test/resources/dash_tests/function/callSPARQLFunction.test.ttl-None]",
       "status": "passed"
     },
     {
-      "id": "test/test_dash_validate.py::test_dash_validate_functions[/Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/dash_tests/function/simpleSPARQLFunction.test.ttl-None]",
+      "id": "test/test_dash_validate.py::test_dash_validate_functions[vendor/pyshacl/test/resources/dash_tests/function/simpleSPARQLFunction.test.ttl-None]",
       "status": "passed"
     },
     {
@@ -612,31 +612,31 @@
       "status": "passed"
     },
     {
-      "id": "test/test_rules_oxigraph.py::test_sparql_rules_oxigraph[/Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/dash_tests/rules/sparql/rectangle.test.ttl-None]",
+      "id": "test/test_rules_oxigraph.py::test_sparql_rules_oxigraph[vendor/pyshacl/test/resources/dash_tests/rules/sparql/rectangle.test.ttl-None]",
       "status": "passed"
     },
     {
-      "id": "test/test_rules_oxigraph.py::test_sparql_rules_oxigraph[/Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/dash_tests/rules/sparql/classify-square.test.ttl-None]",
+      "id": "test/test_rules_oxigraph.py::test_sparql_rules_oxigraph[vendor/pyshacl/test/resources/dash_tests/rules/sparql/classify-square.test.ttl-None]",
       "status": "passed"
     },
     {
-      "id": "test/test_rules_oxigraph.py::test_triple_rules_oxigraph[/Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/dash_tests/rules/triple/rectangle.test.ttl-None]",
+      "id": "test/test_rules_oxigraph.py::test_triple_rules_oxigraph[vendor/pyshacl/test/resources/dash_tests/rules/triple/rectangle.test.ttl-None]",
       "status": "passed"
     },
     {
-      "id": "test/test_rules_oxigraph.py::test_triple_rules_oxigraph[/Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/dash_tests/rules/triple/schema2person.test.ttl-None]",
+      "id": "test/test_rules_oxigraph.py::test_triple_rules_oxigraph[vendor/pyshacl/test/resources/dash_tests/rules/triple/schema2person.test.ttl-None]",
       "status": "passed"
     },
     {
-      "id": "test/test_rules_oxigraph.py::test_triple_rules_oxigraph[/Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/dash_tests/rules/triple/square.test.ttl-None]",
+      "id": "test/test_rules_oxigraph.py::test_triple_rules_oxigraph[vendor/pyshacl/test/resources/dash_tests/rules/triple/square.test.ttl-None]",
       "status": "passed"
     },
     {
-      "id": "test/test_rules_oxigraph.py::test_triple_rules_oxigraph[/Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/dash_tests/rules/triple/functions-permutations.test.ttl-None]",
+      "id": "test/test_rules_oxigraph.py::test_triple_rules_oxigraph[vendor/pyshacl/test/resources/dash_tests/rules/triple/functions-permutations.test.ttl-None]",
       "status": "passed"
     },
     {
-      "id": "test/test_rules_oxigraph.py::test_triple_rules_oxigraph[/Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/dash_tests/rules/triple/person.ttl-/Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/dash_tests/rules/triple/person2schema.test.ttl]",
+      "id": "test/test_rules_oxigraph.py::test_triple_rules_oxigraph[vendor/pyshacl/test/resources/dash_tests/rules/triple/person.ttl-vendor/pyshacl/test/resources/dash_tests/rules/triple/person2schema.test.ttl]",
       "status": "passed"
     },
     {
@@ -656,973 +656,973 @@
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/complex/personexample.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all[vendor/pyshacl/test/resources/sht_tests/core/complex/personexample.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/complex/shacl-shacl.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all[vendor/pyshacl/test/resources/sht_tests/core/complex/shacl-shacl.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/misc/deactivated-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all[vendor/pyshacl/test/resources/sht_tests/core/misc/deactivated-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/misc/deactivated-002.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all[vendor/pyshacl/test/resources/sht_tests/core/misc/deactivated-002.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/misc/message-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all[vendor/pyshacl/test/resources/sht_tests/core/misc/message-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/misc/severity-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all[vendor/pyshacl/test/resources/sht_tests/core/misc/severity-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/misc/severity-002.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all[vendor/pyshacl/test/resources/sht_tests/core/misc/severity-002.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/node/and-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all[vendor/pyshacl/test/resources/sht_tests/core/node/and-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/node/and-002.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all[vendor/pyshacl/test/resources/sht_tests/core/node/and-002.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/node/class-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all[vendor/pyshacl/test/resources/sht_tests/core/node/class-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/node/class-002.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all[vendor/pyshacl/test/resources/sht_tests/core/node/class-002.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/node/class-003.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all[vendor/pyshacl/test/resources/sht_tests/core/node/class-003.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/node/closed-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all[vendor/pyshacl/test/resources/sht_tests/core/node/closed-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/node/closed-002.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all[vendor/pyshacl/test/resources/sht_tests/core/node/closed-002.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/node/datatype-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all[vendor/pyshacl/test/resources/sht_tests/core/node/datatype-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/node/datatype-002.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all[vendor/pyshacl/test/resources/sht_tests/core/node/datatype-002.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/node/disjoint-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all[vendor/pyshacl/test/resources/sht_tests/core/node/disjoint-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/node/equals-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all[vendor/pyshacl/test/resources/sht_tests/core/node/equals-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/node/hasValue-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all[vendor/pyshacl/test/resources/sht_tests/core/node/hasValue-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/node/in-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all[vendor/pyshacl/test/resources/sht_tests/core/node/in-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/node/languageIn-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all[vendor/pyshacl/test/resources/sht_tests/core/node/languageIn-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/node/maxExclusive-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all[vendor/pyshacl/test/resources/sht_tests/core/node/maxExclusive-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/node/maxInclusive-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all[vendor/pyshacl/test/resources/sht_tests/core/node/maxInclusive-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/node/maxLength-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all[vendor/pyshacl/test/resources/sht_tests/core/node/maxLength-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/node/minExclusive-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all[vendor/pyshacl/test/resources/sht_tests/core/node/minExclusive-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/node/minInclusive-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all[vendor/pyshacl/test/resources/sht_tests/core/node/minInclusive-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/node/minInclusive-002.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all[vendor/pyshacl/test/resources/sht_tests/core/node/minInclusive-002.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/node/minInclusive-003.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all[vendor/pyshacl/test/resources/sht_tests/core/node/minInclusive-003.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/node/minLength-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all[vendor/pyshacl/test/resources/sht_tests/core/node/minLength-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/node/node-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all[vendor/pyshacl/test/resources/sht_tests/core/node/node-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/node/nodeKind-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all[vendor/pyshacl/test/resources/sht_tests/core/node/nodeKind-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/node/not-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all[vendor/pyshacl/test/resources/sht_tests/core/node/not-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/node/not-002.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all[vendor/pyshacl/test/resources/sht_tests/core/node/not-002.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/node/or-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all[vendor/pyshacl/test/resources/sht_tests/core/node/or-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/node/pattern-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all[vendor/pyshacl/test/resources/sht_tests/core/node/pattern-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/node/pattern-002.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all[vendor/pyshacl/test/resources/sht_tests/core/node/pattern-002.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/node/qualified-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all[vendor/pyshacl/test/resources/sht_tests/core/node/qualified-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/node/xone-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all[vendor/pyshacl/test/resources/sht_tests/core/node/xone-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/node/xone-duplicate.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all[vendor/pyshacl/test/resources/sht_tests/core/node/xone-duplicate.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/path/path-alternative-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all[vendor/pyshacl/test/resources/sht_tests/core/path/path-alternative-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/path/path-complex-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all[vendor/pyshacl/test/resources/sht_tests/core/path/path-complex-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/path/path-complex-002.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all[vendor/pyshacl/test/resources/sht_tests/core/path/path-complex-002.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/path/path-inverse-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all[vendor/pyshacl/test/resources/sht_tests/core/path/path-inverse-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/path/path-oneOrMore-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all[vendor/pyshacl/test/resources/sht_tests/core/path/path-oneOrMore-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/path/path-sequence-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all[vendor/pyshacl/test/resources/sht_tests/core/path/path-sequence-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/path/path-sequence-002.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all[vendor/pyshacl/test/resources/sht_tests/core/path/path-sequence-002.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/path/path-sequence-duplicate-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all[vendor/pyshacl/test/resources/sht_tests/core/path/path-sequence-duplicate-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/path/path-strange-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all[vendor/pyshacl/test/resources/sht_tests/core/path/path-strange-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/path/path-strange-002.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all[vendor/pyshacl/test/resources/sht_tests/core/path/path-strange-002.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/path/path-unused-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all[vendor/pyshacl/test/resources/sht_tests/core/path/path-unused-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/path/path-zeroOrMore-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all[vendor/pyshacl/test/resources/sht_tests/core/path/path-zeroOrMore-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/path/path-zeroOrOne-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all[vendor/pyshacl/test/resources/sht_tests/core/path/path-zeroOrOne-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/property/and-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all[vendor/pyshacl/test/resources/sht_tests/core/property/and-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/property/class-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all[vendor/pyshacl/test/resources/sht_tests/core/property/class-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/property/datatype-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all[vendor/pyshacl/test/resources/sht_tests/core/property/datatype-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/property/datatype-002.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all[vendor/pyshacl/test/resources/sht_tests/core/property/datatype-002.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/property/datatype-003.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all[vendor/pyshacl/test/resources/sht_tests/core/property/datatype-003.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/property/datatype-ill-formed.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all[vendor/pyshacl/test/resources/sht_tests/core/property/datatype-ill-formed.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/property/disjoint-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all[vendor/pyshacl/test/resources/sht_tests/core/property/disjoint-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/property/equals-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all[vendor/pyshacl/test/resources/sht_tests/core/property/equals-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/property/hasValue-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all[vendor/pyshacl/test/resources/sht_tests/core/property/hasValue-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/property/in-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all[vendor/pyshacl/test/resources/sht_tests/core/property/in-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/property/languageIn-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all[vendor/pyshacl/test/resources/sht_tests/core/property/languageIn-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/property/lessThan-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all[vendor/pyshacl/test/resources/sht_tests/core/property/lessThan-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/property/lessThan-002.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all[vendor/pyshacl/test/resources/sht_tests/core/property/lessThan-002.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/property/lessThanOrEquals-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all[vendor/pyshacl/test/resources/sht_tests/core/property/lessThanOrEquals-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/property/maxCount-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all[vendor/pyshacl/test/resources/sht_tests/core/property/maxCount-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/property/maxCount-002.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all[vendor/pyshacl/test/resources/sht_tests/core/property/maxCount-002.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/property/maxExclusive-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all[vendor/pyshacl/test/resources/sht_tests/core/property/maxExclusive-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/property/maxInclusive-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all[vendor/pyshacl/test/resources/sht_tests/core/property/maxInclusive-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/property/maxLength-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all[vendor/pyshacl/test/resources/sht_tests/core/property/maxLength-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/property/minCount-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all[vendor/pyshacl/test/resources/sht_tests/core/property/minCount-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/property/minCount-002.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all[vendor/pyshacl/test/resources/sht_tests/core/property/minCount-002.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/property/minExclusive-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all[vendor/pyshacl/test/resources/sht_tests/core/property/minExclusive-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/property/minExclusive-002.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all[vendor/pyshacl/test/resources/sht_tests/core/property/minExclusive-002.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/property/minLength-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all[vendor/pyshacl/test/resources/sht_tests/core/property/minLength-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/property/node-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all[vendor/pyshacl/test/resources/sht_tests/core/property/node-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/property/node-002.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all[vendor/pyshacl/test/resources/sht_tests/core/property/node-002.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/property/nodeKind-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all[vendor/pyshacl/test/resources/sht_tests/core/property/nodeKind-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/property/not-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all[vendor/pyshacl/test/resources/sht_tests/core/property/not-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/property/or-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all[vendor/pyshacl/test/resources/sht_tests/core/property/or-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/property/or-datatypes-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all[vendor/pyshacl/test/resources/sht_tests/core/property/or-datatypes-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/property/pattern-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all[vendor/pyshacl/test/resources/sht_tests/core/property/pattern-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/property/pattern-002.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all[vendor/pyshacl/test/resources/sht_tests/core/property/pattern-002.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/property/property-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all[vendor/pyshacl/test/resources/sht_tests/core/property/property-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/property/qualifiedMinCountDisjoint-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all[vendor/pyshacl/test/resources/sht_tests/core/property/qualifiedMinCountDisjoint-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/property/qualifiedValueShape-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all[vendor/pyshacl/test/resources/sht_tests/core/property/qualifiedValueShape-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/property/qualifiedValueShapesDisjoint-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all[vendor/pyshacl/test/resources/sht_tests/core/property/qualifiedValueShapesDisjoint-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/property/uniqueLang-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all[vendor/pyshacl/test/resources/sht_tests/core/property/uniqueLang-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/property/uniqueLang-002.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all[vendor/pyshacl/test/resources/sht_tests/core/property/uniqueLang-002.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/targets/multipleTargets-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all[vendor/pyshacl/test/resources/sht_tests/core/targets/multipleTargets-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/targets/targetClass-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all[vendor/pyshacl/test/resources/sht_tests/core/targets/targetClass-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/targets/targetClassImplicit-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all[vendor/pyshacl/test/resources/sht_tests/core/targets/targetClassImplicit-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/targets/targetNode-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all[vendor/pyshacl/test/resources/sht_tests/core/targets/targetNode-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/targets/targetObjectsOf-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all[vendor/pyshacl/test/resources/sht_tests/core/targets/targetObjectsOf-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/targets/targetSubjectsOf-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all[vendor/pyshacl/test/resources/sht_tests/core/targets/targetSubjectsOf-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/targets/targetSubjectsOf-002.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all[vendor/pyshacl/test/resources/sht_tests/core/targets/targetSubjectsOf-002.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/validation-reports/shared.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all[vendor/pyshacl/test/resources/sht_tests/core/validation-reports/shared.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/sparql/component/nodeValidator-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all[vendor/pyshacl/test/resources/sht_tests/sparql/component/nodeValidator-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/sparql/component/optional-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all[vendor/pyshacl/test/resources/sht_tests/sparql/component/optional-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/sparql/component/propertyValidator-select-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all[vendor/pyshacl/test/resources/sht_tests/sparql/component/propertyValidator-select-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/sparql/component/validator-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all[vendor/pyshacl/test/resources/sht_tests/sparql/component/validator-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/sparql/node/prefixes-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all[vendor/pyshacl/test/resources/sht_tests/sparql/node/prefixes-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/sparql/node/sparql-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all[vendor/pyshacl/test/resources/sht_tests/sparql/node/sparql-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/sparql/node/sparql-002.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all[vendor/pyshacl/test/resources/sht_tests/sparql/node/sparql-002.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/sparql/node/sparql-003.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all[vendor/pyshacl/test/resources/sht_tests/sparql/node/sparql-003.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/sparql/pre-binding/pre-binding-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all[vendor/pyshacl/test/resources/sht_tests/sparql/pre-binding/pre-binding-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/sparql/pre-binding/pre-binding-002.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all[vendor/pyshacl/test/resources/sht_tests/sparql/pre-binding/pre-binding-002.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/sparql/pre-binding/pre-binding-003.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all[vendor/pyshacl/test/resources/sht_tests/sparql/pre-binding/pre-binding-003.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/sparql/pre-binding/pre-binding-004.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all[vendor/pyshacl/test/resources/sht_tests/sparql/pre-binding/pre-binding-004.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/sparql/pre-binding/pre-binding-005.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all[vendor/pyshacl/test/resources/sht_tests/sparql/pre-binding/pre-binding-005.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/sparql/pre-binding/pre-binding-006.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all[vendor/pyshacl/test/resources/sht_tests/sparql/pre-binding/pre-binding-006.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/sparql/pre-binding/pre-binding-007.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all[vendor/pyshacl/test/resources/sht_tests/sparql/pre-binding/pre-binding-007.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/sparql/pre-binding/shapesGraph-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all[vendor/pyshacl/test/resources/sht_tests/sparql/pre-binding/shapesGraph-001.ttl-0]",
       "status": "failed",
       "reason": "test/test_sht_validate.py:43: in test_sht_all\n    run_sht_test(test, {\"inference\": 'rdfs', \"debug\": True, \"meta_shacl\": False})\ntest/test_sht_validate.py:88: in run_sht_test\n    raise ae\ntest/test_sht_validate.py:81: in run_sht_test\n    assert passes\nE   assert False"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/sparql/pre-binding/unsupported-sparql-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all[vendor/pyshacl/test/resources/sht_tests/sparql/pre-binding/unsupported-sparql-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/sparql/pre-binding/unsupported-sparql-002.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all[vendor/pyshacl/test/resources/sht_tests/sparql/pre-binding/unsupported-sparql-002.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/sparql/pre-binding/unsupported-sparql-003.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all[vendor/pyshacl/test/resources/sht_tests/sparql/pre-binding/unsupported-sparql-003.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/sparql/pre-binding/unsupported-sparql-004.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all[vendor/pyshacl/test/resources/sht_tests/sparql/pre-binding/unsupported-sparql-004.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/sparql/pre-binding/unsupported-sparql-005.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all[vendor/pyshacl/test/resources/sht_tests/sparql/pre-binding/unsupported-sparql-005.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/sparql/pre-binding/unsupported-sparql-006.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all[vendor/pyshacl/test/resources/sht_tests/sparql/pre-binding/unsupported-sparql-006.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/sparql/property/sparql-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all[vendor/pyshacl/test/resources/sht_tests/sparql/property/sparql-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/complex/personexample.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[vendor/pyshacl/test/resources/sht_tests/core/complex/personexample.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/complex/shacl-shacl.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[vendor/pyshacl/test/resources/sht_tests/core/complex/shacl-shacl.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/misc/deactivated-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[vendor/pyshacl/test/resources/sht_tests/core/misc/deactivated-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/misc/deactivated-002.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[vendor/pyshacl/test/resources/sht_tests/core/misc/deactivated-002.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/misc/message-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[vendor/pyshacl/test/resources/sht_tests/core/misc/message-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/misc/severity-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[vendor/pyshacl/test/resources/sht_tests/core/misc/severity-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/misc/severity-002.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[vendor/pyshacl/test/resources/sht_tests/core/misc/severity-002.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/node/and-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[vendor/pyshacl/test/resources/sht_tests/core/node/and-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/node/and-002.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[vendor/pyshacl/test/resources/sht_tests/core/node/and-002.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/node/class-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[vendor/pyshacl/test/resources/sht_tests/core/node/class-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/node/class-002.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[vendor/pyshacl/test/resources/sht_tests/core/node/class-002.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/node/class-003.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[vendor/pyshacl/test/resources/sht_tests/core/node/class-003.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/node/closed-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[vendor/pyshacl/test/resources/sht_tests/core/node/closed-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/node/closed-002.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[vendor/pyshacl/test/resources/sht_tests/core/node/closed-002.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/node/datatype-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[vendor/pyshacl/test/resources/sht_tests/core/node/datatype-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/node/datatype-002.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[vendor/pyshacl/test/resources/sht_tests/core/node/datatype-002.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/node/disjoint-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[vendor/pyshacl/test/resources/sht_tests/core/node/disjoint-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/node/equals-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[vendor/pyshacl/test/resources/sht_tests/core/node/equals-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/node/hasValue-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[vendor/pyshacl/test/resources/sht_tests/core/node/hasValue-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/node/in-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[vendor/pyshacl/test/resources/sht_tests/core/node/in-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/node/languageIn-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[vendor/pyshacl/test/resources/sht_tests/core/node/languageIn-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/node/maxExclusive-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[vendor/pyshacl/test/resources/sht_tests/core/node/maxExclusive-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/node/maxInclusive-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[vendor/pyshacl/test/resources/sht_tests/core/node/maxInclusive-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/node/maxLength-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[vendor/pyshacl/test/resources/sht_tests/core/node/maxLength-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/node/minExclusive-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[vendor/pyshacl/test/resources/sht_tests/core/node/minExclusive-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/node/minInclusive-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[vendor/pyshacl/test/resources/sht_tests/core/node/minInclusive-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/node/minInclusive-002.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[vendor/pyshacl/test/resources/sht_tests/core/node/minInclusive-002.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/node/minInclusive-003.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[vendor/pyshacl/test/resources/sht_tests/core/node/minInclusive-003.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/node/minLength-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[vendor/pyshacl/test/resources/sht_tests/core/node/minLength-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/node/node-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[vendor/pyshacl/test/resources/sht_tests/core/node/node-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/node/nodeKind-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[vendor/pyshacl/test/resources/sht_tests/core/node/nodeKind-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/node/not-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[vendor/pyshacl/test/resources/sht_tests/core/node/not-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/node/not-002.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[vendor/pyshacl/test/resources/sht_tests/core/node/not-002.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/node/or-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[vendor/pyshacl/test/resources/sht_tests/core/node/or-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/node/pattern-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[vendor/pyshacl/test/resources/sht_tests/core/node/pattern-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/node/pattern-002.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[vendor/pyshacl/test/resources/sht_tests/core/node/pattern-002.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/node/qualified-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[vendor/pyshacl/test/resources/sht_tests/core/node/qualified-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/node/xone-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[vendor/pyshacl/test/resources/sht_tests/core/node/xone-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/node/xone-duplicate.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[vendor/pyshacl/test/resources/sht_tests/core/node/xone-duplicate.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/path/path-alternative-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[vendor/pyshacl/test/resources/sht_tests/core/path/path-alternative-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/path/path-complex-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[vendor/pyshacl/test/resources/sht_tests/core/path/path-complex-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/path/path-complex-002.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[vendor/pyshacl/test/resources/sht_tests/core/path/path-complex-002.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/path/path-inverse-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[vendor/pyshacl/test/resources/sht_tests/core/path/path-inverse-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/path/path-oneOrMore-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[vendor/pyshacl/test/resources/sht_tests/core/path/path-oneOrMore-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/path/path-sequence-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[vendor/pyshacl/test/resources/sht_tests/core/path/path-sequence-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/path/path-sequence-002.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[vendor/pyshacl/test/resources/sht_tests/core/path/path-sequence-002.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/path/path-sequence-duplicate-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[vendor/pyshacl/test/resources/sht_tests/core/path/path-sequence-duplicate-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/path/path-strange-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[vendor/pyshacl/test/resources/sht_tests/core/path/path-strange-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/path/path-strange-002.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[vendor/pyshacl/test/resources/sht_tests/core/path/path-strange-002.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/path/path-unused-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[vendor/pyshacl/test/resources/sht_tests/core/path/path-unused-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/path/path-zeroOrMore-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[vendor/pyshacl/test/resources/sht_tests/core/path/path-zeroOrMore-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/path/path-zeroOrOne-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[vendor/pyshacl/test/resources/sht_tests/core/path/path-zeroOrOne-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/property/and-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[vendor/pyshacl/test/resources/sht_tests/core/property/and-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/property/class-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[vendor/pyshacl/test/resources/sht_tests/core/property/class-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/property/datatype-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[vendor/pyshacl/test/resources/sht_tests/core/property/datatype-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/property/datatype-002.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[vendor/pyshacl/test/resources/sht_tests/core/property/datatype-002.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/property/datatype-003.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[vendor/pyshacl/test/resources/sht_tests/core/property/datatype-003.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/property/datatype-ill-formed.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[vendor/pyshacl/test/resources/sht_tests/core/property/datatype-ill-formed.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/property/disjoint-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[vendor/pyshacl/test/resources/sht_tests/core/property/disjoint-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/property/equals-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[vendor/pyshacl/test/resources/sht_tests/core/property/equals-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/property/hasValue-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[vendor/pyshacl/test/resources/sht_tests/core/property/hasValue-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/property/in-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[vendor/pyshacl/test/resources/sht_tests/core/property/in-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/property/languageIn-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[vendor/pyshacl/test/resources/sht_tests/core/property/languageIn-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/property/lessThan-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[vendor/pyshacl/test/resources/sht_tests/core/property/lessThan-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/property/lessThan-002.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[vendor/pyshacl/test/resources/sht_tests/core/property/lessThan-002.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/property/lessThanOrEquals-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[vendor/pyshacl/test/resources/sht_tests/core/property/lessThanOrEquals-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/property/maxCount-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[vendor/pyshacl/test/resources/sht_tests/core/property/maxCount-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/property/maxCount-002.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[vendor/pyshacl/test/resources/sht_tests/core/property/maxCount-002.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/property/maxExclusive-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[vendor/pyshacl/test/resources/sht_tests/core/property/maxExclusive-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/property/maxInclusive-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[vendor/pyshacl/test/resources/sht_tests/core/property/maxInclusive-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/property/maxLength-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[vendor/pyshacl/test/resources/sht_tests/core/property/maxLength-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/property/minCount-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[vendor/pyshacl/test/resources/sht_tests/core/property/minCount-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/property/minCount-002.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[vendor/pyshacl/test/resources/sht_tests/core/property/minCount-002.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/property/minExclusive-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[vendor/pyshacl/test/resources/sht_tests/core/property/minExclusive-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/property/minExclusive-002.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[vendor/pyshacl/test/resources/sht_tests/core/property/minExclusive-002.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/property/minLength-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[vendor/pyshacl/test/resources/sht_tests/core/property/minLength-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/property/node-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[vendor/pyshacl/test/resources/sht_tests/core/property/node-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/property/node-002.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[vendor/pyshacl/test/resources/sht_tests/core/property/node-002.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/property/nodeKind-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[vendor/pyshacl/test/resources/sht_tests/core/property/nodeKind-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/property/not-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[vendor/pyshacl/test/resources/sht_tests/core/property/not-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/property/or-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[vendor/pyshacl/test/resources/sht_tests/core/property/or-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/property/or-datatypes-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[vendor/pyshacl/test/resources/sht_tests/core/property/or-datatypes-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/property/pattern-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[vendor/pyshacl/test/resources/sht_tests/core/property/pattern-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/property/pattern-002.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[vendor/pyshacl/test/resources/sht_tests/core/property/pattern-002.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/property/property-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[vendor/pyshacl/test/resources/sht_tests/core/property/property-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/property/qualifiedMinCountDisjoint-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[vendor/pyshacl/test/resources/sht_tests/core/property/qualifiedMinCountDisjoint-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/property/qualifiedValueShape-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[vendor/pyshacl/test/resources/sht_tests/core/property/qualifiedValueShape-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/property/qualifiedValueShapesDisjoint-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[vendor/pyshacl/test/resources/sht_tests/core/property/qualifiedValueShapesDisjoint-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/property/uniqueLang-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[vendor/pyshacl/test/resources/sht_tests/core/property/uniqueLang-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/property/uniqueLang-002.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[vendor/pyshacl/test/resources/sht_tests/core/property/uniqueLang-002.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/targets/multipleTargets-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[vendor/pyshacl/test/resources/sht_tests/core/targets/multipleTargets-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/targets/targetClass-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[vendor/pyshacl/test/resources/sht_tests/core/targets/targetClass-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/targets/targetClassImplicit-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[vendor/pyshacl/test/resources/sht_tests/core/targets/targetClassImplicit-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/targets/targetNode-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[vendor/pyshacl/test/resources/sht_tests/core/targets/targetNode-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/targets/targetObjectsOf-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[vendor/pyshacl/test/resources/sht_tests/core/targets/targetObjectsOf-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/targets/targetSubjectsOf-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[vendor/pyshacl/test/resources/sht_tests/core/targets/targetSubjectsOf-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/targets/targetSubjectsOf-002.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[vendor/pyshacl/test/resources/sht_tests/core/targets/targetSubjectsOf-002.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/core/validation-reports/shared.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[vendor/pyshacl/test/resources/sht_tests/core/validation-reports/shared.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/sparql/component/nodeValidator-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[vendor/pyshacl/test/resources/sht_tests/sparql/component/nodeValidator-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/sparql/component/optional-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[vendor/pyshacl/test/resources/sht_tests/sparql/component/optional-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/sparql/component/propertyValidator-select-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[vendor/pyshacl/test/resources/sht_tests/sparql/component/propertyValidator-select-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/sparql/component/validator-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[vendor/pyshacl/test/resources/sht_tests/sparql/component/validator-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/sparql/node/prefixes-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[vendor/pyshacl/test/resources/sht_tests/sparql/node/prefixes-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/sparql/node/sparql-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[vendor/pyshacl/test/resources/sht_tests/sparql/node/sparql-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/sparql/node/sparql-002.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[vendor/pyshacl/test/resources/sht_tests/sparql/node/sparql-002.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/sparql/node/sparql-003.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[vendor/pyshacl/test/resources/sht_tests/sparql/node/sparql-003.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/sparql/pre-binding/pre-binding-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[vendor/pyshacl/test/resources/sht_tests/sparql/pre-binding/pre-binding-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/sparql/pre-binding/pre-binding-002.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[vendor/pyshacl/test/resources/sht_tests/sparql/pre-binding/pre-binding-002.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/sparql/pre-binding/pre-binding-003.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[vendor/pyshacl/test/resources/sht_tests/sparql/pre-binding/pre-binding-003.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/sparql/pre-binding/pre-binding-004.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[vendor/pyshacl/test/resources/sht_tests/sparql/pre-binding/pre-binding-004.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/sparql/pre-binding/pre-binding-005.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[vendor/pyshacl/test/resources/sht_tests/sparql/pre-binding/pre-binding-005.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/sparql/pre-binding/pre-binding-006.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[vendor/pyshacl/test/resources/sht_tests/sparql/pre-binding/pre-binding-006.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/sparql/pre-binding/pre-binding-007.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[vendor/pyshacl/test/resources/sht_tests/sparql/pre-binding/pre-binding-007.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/sparql/pre-binding/shapesGraph-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[vendor/pyshacl/test/resources/sht_tests/sparql/pre-binding/shapesGraph-001.ttl-0]",
       "status": "failed",
       "reason": "test/test_sht_validate.py:51: in test_sht_all_sparql_mode\n    run_sht_test(test, {\"inference\": 'none', \"debug\": True, \"sparql_mode\": True, \"meta_shacl\": False})\ntest/test_sht_validate.py:88: in run_sht_test\n    raise ae\ntest/test_sht_validate.py:81: in run_sht_test\n    assert passes\nE   assert False"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/sparql/pre-binding/unsupported-sparql-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[vendor/pyshacl/test/resources/sht_tests/sparql/pre-binding/unsupported-sparql-001.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/sparql/pre-binding/unsupported-sparql-002.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[vendor/pyshacl/test/resources/sht_tests/sparql/pre-binding/unsupported-sparql-002.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/sparql/pre-binding/unsupported-sparql-003.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[vendor/pyshacl/test/resources/sht_tests/sparql/pre-binding/unsupported-sparql-003.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/sparql/pre-binding/unsupported-sparql-004.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[vendor/pyshacl/test/resources/sht_tests/sparql/pre-binding/unsupported-sparql-004.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/sparql/pre-binding/unsupported-sparql-005.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[vendor/pyshacl/test/resources/sht_tests/sparql/pre-binding/unsupported-sparql-005.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/sparql/pre-binding/unsupported-sparql-006.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[vendor/pyshacl/test/resources/sht_tests/sparql/pre-binding/unsupported-sparql-006.ttl-0]",
       "status": "passed"
     },
     {
-      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[file:///Users/jgeluk/Work/pyshacl-turbo/vendor/pyshacl/test/resources/sht_tests/sparql/property/sparql-001.ttl-0]",
+      "id": "test/test_sht_validate.py::test_sht_all_sparql_mode[vendor/pyshacl/test/resources/sht_tests/sparql/property/sparql-001.ttl-0]",
       "status": "passed"
     }
   ],

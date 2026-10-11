@@ -24,20 +24,20 @@ def report():
         "reference": "pySHACL 0.40.1",
         "excluded": ["SHACL-JS"],
         "collection_errors": [],
-        "exit_status": 1,
-        "summary": {"passed": 1, "failed": 1},
+        "exit_status": 0,
+        "summary": {"passed": 2},
         "cases": [
             {"id": "test/example.py::test_example", "status": "passed"},
             {
                 "id": "test/issues/bad_test_070.py::test_070",
-                "status": "failed",
-                "reason": "E   assert False",
+                "status": "passed",
+                "local_correction": "vendor/pyshacl-issue-70.patch",
             },
         ],
     }
 
 
-def test_gate_keeps_documented_reference_assertion_failed(gate):
+def test_gate_requires_corrected_case_to_pass_and_retains_its_provenance(gate):
     observed = report()
     original = deepcopy(observed)
     gate.check_report(observed, original)
@@ -53,10 +53,13 @@ def test_gate_keeps_documented_reference_assertion_failed(gate):
         lambda r: r["cases"][0].update(status="failed"),
         lambda r: r["cases"][0].update(id="test/different.py::test_case"),
         lambda r: r["cases"][0].update(native_equivalent="undocumented_substitute"),
-        lambda r: r["cases"][1].update(reason="Network error"),
+        lambda r: r["cases"][1].update(status="failed", reason="E   assert False"),
+        lambda r: r["cases"][1].pop("local_correction"),
+        lambda r: r["cases"][1].update(local_correction="undocumented.patch"),
         lambda r: r["collection_errors"].append({"id": "broken module"}),
+        lambda r: r.update(exit_status=1),
         lambda r: r.update(exit_status=2),
-        lambda r: r.update(summary={"passed": 2}),
+        lambda r: r.update(summary={"passed": 1, "failed": 1}),
     ],
 )
 def test_gate_rejects_incomplete_or_changed_results(gate, change):

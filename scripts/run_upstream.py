@@ -1,4 +1,4 @@
-"""Run every inventoried non-JS upstream test, including parametrized cases."""
+"""Run the locally corrected non-JS upstream suite, including parametrized cases."""
 
 import argparse
 import ast

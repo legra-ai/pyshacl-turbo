@@ -6,8 +6,9 @@ reference is pySHACL 0.40.1. SHACL-JS is excluded from this project's target.
 
 ## Measurements
 
-The latest Turbo run passes **402/403 cases (99.8%)**: 400 unchanged behavioral
-cases plus two native equivalents. One audited reference assertion fails.
+The latest Turbo run passes **403/403 cases (100%)** in the locally corrected
+upstream suite: 400 unchanged behavioral cases, one corrected fixture, and two
+native equivalents. All cases must pass in CI.
 
 The complete non-JS upstream suite contains 403 parametrized cases, including
 functions in package initializers and nonstandard filenames. See
@@ -25,16 +26,23 @@ the JSON. They verify native SPARQL function invocation and the Store adapter,
 instead of a reference Python callback or wrapper class name. See
 [ADR 0009](adr/0009-native-af-and-compatibility-audit.md).
 
-The strict reference run passes 400/403: `bad_test_070` fails its remote fixture
-assertion, and two `shapesGraph-001` variants fail after disabling upstream
-allowances. These reference failures remain in the inventory. Turbo passes the
-two shapesGraph cases. Reference failures are not relabeled as Turbo passes.
+The reference run passes 401/403 after the same fixture correction: two
+`shapesGraph-001` variants fail after disabling upstream allowances. These
+reference failures remain in [upstream-reference.json](upstream-reference.json).
+Turbo passes the two shapesGraph cases. Reference failures are not relabeled as
+Turbo passes.
 
-The [immutable fixture audit](reference-fixture-audit.json) confirms that
-`bad_test_070` now produces isomorphic nonconforming reports in both engines:
-its geometry node lacks the required `geo:Geometry` class. The fixture's
-`assert conforms` is wrong for the supplied data and shapes. It remains a strict
-upstream failure; the audit does not turn it into a pass.
+The [local correction](../vendor/pyshacl-issue-70.patch) fixes `bad_test_070`'s
+incorrect expectation that invalid geometry data conforms. It now asserts the
+single missing-class violation, including its focus node, path and value, then
+supplies `sf:Point rdfs:subClassOf geo:Geometry` and asserts conformance. Its
+remote shapes are pinned to the audited immutable revision. The
+[fixture audit](reference-fixture-audit.json) runs this actual corrected test
+with both engines and requires isomorphic reports for both input states.
+Both engines pass the corrected test. The report marks it with `local_correction`;
+this is a locally corrected suite result, not a claim that the unmodified
+upstream test now passes. The previous uncorrected Turbo result was 402/403.
+See [ADR 0018](adr/0018-correct-upstream-geometry-fixture.md).
 
 The pinned W3C suite now runs through both public input paths. Document inputs
 pass **120/120 (100%)**: 98 Core and 22 SPARQL. RDFLib Graph inputs still pass
