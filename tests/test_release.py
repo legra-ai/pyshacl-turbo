@@ -3,6 +3,7 @@
 import hashlib
 import importlib.util
 import json
+import time
 import zipfile
 from pathlib import Path
 from urllib.error import HTTPError
@@ -56,6 +57,69 @@ def test_unexpected_registry_file_is_not_silently_accepted(release, packages, mo
     )
     with pytest.raises(ValueError, match="unexpected"):
         release.missing_packages("0.1.0", packages)
+
+
+def test_verification_waits_for_all_uploaded_files_to_be_visible(release, packages, monkeypatch):
+    files = [
+        {"filename": path.name, "digests": {"sha256": release.digest(path)}} for path in packages
+    ]
+    responses = iter([None, {"urls": files[:1]}, {"urls": files}])
+    monkeypatch.setattr(release, "registry_json", lambda url: next(responses))
+    sleeps = []
+    monkeypatch.setattr(time, "sleep", sleeps.append)
+    monkeypatch.setattr(release, "inventory", lambda directory, version: packages)
+    monkeypatch.setenv("RELEASE_VERSION", "0.1.0")
+    monkeypatch.setattr(release.sys, "argv", ["release_packages.py", "verify"])
+
+    release.main()
+
+    assert sleeps == [10, 10]
+
+
+def test_verification_fails_when_registry_visibility_budget_is_exhausted(
+    release, packages, monkeypatch
+):
+    monkeypatch.setattr(release, "registry_json", lambda url: None)
+    sleeps = []
+    monkeypatch.setattr(release.time, "sleep", sleeps.append)
+
+    with pytest.raises(ValueError, match="PyPI release incomplete.*example.whl"):
+        release.verify_packages("0.1.0", packages, attempts=3, interval=10)
+
+    assert sleeps == [10, 10]
+
+
+@pytest.mark.parametrize("unexpected", [False, True])
+def test_verification_never_retries_registry_identity_conflicts(
+    release, packages, monkeypatch, unexpected
+):
+    filename = "unexpected.whl" if unexpected else packages[0].name
+    monkeypatch.setattr(
+        release,
+        "registry_json",
+        lambda url: {"urls": [{"filename": filename, "digests": {"sha256": "wrong"}}]},
+    )
+    sleeps = []
+    monkeypatch.setattr(release.time, "sleep", sleeps.append)
+
+    with pytest.raises(ValueError, match="unexpected|identity"):
+        release.verify_packages("0.1.0", packages)
+
+    assert sleeps == []
+
+
+def test_verification_never_retries_registry_service_errors(release, packages, monkeypatch):
+    def fail(*args, **kwargs):
+        raise HTTPError("https://pypi.org", 503, "unavailable", {}, None)
+
+    monkeypatch.setattr(release, "urlopen", fail)
+    sleeps = []
+    monkeypatch.setattr(release.time, "sleep", sleeps.append)
+
+    with pytest.raises(HTTPError):
+        release.verify_packages("0.1.0", packages)
+
+    assert sleeps == []
 
 
 @pytest.mark.parametrize("status", [401, 403, 429, 500])

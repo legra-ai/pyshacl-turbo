@@ -1,5 +1,7 @@
 # pyshacl-turbo
 
+[![PyPI version](https://img.shields.io/pypi/v/pyshacl-turbo)](https://pypi.org/project/pyshacl-turbo/)
+[![PyPI downloads](https://img.shields.io/pypi/dm/pyshacl-turbo)](https://pypi.org/project/pyshacl-turbo/)
 [![Python 3.11+](https://img.shields.io/badge/Python-3.11%2B-3776AB?logo=python&logoColor=white)](pyproject.toml)
 [![Rust](https://img.shields.io/badge/Rust-1.98%2B-DEA584?logo=rust&logoColor=black)](rust-toolchain.toml)
 [![License: MIT OR Apache-2.0](https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-blue)](LICENSE-MIT)
@@ -38,6 +40,23 @@ remaining regex limits.
 Count and length bounds retain exact arbitrary-precision values, with pySHACL's
 parameter-specific datatype rules. See [ADR 0016](docs/adr/0016-exact-integer-parameters.md)
 for integer and qualified-count behavior.
+
+## Install
+
+```sh
+python -m pip install pyshacl-turbo
+```
+
+Requires Python 3.11+. Wheels are available for Linux x86-64/ARM64 (glibc
+2.28+), macOS Intel/Apple Silicon, and Windows x86-64. Rust is only needed when
+building from source. This is an experimental release; the compatibility
+measurements and remaining limits above still apply.
+
+For optional PyOxigraph Store input:
+
+```sh
+python -m pip install 'pyshacl-turbo[oxigraph]'
+```
 
 ## Build
 
@@ -209,8 +228,8 @@ premature literal canonicalization. Documented local Rust dependency patches
 preserve RDFLib string identity and SHACL SPARQL prebinding.
 
 PRs use conventional titles and squash merges; `main` requires signed commits,
-passing `test`, `compatibility`, `regex`, and `Conventional Commit` checks, and
-the configured owner review. Repository maintenance follows the public Legra
+passing `prepare`, `test`, `compatibility`, `regex`, and `Conventional Commit`
+checks, and the configured owner review. Repository maintenance follows the public Legra
 release policy and the shared `legra-ai/github-actions` pipeline. Release
 artifacts and recovery are described in [releasing](docs/releasing.md).
 
