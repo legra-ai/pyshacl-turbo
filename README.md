@@ -17,7 +17,11 @@ validation, SPARQL constraints, targets, rules and inference execute in Rust.
 There is no runtime dependency on pySHACL or owlrl. Native execution releases
 the Python GIL.
 
-Turbo targets **pySHACL 0.40.1, excluding SHACL-JS**, and passes **403/403 cases
+The goal is a **complete drop-in replacement for pySHACL**, with additional
+features and better performance. **SHACL-JS is planned**; current implementation
+work closes the non-JS gaps first. The pinned reference is pySHACL 0.40.1.
+
+Turbo passes **403/403 non-JS cases
 (100%)** in the locally corrected upstream suite: 400
 unchanged behavioral cases, one corrected fixture, and 2 explicitly recorded
 native equivalents for Python implementation tests. The corrected fixture
@@ -35,6 +39,13 @@ Beyond these suites, remote SPARQL endpoint inputs are unsupported, and complete
 inference output and exact report-text formatting still differ from pySHACL.
 See [known limits](docs/compatibility.md#known-limits) for the remaining gaps and
 intentional differences.
+
+The [direct public-contract comparison](docs/direct-contract.md) measures the
+actual APIs and CLI without the upstream test bridge, including return values,
+RDF graph scope, report text, errors and mutations. It records mismatches and
+reference failures separately and publishes timings only when observations
+agree. The [replacement contract](docs/adr/0020-measure-the-complete-public-contract.md)
+also tracks imports, public classes, remote inputs, the HTTP server and future JS work.
 
 Core and SPARQL patterns execute Python-compatible regexes natively, including
 lookarounds and backreferences. SPARQL REPLACE retains the pinned RDFLib
@@ -132,6 +143,15 @@ identity. See [ADR 0017](docs/adr/0017-shared-structural-compiler.md).
 
 ## Performance
 
+The [latest non-inference matrix](benchmarks/drop-in.md) measures the public-contract
+fixes in ADR 0020: Core validation, increasing shape counts, SHACL rules and
+SPARQL patterns, through both RDFLib and Store inputs. Five interleaved samples
+per configuration include boundary conversion and report construction; full
+RDF report parity is required before timing. It was run separately from this
+task's builds and tests; other workspace activity was observed and is recorded
+in the load note. Small API-call timings with stricter output/interface checks
+are in the [direct comparison](docs/direct-contract.md).
+
 ```sh
 make benchmark
 ```
@@ -152,7 +172,7 @@ Measurements are workload-specific. Sparse targeting can be slower because
 Turbo must copy the input graph. Reasoning timings are provisional where the
 complete inferred graphs differ, even when validation reports agree. Reference
 backend errors are recorded without assigning a speedup.
-The latest run was made while other workspace builds were active; its raw
+The older `current.md` run was made while other workspace builds were active; its raw
 samples show substantial scheduling variation. Sparse-target workloads remain
 slower with fresh RDFLib input. See the report's load notes before using its
 speedup ratios for capacity planning.
@@ -222,6 +242,10 @@ and two native equivalents remain identified in the report. The corrected
 fixture must also pass its independent two-engine audit. The W3C Graph divergence
 remains a strict expected failure. New failures and unexpected Graph passes fail
 CI. These badges do not claim complete pySHACL compatibility.
+
+The same Compatibility job also runs the direct public-contract catalogue.
+Previously matching cases and fields must remain equal; recorded differences
+and reference failures remain visible in its JSON and Markdown artifacts.
 
 Upstream allowances which turn failures into passes are disabled for both engines.
 The bridge blocks reference validation and rule execution. Original comparators

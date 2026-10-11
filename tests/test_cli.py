@@ -108,9 +108,22 @@ def test_cli_errors_use_documented_exit_codes(cli_files, capsys, problem):
         shapes.write_text(PREFIXES + "ex:S a sh:PropertyShape; sh:path 42.")
     else:
         args.append("--js")
-    assert main(args) == (3 if problem == "js" else 2)
+    assert main(args) == {"js": 3, "missing-file": 1, "invalid-shape": 2}[problem]
     output = capsys.readouterr()
     assert output.err and not output.out
+
+
+def test_cli_unreadable_input_uses_reference_input_error(cli_files, monkeypatch, capsys):
+    data, _ = cli_files
+
+    def denied(*args, **kwargs):
+        raise PermissionError("permission denied")
+
+    # Permission bits are not reliable when CI runs as root. Exercise the exact
+    # OS error at the input open boundary instead.
+    monkeypatch.setattr("builtins.open", denied)
+    assert main([str(data)]) == 1
+    assert capsys.readouterr().err == "Input Error. DataGraph file not readable.\n"
 
 
 @pytest.mark.parametrize("fmt", ["turtle", "nquads", "trig"])

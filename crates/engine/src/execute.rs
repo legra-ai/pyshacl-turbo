@@ -781,6 +781,9 @@ impl CompiledShapes {
         let mut evaluation = Evaluation::new(options.max_validation_depth);
         for &index in &self.execution_order {
             let shape = &self.shapes[index];
+            if !options.use_shapes.is_empty() && !options.use_shapes.contains(&shape.node) {
+                continue;
+            }
             if shape.rules.is_empty() {
                 continue;
             }
@@ -798,7 +801,7 @@ impl CompiledShapes {
                     if rule.deactivated {
                         continue;
                     }
-                    let focus = self.focus_nodes(shape, data)?;
+                    let focus = self.selected_focus_nodes(shape, data, &options)?;
                     let mut additions = HashSet::new();
                     for node in focus {
                         let mut condition_results = Vec::new();
@@ -898,6 +901,22 @@ impl CompiledShapes {
         Ok(evaluation.warnings)
     }
 
+    fn selected_focus_nodes(
+        &self,
+        shape: &Shape,
+        data: &Dataset,
+        options: &Options,
+    ) -> Result<Vec<Term>> {
+        if !options.use_shapes.is_empty() && !options.focus_nodes.is_empty() {
+            return Ok(options.focus_nodes.clone());
+        }
+        let mut nodes = self.focus_nodes(shape, data)?;
+        if !options.focus_nodes.is_empty() {
+            nodes.retain(|node| options.focus_nodes.contains(node));
+        }
+        Ok(nodes)
+    }
+
     /// Expand rules, then discover validation targets on the resulting graph.
     pub fn validate(&self, data: &mut Dataset, options: Options) -> Result<ValidationReport> {
         let mut evaluation = Evaluation::new(options.max_validation_depth);
@@ -919,15 +938,7 @@ impl CompiledShapes {
             if shape.deactivated {
                 continue;
             }
-            let mut focus_nodes =
-                if !options.use_shapes.is_empty() && !options.focus_nodes.is_empty() {
-                    options.focus_nodes.clone()
-                } else {
-                    self.focus_nodes(shape, data)?
-                };
-            if !options.focus_nodes.is_empty() {
-                focus_nodes.retain(|n| options.focus_nodes.contains(n));
-            }
+            let focus_nodes = self.selected_focus_nodes(shape, data, &options)?;
             self.evaluate_batch(index, &focus_nodes, data, &mut violations, &mut evaluation)?;
             if options.abort_on_first && !violations.is_empty() {
                 break;
@@ -959,13 +970,15 @@ impl CompiledShapes {
         if !violations.is_empty() {
             text.push_str(&format!("Results ({}):\n", violations.len()));
         }
-        let mut namespaces = self.namespaces.clone();
-        namespaces.extend(options.namespaces);
+        let mut shape_namespaces = self.namespaces.clone();
+        let mut data_namespaces = options.namespaces;
         for (p, ns) in [("sh", SH), ("rdf", RDF), ("rdfs", RDFS), ("xsd", XSD)] {
-            namespaces.push((p.into(), ns.into()));
+            shape_namespaces.push((p.into(), ns.into()));
+            data_namespaces.push((p.into(), ns.into()));
         }
         let display = crate::display::Display {
-            namespaces,
+            shape_namespaces,
+            data_namespaces,
             data: display_data,
             shapes: &self.graph,
         };
@@ -1207,8 +1220,18 @@ impl CompiledShapes {
         } else {
             component
         };
-        text.push_str(&format!("Constraint Violation in {title} ({}):\n\tSeverity: {}\n\tSource Shape: {}\n\tFocus Node: {}\n",
-            display.iri(&violation.component), display.iri(&shape.severity), display.term(&shape.node, true), display.term(&violation.focus, false)));
+        let category = if shape.severity == iri(SH, "Violation") {
+            "Constraint Violation"
+        } else {
+            "Validation Result"
+        };
+        text.push_str(&format!(
+            "{category} in {title} ({}):\n\tSeverity: {}\n\tSource Shape: {}\n\tFocus Node: {}\n",
+            violation.component.as_str(),
+            display.iri(&shape.severity),
+            display.term(&shape.node, true),
+            display.term(&violation.focus, false)
+        ));
         if let Some(value) = &violation.value {
             text.push_str(&format!("\tValue Node: {}\n", display.term(value, false)));
         }

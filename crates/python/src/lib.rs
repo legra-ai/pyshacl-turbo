@@ -314,6 +314,8 @@ impl PyCompiledShapes {
         iterate_rules: bool,
         max_rule_iterations: usize,
         max_validation_depth: usize,
+        focus_nodes: Vec<String>,
+        use_shapes: Vec<String>,
     ) -> PyResult<(String, Vec<String>)> {
         let rdf_format = format(rdf_format)?;
         py.detach(|| {
@@ -324,6 +326,16 @@ impl PyCompiledShapes {
                     iterate_rules,
                     max_rule_iterations,
                     max_validation_depth,
+                    focus_nodes: focus_nodes
+                        .into_iter()
+                        .map(|s| NamedNode::new(s).map(Term::from))
+                        .collect::<std::result::Result<_, _>>()
+                        .map_err(|e| Error::Invalid(e.to_string()))?,
+                    use_shapes: use_shapes
+                        .into_iter()
+                        .map(|s| NamedNode::new(s).map(Term::from))
+                        .collect::<std::result::Result<_, _>>()
+                        .map_err(|e| Error::Invalid(e.to_string()))?,
                     ..Options::default()
                 },
             )?;

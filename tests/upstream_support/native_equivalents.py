@@ -17,10 +17,14 @@ def sparql_function_from_store(module):
     shape = URIRef(
         "http://datashapes.org/shasf/tests/expression/advanced.test.shacl#PersonSparqlFunctionShape"
     )
-    conforms, report, _ = turbo.validate(
-        store, shacl_graph=shapes, advanced=True, use_shapes=[shape]
+    rule_shape = URIRef(
+        "http://datashapes.org/shasf/tests/expression/advanced.test.shacl#PersonRuleShape"
     )
-    # Only the SPARQL constraint is selected. An unregistered function gives an
+    conforms, report, _ = turbo.validate(
+        store, shacl_graph=shapes, advanced=True, use_shapes=[shape, rule_shape]
+    )
+    # Select the SPARQL constraint and the rule making Jenny a Person. The
+    # expression constraint remains excluded. An unregistered function gives an
     # unbound FILTER result and cannot generate these two violations. This tests
     # the native function path instead of spying on a reference Python callback.
     assert not conforms

@@ -44,7 +44,7 @@ def test_multiple_inputs_combine_and_validate_each():
     shapes = graph("ex:S sh:targetNode ex:s; sh:path ex:p; sh:minCount 1; sh:maxCount 1.")
     data = [graph("ex:s ex:p 1."), graph("ex:s ex:p 2.")]
     assert not turbo.validate(data, shacl_graph=shapes)[0]
-    assert [r[0] for r in turbo.validate_each(data, shacl_graph=shapes)] == [True, True]
+    assert [r[0] for r in turbo.validate_each(data, shacl_graph=shapes).values()] == [True, True]
 
 
 def test_empty_multiple_input_fails():
