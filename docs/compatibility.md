@@ -63,6 +63,11 @@ inputs, and acceptance of malformed DASH reports missing `sh:conforms`.
   see [ADR 0013](adr/0013-native-python-patterns.md).
 - SPARQL constraints, ASK/SELECT custom components, target queries, parameterized
   target types, prefix declarations and SHACL variable prebinding.
+- Native SPARQL REGEX and REPLACE follow the pinned Python/RDFLib behavior,
+  including Python constructs, replacement groups and empty matches. Native
+  callbacks and query JSON preserve exact literal identity. Default min/max-count
+  messages now agree with the reference. An additional 104 regression cases
+  exercise these paths; see [ADR 0015](adr/0015-native-sparql-patterns.md).
 - SPARQLRules and TripleRules, ordering, conditions and bounded iteration.
 - Native ASK/SELECT functions, nested node expressions, function argument products,
   paths, union, intersection and filterShape; expression constraints.
@@ -116,11 +121,13 @@ concurrent deletions. Neither path introduces Tokio or asynchronous I/O.
   The current RDFS and OWL-RL cases match on all ordinary RDF triples. The
   reference additionally produces 901 and 902 literal-subject triples respectively
   on the 1,000-node cases, so both full-closure comparisons still fail.
-- SPARQL REGEX/REPLACE still use Oxigraph's regex semantics. Core `sh:pattern`
-  supports Python constructs, but exhaustive parser/error parity and Unicode
-  database alignment remain unproven. Its backtracking limit raises a hard error;
+- Core and SPARQL patterns support Python constructs, but exhaustive parser/error
+  parity and Unicode database alignment remain unproven. The native backtracking
+  limit raises a hard error;
   Python 3.14 regex changes need a version-aware contract. Exhaustive XSD
   lexical-space and SHACL-AF expression coverage remain unproven.
+  SPARQL REPLACE deliberately retains RDFLib 7.6.0's flag-as-count behavior;
+  correcting that behavior requires a separate reference-version decision.
 - Multiple custom parameter values produce all combinations; pySHACL chooses an
   arbitrary single value. Referenced cyclic blank-node descriptions are retained
   in report graphs rather than truncated at a fixed depth.
@@ -140,3 +147,6 @@ The matrix predates ADR 0012's recursion and undefined-function changes; source
 hashes identify its measured checkpoint.
 A [new Core-only matrix](../benchmarks/pattern-core.md) measures the ADR 0013
 pattern changes and retains complete report parity as a timing prerequisite.
+The [SPARQL pattern matrix](../benchmarks/sparql-patterns.md) measures ADR 0015's
+REGEX/REPLACE path, with equivalent typed-string inputs across RDFLib and Store
+adapters. It also requires full report parity and records concurrent build load.

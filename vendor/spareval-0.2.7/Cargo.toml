@@ -40,6 +40,7 @@ rustdoc-args = [
 calendar-ext = ["sep-0002"]
 default = []
 undefined-functions-as-expression-errors = []
+exact-custom-function-terms = ["oxrdf/rdf-10-string-identity"]
 sep-0002 = ["sparopt/sep-0002"]
 sep-0006 = ["sparopt/sep-0006"]
 sparql-12 = [
@@ -96,6 +97,13 @@ version = "=0.3.7"
 
 [dependencies.thiserror]
 version = ">=1.0.50, <3.0"
+
+# Also exercise this crate standalone, with and without Turbo's opt-in features.
+# These patches apply only when this manifest is the root manifest.
+[patch.crates-io]
+oxrdf = { path = "../oxrdf-0.3.4" }
+spargebra = { path = "../spargebra-0.4.7" }
+sparopt = { path = "../sparopt-0.3.7" }
 
 [lints.clippy]
 allow_attributes = "warn"
