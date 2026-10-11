@@ -172,9 +172,16 @@ concurrent deletions. Neither path introduces Tokio or asynchronous I/O.
 - Multiple custom parameter values produce all combinations; pySHACL chooses an
   arbitrary single value. Referenced cyclic blank-node descriptions are retained
   in report graphs rather than truncated at a fixed depth.
-- Remote SPARQL endpoint inputs are unsupported. HTTP server behavior and
-  the private workload from the motivating screenshot remain unverified or
-  unsupported. A supported local Store is not a remote SPARQL endpoint.
+- Remote SPARQL endpoint inputs are not implemented. The native engine currently
+  evaluates constraints against a local dataset or a snapshot of a local Store;
+  it has no backend for querying a live endpoint. An endpoint URL passed with
+  `sparql_mode=True` raises `NotImplementedError`. HTTP URLs for downloadable
+  RDF documents and SPARQL constraints over local data are supported, but neither
+  provides remote endpoint validation. Matching pySHACL's remote mode requires
+  querying targets and values at the endpoint, preserving its graph scope,
+  authentication, errors and read-only restrictions. This is an implementation
+  gap in the complete replacement target, not a limitation of Rust or a permanent
+  exclusion. The pySHACL HTTP server is also not implemented.
 
 All five published platform wheels, including Windows, pass installation and
 public API/CLI smoke checks. See [release evidence](releasing.md#initial-publication-evidence--2026-10-11).
