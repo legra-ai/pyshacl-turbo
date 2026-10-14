@@ -699,7 +699,7 @@ dependencies = [
 
 [[package]]
 name = "pyshacl-turbo-engine"
-version = "0.1.3"
+version = "0.2.0"
 dependencies = [
  "bigdecimal",
  "fancy-regex",
@@ -720,7 +720,7 @@ dependencies = [
 
 [[package]]
 name = "pyshacl-turbo-python"
-version = "0.1.3"
+version = "0.2.0"
 dependencies = [
  "pyo3",
  "pyshacl-turbo-engine",
