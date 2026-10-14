@@ -1,8 +1,9 @@
 """Shape inspection backed by the native structural compiler and target evaluator."""
 
 import logging
+from collections.abc import Iterable
 
-from rdflib import Dataset, Graph
+from rdflib import BNode, Dataset, Graph, Literal, URIRef
 from rdflib.util import from_n3
 
 from .shape import Shape
@@ -42,6 +43,16 @@ class ShapesGraph:
 
     def lookup_shape_from_node(self, node):
         return self._node_shape_cache[node]
+
+    def targeting(
+        self,
+        data_graph,
+        node: URIRef | BNode | Literal,
+        *,
+        skip: Iterable[URIRef | BNode] = (),
+    ) -> list[URIRef | BNode]:
+        """Return active node-shape identifiers targeting node, including AF targets."""
+        return self._compile().targeting(data_graph, node, skip=skip)
 
     def shapes_from_uris(self, shapes_uris):
         if not self._node_shape_cache:

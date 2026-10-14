@@ -282,6 +282,46 @@ impl PyCompiledShapes {
         self.inner.shape_nodes().map(ToString::to_string).collect()
     }
 
+    fn targeting_index(
+        &self,
+        py: Python<'_>,
+        data: &PyTargetData,
+        skip: Vec<String>,
+    ) -> PyResult<String> {
+        py.detach(|| {
+            let skip: std::collections::HashSet<_> = skip.into_iter().collect();
+            let skipped = self
+                .inner
+                .shape_nodes()
+                .filter(|node| skip.contains(&node.to_string()))
+                .cloned()
+                .collect();
+            let index = self.inner.targeting_index(&data.inner, &skipped)?;
+            let mut output = Dataset::new();
+            for (focus, shapes) in index {
+                for shape in shapes {
+                    let subject = match shape {
+                        Term::NamedNode(node) => NamedOrBlankNode::from(node),
+                        Term::BlankNode(node) => NamedOrBlankNode::from(node),
+                        _ => {
+                            return Err(Error::Invalid(
+                                "Shape identifier must be an IRI or blank node".into(),
+                            ));
+                        }
+                    };
+                    output.insert(&Quad::new(
+                        subject,
+                        NamedNode::new_unchecked("urn:pyshacl-turbo:target"),
+                        focus.clone(),
+                        GraphName::DefaultGraph,
+                    ));
+                }
+            }
+            serialize_graph(&output)
+        })
+        .map_err(error)
+    }
+
     fn focus_nodes(
         &self,
         py: Python<'_>,

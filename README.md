@@ -136,6 +136,22 @@ pay copying costs. These classes expose inspection and
 targeting; their complete reference validation/plugin interfaces remain
 compatibility work.
 
+To find shapes targeting one node, use the public reverse lookup:
+
+```python
+from rdflib import URIRef
+from pyshacl_turbo import compile_shapes
+
+program = compile_shapes(shapes_graph, advanced=True)
+matching_shapes = program.targeting(targets, URIRef("urn:example:alice"), skip=())
+```
+
+It returns active node-shape identifiers and excludes property shapes. Reusing
+prepared data shares a native reverse index across node lookups. See the
+[targeting guide](https://github.com/legra-ai/pyshacl-turbo/blob/main/docs/targeting.md#which-shapes-target-a-node)
+for supported targets and exclusion semantics. Built packages include `py.typed`
+so type checkers can discover inline type information.
+
 ```python
 from pyshacl_turbo import compile_shapes, validate
 
