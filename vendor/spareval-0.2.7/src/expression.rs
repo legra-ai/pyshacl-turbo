@@ -1632,6 +1632,8 @@ pub fn build_expression_evaluator<'a, C: ExpressionEvaluatorContext<'a>>(
 /// Evaluates an expression and returns an internal term
 ///
 /// Returns None if building such expression implies to convert into an [`ExpressionTerm`] then back.
+/// With `exact-custom-function-terms`, mixed value/term branches are supported:
+/// only branches producing ordinary values use the value representation.
 pub fn try_build_internal_expression_evaluator<'a, C: ExpressionEvaluatorContext<'a>>(
     expression: &Expression,
     context: &mut C,
@@ -1639,10 +1641,63 @@ pub fn try_build_internal_expression_evaluator<'a, C: ExpressionEvaluatorContext
 {
     Ok(Some(match expression {
         #[cfg(feature = "exact-custom-function-terms")]
-        Expression::FunctionCall(Function::Custom(name), parameters) => {
-            let Some(function) = context.custom_functions().get(name).cloned() else {
+        Expression::FunctionCall(function, parameters)
+            if matches!(function, Function::StrDt)
+                || matches!(function, Function::Custom(name) if *name == xsd::STRING) =>
+        {
+            let cast = matches!(function, Function::Custom(_));
+            let arity = if cast { 1 } else { 2 };
+            if parameters.len() != arity {
                 return Ok(None);
+            }
+            let value: ExpressionEvaluator<'a, C::Tuple, Term> = if let Some(evaluator) =
+                try_build_internal_expression_evaluator(&parameters[0], context)?
+            {
+                let externalize = context.build_externalize_term();
+                Rc::new(move |tuple: &C::Tuple| externalize(evaluator(tuple)?))
+            } else {
+                let evaluator = build_expression_evaluator(&parameters[0], context)?;
+                Rc::new(move |tuple: &C::Tuple| Some(evaluator(tuple)?.into()))
             };
+            let datatype = if cast {
+                None
+            } else {
+                Some(build_expression_evaluator(&parameters[1], context)?)
+            };
+            let internalize = context.build_internalize_term();
+            Rc::new(move |tuple| {
+                let value = match value(tuple)? {
+                    Term::NamedNode(value) if cast => value.into_string(),
+                    Term::Literal(value)
+                        if cast
+                            || (value.datatype() == xsd::STRING && value.language().is_none()) =>
+                    {
+                        value.value().to_owned()
+                    }
+                    _ => return None,
+                };
+                let datatype = if let Some(datatype) = &datatype {
+                    let ExpressionTerm::NamedNode(datatype) = datatype(tuple)? else {
+                        return None;
+                    };
+                    datatype
+                } else {
+                    xsd::STRING.into_owned()
+                };
+                // Keep the constructor's RDF term: ExpressionTerm canonicalizes
+                // explicit xsd:string back into a plain string.
+                internalize(Literal::new_typed_literal(value, datatype).into())
+            })
+        }
+        #[cfg(feature = "exact-custom-function-terms")]
+        Expression::FunctionCall(Function::Custom(name), parameters)
+            if context.custom_functions().contains_key(name) =>
+        {
+            let function = context
+                .custom_functions()
+                .get(name)
+                .expect("registered function")
+                .clone();
             let args = parameters
                 .iter()
                 .map(|arg| {
@@ -1714,6 +1769,16 @@ pub fn try_build_internal_expression_evaluator<'a, C: ExpressionEvaluatorContext
                 }
             })
         }
+        #[cfg(feature = "exact-custom-function-terms")]
+        _ => {
+            // Value-producing branches still need an internal evaluator so an
+            // IF/COALESCE sibling cannot force exact RDF terms through the
+            // canonical value representation.
+            let evaluator = build_expression_evaluator(expression, context)?;
+            let internalize = context.build_internalize_expression_term();
+            Rc::new(move |tuple| internalize(evaluator(tuple)?))
+        }
+        #[cfg(not(feature = "exact-custom-function-terms"))]
         _ => return Ok(None),
     }))
 }

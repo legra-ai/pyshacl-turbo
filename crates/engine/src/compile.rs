@@ -228,7 +228,7 @@ fn check_vocabulary(
     advanced: bool,
     executable_nodes: &HashSet<Term>,
 ) -> Result<()> {
-    // Deliberately closed for the experimental milestone. This also catches
+    // Deliberately limited to supported features. This also catches
     // misspelled SHACL terms instead of silently treating them as annotations.
     const ALLOWED: &[&str] = &[
         "targetNode",
@@ -328,6 +328,11 @@ fn check_vocabulary(
 }
 
 impl CompiledShapes {
+    /// Shape identities discovered by the shared structural compiler.
+    pub fn shape_nodes(&self) -> impl Iterator<Item = &Term> {
+        self.shapes.iter().map(|shape| &shape.node)
+    }
+
     pub fn compile(store: Dataset, advanced: bool) -> Result<Self> {
         Self::compile_with_boolean_policy(store, advanced, true)
     }

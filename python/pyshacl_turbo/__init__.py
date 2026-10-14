@@ -1,4 +1,4 @@
-"""Experimental pySHACL compatibility layer. All SHACL execution happens in Rust."""
+"""pySHACL compatibility layer. All SHACL execution happens in Rust."""
 
 import logging
 import warnings
@@ -22,6 +22,9 @@ from .rdf import (
 )
 from .rdf import decode as _graph
 from .rdf import input_graph as _input
+from .shape import Shape
+from .shapes_graph import ShapesGraph
+from .target_data import TargetData, prepare_target_data
 
 ValidationFailure = _native.ValidationFailure
 __version__ = version("pyshacl-turbo")
@@ -46,7 +49,10 @@ def _failure_result(function):
 __all__ = [
     "CompiledShapes",
     "ReportableRuntimeError",
+    "Shape",
     "ShapeRecursionWarning",
+    "ShapesGraph",
+    "TargetData",
     "ValidationFailure",
     "ValidationWarning",
     "__version__",
@@ -55,6 +61,7 @@ __all__ = [
     "extract_query_and_expected_result",
     "load_from_source",
     "meta_validate",
+    "prepare_target_data",
     "shacl_rules",
     "validate",
     "validate_each",

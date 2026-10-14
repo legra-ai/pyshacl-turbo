@@ -2,7 +2,7 @@
 
 Measured on 2026-10-11 with release builds, Python 3.13.16, pySHACL 0.40.1 and RDFLib 7.6.0. The baseline is `9cb81e829bd05fec65e52d01f66ea861a030415e`; the candidate is the integration working tree using the published `shacl-structural-model 3.0.0`. The JSON files record every source-file hash and the actual loaded native-module hash. Their `source_head` is the pre-commit base; the candidate source hashes identify its uncommitted changes.
 
-Other-workspace Rust, Node and Python processes were active. This task ran no builds or tests alongside timings. These are descriptive measurements on a shared developer machine, with visible scheduling variation; small differences are not precise regression bounds. Every timed workload first passed full validation-report equivalence against pySHACL. The private screenshot workload is not included.
+Other-workspace Rust, Node and Python processes were active. This task ran no builds or tests alongside timings. These are descriptive measurements on a shared developer machine, with visible scheduling variation; small differences are not precise regression bounds. Every timed workload first passed full validation-report equivalence against pySHACL. These are synthetic cases.
 
 ## Alternating compilation diagnostic
 

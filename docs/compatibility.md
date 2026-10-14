@@ -141,8 +141,14 @@ concurrent deletions. Neither path introduces Tokio or asynchronous I/O.
 ## Known limits
 
 - Existing applications still need to use `pyshacl_turbo` imports and
-  `pyshacl-turbo` commands. The reference's public `Validator`, `RuleExpandRunner`,
-  `Shape` and `ShapesGraph` classes are not yet available. Rule results expose
+  `pyshacl-turbo` commands. The reference's public `Validator` and `RuleExpandRunner`
+  classes are not yet available. `Shape` and `ShapesGraph` inspection and native
+  focus-node discovery are available under the corresponding `pyshacl_turbo.shape`
+  and `pyshacl_turbo.shapes_graph` modules; their full validation/plugin interfaces
+  are not implemented. `prepare_target_data(graph)` creates an immutable native
+  snapshot for repeated `Shape.focus_nodes(snapshot)` calls, sharing parsing and
+  cached target sets. Prepare a new snapshot when source mutations should be
+  visible. Ordinary Graph calls continue to read fresh data. Rule results expose
   RDFLib objects rather than the reference's DataGraph wrapper, with observable
   interface differences. Typed shape/constraint/rule load errors still differ.
 - SHACL-JS is planned and has not been implemented or measured. It is part of

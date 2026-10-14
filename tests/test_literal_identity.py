@@ -43,6 +43,42 @@ def test_rules_copy_both_string_forms_without_changing_identity():
     }
 
 
+@pytest.mark.parametrize(
+    "expression,typed",
+    [
+        ("xsd:string(?value)", True),
+        ("STRDT(STR(?value), xsd:string)", True),
+        ('xsd:string("3")', True),
+        ('STRDT("3", xsd:string)', True),
+        ('IF(true, xsd:string(?value), "unused")', True),
+        ('COALESCE(xsd:string(?value), "unused")', True),
+        ("IF(?value = 3, xsd:string(?value), STR(4))", True),
+        ("COALESCE(xsd:string(?value), STR(4))", True),
+        ("COALESCE(ex:undefined(), xsd:string(?value))", True),
+        ("STR(?value)", False),
+        ('CONCAT("", STR(?value))', False),
+    ],
+)
+def test_rules_preserve_computed_string_datatypes(expression, typed):
+    data = graph("ex:s ex:p 3.")
+    shapes = graph("ex:S sh:targetNode ex:s; sh:rule ex:R. ex:R a sh:SPARQLRule.")
+    shapes.add(
+        (
+            EX.R,
+            SH.construct,
+            Literal(
+                f"PREFIX xsd: <{XSD}> "
+                f"CONSTRUCT {{ $this <{EX.copied}> ?result }} "
+                f"WHERE {{ $this <{EX.p}> ?value . BIND({expression} AS ?result) }}"
+            ),
+        )
+    )
+    expected = reference_rules(data, shapes)
+    assert expected.value(EX.s, EX.copied) == Literal("3", datatype=XSD.string if typed else None)
+    actual = turbo.shacl_rules(data, shacl_graph=shapes, advanced=True)
+    assert set(actual) == set(expected)
+
+
 def test_sparql_preserves_identity_but_compares_string_values():
     data = graph('ex:s ex:p "value", "value"^^xsd:string.')
     shapes = graph('''ex:S sh:targetNode ex:s; sh:message "distinct terms, equal values";
