@@ -18,6 +18,25 @@ def benchmark_module():
     return module
 
 
+def test_generated_benchmark_method_describes_only_its_synthetic_fixture(tmp_path):
+    module = benchmark_module()
+    output = tmp_path / "performance.json"
+    module.write_report(
+        {
+            "environment": {"date": "2026-10-14", "platform": "test", "python": "3.13"},
+            "repeats": 1,
+            "runs": [],
+        },
+        output,
+    )
+    method = next(
+        line
+        for line in output.with_suffix(".md").read_text().splitlines()
+        if line.startswith("Warm median milliseconds.")
+    )
+    assert method.endswith("These are synthetic cases.")
+
+
 def test_benchmark_rejects_missing_results_even_when_conformance_agrees():
     module = benchmark_module()
     case = module.make_case("core", 10, 1)

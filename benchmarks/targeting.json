@@ -1,0 +1,111 @@
+{
+  "measured_at": "2026-10-14T09:54:19.249269+00:00",
+  "platform": "macOS-27.0.1-arm64-arm-64bit-Mach-O",
+  "python": "3.13.16",
+  "versions": {
+    "pyshacl": "0.40.1",
+    "pyshacl-turbo": "0.1.3",
+    "rdflib": "7.6.0"
+  },
+  "source_sha256": "8a62ff3216abc24cebbfcdf3062cd7b7617ff1b1c4d6598bfe39de725078d654",
+  "native_sha256": "dbf2567d4db0dcb05bd8b13696e4ba962f66708c36437b448dcdaef826618100",
+  "repeats": 5,
+  "workloads": [
+    {
+      "targets": "core_class",
+      "data_triples": 1000,
+      "shape_count": 10,
+      "focus_nodes_per_shape": 1000,
+      "results": {
+        "reference": {
+          "samples_ms": [
+            4.52175,
+            4.469083,
+            4.449583,
+            4.486625,
+            4.538625
+          ],
+          "median_ms": 4.486625
+        },
+        "turbo_live_graph": {
+          "samples_ms": [
+            193.342708,
+            220.841792,
+            193.852542,
+            196.451458,
+            217.343958
+          ],
+          "median_ms": 196.451458
+        },
+        "turbo_fresh_snapshot_including_preparation": {
+          "samples_ms": [
+            161.705917,
+            178.099292,
+            164.509917,
+            163.849625,
+            190.807416
+          ],
+          "median_ms": 164.509917
+        },
+        "turbo_reused_snapshot": {
+          "samples_ms": [
+            0.095958,
+            0.056375,
+            0.062542,
+            0.0585,
+            0.053125
+          ],
+          "median_ms": 0.0585
+        }
+      }
+    },
+    {
+      "targets": "sparql",
+      "data_triples": 1000,
+      "shape_count": 10,
+      "focus_nodes_per_shape": 1000,
+      "results": {
+        "reference": {
+          "samples_ms": [
+            67.404125,
+            67.392708,
+            88.773542,
+            74.318541,
+            74.786125
+          ],
+          "median_ms": 74.318541
+        },
+        "turbo_live_graph": {
+          "samples_ms": [
+            196.095125,
+            217.349583,
+            201.574875,
+            195.721541,
+            218.077
+          ],
+          "median_ms": 201.574875
+        },
+        "turbo_fresh_snapshot_including_preparation": {
+          "samples_ms": [
+            166.798792,
+            186.476167,
+            167.767375,
+            163.283917,
+            182.080334
+          ],
+          "median_ms": 167.767375
+        },
+        "turbo_reused_snapshot": {
+          "samples_ms": [
+            0.081,
+            0.062791,
+            0.051916,
+            0.050208,
+            0.050667
+          ],
+          "median_ms": 0.051916
+        }
+      }
+    }
+  ]
+}

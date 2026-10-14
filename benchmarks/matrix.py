@@ -283,7 +283,7 @@ def write_report(result, output):
         "",
         f"Measured {result['environment']['date']}; {result['environment']['platform']}; Python {result['environment']['python']}.",
         "",
-        "Warm median milliseconds. RDFLib graph input and complete RDFLib report output; Turbo includes compilation and all conversions. Reused shapes exclude compilation but still include inference. Process startup, fixture construction and file I/O are excluded. Every timed workload first passed complete report-graph isomorphism against pySHACL. These are synthetic cases, not the private workload in the screenshot.",
+        "Warm median milliseconds. RDFLib graph input and complete RDFLib report output; Turbo includes compilation and all conversions. Reused shapes exclude compilation but still include inference. Process startup, fixture construction and file I/O are excluded. Every timed workload first passed complete report-graph isomorphism against pySHACL. These are synthetic cases.",
         "",
         f"{result['repeats']} interleaved samples per configuration; raw samples and source hashes are in [{output.name}]({output.name}). A larger speedup is better. Measurements are descriptive, not a confidence interval.",
         "",

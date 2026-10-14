@@ -25,6 +25,12 @@ forms and plain versus explicitly typed strings. Enclosing value expressions
 continue to request value semantics. The feature enables oxrdf's local
 `rdf-10-string-identity` feature and is used under ADR 0015.
 
+This feature also preserves terms produced by `xsd:string(...)` and `STRDT`,
+including `IF` and `COALESCE` branches containing ordinary value expressions.
+Explicit string constructors must not pass through `ExpressionTerm::StringLiteral`,
+which loses their datatype spelling. `STR` and `CONCAT` continue to produce plain
+strings. See ADR 0022 and `tests/test_literal_identity.py`.
+
 `make test-sparql-evaluator` tests upstream callback behavior with the feature
 disabled and exact terms with Turbo's features enabled. The standalone manifest
 uses the same local oxrdf/spargebra/sparopt patches, with its own pinned lockfile.

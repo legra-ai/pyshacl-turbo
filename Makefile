@@ -4,7 +4,7 @@ MATURIN := $(CURDIR)/.venv/bin/maturin
 REGEX_MANIFEST := vendor/fancy-regex-0.19.2/Cargo.toml
 SPARQL_MANIFEST := vendor/spareval-0.2.7/Cargo.toml
 
-.PHONY: dev test test-compatibility test-regex test-sparql-evaluator test-coverage lint check benchmark benchmark-pipeline coverage
+.PHONY: dev test test-compatibility test-regex test-sparql-evaluator test-coverage lint check benchmark benchmark-pipeline benchmark-targeting coverage
 
 .venv/bin/python:
 	uv venv --python $(PYTHON) .venv
@@ -49,6 +49,9 @@ benchmark:
 
 benchmark-pipeline:
 	$(VENV_PYTHON) benchmarks/compare.py --nodes 100 1000 --repeats 5 --output benchmarks/latest.json
+
+benchmark-targeting:
+	$(VENV_PYTHON) benchmarks/targeting.py --nodes 1000 --shapes 10 --repeats 5 --output benchmarks/targeting.json
 
 coverage:
 	$(VENV_PYTHON) scripts/coverage_inventory.py

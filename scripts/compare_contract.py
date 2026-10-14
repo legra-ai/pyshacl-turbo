@@ -552,7 +552,7 @@ def main():
             "HTTP server",
             "SHACL-JS (planned)",
             "complete inference/regex/datatype/AF feature space",
-            "private motivating workload",
+            "external application workloads",
         ],
         "cases": rows,
     }

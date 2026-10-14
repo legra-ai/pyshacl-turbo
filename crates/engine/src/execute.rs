@@ -173,7 +173,32 @@ impl CompiledShapes {
         })
     }
 
+    /// Inspect targets using the same evaluator as validation and rules.
+    /// The caller supplies the default-union view, reusable across calls.
+    pub fn shape_focus_nodes(
+        &self,
+        node: &str,
+        data: &Dataset,
+        advanced: bool,
+    ) -> Result<Vec<Term>> {
+        let shape = self
+            .shapes
+            .iter()
+            .find(|shape| shape.node.to_string() == node)
+            .ok_or_else(|| Error::Invalid(format!("Unknown shape: {node}")))?;
+        self.focus_nodes_with_advanced(shape, data, advanced)
+    }
+
     fn focus_nodes(&self, shape: &Shape, data: &Dataset) -> Result<Vec<Term>> {
+        self.focus_nodes_with_advanced(shape, data, true)
+    }
+
+    fn focus_nodes_with_advanced(
+        &self,
+        shape: &Shape,
+        data: &Dataset,
+        advanced: bool,
+    ) -> Result<Vec<Term>> {
         let mut nodes = HashSet::new();
         for target in &shape.targets {
             match target {
@@ -205,6 +230,9 @@ impl CompiledShapes {
                     }
                 }
                 Target::Sparql { query, bindings } => {
+                    if !advanced {
+                        continue;
+                    }
                     let mut evaluation = query
                         .prepare(&self.functions, data)
                         .on_queryable_dataset(data);

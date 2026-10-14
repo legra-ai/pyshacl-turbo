@@ -80,7 +80,7 @@ def main():
             "pyshacl": version("pyshacl"),
             "pyoxigraph": version("pyoxigraph"),
         },
-        "method": "Median of warmed calls, RDFLib Graph input and report output. Oxigraph baseline includes Graph serialization and loading. Reused-shapes excludes initial shape compilation. No process startup or file I/O in timings. Synthetic SPARQL-rule pipeline, not the screenshot workload.",
+        "method": "Median of warmed calls, RDFLib Graph input and report output. Oxigraph baseline includes Graph serialization and loading. Reused-shapes excludes initial shape compilation. No process startup or file I/O in timings. Synthetic SPARQL-rule pipeline.",
         "runs": [],
     }
     for count in args.nodes:

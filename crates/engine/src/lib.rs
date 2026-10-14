@@ -1,4 +1,4 @@
-//! Experimental SHACL engine. Unsupported SHACL features are explicit errors.
+//! SHACL engine. Unsupported SHACL features are explicit errors.
 //! Python is not involved in compilation, targeting, rules, or validation.
 
 mod compile;
