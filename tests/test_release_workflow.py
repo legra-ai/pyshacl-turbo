@@ -11,6 +11,26 @@ import yaml
 ROOT = Path(__file__).parents[1]
 
 
+def test_linux_release_builds_use_native_manylinux_linkers_with_fatal_warnings():
+    workflow = yaml.safe_load((ROOT / ".github/workflows/ci.yml").read_text())
+    wheels = workflow["jobs"]["wheels"]
+    linux = [row for row in wheels["strategy"]["matrix"]["include"] if "linux" in row["target"]]
+    assert {row["container"] for row in linux} == {
+        "quay.io/pypa/manylinux_2_28_x86_64:latest",
+        "quay.io/pypa/manylinux_2_28_aarch64:latest",
+    }
+    build = next(step for step in wheels["steps"] if step.get("uses") == "PyO3/maturin-action@v1")
+    assert build["if"] == "runner.os == 'Linux'"
+    assert build["with"]["manylinux"] == "2_28"
+    assert build["with"]["container"] == "${{ matrix.container }}"
+    assert build["with"]["docker-options"] == "-e CARGO_BUILD_WARNINGS=deny"
+    assert build["with"]["working-directory"] == "source-build"
+    assert "--locked" in build["with"]["args"]
+    assert "--release" in build["with"]["args"]
+    assert "--zig" not in str(wheels)
+    assert any("--strip-components=1" in step.get("run", "") for step in wheels["steps"])
+
+
 def test_readme_links_work_on_package_index_pages():
     links = re.findall(r"\]\(([^)\s]+)\)", (ROOT / "README.md").read_text())
     assert links
