@@ -1,5 +1,6 @@
 """A release may only upload artifacts built from the revision all gates tested."""
 
+import re
 import subprocess
 import tomllib
 from pathlib import Path
@@ -8,6 +9,12 @@ import pytest
 import yaml
 
 ROOT = Path(__file__).parents[1]
+
+
+def test_readme_links_work_on_package_index_pages():
+    links = re.findall(r"\]\(([^)\s]+)\)", (ROOT / "README.md").read_text())
+    assert links
+    assert all(link.startswith(("https://", "#")) for link in links)
 
 
 def test_release_checks_and_builds_the_prepared_revision():

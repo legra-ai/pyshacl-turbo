@@ -217,6 +217,38 @@ struct PyCompiledShapes {
     inner: CompiledShapes,
 }
 
+/// Immutable data snapshot with a precomputed default-union view.
+#[pyclass(frozen, name = "TargetData")]
+struct PyTargetData {
+    inner: Dataset,
+}
+
+#[pymethods]
+impl PyTargetData {
+    #[new]
+    fn new(py: Python<'_>, source: &str, rdf_format: &str, base: Option<&str>) -> PyResult<Self> {
+        let rdf_format = format(rdf_format)?;
+        py.detach(|| {
+            let mut data = rdf_format.parse(source, base)?;
+            let default: Vec<_> = data
+                .iter()
+                .filter(|quad| !quad.graph_name.is_default_graph())
+                .map(|quad| {
+                    Quad::new(
+                        quad.subject,
+                        quad.predicate,
+                        quad.object,
+                        GraphName::DefaultGraph,
+                    )
+                })
+                .collect();
+            data.extend(default);
+            Ok(Self { inner: data })
+        })
+        .map_err(error)
+    }
+}
+
 type ReportOutput = (bool, String, String, Option<String>, Vec<String>);
 
 #[pymethods]
@@ -242,6 +274,73 @@ impl PyCompiledShapes {
                     &namespaces,
                 )?,
             })
+        })
+        .map_err(error)
+    }
+
+    fn shape_nodes(&self) -> Vec<String> {
+        self.inner.shape_nodes().map(ToString::to_string).collect()
+    }
+
+    fn targeting_index(
+        &self,
+        py: Python<'_>,
+        data: &PyTargetData,
+        skip: Vec<String>,
+    ) -> PyResult<String> {
+        py.detach(|| {
+            let skip: std::collections::HashSet<_> = skip.into_iter().collect();
+            let skipped = self
+                .inner
+                .shape_nodes()
+                .filter(|node| skip.contains(&node.to_string()))
+                .cloned()
+                .collect();
+            let index = self.inner.targeting_index(&data.inner, &skipped)?;
+            let mut output = Dataset::new();
+            for (focus, shapes) in index {
+                for shape in shapes {
+                    let subject = match shape {
+                        Term::NamedNode(node) => NamedOrBlankNode::from(node),
+                        Term::BlankNode(node) => NamedOrBlankNode::from(node),
+                        _ => {
+                            return Err(Error::Invalid(
+                                "Shape identifier must be an IRI or blank node".into(),
+                            ));
+                        }
+                    };
+                    output.insert(&Quad::new(
+                        subject,
+                        NamedNode::new_unchecked("urn:pyshacl-turbo:target"),
+                        focus.clone(),
+                        GraphName::DefaultGraph,
+                    ));
+                }
+            }
+            serialize_graph(&output)
+        })
+        .map_err(error)
+    }
+
+    fn focus_nodes(
+        &self,
+        py: Python<'_>,
+        node: &str,
+        data: &PyTargetData,
+        advanced: bool,
+    ) -> PyResult<String> {
+        py.detach(|| {
+            let nodes = self.inner.shape_focus_nodes(node, &data.inner, advanced)?;
+            let mut output = Dataset::new();
+            for node in nodes {
+                output.insert(&Quad::new(
+                    NamedNode::new_unchecked("urn:pyshacl-turbo:inspection"),
+                    NamedNode::new_unchecked("urn:pyshacl-turbo:focus"),
+                    node,
+                    GraphName::DefaultGraph,
+                ));
+            }
+            serialize_graph(&output)
         })
         .map_err(error)
     }
@@ -348,6 +447,7 @@ impl PyCompiledShapes {
 #[pymodule]
 fn _native(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_class::<PyCompiledShapes>()?;
+    module.add_class::<PyTargetData>()?;
     module.add_function(wrap_pyfunction!(parse_rdf, module)?)?;
     module.add_function(wrap_pyfunction!(additions, module)?)?;
     module.add_function(wrap_pyfunction!(infer, module)?)?;

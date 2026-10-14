@@ -2,7 +2,7 @@
 
 Measured 2026-10-10T23:34:21.243983+00:00; macOS-27.0.1-arm64-arm-64bit-Mach-O; Python 3.13.16.
 
-Warm median milliseconds. RDFLib graph input and complete RDFLib report output; Turbo includes compilation and all conversions. Reused shapes exclude compilation but still include inference. Process startup, fixture construction and file I/O are excluded. Every timed workload first passed complete report-graph isomorphism against pySHACL. These are synthetic cases, not the private workload in the screenshot.
+Warm median milliseconds. RDFLib graph input and complete RDFLib report output; Turbo includes compilation and all conversions. Reused shapes exclude compilation but still include inference. Process startup, fixture construction and file I/O are excluded. Every timed workload first passed complete report-graph isomorphism against pySHACL. These are synthetic cases.
 
 7 interleaved samples per configuration; raw samples and source hashes are in [pattern-core.json](pattern-core.json). A larger speedup is better. Measurements are descriptive, not a confidence interval.
 

@@ -1,14 +1,14 @@
-"""Experimental pySHACL compatibility layer. All SHACL execution happens in Rust."""
+"""pySHACL compatibility layer. All SHACL execution happens in Rust."""
 
 import logging
 import warnings
-from collections.abc import Sequence
+from collections.abc import Iterable, Sequence
 from dataclasses import replace
 from functools import wraps
 from importlib.metadata import version
 from pathlib import Path
 
-from rdflib import Dataset, Graph
+from rdflib import BNode, Dataset, Graph, Literal, URIRef
 
 from . import _native
 from .errors import ReportableRuntimeError, ShapeRecursionWarning, ValidationWarning
@@ -22,6 +22,9 @@ from .rdf import (
 )
 from .rdf import decode as _graph
 from .rdf import input_graph as _input
+from .shape import Shape
+from .shapes_graph import ShapesGraph
+from .target_data import TargetData, prepare_target_data
 
 ValidationFailure = _native.ValidationFailure
 __version__ = version("pyshacl-turbo")
@@ -46,7 +49,10 @@ def _failure_result(function):
 __all__ = [
     "CompiledShapes",
     "ReportableRuntimeError",
+    "Shape",
     "ShapeRecursionWarning",
+    "ShapesGraph",
+    "TargetData",
     "ValidationFailure",
     "ValidationWarning",
     "__version__",
@@ -55,6 +61,7 @@ __all__ = [
     "extract_query_and_expected_result",
     "load_from_source",
     "meta_validate",
+    "prepare_target_data",
     "shacl_rules",
     "validate",
     "validate_each",
@@ -76,6 +83,20 @@ class CompiledShapes:
             isinstance(shacl_graph, Graph),
             [(p, str(ns)) for p, ns in self.graph.namespaces()],
         )
+
+    def targeting(
+        self,
+        data_graph,
+        node: URIRef | BNode | Literal,
+        *,
+        skip: Iterable[URIRef | BNode] = (),
+    ) -> list[URIRef | BNode]:
+        """Return active node-shape identifiers whose declared targets include node.
+
+        Reuse TargetData to share a native reverse index across node lookups.
+        Excluded shapes are not evaluated. Graph inputs read fresh data per call.
+        """
+        return prepare_target_data(data_graph)._targeting(self, node, skip)
 
     def validate(
         self,

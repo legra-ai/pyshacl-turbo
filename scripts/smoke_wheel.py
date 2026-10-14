@@ -2,6 +2,7 @@
 
 import sys
 import warnings
+from importlib.resources import files
 from importlib.util import find_spec
 
 import pyshacl_turbo as turbo
@@ -11,6 +12,14 @@ from rdflib.namespace import RDF, RDFS, SH, XSD
 assert find_spec("pyshacl") is None
 assert find_spec("owlrl") is None
 ex = Namespace("https://example.com/")
+assert files(turbo).joinpath("py.typed").is_file()
+target_shapes = Graph()
+target_shapes.add((ex.Target, SH.targetNode, ex.s))
+target_program = turbo.compile_shapes(target_shapes)
+target_snapshot = turbo.prepare_target_data(Graph())
+assert target_program.targeting(target_snapshot, ex.s) == [ex.Target]
+assert target_program.targeting(target_snapshot, ex.s) == [ex.Target]
+assert target_program.targeting(target_snapshot, ex.s, skip={ex.Target}) == []
 data, shapes = Graph(), Graph()
 data.add((ex.s, ex.p, Literal("value")))
 data.add((ex.s, ex.p, Literal("value", datatype=XSD.string)))

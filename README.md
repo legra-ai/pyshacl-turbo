@@ -47,8 +47,8 @@ pySHACL. **SHACL-JS is planned.** Review the
 
 Requires Python 3.11+. Wheels are available for Linux x86-64/ARM64 (glibc
 2.28+), macOS Intel/Apple Silicon, and Windows x86-64. Rust is only needed when
-building from source. This is an experimental release; the compatibility
-measurements and remaining limits above still apply.
+building from source. The compatibility measurements and remaining limits above
+apply to the current release.
 
 Add the package to your [uv project](https://docs.astral.sh/uv/guides/projects/):
 
@@ -109,6 +109,48 @@ make check
 ```
 
 ## Python
+
+Shape inspection is available through `pyshacl_turbo.shapes_graph.ShapesGraph`
+and `pyshacl_turbo.shape.Shape`. `ShapesGraph(graph).shapes` exposes shape
+identities and metadata. Call `shape.set_advanced(True)` before
+`shape.focus_nodes(data_graph)` to include SHACL-AF targets. Target discovery
+uses the native engine. For repeated calls, prepare the data once and reuse both
+the shapes graph and snapshot:
+
+```python
+from pyshacl_turbo import ShapesGraph, prepare_target_data
+
+shapes = ShapesGraph(shapes_graph)
+targets = prepare_target_data(data_graph)
+for shape in shapes.shapes:
+    shape.set_advanced(True)
+    focus_nodes = shape.focus_nodes(targets)
+```
+
+The snapshot parses data once and caches target sets per compiled shape and
+advanced-mode setting. Prepare a new snapshot after changing the source data.
+See the [snapshot guide](https://github.com/legra-ai/pyshacl-turbo/blob/main/docs/targeting.md) for a complete example, mutation
+semantics and measured first-use versus repeated-use costs.
+Ordinary `shape.focus_nodes(data_graph)` calls always read fresh data and still
+pay copying costs. These classes expose inspection and
+targeting; their complete reference validation/plugin interfaces remain
+compatibility work.
+
+To find shapes targeting one node, use the public reverse lookup:
+
+```python
+from rdflib import URIRef
+from pyshacl_turbo import compile_shapes
+
+program = compile_shapes(shapes_graph, advanced=True)
+matching_shapes = program.targeting(targets, URIRef("urn:example:alice"), skip=())
+```
+
+It returns active node-shape identifiers and excludes property shapes. Reusing
+prepared data shares a native reverse index across node lookups. See the
+[targeting guide](https://github.com/legra-ai/pyshacl-turbo/blob/main/docs/targeting.md#which-shapes-target-a-node)
+for supported targets and exclusion semantics. Built packages include `py.typed`
+so type checkers can discover inline type information.
 
 ```python
 from pyshacl_turbo import compile_shapes, validate
@@ -193,6 +235,21 @@ and interface checks are in the [direct comparison](https://github.com/legra-ai/
 ```sh
 make benchmark
 ```
+
+For repeated focus-node inspection, `make benchmark-targeting` compares ordinary
+graph calls with fresh and reused `TargetData` snapshots. The local
+[targeting samples](https://github.com/legra-ai/pyshacl-turbo/blob/main/benchmarks/targeting.json) cover ten shapes over 1,000 nodes:
+
+| Target kind | pySHACL | Turbo, ordinary graph | Turbo, fresh snapshot including preparation | Turbo, reused snapshot |
+| --- | ---: | ---: | ---: | ---: |
+| Core class | 4.487 ms | 196.451 ms | 164.510 ms | 0.059 ms |
+| SPARQL | 74.319 ms | 201.575 ms | 167.767 ms | 0.052 ms |
+
+These are medians of five samples after warmup, with every target set checked.
+Reused snapshots return cached target sets; the fresh-snapshot column includes
+initial evaluation. Reuse helps repeated reads of unchanged data, while ordinary
+graph calls and initial preparation still have conversion costs. The samples
+record source and native-module hashes for the local working-tree release build.
 
 Earlier measurements cover [inference](https://github.com/legra-ai/pyshacl-turbo/blob/main/benchmarks/current.md),
 [compiler integration](https://github.com/legra-ai/pyshacl-turbo/blob/main/benchmarks/structural-model.md),

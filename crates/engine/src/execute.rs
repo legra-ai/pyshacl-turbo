@@ -1,4 +1,4 @@
-use std::collections::{HashSet, VecDeque};
+use std::collections::{HashMap, HashSet, VecDeque};
 
 use oxigraph::model::*;
 use oxigraph::sparql::QueryResults;
@@ -173,7 +173,54 @@ impl CompiledShapes {
         })
     }
 
+    /// Inspect targets using the same evaluator as validation and rules.
+    /// The caller supplies the default-union view, reusable across calls.
+    pub fn shape_focus_nodes(
+        &self,
+        node: &str,
+        data: &Dataset,
+        advanced: bool,
+    ) -> Result<Vec<Term>> {
+        let shape = self
+            .shapes
+            .iter()
+            .find(|shape| shape.node.to_string() == node)
+            .ok_or_else(|| Error::Invalid(format!("Unknown shape: {node}")))?;
+        self.focus_nodes_with_advanced(shape, data, advanced)
+    }
+
     fn focus_nodes(&self, shape: &Shape, data: &Dataset) -> Result<Vec<Term>> {
+        self.focus_nodes_with_advanced(shape, data, true)
+    }
+
+    /// Reverse declared targets for active node shapes. Data is a reusable
+    /// default-union view. Skipped shapes are never evaluated.
+    pub fn targeting_index(
+        &self,
+        data: &Dataset,
+        skip: &HashSet<Term>,
+    ) -> Result<HashMap<Term, Vec<Term>>> {
+        let mut index: HashMap<Term, Vec<Term>> = HashMap::new();
+        for shape in &self.shapes {
+            if shape.deactivated || shape.path.is_some() || skip.contains(&shape.node) {
+                continue;
+            }
+            for node in self.focus_nodes(shape, data)? {
+                index.entry(node).or_default().push(shape.node.clone());
+            }
+        }
+        for shapes in index.values_mut() {
+            shapes.sort_by_key(ToString::to_string);
+        }
+        Ok(index)
+    }
+
+    fn focus_nodes_with_advanced(
+        &self,
+        shape: &Shape,
+        data: &Dataset,
+        advanced: bool,
+    ) -> Result<Vec<Term>> {
         let mut nodes = HashSet::new();
         for target in &shape.targets {
             match target {
@@ -205,6 +252,9 @@ impl CompiledShapes {
                     }
                 }
                 Target::Sparql { query, bindings } => {
+                    if !advanced {
+                        continue;
+                    }
                     let mut evaluation = query
                         .prepare(&self.functions, data)
                         .on_queryable_dataset(data);
