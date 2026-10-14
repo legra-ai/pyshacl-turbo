@@ -50,8 +50,7 @@ Requires Python 3.11+. Wheels are available for Linux x86-64/ARM64 (glibc
 building from source. This is an experimental release; the compatibility
 measurements and remaining limits above still apply.
 
-For a [uv project](https://docs.astral.sh/uv/guides/projects/), run these from
-the directory containing `pyproject.toml` (create a project with `uv init` if needed):
+Add the package to your [uv project](https://docs.astral.sh/uv/guides/projects/):
 
 ```sh
 uv add pyshacl-turbo
@@ -63,41 +62,28 @@ For optional PyOxigraph Store input, use:
 uv add 'pyshacl-turbo[oxigraph]'
 ```
 
-For a virtual environment managed with uv's pip interface:
-
-```sh
-uv venv --python 3.13
-uv pip install pyshacl-turbo
-```
-
-Or use pip in your Python environment:
+Alternatively, use pip:
 
 ```sh
 python -m pip install pyshacl-turbo
 ```
 
-The same optional Store extra is available with either installer:
-
-```sh
-uv pip install 'pyshacl-turbo[oxigraph]'
-# Or, with pip:
-python -m pip install 'pyshacl-turbo[oxigraph]'
-```
+The `oxigraph` extra is also available with pip.
 
 ## Command line
 
-Run directly in an isolated [uv tool environment](https://docs.astral.sh/uv/guides/tools/):
-
-```sh
-uvx pyshacl-turbo data.ttl -s shapes.ttl
-uvx --from pyshacl-turbo pyshacl-turbo-rules data.ttl -s rules.ttl
-```
-
-In a uv project where you have added the package:
+Run validation or rules in your uv project:
 
 ```sh
 uv run pyshacl-turbo data.ttl -s shapes.ttl
 uv run pyshacl-turbo-rules data.ttl -s rules.ttl
+```
+
+Or run directly in an isolated [uv tool environment](https://docs.astral.sh/uv/guides/tools/):
+
+```sh
+uvx pyshacl-turbo data.ttl -s shapes.ttl
+uvx --from pyshacl-turbo pyshacl-turbo-rules data.ttl -s rules.ttl
 ```
 
 To install both commands for regular use:
@@ -109,7 +95,7 @@ pyshacl-turbo data.ttl -s shapes.ttl
 
 If uv reports that its tool directory is missing from `PATH`, run
 `uv tool update-shell` and restart your shell. Tool environments are isolated;
-use `uv add`, `uv pip install` or pip for Python imports in your own project.
+use `uv add` for Python imports in your uv project.
 Validation exits with status 0 for conforming data and 1 for violations.
 
 ## Build
