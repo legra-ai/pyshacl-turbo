@@ -53,6 +53,42 @@ graph to `shape.focus_nodes(data)` reads fresh data each time and pays conversio
 costs each time. Snapshot preparation is explicit; graphs are not implicitly
 cached by identity. Preparing an existing `TargetData` returns the same snapshot.
 
+## Which shapes target a node?
+
+`CompiledShapes.targeting(data, node, skip=())` returns the identifiers of active
+node shapes whose declared targets include the supplied RDFLib term. Results
+are a fresh list sorted by the identifiers' N3 spelling. Property shapes and
+deactivated shapes are excluded. Shapes reached only through constraints such
+as `sh:node` or `sh:property` are not declared targets.
+
+```python
+from rdflib import URIRef
+from pyshacl_turbo import compile_shapes
+
+program = compile_shapes(shape_definitions, advanced=True)
+matches = program.targeting(snapshot, URIRef("urn:example:alice"))
+assert matches == [URIRef("urn:example:People")]
+assert program.targeting(
+    snapshot, URIRef("urn:example:alice"), skip={URIRef("urn:example:People")}
+) == []
+```
+
+The data argument accepts an ordinary input or a prepared `TargetData` snapshot.
+An ordinary input is freshly loaded on each call. A snapshot builds a native
+reverse index once per compiled program and exclusion set, then reuses it across
+lookups for different nodes. `ShapesGraph.targeting(data, node, skip=())` exposes
+the same operation when using the inspection API.
+
+`node` must be an RDFLib `URIRef`, `BNode`, or `Literal`. `skip` must be an
+iterable of shape `URIRef` or `BNode` identifiers. Skipped shapes are not evaluated,
+and target errors propagate without caching an incomplete index. Supported
+SHACL-AF targets require `advanced=True` when compiling the shapes. Parameterized
+SPARQL target types and SPARQL result ordering and limits are preserved.
+
+The operation discovers declared targets; it does not run validation, rules,
+or inference. Explicit literal and absent-node targets can match even when
+the target term is not present in the data graph. No validation report is needed.
+
 ## Measured example
 
 The synthetic benchmark uses ten shapes and 1,000 data nodes. Values below are

@@ -17,6 +17,7 @@ def check(path):
         prefix = metadata_names[0].removesuffix("METADATA") + "licenses/"
         assert any(name.endswith((".so", ".pyd")) for name in files), "Native extension missing"
         assert "pyshacl_turbo/assets/shacl-shacl.ttl" in files
+        assert files["pyshacl_turbo/py.typed"] == b"", "Inline typing marker missing"
     else:
         with tarfile.open(path) as archive:
             files = {
@@ -30,6 +31,7 @@ def check(path):
             "Cargo.lock",
             "Cargo.toml",
             "pyproject.toml",
+            "python/pyshacl_turbo/py.typed",
             "rust-toolchain.toml",
             "crates/engine/src/lib.rs",
             "crates/engine/tests/pipeline.rs",

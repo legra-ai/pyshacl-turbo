@@ -2,13 +2,13 @@
 
 import logging
 import warnings
-from collections.abc import Sequence
+from collections.abc import Iterable, Sequence
 from dataclasses import replace
 from functools import wraps
 from importlib.metadata import version
 from pathlib import Path
 
-from rdflib import Dataset, Graph
+from rdflib import BNode, Dataset, Graph, Literal, URIRef
 
 from . import _native
 from .errors import ReportableRuntimeError, ShapeRecursionWarning, ValidationWarning
@@ -83,6 +83,20 @@ class CompiledShapes:
             isinstance(shacl_graph, Graph),
             [(p, str(ns)) for p, ns in self.graph.namespaces()],
         )
+
+    def targeting(
+        self,
+        data_graph,
+        node: URIRef | BNode | Literal,
+        *,
+        skip: Iterable[URIRef | BNode] = (),
+    ) -> list[URIRef | BNode]:
+        """Return active node-shape identifiers whose declared targets include node.
+
+        Reuse TargetData to share a native reverse index across node lookups.
+        Excluded shapes are not evaluated. Graph inputs read fresh data per call.
+        """
+        return prepare_target_data(data_graph)._targeting(self, node, skip)
 
     def validate(
         self,
