@@ -37,5 +37,9 @@ jobs:
         with:
           toolchain: 1.99.1
           components: rustfmt
+      - uses: dtolnay/rust-toolchain@nightly-2026-10-16
+        with:
+          components: rustfmt
       - name: Upstream matcher tests and Python-mode VM regressions
+        # The vendored matcher is formatted by the same pinned nightly.
         run: make test-regex

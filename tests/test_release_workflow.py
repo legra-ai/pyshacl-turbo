@@ -100,6 +100,15 @@ def test_toolchains_and_hook_dependencies():
     assert "./scripts/fmt.sh --check" in (ROOT / ".githooks/pre-commit").read_text()
 
 
+@pytest.mark.parametrize("workflow,job", [("ci.yml", "verify"), ("regex.yml", "regex")])
+def test_formatting_jobs_install_the_pinned_nightly(workflow, job):
+    document = yaml.safe_load((ROOT / ".github/workflows" / workflow).read_text())
+    assert any(
+        step.get("uses") == "dtolnay/rust-toolchain@nightly-2026-10-16"
+        for step in document["jobs"][job]["steps"]
+    )
+
+
 @pytest.mark.parametrize(
     "header,expected",
     [

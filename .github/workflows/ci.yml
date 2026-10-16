@@ -87,7 +87,11 @@ jobs:
           toolchain: 1.99.1
           components: rustfmt, clippy
       - name: Build native extension and install pinned test dependencies
+        # Formatting uses its own nightly pin; compilation remains on 1.99.1.
         run: make dev PYTHON=${{ matrix.python }}
+      - uses: dtolnay/rust-toolchain@nightly-2026-10-16
+        with:
+          components: rustfmt
       - name: Python, Rust, formatting and lint checks
         run: make check
       - name: SPARQL evaluator defaults and opt-in compatibility features
