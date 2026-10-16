@@ -5,6 +5,7 @@ use oxigraph::sparql::QueryResults;
 
 use crate::compile::{CompiledShapes, Shape, Target};
 use crate::constraints::Constraint;
+use crate::functions::Functions;
 use crate::graph::*;
 use crate::{Error, Result};
 
@@ -56,6 +57,7 @@ struct EvaluationStep {
 }
 
 struct Evaluation {
+    functions: Functions,
     path: Vec<EvaluationStep>,
     max_depth: usize,
     warnings: Vec<String>,
@@ -72,6 +74,7 @@ struct EvaluationBatch {
 impl Evaluation {
     fn new(max_depth: usize) -> Self {
         Self {
+            functions: Functions::default(),
             path: Vec::new(),
             max_depth,
             warnings: Vec::new(),
@@ -255,9 +258,8 @@ impl CompiledShapes {
                     if !advanced {
                         continue;
                     }
-                    let mut evaluation = query
-                        .prepare(&self.functions, data)
-                        .on_queryable_dataset(data);
+                    let functions = self.functions.for_dataset(data);
+                    let mut evaluation = query.prepare(&functions, data).on_queryable_dataset(data);
                     for (variable, value) in bindings {
                         evaluation =
                             evaluation.substitute_variable(variable.clone(), value.clone());
@@ -363,6 +365,7 @@ impl CompiledShapes {
         results: &mut Vec<Violation>,
         evaluation: &mut Evaluation,
     ) -> Result<()> {
+        let functions = evaluation.functions.clone();
         let shape = &self.shapes[index];
         if shape.deactivated {
             return Ok(());
@@ -397,20 +400,19 @@ impl CompiledShapes {
                     messages,
                 } => {
                     for value in &values {
-                        let nodes =
-                            expression.evaluate(value, data, &self.functions, &mut |i, n| {
-                                let mut nested = Vec::new();
-                                self.evaluate_child(
-                                    index,
-                                    "ExpressionConstraintComponent",
-                                    i,
-                                    n,
-                                    data,
-                                    &mut nested,
-                                    evaluation,
-                                )?;
-                                Ok(nested.is_empty())
-                            })?;
+                        let nodes = expression.evaluate(value, data, &functions, &mut |i, n| {
+                            let mut nested = Vec::new();
+                            self.evaluate_child(
+                                index,
+                                "ExpressionConstraintComponent",
+                                i,
+                                n,
+                                data,
+                                &mut nested,
+                                evaluation,
+                            )?;
+                            Ok(nested.is_empty())
+                        })?;
                         if nodes != HashSet::from([Literal::from(true).into()]) {
                             let mut result =
                                 violation("ExpressionConstraintComponent", Some(value));
@@ -436,7 +438,7 @@ impl CompiledShapes {
                             focus,
                             &shape.messages,
                             input,
-                            &self.functions,
+                            &functions,
                         )? {
                             let mut result =
                                 violation("SPARQLConstraintComponent", row.value.as_ref());
@@ -852,6 +854,8 @@ impl CompiledShapes {
                         continue;
                     }
                     let focus = self.selected_focus_nodes(shape, data, &options)?;
+                    let functions = self.functions.for_dataset(data);
+                    evaluation.functions = functions.clone();
                     let mut additions = HashSet::new();
                     for node in focus {
                         let mut condition_results = Vec::new();
@@ -879,24 +883,12 @@ impl CompiledShapes {
                                 )?;
                                 Ok(results.is_empty())
                             };
-                            let subjects = expressions[0].evaluate(
-                                &node,
-                                data,
-                                &self.functions,
-                                &mut filter,
-                            )?;
-                            let predicates = expressions[1].evaluate(
-                                &node,
-                                data,
-                                &self.functions,
-                                &mut filter,
-                            )?;
-                            let objects = expressions[2].evaluate(
-                                &node,
-                                data,
-                                &self.functions,
-                                &mut filter,
-                            )?;
+                            let subjects =
+                                expressions[0].evaluate(&node, data, &functions, &mut filter)?;
+                            let predicates =
+                                expressions[1].evaluate(&node, data, &functions, &mut filter)?;
+                            let objects =
+                                expressions[2].evaluate(&node, data, &functions, &mut filter)?;
                             for s in subjects {
                                 for p in &predicates {
                                     for o in &objects {
@@ -915,7 +907,7 @@ impl CompiledShapes {
                         }
                         for query in &rule.queries {
                             let result = query
-                                .prepare(&self.functions, data)
+                                .prepare(&functions, data)
                                 .on_queryable_dataset(&*data)
                                 .substitute_variable(Variable::new_unchecked("this"), node.clone())
                                 .execute()?;
@@ -979,6 +971,7 @@ impl CompiledShapes {
         } else {
             &*data
         };
+        evaluation.functions = self.functions.for_dataset(data);
         let mut violations = Vec::new();
         for &index in &self.execution_order {
             let shape = &self.shapes[index];

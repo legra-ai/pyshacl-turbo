@@ -43,7 +43,7 @@ impl NativeQuery {
             let evaluator = if functions.0.is_empty() {
                 SparqlEvaluator::new()
             } else {
-                functions.evaluator(Arc::new(data.clone()), 0, errors.clone())
+                functions.evaluator(functions.snapshot(data), 0, errors.clone())
             };
             NativePrepared {
                 query: self
@@ -253,9 +253,21 @@ struct Function {
 }
 
 #[derive(Clone, Default)]
-pub(crate) struct Functions(Arc<HashMap<NamedNode, Function>>);
+pub(crate) struct Functions(Arc<HashMap<NamedNode, Function>>, Option<Arc<Dataset>>);
 
 impl Functions {
+    /// Bind callback reads to one immutable rule/validation phase.
+    pub fn for_dataset(&self, data: &Dataset) -> Self {
+        Self(
+            self.0.clone(),
+            (!self.0.is_empty()).then(|| Arc::new(data.clone())),
+        )
+    }
+
+    fn snapshot(&self, data: &Dataset) -> Arc<Dataset> {
+        self.1.clone().unwrap_or_else(|| Arc::new(data.clone()))
+    }
+
     pub fn compile(graph: &Dataset, namespaces: &[(String, String)]) -> Result<Self> {
         let mut functions = HashMap::new();
         for node in subjects(
@@ -332,7 +344,7 @@ impl Functions {
                 },
             );
         }
-        Ok(Self(Arc::new(functions)))
+        Ok(Self(Arc::new(functions), None))
     }
 
     pub fn contains(&self, name: &NamedNode) -> bool {
@@ -370,7 +382,7 @@ impl Functions {
     }
 
     pub fn call(&self, name: &NamedNode, args: &[Term], data: &Dataset) -> Result<Option<Term>> {
-        self.call_inner(name, args, Arc::new(data.clone()), 0)
+        self.call_inner(name, args, self.snapshot(data), 0)
     }
 
     fn call_inner(
@@ -444,4 +456,36 @@ pub fn evaluate_query<'a>(
         .prepare(&functions, data)
         .on_queryable_dataset(data)
         .execute()
+}
+
+#[cfg(test)]
+mod snapshot_tests {
+    use super::*;
+
+    #[test]
+    fn function_snapshot_is_shared_within_a_phase_and_refreshed_between_phases() {
+        let graph = crate::parse_graph(
+            "@prefix sh: <http://www.w3.org/ns/shacl#> . <urn:f> a sh:SPARQLFunction; sh:select \"SELECT (1 AS ?result) WHERE {}\" .",
+            oxigraph::io::RdfFormat::Turtle, None,
+        ).unwrap();
+        let functions = Functions::compile(&graph, &[]).unwrap();
+        let mut data = Dataset::new();
+        let phase = functions.for_dataset(&data);
+        let first = phase.snapshot(&data);
+        let again = phase.clone().snapshot(&data);
+        assert!(Arc::ptr_eq(&first, &again));
+        data.insert(
+            Quad::new(
+                NamedNode::new_unchecked("urn:s"),
+                NamedNode::new_unchecked("urn:p"),
+                Literal::from(1),
+                GraphName::DefaultGraph,
+            )
+            .as_ref(),
+        );
+        let next = functions.for_dataset(&data).snapshot(&data);
+        assert!(!Arc::ptr_eq(&first, &next));
+        assert_eq!(first.len(), 0);
+        assert_eq!(next.len(), 1);
+    }
 }
