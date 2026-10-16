@@ -91,11 +91,8 @@ def test_release_checks_and_builds_the_prepared_revision():
 def test_toolchains_and_hook_dependencies():
     rust = tomllib.loads((ROOT / "Cargo.toml").read_text())["workspace"]["package"]
     toolchain = tomllib.loads((ROOT / "rust-toolchain.toml").read_text())["toolchain"]
-    assert (
-        toolchain["channel"]
-        == rust["rust-version"]
-        == (ROOT / "rustfmt-toolchain").read_text().strip()
-    )
+    assert toolchain["channel"] == rust["rust-version"] == "1.99.1"
+    assert (ROOT / "rustfmt-toolchain").read_text().strip() == "nightly-2026-10-16"
     lock = tomllib.loads((ROOT / "Cargo.lock").read_text())
     names = {package["name"] for package in lock["package"]}
     assert "rhusky" in names
