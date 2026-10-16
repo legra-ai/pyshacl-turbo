@@ -168,10 +168,11 @@ class CompiledShapes:
             15 if max_validation_depth is None else max_validation_depth,
             _expand_names(data.namespaces or dict(self.graph.namespaces()), focus_nodes),
             _expand_names(self.graph, use_shapes),
+            inplace and isinstance(data_graph, Graph),
         )
         _emit_recursion_warnings(recursion_warnings)
         if inplace and isinstance(data_graph, Graph):
-            commit_serialized(data_graph, expanded, data.blank_nodes, before=data)
+            commit_serialized(data_graph, expanded, data.blank_nodes)
             return data_graph
         result = _graph(
             expanded,

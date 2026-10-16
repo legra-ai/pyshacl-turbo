@@ -17,6 +17,22 @@ def test_rdflib_commit_without_snapshot_merges_complete_output():
     }
 
 
+def test_inplace_rules_receive_native_additions_without_reparsing_full_output(monkeypatch):
+    data = graph("ex:s ex:p 1.")
+    compiled = turbo.compile_shapes(
+        graph("""ex:S sh:targetNode ex:s; sh:rule [a sh:SPARQLRule;
+          sh:construct "CONSTRUCT { $this ex:derived true } WHERE {}"]."""),
+        advanced=True,
+    )
+
+    def reparsed_delta(*args):
+        pytest.fail("native rule execution must already provide the additions")
+
+    monkeypatch.setattr(turbo._native, "additions", reparsed_delta)
+    assert compiled.shacl_rules(data, inplace=True) is data
+    assert (EX.s, EX.derived, Literal(True)) in data
+
+
 @pytest.mark.parametrize("dataset", [False, True])
 def test_rdflib_commit_decodes_only_added_quads(dataset, monkeypatch):
     data = Dataset(default_union=True) if dataset else Graph()

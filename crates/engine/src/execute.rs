@@ -817,14 +817,41 @@ impl CompiledShapes {
         if data.iter().any(|q| !q.graph_name.is_default_graph()) {
             let before = with_union(data);
             let mut working = before.clone();
-            let warnings = self.expand_rules_inner(&mut working, options)?;
+            let warnings = self.expand_rules_inner(&mut working, options, None)?;
             commit_additions(data, &before, &working);
             return Ok(warnings);
         }
-        self.expand_rules_inner(data, options)
+        self.expand_rules_inner(data, options, None)
     }
 
-    fn expand_rules_inner(&self, data: &mut Dataset, options: Options) -> Result<Vec<String>> {
+    /// Expand rules while retaining only successfully inserted statements.
+    pub fn expand_rules_delta(
+        &self,
+        data: &mut Dataset,
+        options: Options,
+    ) -> Result<RuleExpansion> {
+        let mut additions = Dataset::new();
+        let recursion_warnings = if data.iter().any(|q| !q.graph_name.is_default_graph()) {
+            let before = with_union(data);
+            let mut working = before.clone();
+            let warnings = self.expand_rules_inner(&mut working, options, Some(&mut additions))?;
+            data.extend(additions.iter());
+            warnings
+        } else {
+            self.expand_rules_inner(data, options, Some(&mut additions))?
+        };
+        Ok(RuleExpansion {
+            graph: additions,
+            recursion_warnings,
+        })
+    }
+
+    fn expand_rules_inner(
+        &self,
+        data: &mut Dataset,
+        options: Options,
+        mut delta: Option<&mut Dataset>,
+    ) -> Result<Vec<String>> {
         if options.max_rule_iterations == 0 {
             return Err(Error::Invalid(
                 "max_rule_iterations must be positive".into(),
@@ -931,6 +958,9 @@ impl CompiledShapes {
                     // rules see the complete batch of additions.
                     for quad in additions {
                         if data.insert(&quad) {
+                            if let Some(delta) = delta.as_deref_mut() {
+                                delta.insert(&quad);
+                            }
                             changed = true;
                         }
                     }

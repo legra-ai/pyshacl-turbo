@@ -6,6 +6,39 @@ const DATA: &str = include_str!("../../../tests/fixtures/pipeline-data.ttl");
 const SHAPES: &str = include_str!("../../../tests/fixtures/pipeline-shapes.ttl");
 
 #[test]
+fn rule_delta_retains_only_new_statements_and_preserves_named_input() {
+    let shapes = parse_graph(
+        "@prefix sh:<http://www.w3.org/ns/shacl#> . <urn:S> sh:targetSubjectsOf <urn:p>; sh:rule [a sh:TripleRule; sh:subject sh:this; sh:predicate <urn:q>; sh:object [sh:path <urn:p>]].",
+        RdfFormat::Turtle, None,
+    ).unwrap();
+    let program = CompiledShapes::compile(shapes, true).unwrap();
+    let mut data = pyshacl_turbo_engine::parse_dataset(
+        "<urn:g> { _:s <urn:p> \"01\"^^<http://www.w3.org/2001/XMLSchema#integer> }",
+        RdfFormat::TriG,
+        None,
+    )
+    .unwrap();
+    let original = data.clone();
+    let delta = program
+        .expand_rules_delta(&mut data, Options::default())
+        .unwrap();
+    assert_eq!(delta.graph.len(), 1);
+    assert_eq!(data.len(), 2);
+    assert!(original.iter().all(|q| data.contains(q)));
+    let added = delta.graph.iter().next().unwrap();
+    assert_eq!(added.predicate.as_str(), "urn:q");
+    assert_eq!(
+        added.object.to_string(),
+        "\"01\"^^<http://www.w3.org/2001/XMLSchema#integer>"
+    );
+    assert!(added.graph_name.is_default_graph());
+    let repeated = program
+        .expand_rules_delta(&mut data, Options::default())
+        .unwrap();
+    assert!(repeated.graph.is_empty());
+}
+
+#[test]
 fn native_pipeline_derives_and_validates_without_python() {
     let program =
         CompiledShapes::compile(parse_graph(SHAPES, RdfFormat::Turtle, None).unwrap(), true)

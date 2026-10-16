@@ -415,30 +415,34 @@ impl PyCompiledShapes {
         max_validation_depth: usize,
         focus_nodes: Vec<String>,
         use_shapes: Vec<String>,
+        additions_only: bool,
     ) -> PyResult<(String, Vec<String>)> {
         let rdf_format = format(rdf_format)?;
         py.detach(|| {
             let mut data = rdf_format.parse(source, base)?;
-            let warnings = self.inner.expand_rules(
-                &mut data,
-                Options {
-                    iterate_rules,
-                    max_rule_iterations,
-                    max_validation_depth,
-                    focus_nodes: focus_nodes
-                        .into_iter()
-                        .map(|s| NamedNode::new(s).map(Term::from))
-                        .collect::<std::result::Result<_, _>>()
-                        .map_err(|e| Error::Invalid(e.to_string()))?,
-                    use_shapes: use_shapes
-                        .into_iter()
-                        .map(|s| NamedNode::new(s).map(Term::from))
-                        .collect::<std::result::Result<_, _>>()
-                        .map_err(|e| Error::Invalid(e.to_string()))?,
-                    ..Options::default()
-                },
-            )?;
-            Ok((serialize_graph(&data)?, warnings))
+            let options = Options {
+                iterate_rules,
+                max_rule_iterations,
+                max_validation_depth,
+                focus_nodes: focus_nodes
+                    .into_iter()
+                    .map(|s| NamedNode::new(s).map(Term::from))
+                    .collect::<std::result::Result<_, _>>()
+                    .map_err(|e| Error::Invalid(e.to_string()))?,
+                use_shapes: use_shapes
+                    .into_iter()
+                    .map(|s| NamedNode::new(s).map(Term::from))
+                    .collect::<std::result::Result<_, _>>()
+                    .map_err(|e| Error::Invalid(e.to_string()))?,
+                ..Options::default()
+            };
+            if additions_only {
+                let delta = self.inner.expand_rules_delta(&mut data, options)?;
+                Ok((serialize_graph(&delta.graph)?, delta.recursion_warnings))
+            } else {
+                let warnings = self.inner.expand_rules(&mut data, options)?;
+                Ok((serialize_graph(&data)?, warnings))
+            }
         })
         .map_err(error)
     }
