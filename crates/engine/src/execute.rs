@@ -813,13 +813,18 @@ impl CompiledShapes {
 
     /// Mutates only this explicitly supplied store. Python validates a fresh store
     /// and commits additions to the caller's Graph only after successful execution.
+    fn has_active_rules(&self, options: &Options) -> bool {
+        self.execution_order.iter().any(|&index| {
+            let shape = &self.shapes[index];
+            (options.use_shapes.is_empty() || options.use_shapes.contains(&shape.node))
+                && shape.rules.iter().any(|rule| !rule.deactivated)
+        })
+    }
+
     pub fn expand_rules(&self, data: &mut Dataset, options: Options) -> Result<Vec<String>> {
-        if data.iter().any(|q| !q.graph_name.is_default_graph()) {
-            let before = with_union(data);
-            let mut working = before.clone();
-            let warnings = self.expand_rules_inner(&mut working, options, None)?;
-            commit_additions(data, &before, &working);
-            return Ok(warnings);
+        if self.has_active_rules(&options) && data.iter().any(|q| !q.graph_name.is_default_graph())
+        {
+            return Ok(self.expand_rules_delta(data, options)?.recursion_warnings);
         }
         self.expand_rules_inner(data, options, None)
     }
@@ -831,9 +836,10 @@ impl CompiledShapes {
         options: Options,
     ) -> Result<RuleExpansion> {
         let mut additions = Dataset::new();
-        let recursion_warnings = if data.iter().any(|q| !q.graph_name.is_default_graph()) {
-            let before = with_union(data);
-            let mut working = before.clone();
+        let recursion_warnings = if self.has_active_rules(&options)
+            && data.iter().any(|q| !q.graph_name.is_default_graph())
+        {
+            let mut working = with_union(data);
             let warnings = self.expand_rules_inner(&mut working, options, Some(&mut additions))?;
             data.extend(additions.iter());
             warnings
@@ -1386,4 +1392,39 @@ fn commit_store(store: &oxigraph::store::Store, before: &Dataset, after: &Datase
                 .map(|q| q.into_owned()),
         )
         .map_err(|e| Error::Runtime(format!("Store commit failed: {e}")))
+}
+
+#[cfg(test)]
+mod union_tests {
+    use super::*;
+    use oxigraph::io::RdfFormat;
+
+    #[test]
+    fn validation_without_active_rules_builds_only_its_validation_union() {
+        let shapes = parse("@prefix sh:<http://www.w3.org/ns/shacl#> . <urn:S> sh:targetNode <urn:s>; sh:path <urn:p>; sh:minCount 1.", RdfFormat::Turtle, None).unwrap();
+        let program = CompiledShapes::compile(shapes, true).unwrap();
+        let mut data =
+            parse_dataset("<urn:g> { <urn:s> <urn:p> 1 }", RdfFormat::TriG, None).unwrap();
+        UNION_BUILDS.with(|count| count.set(0));
+        assert!(
+            program
+                .validate(&mut data, Options::default())
+                .unwrap()
+                .conforms
+        );
+        assert_eq!(UNION_BUILDS.with(std::cell::Cell::get), 1);
+        assert_eq!(data.len(), 1);
+        assert!(!data.iter().any(|q| q.graph_name.is_default_graph()));
+        assert!(
+            program
+                .expand_rules(
+                    &mut data,
+                    Options {
+                        max_rule_iterations: 0,
+                        ..Options::default()
+                    }
+                )
+                .is_err()
+        );
+    }
 }
