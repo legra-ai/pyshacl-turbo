@@ -11,6 +11,14 @@ def test_display_defaults_do_not_activate_cardinality_validation():
     assert compare(graph(""), shapes)[0]
 
 
+@pytest.mark.parametrize("flags", ['"i"', '"i"^^xsd:string'])
+def test_pattern_flags_survive_structural_model_lowering(flags):
+    shapes = graph(f"""ex:S a sh:NodeShape; sh:targetNode ex:s;
+        sh:property [sh:path ex:p; sh:pattern "^hello$"; sh:flags {flags}].""")
+    assert compare(graph('ex:s ex:p "HELLO".'), shapes)[0]
+    assert not compare(graph('ex:s ex:p "goodbye".'), shapes)[0]
+
+
 @pytest.mark.parametrize("target_type", ["ex:People", "_:people"])
 def test_custom_target_type_retains_rdf_identity(target_type):
     shapes = graph(f"""{target_type} a sh:SPARQLTargetType; rdfs:subClassOf sh:Target;

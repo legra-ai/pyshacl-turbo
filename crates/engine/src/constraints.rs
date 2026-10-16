@@ -347,9 +347,10 @@ pub(crate) fn read(
             });
         }
     }
-    let flags = one(store, node, "flags")?
-        .map(|v| string(v, "flags"))
-        .transpose()?;
+    let flags = one(store, node, "flags")?;
+    if let Some(value) = &flags {
+        string(value.clone(), "flags")?;
+    }
     for pattern in values(store, node, "pattern")? {
         let Term::Literal(pattern) = pattern else {
             return Err(Error::Invalid("sh:pattern requires a literal".into()));
@@ -531,7 +532,10 @@ pub(crate) fn lower_one(
         C::MaxInclusive(value) => range(value, "MaxInclusiveConstraintComponent", "<=")?,
         C::Pattern { pattern, flags } => Constraint::Pattern(crate::pattern::Pattern::compile(
             &pattern,
-            flags.as_deref().unwrap_or_default(),
+            &flags
+                .map(|value| string(value, "flags"))
+                .transpose()?
+                .unwrap_or_default(),
         )?),
         C::LanguageIn(values) => {
             Constraint::LanguageIn(values.into_iter().map(|v| v.to_ascii_lowercase()).collect())
