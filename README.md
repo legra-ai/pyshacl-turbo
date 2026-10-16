@@ -15,6 +15,13 @@
 SHACL validation for Python, powered by Rust. The goal is a **complete drop-in
 replacement for pySHACL**, with additional features and better performance.
 
+Companion turbo projects are
+[rdflib-turbo](https://github.com/legra-ai/rdflib-turbo), for native RDF datasets,
+parsing and SPARQL, and [owlrl-turbo](https://github.com/legra-ai/owlrl-turbo), for
+native RDFS/OWL-RL inference using that dataset runtime. Both begin with limited
+alpha APIs. They currently connect to pyshacl-turbo through explicit RDFLib
+conversion; pyshacl-turbo does not yet share their native dataset handles.
+
 In our [benchmarks](https://github.com/legra-ai/pyshacl-turbo/blob/main/benchmarks/drop-in.md), Turbo was **27–31× faster for SHACL
 rules** and **123–126× faster for SPARQL pattern workloads** than pySHACL 0.40.1
 with RDFLib inputs. These measurements include shape compilation, input
@@ -163,6 +170,13 @@ conforms, report_graph, report_text = validate(
 program = compile_shapes("shapes.ttl", advanced=True)
 conforms, report_graph, report_text = program.validate("data.ttl")
 ```
+
+Repeated calls automatically reuse native compilation for matching shapes content,
+namespace bindings and compilation options. SPARQL execution also reuses optimized
+algebra for matching statements and initially bound variable names. Both caches
+retain at most 128 entries; each execution reads current data and bindings.
+Explicit `compile_shapes()` still avoids loading and serializing unchanged shapes
+on every call. See [automatic preparation](https://github.com/legra-ai/pyshacl-turbo/blob/main/docs/preparation.md).
 
 Inputs include RDFLib Graph/Dataset objects, paths, URLs, file objects, RDF text
 and bytes. Supported formats include Turtle, N-Triples, N-Quads, TriG, RDF/XML,

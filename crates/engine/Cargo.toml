@@ -22,7 +22,7 @@ oxigraph.workspace = true
 oxrdf = { version = "=0.3.4", features = ["rdf-10-string-identity"] }
 thiserror.workspace = true
 spargebra = "=0.4.7"
-spareval = { version = "=0.2.7", features = ["undefined-functions-as-expression-errors", "exact-custom-function-terms"] }
+spareval = { version = "=0.2.7", features = ["undefined-functions-as-expression-errors", "exact-custom-function-terms", "cached-query-plans"] }
 bigdecimal = "0.4"
 fancy-regex = { version = "=0.19.2", default-features = false, features = ["std", "perf", "unicode", "python-re"] }
 regex-syntax = "0.8"
@@ -30,5 +30,5 @@ unicode-ident = "1"
 unicode_names2 = "4"
 oxsdatatypes = "=0.2.3"
 num-bigint = "0.4"
-shacl-structural-model = "=3.0.0"
+shacl-structural-model = "=4.0.0"
 iri-rfc3987 = "=0.1.6"

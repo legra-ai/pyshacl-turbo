@@ -33,6 +33,12 @@ order as `BigDecimal`, with no float conversion. Prepared queries, translated
 regexes, shape indexes and paths remain native execution structures. Validation
 does not traverse the shared structural model on every call.
 
+With structural-model 4.0.0, keep `sh:flags` as its original RDF term in the
+declaration too. Check that it is a string during reading, then lower its
+lexical value into the native regex compiler. The model's flags parameter now
+defaults to the RDF term type; treating it as an owned Rust string no longer
+matches `NodeShape<Term>` and `PropertyShape<Term>`.
+
 Keep the original RDF dataset for reports, `$shapesGraph`, path/list identity
 and annotations. Apply ADR 0007's graph/document boolean policy to the compiler
 input before reading declarations, without rewriting the retained source.

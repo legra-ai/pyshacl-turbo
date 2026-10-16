@@ -6,6 +6,13 @@ MIT and Apache-2.0 license texts and original archive provenance are retained.
 The prebinding patch supplies initially bound variables to the optimizer;
 see `../sparql-prebinding.patch` and ADR 0004.
 
+The opt-in `cached-query-plans` feature reuses immutable optimized graph patterns
+in a process-local 128-entry LRU. Exact parsed patterns and sorted initial bound
+variable names form the key; execution values, current data and registered
+callbacks are never cached. SELECT, ASK, CONSTRUCT and DESCRIBE share this path.
+Explicit `without_optimizations()` bypasses the cache. Without the feature, each
+execution still performs its own optimization. See ADR 0025 and `src/plan_cache.rs`.
+
 The opt-in `undefined-functions-as-expression-errors` feature changes only the
 unregistered scalar-function arm in expression evaluator construction. An
 unknown function returns an expression error (`None`) at evaluation time, so

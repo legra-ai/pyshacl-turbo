@@ -19,7 +19,9 @@
   and [ADR 0012](../docs/adr/0012-reference-recursion-and-expression-errors.md).
   Its opt-in exact callback-term feature is documented in the same patch note
   and [ADR 0015](../docs/adr/0015-native-sparql-patterns.md). CI tests default
-  behavior and both enabled features using `make test-sparql-evaluator`.
+  behavior and enabled features using `make test-sparql-evaluator`. Its opt-in
+  `cached-query-plans` feature reuses immutable algebra with initial binding names
+  in the key; see [ADR 0025](../docs/adr/0025-automatic-sparql-preparation.md).
 - `spargebra-0.4.7/`: projection parsing accepts explicitly supplied external
   variables for SHACL prebindings; see its `TURBO-PATCH.md`.
 - `oxrdf-0.3.4/`: optional exact string term identity, documented in its

@@ -41,6 +41,7 @@ calendar-ext = ["sep-0002"]
 default = []
 undefined-functions-as-expression-errors = []
 exact-custom-function-terms = ["oxrdf/rdf-10-string-identity"]
+cached-query-plans = []
 sep-0002 = ["sparopt/sep-0002"]
 sep-0006 = ["sparopt/sep-0006"]
 sparql-12 = [

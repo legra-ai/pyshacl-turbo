@@ -1,0 +1,169 @@
+{
+  "before": {
+    "platform": "macOS-27.0.1-arm64-arm-64bit-Mach-O",
+    "python": "3.13.16",
+    "version": "0.2.4",
+    "source_hashes": {
+      "__init__.py": "3ab3990e94f416c75e5f4bd4fae9aa30484eaa95dc6e43a28f60c492c7c07f5a",
+      "_native.abi3.so": "264eeaea0923b9fed0698fad70c0e0b827b08c87a12cb4c6bb845bc9f4c10fa8"
+    },
+    "cases": [
+      {
+        "data_triples": 2,
+        "focus_nodes": 1,
+        "constraints": 24,
+        "observation": [
+          true,
+          85907499267350640335256385473838606125888729151878419041166192456338444224841,
+          "Validation Report\nConforms: True\n"
+        ],
+        "results": {
+          "top_level": {
+            "samples_ms": [
+              1.313416,
+              1.326208,
+              1.361583,
+              1.34675,
+              1.353,
+              1.389208,
+              1.381417
+            ],
+            "median_ms": 1.353
+          },
+          "explicit_compiled": {
+            "samples_ms": [
+              0.51625,
+              0.528833,
+              0.475625,
+              0.485917,
+              0.473709,
+              0.494625,
+              0.474709
+            ],
+            "median_ms": 0.485917
+          }
+        }
+      },
+      {
+        "data_triples": 512,
+        "focus_nodes": 256,
+        "constraints": 1,
+        "observation": [
+          true,
+          85907499267350640335256385473838606125888729151878419041166192456338444224841,
+          "Validation Report\nConforms: True\n"
+        ],
+        "results": {
+          "top_level": {
+            "samples_ms": [
+              5.516791,
+              5.411709,
+              5.5445,
+              5.46025,
+              5.447041,
+              5.468541,
+              5.407125
+            ],
+            "median_ms": 5.46025
+          },
+          "explicit_compiled": {
+            "samples_ms": [
+              5.306541,
+              5.277417,
+              5.255209,
+              5.221583,
+              5.246167,
+              5.266041,
+              5.180833
+            ],
+            "median_ms": 5.255209
+          }
+        }
+      }
+    ]
+  },
+  "after": {
+    "platform": "macOS-27.0.1-arm64-arm-64bit-Mach-O",
+    "python": "3.13.16",
+    "version": "0.2.4",
+    "source_hashes": {
+      "__init__.py": "ff6ca2bc7aa6c2f7eef59deb133f44871dbc8a34265deb2f9e06fa4640fe1b52",
+      "_native.abi3.so": "52124faaf09905a3e7646d83366d0a08fe0f32873b39bcf2ab75d8185b57e585"
+    },
+    "cases": [
+      {
+        "data_triples": 2,
+        "focus_nodes": 1,
+        "constraints": 24,
+        "observation": [
+          true,
+          85907499267350640335256385473838606125888729151878419041166192456338444224841,
+          "Validation Report\nConforms: True\n"
+        ],
+        "results": {
+          "top_level": {
+            "samples_ms": [
+              0.6135,
+              0.627791,
+              1.9465,
+              0.606875,
+              0.603542,
+              0.641042,
+              0.646583
+            ],
+            "median_ms": 0.627791
+          },
+          "explicit_compiled": {
+            "samples_ms": [
+              0.478375,
+              0.457,
+              0.468958,
+              0.452542,
+              0.473292,
+              0.452959,
+              0.475083
+            ],
+            "median_ms": 0.468958
+          }
+        }
+      },
+      {
+        "data_triples": 512,
+        "focus_nodes": 256,
+        "constraints": 1,
+        "observation": [
+          true,
+          85907499267350640335256385473838606125888729151878419041166192456338444224841,
+          "Validation Report\nConforms: True\n"
+        ],
+        "results": {
+          "top_level": {
+            "samples_ms": [
+              5.38525,
+              5.394041,
+              5.315333,
+              5.202167,
+              5.217375,
+              5.213666,
+              5.220125
+            ],
+            "median_ms": 5.220125
+          },
+          "explicit_compiled": {
+            "samples_ms": [
+              5.235292,
+              5.094208,
+              5.0535,
+              5.1005,
+              5.106041,
+              5.121833,
+              5.096125
+            ],
+            "median_ms": 5.1005
+          }
+        }
+      }
+    ]
+  },
+  "baseline_revision": "506b6a54369694a204fdddea61a0a5bba4eea8ea"
+}
