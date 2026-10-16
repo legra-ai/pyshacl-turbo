@@ -1,5 +1,16 @@
 # pyshacl-turbo
 
+[![Python line coverage](https://legra-ai.github.io/pyshacl-turbo/python-lines.svg)](https://legra-ai.github.io/pyshacl-turbo/)
+[![Python branch coverage](https://legra-ai.github.io/pyshacl-turbo/python-branches.svg)](https://legra-ai.github.io/pyshacl-turbo/)
+[![Rust line coverage](https://legra-ai.github.io/pyshacl-turbo/rust-lines.svg)](https://legra-ai.github.io/pyshacl-turbo/)
+[![Rust region coverage](https://legra-ai.github.io/pyshacl-turbo/rust-regions.svg)](https://legra-ai.github.io/pyshacl-turbo/)
+[![Rust function coverage](https://legra-ai.github.io/pyshacl-turbo/rust-functions.svg)](https://legra-ai.github.io/pyshacl-turbo/)
+
+Coverage badges update from successful main-branch CI measurements, including the
+daily scheduled run. Python lines and branches are separate; Rust badges measure
+owned native source exercised by Rust and Python integration tests.
+Rust branch coverage and dependency/vendored-patch coverage are not measured by these badges.
+
 [![PyPI version](https://img.shields.io/pypi/v/pyshacl-turbo)](https://pypi.org/project/pyshacl-turbo/)
 [![PyPI downloads](https://img.shields.io/pypi/dm/pyshacl-turbo)](https://pypi.org/project/pyshacl-turbo/)
 [![Python 3.11+](https://img.shields.io/badge/Python-3.11%2B-3776AB?logo=python&logoColor=white)](https://github.com/legra-ai/pyshacl-turbo/blob/main/pyproject.toml)

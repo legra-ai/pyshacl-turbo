@@ -1,0 +1,6 @@
+{
+  "crates/engine/src/lib.rs": {
+    "sha256": "c030e058bdc40248d0e17180960dc0fbcef34cdb3af57fc957495324f519100a",
+    "reason": "Module declarations, re-exports, type alias and derived error enum have no executable source mapping under the pinned stable compiler."
+  }
+}

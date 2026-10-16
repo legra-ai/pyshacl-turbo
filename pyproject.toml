@@ -39,6 +39,7 @@ python-source = "python"
 module-name = "pyshacl_turbo._native"
 features = ["pyo3/extension-module"]
 include = [
+    {path = "native-coverage-sources.json", format = "sdist"},
     {path = "vendor/**/*", format = "sdist"},
     {path = "tests/**/*", format = "sdist"},
     {path = "scripts/**/*", format = "sdist"},

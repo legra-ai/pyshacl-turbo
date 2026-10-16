@@ -50,7 +50,7 @@ def test_release_checks_and_builds_the_prepared_revision():
         assert checkouts and all(
             step["with"]["ref"] == "${{ needs.prepare.outputs.revision }}" for step in checkouts
         )
-    for name in ["compatibility", "regex"]:
+    for name in ["compatibility", "regex", "native-coverage"]:
         assert jobs[name]["with"]["revision"] == "${{ needs.prepare.outputs.revision }}"
     assert set(jobs["test"]["needs"]) == {
         "prepare",
@@ -59,6 +59,7 @@ def test_release_checks_and_builds_the_prepared_revision():
         "regex",
         "sdist",
         "wheels",
+        "native-coverage",
     }
     assert any(
         step.get("run") == "python scripts/release_packages.py check-build"

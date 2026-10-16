@@ -1,0 +1,972 @@
+{
+  "project": "pyshacl-turbo",
+  "date": "2026-10-16T22:47:16.374503+00:00",
+  "rustc": "rustc 1.99.1 (58cf8f9c3 2026-10-13)\nbinary: rustc\ncommit-hash: 58cf8f9c35b355199727627d07ae34a4e2846d67\ncommit-date: 2026-10-13\nhost: aarch64-apple-darwin\nrelease: 1.99.1\nLLVM version: 23.1.1\n",
+  "cargo_llvm_cov": "0.9.1",
+  "revision": "6cc35dcbb8c8a4ebe17e72a9f673d6667653c2f9",
+  "source_sha256": {
+    "crates/engine/src/compile.rs": "189cb775b9898ed249cd38f5b1d1a89e4e72ccd6a3769a5069ad34b5047a05a6",
+    "crates/engine/src/components.rs": "5bc1170631925335ca71ddd51e7ef031da06345bd4bf7354673d9210b5a40aad",
+    "crates/engine/src/constraints.rs": "b7012bb22fa33ef873b01d7d2fc97d61034a7776f4a70f8b1a4d3a6dc5673c4e",
+    "crates/engine/src/display.rs": "fe07a8ba5c7c4f3ea58003e39dfc2e2f70bae66c48fe22a87a4d882f05eeb9bf",
+    "crates/engine/src/execute.rs": "f83d6be0bf341bab20203bd21eddf8db17dc0c7c03e5b7e72ac62a130a04a6f0",
+    "crates/engine/src/expression.rs": "00134daaa9e9c1c18ff170e325faa022c59853c521a43a9939cb297106203e32",
+    "crates/engine/src/functions.rs": "9d95bc0c782dea854713897c653a80365a24f3fe9ea4541c139a4d71b676a67a",
+    "crates/engine/src/graph.rs": "feedfc3d87de66d619fd91df67a27b90c72a140ecbcd9ca3a358728edd39c4dd",
+    "crates/engine/src/inference.rs": "57f320ae80cc6833ebbcffa1e874c7dbf2468f326212f46e99a835847b29b739",
+    "crates/engine/src/inference/axioms.rs": "067dff6c54e846dabca7b29af1d2ebb9d43defa9802aeced8a2613d07fdc57d5",
+    "crates/engine/src/lib.rs": "c030e058bdc40248d0e17180960dc0fbcef34cdb3af57fc957495324f519100a",
+    "crates/engine/src/ontology.rs": "9b25fc852eddf681c9156a9d7f86446b3d5b8bcf9385edbf4af4670c128b9009",
+    "crates/engine/src/path.rs": "f0d22d39d3e85e26f6ed62a9f16c4af0d97632abc8f7aef839c6eb1b575869ce",
+    "crates/engine/src/pattern.rs": "0dcd2138431bfaa4a62c32b022779692894b31b049ff7172228ebf772a97f6dc",
+    "crates/engine/src/sparql.rs": "c62c52b2d5d403ceae56bc039940160675ff26691bac8e875626f8de6950bd3e",
+    "crates/engine/src/sparql_regex.rs": "1d445a80f28f05312aea83566346fb273ecb74ea9706cad09eb30f9176fc730e",
+    "crates/engine/src/structural.rs": "576d1de4dfe14ef0972c2d77231abad73de95cb601c4d0468eb6925e09b7f157",
+    "crates/engine/src/value.rs": "2db95f5a907aec248f2d03769e0e54502d8d546787c811cb3f9618a81ed1d73e",
+    "crates/python/src/lib.rs": "86f5f5bcf1f0e195303e4ebccfecedf96a6de53056781048ea7093f4f41e749c",
+    "crates/python/src/terms.rs": "dae061f5302e068cbc89069facece3ffd5fc8808c8874936b1ad0e2cde938767"
+  },
+  "harness_sha256": "590489225702351117ebd6d48635f24116e2e6f07612a4623436dee62e58cf65",
+  "test_lock_sha256": "4e2343db0a8299d2d0ee99c6d94fc24c463adc7a807e337a586f45cf13b1cbf4",
+  "wheel_sha256": "79eda638f7eac7fc0760bb7c3375502f04a7167b99984bdf1b6b8f3dbee0af2f",
+  "native_sha256": "df77f435e742454ac096132cb7dd3f1235ddc2238175a0b5aaaa04ee9d021631",
+  "rust_test_cases": 23,
+  "stages": {
+    "rust": {
+      "owned": {
+        "lines": {
+          "count": 5810,
+          "covered": 2363,
+          "percent": 40.67125645438898
+        },
+        "regions": {
+          "count": 10391,
+          "covered": 4058,
+          "percent": 39.05302665768453
+        },
+        "functions": {
+          "count": 503,
+          "covered": 184,
+          "percent": 36.58051689860835
+        }
+      },
+      "vendored": {
+        "lines": {
+          "count": 0,
+          "covered": 0,
+          "percent": null
+        },
+        "regions": {
+          "count": 0,
+          "covered": 0,
+          "percent": null
+        },
+        "functions": {
+          "count": 0,
+          "covered": 0,
+          "percent": null
+        }
+      },
+      "files": {
+        "crates/engine/src/compile.rs": {
+          "lines": {
+            "count": 430,
+            "covered": 331
+          },
+          "regions": {
+            "count": 672,
+            "covered": 515
+          },
+          "functions": {
+            "count": 35,
+            "covered": 23
+          }
+        },
+        "crates/engine/src/components.rs": {
+          "lines": {
+            "count": 154,
+            "covered": 123
+          },
+          "regions": {
+            "count": 244,
+            "covered": 205
+          },
+          "functions": {
+            "count": 10,
+            "covered": 6
+          }
+        },
+        "crates/engine/src/constraints.rs": {
+          "lines": {
+            "count": 425,
+            "covered": 197
+          },
+          "regions": {
+            "count": 854,
+            "covered": 374
+          },
+          "functions": {
+            "count": 32,
+            "covered": 14
+          }
+        },
+        "crates/engine/src/display.rs": {
+          "lines": {
+            "count": 104,
+            "covered": 93
+          },
+          "regions": {
+            "count": 179,
+            "covered": 151
+          },
+          "functions": {
+            "count": 14,
+            "covered": 10
+          }
+        },
+        "crates/engine/src/execute.rs": {
+          "lines": {
+            "count": 1272,
+            "covered": 691
+          },
+          "regions": {
+            "count": 2119,
+            "covered": 1148
+          },
+          "functions": {
+            "count": 77,
+            "covered": 43
+          }
+        },
+        "crates/engine/src/expression.rs": {
+          "lines": {
+            "count": 161,
+            "covered": 50
+          },
+          "regions": {
+            "count": 327,
+            "covered": 66
+          },
+          "functions": {
+            "count": 15,
+            "covered": 4
+          }
+        },
+        "crates/engine/src/functions.rs": {
+          "lines": {
+            "count": 372,
+            "covered": 141
+          },
+          "regions": {
+            "count": 606,
+            "covered": 240
+          },
+          "functions": {
+            "count": 38,
+            "covered": 15
+          }
+        },
+        "crates/engine/src/graph.rs": {
+          "lines": {
+            "count": 187,
+            "covered": 146
+          },
+          "regions": {
+            "count": 331,
+            "covered": 266
+          },
+          "functions": {
+            "count": 32,
+            "covered": 22
+          }
+        },
+        "crates/engine/src/inference.rs": {
+          "lines": {
+            "count": 153,
+            "covered": 0
+          },
+          "regions": {
+            "count": 293,
+            "covered": 0
+          },
+          "functions": {
+            "count": 15,
+            "covered": 0
+          }
+        },
+        "crates/engine/src/inference/axioms.rs": {
+          "lines": {
+            "count": 151,
+            "covered": 0
+          },
+          "regions": {
+            "count": 329,
+            "covered": 0
+          },
+          "functions": {
+            "count": 12,
+            "covered": 0
+          }
+        },
+        "crates/engine/src/ontology.rs": {
+          "lines": {
+            "count": 85,
+            "covered": 0
+          },
+          "regions": {
+            "count": 167,
+            "covered": 0
+          },
+          "functions": {
+            "count": 9,
+            "covered": 0
+          }
+        },
+        "crates/engine/src/path.rs": {
+          "lines": {
+            "count": 155,
+            "covered": 88
+          },
+          "regions": {
+            "count": 332,
+            "covered": 181
+          },
+          "functions": {
+            "count": 9,
+            "covered": 7
+          }
+        },
+        "crates/engine/src/pattern.rs": {
+          "lines": {
+            "count": 528,
+            "covered": 0
+          },
+          "regions": {
+            "count": 874,
+            "covered": 0
+          },
+          "functions": {
+            "count": 50,
+            "covered": 0
+          }
+        },
+        "crates/engine/src/sparql.rs": {
+          "lines": {
+            "count": 443,
+            "covered": 242
+          },
+          "regions": {
+            "count": 760,
+            "covered": 383
+          },
+          "functions": {
+            "count": 27,
+            "covered": 18
+          }
+        },
+        "crates/engine/src/sparql_regex.rs": {
+          "lines": {
+            "count": 283,
+            "covered": 35
+          },
+          "regions": {
+            "count": 522,
+            "covered": 47
+          },
+          "functions": {
+            "count": 22,
+            "covered": 4
+          }
+        },
+        "crates/engine/src/structural.rs": {
+          "lines": {
+            "count": 257,
+            "covered": 180
+          },
+          "regions": {
+            "count": 573,
+            "covered": 390
+          },
+          "functions": {
+            "count": 26,
+            "covered": 13
+          }
+        },
+        "crates/engine/src/value.rs": {
+          "lines": {
+            "count": 108,
+            "covered": 0
+          },
+          "regions": {
+            "count": 227,
+            "covered": 0
+          },
+          "functions": {
+            "count": 9,
+            "covered": 0
+          }
+        },
+        "crates/python/src/lib.rs": {
+          "lines": {
+            "count": 417,
+            "covered": 0
+          },
+          "regions": {
+            "count": 715,
+            "covered": 0
+          },
+          "functions": {
+            "count": 53,
+            "covered": 0
+          }
+        },
+        "crates/python/src/terms.rs": {
+          "lines": {
+            "count": 125,
+            "covered": 46
+          },
+          "regions": {
+            "count": 267,
+            "covered": 92
+          },
+          "functions": {
+            "count": 18,
+            "covered": 5
+          }
+        }
+      },
+      "vendored_files": {},
+      "branches": null,
+      "unmapped_non_executable": {
+        "crates/engine/src/lib.rs": {
+          "sha256": "c030e058bdc40248d0e17180960dc0fbcef34cdb3af57fc957495324f519100a",
+          "reason": "Module declarations, re-exports, type alias and derived error enum have no executable source mapping under the pinned stable compiler."
+        }
+      }
+    },
+    "python": {
+      "owned": {
+        "lines": {
+          "count": 5810,
+          "covered": 5078,
+          "percent": 87.40103270223752
+        },
+        "regions": {
+          "count": 10391,
+          "covered": 8780,
+          "percent": 84.49619863343278
+        },
+        "functions": {
+          "count": 503,
+          "covered": 396,
+          "percent": 78.72763419483101
+        }
+      },
+      "vendored": {
+        "lines": {
+          "count": 0,
+          "covered": 0,
+          "percent": null
+        },
+        "regions": {
+          "count": 0,
+          "covered": 0,
+          "percent": null
+        },
+        "functions": {
+          "count": 0,
+          "covered": 0,
+          "percent": null
+        }
+      },
+      "files": {
+        "crates/engine/src/compile.rs": {
+          "lines": {
+            "count": 430,
+            "covered": 376
+          },
+          "regions": {
+            "count": 672,
+            "covered": 597
+          },
+          "functions": {
+            "count": 35,
+            "covered": 27
+          }
+        },
+        "crates/engine/src/components.rs": {
+          "lines": {
+            "count": 154,
+            "covered": 133
+          },
+          "regions": {
+            "count": 244,
+            "covered": 217
+          },
+          "functions": {
+            "count": 10,
+            "covered": 7
+          }
+        },
+        "crates/engine/src/constraints.rs": {
+          "lines": {
+            "count": 425,
+            "covered": 383
+          },
+          "regions": {
+            "count": 854,
+            "covered": 747
+          },
+          "functions": {
+            "count": 32,
+            "covered": 28
+          }
+        },
+        "crates/engine/src/display.rs": {
+          "lines": {
+            "count": 104,
+            "covered": 103
+          },
+          "regions": {
+            "count": 179,
+            "covered": 177
+          },
+          "functions": {
+            "count": 14,
+            "covered": 14
+          }
+        },
+        "crates/engine/src/execute.rs": {
+          "lines": {
+            "count": 1272,
+            "covered": 1094
+          },
+          "regions": {
+            "count": 2119,
+            "covered": 1799
+          },
+          "functions": {
+            "count": 77,
+            "covered": 58
+          }
+        },
+        "crates/engine/src/expression.rs": {
+          "lines": {
+            "count": 161,
+            "covered": 98
+          },
+          "regions": {
+            "count": 327,
+            "covered": 174
+          },
+          "functions": {
+            "count": 15,
+            "covered": 8
+          }
+        },
+        "crates/engine/src/functions.rs": {
+          "lines": {
+            "count": 372,
+            "covered": 302
+          },
+          "regions": {
+            "count": 606,
+            "covered": 473
+          },
+          "functions": {
+            "count": 38,
+            "covered": 29
+          }
+        },
+        "crates/engine/src/graph.rs": {
+          "lines": {
+            "count": 187,
+            "covered": 165
+          },
+          "regions": {
+            "count": 331,
+            "covered": 286
+          },
+          "functions": {
+            "count": 32,
+            "covered": 23
+          }
+        },
+        "crates/engine/src/inference.rs": {
+          "lines": {
+            "count": 153,
+            "covered": 138
+          },
+          "regions": {
+            "count": 293,
+            "covered": 260
+          },
+          "functions": {
+            "count": 15,
+            "covered": 14
+          }
+        },
+        "crates/engine/src/inference/axioms.rs": {
+          "lines": {
+            "count": 151,
+            "covered": 147
+          },
+          "regions": {
+            "count": 329,
+            "covered": 313
+          },
+          "functions": {
+            "count": 12,
+            "covered": 12
+          }
+        },
+        "crates/engine/src/ontology.rs": {
+          "lines": {
+            "count": 85,
+            "covered": 75
+          },
+          "regions": {
+            "count": 167,
+            "covered": 144
+          },
+          "functions": {
+            "count": 9,
+            "covered": 9
+          }
+        },
+        "crates/engine/src/path.rs": {
+          "lines": {
+            "count": 155,
+            "covered": 148
+          },
+          "regions": {
+            "count": 332,
+            "covered": 305
+          },
+          "functions": {
+            "count": 9,
+            "covered": 8
+          }
+        },
+        "crates/engine/src/pattern.rs": {
+          "lines": {
+            "count": 528,
+            "covered": 490
+          },
+          "regions": {
+            "count": 874,
+            "covered": 785
+          },
+          "functions": {
+            "count": 50,
+            "covered": 38
+          }
+        },
+        "crates/engine/src/sparql.rs": {
+          "lines": {
+            "count": 443,
+            "covered": 365
+          },
+          "regions": {
+            "count": 760,
+            "covered": 592
+          },
+          "functions": {
+            "count": 27,
+            "covered": 22
+          }
+        },
+        "crates/engine/src/sparql_regex.rs": {
+          "lines": {
+            "count": 283,
+            "covered": 246
+          },
+          "regions": {
+            "count": 522,
+            "covered": 448
+          },
+          "functions": {
+            "count": 22,
+            "covered": 20
+          }
+        },
+        "crates/engine/src/structural.rs": {
+          "lines": {
+            "count": 257,
+            "covered": 234
+          },
+          "regions": {
+            "count": 573,
+            "covered": 500
+          },
+          "functions": {
+            "count": 26,
+            "covered": 19
+          }
+        },
+        "crates/engine/src/value.rs": {
+          "lines": {
+            "count": 108,
+            "covered": 83
+          },
+          "regions": {
+            "count": 227,
+            "covered": 141
+          },
+          "functions": {
+            "count": 9,
+            "covered": 6
+          }
+        },
+        "crates/python/src/lib.rs": {
+          "lines": {
+            "count": 417,
+            "covered": 396
+          },
+          "regions": {
+            "count": 715,
+            "covered": 621
+          },
+          "functions": {
+            "count": 53,
+            "covered": 42
+          }
+        },
+        "crates/python/src/terms.rs": {
+          "lines": {
+            "count": 125,
+            "covered": 102
+          },
+          "regions": {
+            "count": 267,
+            "covered": 201
+          },
+          "functions": {
+            "count": 18,
+            "covered": 12
+          }
+        }
+      },
+      "vendored_files": {},
+      "branches": null,
+      "unmapped_non_executable": {
+        "crates/engine/src/lib.rs": {
+          "sha256": "c030e058bdc40248d0e17180960dc0fbcef34cdb3af57fc957495324f519100a",
+          "reason": "Module declarations, re-exports, type alias and derived error enum have no executable source mapping under the pinned stable compiler."
+        }
+      }
+    },
+    "combined": {
+      "owned": {
+        "lines": {
+          "count": 5810,
+          "covered": 5235,
+          "percent": 90.10327022375215
+        },
+        "regions": {
+          "count": 10391,
+          "covered": 9096,
+          "percent": 87.53729188721009
+        },
+        "functions": {
+          "count": 503,
+          "covered": 416,
+          "percent": 82.7037773359841
+        }
+      },
+      "vendored": {
+        "lines": {
+          "count": 0,
+          "covered": 0,
+          "percent": null
+        },
+        "regions": {
+          "count": 0,
+          "covered": 0,
+          "percent": null
+        },
+        "functions": {
+          "count": 0,
+          "covered": 0,
+          "percent": null
+        }
+      },
+      "files": {
+        "crates/engine/src/compile.rs": {
+          "lines": {
+            "count": 430,
+            "covered": 386
+          },
+          "regions": {
+            "count": 672,
+            "covered": 609
+          },
+          "functions": {
+            "count": 35,
+            "covered": 29
+          }
+        },
+        "crates/engine/src/components.rs": {
+          "lines": {
+            "count": 154,
+            "covered": 133
+          },
+          "regions": {
+            "count": 244,
+            "covered": 217
+          },
+          "functions": {
+            "count": 10,
+            "covered": 7
+          }
+        },
+        "crates/engine/src/constraints.rs": {
+          "lines": {
+            "count": 425,
+            "covered": 388
+          },
+          "regions": {
+            "count": 854,
+            "covered": 763
+          },
+          "functions": {
+            "count": 32,
+            "covered": 29
+          }
+        },
+        "crates/engine/src/display.rs": {
+          "lines": {
+            "count": 104,
+            "covered": 103
+          },
+          "regions": {
+            "count": 179,
+            "covered": 177
+          },
+          "functions": {
+            "count": 14,
+            "covered": 14
+          }
+        },
+        "crates/engine/src/execute.rs": {
+          "lines": {
+            "count": 1272,
+            "covered": 1196
+          },
+          "regions": {
+            "count": 2119,
+            "covered": 1986
+          },
+          "functions": {
+            "count": 77,
+            "covered": 70
+          }
+        },
+        "crates/engine/src/expression.rs": {
+          "lines": {
+            "count": 161,
+            "covered": 98
+          },
+          "regions": {
+            "count": 327,
+            "covered": 174
+          },
+          "functions": {
+            "count": 15,
+            "covered": 8
+          }
+        },
+        "crates/engine/src/functions.rs": {
+          "lines": {
+            "count": 372,
+            "covered": 326
+          },
+          "regions": {
+            "count": 606,
+            "covered": 523
+          },
+          "functions": {
+            "count": 38,
+            "covered": 30
+          }
+        },
+        "crates/engine/src/graph.rs": {
+          "lines": {
+            "count": 187,
+            "covered": 167
+          },
+          "regions": {
+            "count": 331,
+            "covered": 291
+          },
+          "functions": {
+            "count": 32,
+            "covered": 24
+          }
+        },
+        "crates/engine/src/inference.rs": {
+          "lines": {
+            "count": 153,
+            "covered": 138
+          },
+          "regions": {
+            "count": 293,
+            "covered": 260
+          },
+          "functions": {
+            "count": 15,
+            "covered": 14
+          }
+        },
+        "crates/engine/src/inference/axioms.rs": {
+          "lines": {
+            "count": 151,
+            "covered": 147
+          },
+          "regions": {
+            "count": 329,
+            "covered": 313
+          },
+          "functions": {
+            "count": 12,
+            "covered": 12
+          }
+        },
+        "crates/engine/src/ontology.rs": {
+          "lines": {
+            "count": 85,
+            "covered": 75
+          },
+          "regions": {
+            "count": 167,
+            "covered": 144
+          },
+          "functions": {
+            "count": 9,
+            "covered": 9
+          }
+        },
+        "crates/engine/src/path.rs": {
+          "lines": {
+            "count": 155,
+            "covered": 150
+          },
+          "regions": {
+            "count": 332,
+            "covered": 310
+          },
+          "functions": {
+            "count": 9,
+            "covered": 9
+          }
+        },
+        "crates/engine/src/pattern.rs": {
+          "lines": {
+            "count": 528,
+            "covered": 490
+          },
+          "regions": {
+            "count": 874,
+            "covered": 785
+          },
+          "functions": {
+            "count": 50,
+            "covered": 38
+          }
+        },
+        "crates/engine/src/sparql.rs": {
+          "lines": {
+            "count": 443,
+            "covered": 365
+          },
+          "regions": {
+            "count": 760,
+            "covered": 592
+          },
+          "functions": {
+            "count": 27,
+            "covered": 22
+          }
+        },
+        "crates/engine/src/sparql_regex.rs": {
+          "lines": {
+            "count": 283,
+            "covered": 246
+          },
+          "regions": {
+            "count": 522,
+            "covered": 448
+          },
+          "functions": {
+            "count": 22,
+            "covered": 20
+          }
+        },
+        "crates/engine/src/structural.rs": {
+          "lines": {
+            "count": 257,
+            "covered": 234
+          },
+          "regions": {
+            "count": 573,
+            "covered": 500
+          },
+          "functions": {
+            "count": 26,
+            "covered": 19
+          }
+        },
+        "crates/engine/src/value.rs": {
+          "lines": {
+            "count": 108,
+            "covered": 83
+          },
+          "regions": {
+            "count": 227,
+            "covered": 141
+          },
+          "functions": {
+            "count": 9,
+            "covered": 6
+          }
+        },
+        "crates/python/src/lib.rs": {
+          "lines": {
+            "count": 417,
+            "covered": 396
+          },
+          "regions": {
+            "count": 715,
+            "covered": 621
+          },
+          "functions": {
+            "count": 53,
+            "covered": 42
+          }
+        },
+        "crates/python/src/terms.rs": {
+          "lines": {
+            "count": 125,
+            "covered": 114
+          },
+          "regions": {
+            "count": 267,
+            "covered": 242
+          },
+          "functions": {
+            "count": 18,
+            "covered": 14
+          }
+        }
+      },
+      "vendored_files": {},
+      "branches": null,
+      "unmapped_non_executable": {
+        "crates/engine/src/lib.rs": {
+          "sha256": "c030e058bdc40248d0e17180960dc0fbcef34cdb3af57fc957495324f519100a",
+          "reason": "Module declarations, re-exports, type alias and derived error enum have no executable source mapping under the pinned stable compiler."
+        }
+      }
+    }
+  }
+}
