@@ -50,6 +50,13 @@ benchmark:
 benchmark-pipeline:
 	$(VENV_PYTHON) benchmarks/compare.py --nodes 100 1000 --repeats 5 --output benchmarks/latest.json
 
+.PHONY: benchmark-companions
+benchmark-companions:
+	uv venv --python $(PYTHON) .venv-companions
+	uv pip sync --python .venv-companions/bin/python --require-hashes --only-binary :all: benchmarks/companions-requirements.lock
+	.venv-companions/bin/python -I benchmarks/companions.py --nodes 100 1000 --repeats 5 --memory-repeats 3 --output benchmarks/companions-current.json
+	.venv-companions/bin/python -I benchmarks/check_companions.py --report benchmarks/companions-current.json --baseline benchmarks/companions-baseline.json
+
 benchmark-targeting:
 	$(VENV_PYTHON) benchmarks/targeting.py --nodes 1000 --shapes 10 --repeats 5 --output benchmarks/targeting.json
 

@@ -1,6 +1,7 @@
 /target/
 /vendor/spareval-0.2.7/target/
 /.venv/
+/.venv-companions/
 /.wheel-venv/
 /.pytest_cache/
 /.ruff_cache/
@@ -21,3 +22,5 @@ __pycache__/
 /release-packages.zip
 /release-packages/
 /pending-packages/
+/benchmarks/companions-current.json
+/benchmarks/companions-current.md

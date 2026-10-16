@@ -38,6 +38,8 @@ jobs:
           python-version: '3.13'
       - uses: astral-sh/setup-uv@v10.3.0
       - uses: actions-rust-lang/setup-rust-toolchain@v2
+        with:
+          toolchain: 1.99.1
       - name: Build native extension and install pinned test dependencies
         run: make dev PYTHON=3.13
       - name: W3C, corrected suite, fixture audit and direct public contracts

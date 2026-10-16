@@ -9,7 +9,7 @@ resolver = "2"
 version = "0.2.5"
 edition = "2024"
 license = "MIT OR Apache-2.0"
-rust-version = "1.98.0"
+rust-version = "1.99.1"
 authors = ["DataRoad Inc, Delaware, USA, trading as Legra"]
 repository = "https://github.com/legra-ai/pyshacl-turbo"
 
