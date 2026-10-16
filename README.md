@@ -232,6 +232,12 @@ identity. See [ADR 0017](https://github.com/legra-ai/pyshacl-turbo/blob/main/doc
 
 ## Performance
 
+The [companion-project benchmark suite](benchmarks/companions.md) measures
+rdflib-turbo, owlrl-turbo and pyshacl-turbo together against their reference
+packages, including parsing, queries, inference, RDFLib conversion costs and
+complete validation pipelines. Run `make benchmark-companions` for the pinned
+published-wheel baseline with raw timing samples and separate peak RSS workers.
+
 The [benchmark results](https://github.com/legra-ai/pyshacl-turbo/blob/main/benchmarks/drop-in.md) compare Core validation,
 increasing shape counts, SHACL rules and SPARQL patterns through both RDFLib
 and Store inputs. Timings are medians of five interleaved samples on macOS

@@ -1,0 +1,223 @@
+{
+  "description": "SHA256 of canonical JSON RDF observations. Known report differences remain differences; no timing thresholds.",
+  "cases": {
+    "parse_turtle/100": {
+      "comparison": "equal",
+      "backends": {
+        "turbo": "5705c18344b0cd0ee9bb8156918b9b3bb14420f3a2c70a74224fea653af22eba",
+        "reference": "5705c18344b0cd0ee9bb8156918b9b3bb14420f3a2c70a74224fea653af22eba"
+      }
+    },
+    "parse_nquads/100": {
+      "comparison": "equal",
+      "backends": {
+        "reference": "6986c74044b24cb285868ed62f6fe214e749bca680c05447d2f6b8a85baa1025",
+        "turbo": "6986c74044b24cb285868ed62f6fe214e749bca680c05447d2f6b8a85baa1025"
+      }
+    },
+    "serialize_nt/100": {
+      "comparison": "equal",
+      "backends": {
+        "reference": "5705c18344b0cd0ee9bb8156918b9b3bb14420f3a2c70a74224fea653af22eba",
+        "turbo": "5705c18344b0cd0ee9bb8156918b9b3bb14420f3a2c70a74224fea653af22eba"
+      }
+    },
+    "serialize_nquads/100": {
+      "comparison": "equal",
+      "backends": {
+        "reference": "6986c74044b24cb285868ed62f6fe214e749bca680c05447d2f6b8a85baa1025",
+        "turbo": "6986c74044b24cb285868ed62f6fe214e749bca680c05447d2f6b8a85baa1025"
+      }
+    },
+    "select/100": {
+      "comparison": "equal",
+      "backends": {
+        "turbo": "61c9a68fa9953e1f8360b8920bf4f63f02e7263d588b424f9d82a1bcd5d35add",
+        "reference": "61c9a68fa9953e1f8360b8920bf4f63f02e7263d588b424f9d82a1bcd5d35add"
+      }
+    },
+    "select_named/100": {
+      "comparison": "equal",
+      "backends": {
+        "turbo": "61c9a68fa9953e1f8360b8920bf4f63f02e7263d588b424f9d82a1bcd5d35add",
+        "reference": "61c9a68fa9953e1f8360b8920bf4f63f02e7263d588b424f9d82a1bcd5d35add"
+      }
+    },
+    "ask/100": {
+      "comparison": "equal",
+      "backends": {
+        "turbo": "da04305ac0a7b246e970cc06b3f69f15d403f1a97d027c427dbf01d7b9f35fc5",
+        "reference": "da04305ac0a7b246e970cc06b3f69f15d403f1a97d027c427dbf01d7b9f35fc5"
+      }
+    },
+    "construct/100": {
+      "comparison": "equal",
+      "backends": {
+        "reference": "fb0633bb47363815c404c2e14c13fee3e681f79a884896a2e42bd21b54646c90",
+        "turbo": "fb0633bb47363815c404c2e14c13fee3e681f79a884896a2e42bd21b54646c90"
+      }
+    },
+    "rdfs/100": {
+      "comparison": "standard_rdf_equal",
+      "backends": {
+        "turbo": "b9a7a5f90e95450fc77486c6fea66b69a4d662836b0567de65b83aa045412335",
+        "reference": "0cea05d88fe1de3cb0926e16ae44d8afc9c680fe106b59204543670df120cdb7"
+      }
+    },
+    "owlrl/100": {
+      "comparison": "standard_rdf_equal",
+      "backends": {
+        "turbo": "c286d2932ce20098bad360155206ec4eb54feb8e1745a68eb16730562768aaf1",
+        "reference": "bd7433682698fd1658920938c9a0e47c8c286795887ef977a4555ebbfffc1fed"
+      }
+    },
+    "from_rdflib/100": {
+      "comparison": "diagnostic",
+      "backends": {
+        "turbo": "5705c18344b0cd0ee9bb8156918b9b3bb14420f3a2c70a74224fea653af22eba"
+      }
+    },
+    "to_rdflib/100": {
+      "comparison": "diagnostic",
+      "backends": {
+        "turbo": "5705c18344b0cd0ee9bb8156918b9b3bb14420f3a2c70a74224fea653af22eba"
+      }
+    },
+    "roundtrip/100": {
+      "comparison": "diagnostic",
+      "backends": {
+        "turbo": "5705c18344b0cd0ee9bb8156918b9b3bb14420f3a2c70a74224fea653af22eba"
+      }
+    },
+    "validate/100": {
+      "comparison": "report_graph_equal",
+      "backends": {
+        "turbo": "e645cf9fafca070e12d051cba29cb63851570f69f34132b583a7040457921cb7",
+        "reference": "e645cf9fafca070e12d051cba29cb63851570f69f34132b583a7040457921cb7"
+      }
+    },
+    "pipeline_rdfs/100": {
+      "comparison": "different",
+      "backends": {
+        "turbo": "fff7cd3e6fcc19f315c329b662499761be309d9e7825c156c97792e2dd79649b",
+        "reference": "a8a749a5f7018c585bcb689f736f40943dde654558e846608bc67c2b4df9fa7d"
+      }
+    },
+    "pipeline_owlrl/100": {
+      "comparison": "different",
+      "backends": {
+        "reference": "ca5397eeae6b44310d1f789ca1fb21342c114dbea7b7cf2776e0a307ae106f27",
+        "turbo": "fe3f0112558d00dbe8e14893599e0ad81c60969325369a0dd6611cef12109b01"
+      }
+    },
+    "parse_turtle/1000": {
+      "comparison": "equal",
+      "backends": {
+        "reference": "13d6bec1a87f5a01775dcc4d9ad7b35e82636be47ba7c015ef7640f5b3630078",
+        "turbo": "13d6bec1a87f5a01775dcc4d9ad7b35e82636be47ba7c015ef7640f5b3630078"
+      }
+    },
+    "parse_nquads/1000": {
+      "comparison": "equal",
+      "backends": {
+        "reference": "265d62cbefd49731013d3425c82b7bc82531f97fcfe123c53642fe609649944f",
+        "turbo": "265d62cbefd49731013d3425c82b7bc82531f97fcfe123c53642fe609649944f"
+      }
+    },
+    "serialize_nt/1000": {
+      "comparison": "equal",
+      "backends": {
+        "reference": "13d6bec1a87f5a01775dcc4d9ad7b35e82636be47ba7c015ef7640f5b3630078",
+        "turbo": "13d6bec1a87f5a01775dcc4d9ad7b35e82636be47ba7c015ef7640f5b3630078"
+      }
+    },
+    "serialize_nquads/1000": {
+      "comparison": "equal",
+      "backends": {
+        "reference": "265d62cbefd49731013d3425c82b7bc82531f97fcfe123c53642fe609649944f",
+        "turbo": "265d62cbefd49731013d3425c82b7bc82531f97fcfe123c53642fe609649944f"
+      }
+    },
+    "select/1000": {
+      "comparison": "equal",
+      "backends": {
+        "reference": "314cd15f0f1688bbbe851f464e7fbf8439ae07305f80ad28147c793585c635b0",
+        "turbo": "314cd15f0f1688bbbe851f464e7fbf8439ae07305f80ad28147c793585c635b0"
+      }
+    },
+    "select_named/1000": {
+      "comparison": "equal",
+      "backends": {
+        "turbo": "314cd15f0f1688bbbe851f464e7fbf8439ae07305f80ad28147c793585c635b0",
+        "reference": "314cd15f0f1688bbbe851f464e7fbf8439ae07305f80ad28147c793585c635b0"
+      }
+    },
+    "ask/1000": {
+      "comparison": "equal",
+      "backends": {
+        "reference": "da04305ac0a7b246e970cc06b3f69f15d403f1a97d027c427dbf01d7b9f35fc5",
+        "turbo": "da04305ac0a7b246e970cc06b3f69f15d403f1a97d027c427dbf01d7b9f35fc5"
+      }
+    },
+    "construct/1000": {
+      "comparison": "equal",
+      "backends": {
+        "reference": "7e8e011bfc22b8518c01de340c74917a2c66a431d84ea969c2839b0c1a1d323e",
+        "turbo": "7e8e011bfc22b8518c01de340c74917a2c66a431d84ea969c2839b0c1a1d323e"
+      }
+    },
+    "rdfs/1000": {
+      "comparison": "standard_rdf_equal",
+      "backends": {
+        "reference": "87ba8a925f1aadd2a781bd5d57123ab59a53661c347d1320e6c7544d3fe7fde3",
+        "turbo": "e876deb2704244912e31050a6afbcd52282cab3dc03bf808107980fb53409a2a"
+      }
+    },
+    "owlrl/1000": {
+      "comparison": "standard_rdf_equal",
+      "backends": {
+        "turbo": "a83931b768e9282115a2dc2ae09e01b1a127662efec9548ea75a9c443b697549",
+        "reference": "c384cbfc0fe214beebb6ec9fcda2a23166522354c349b7bd18510377819932fa"
+      }
+    },
+    "from_rdflib/1000": {
+      "comparison": "diagnostic",
+      "backends": {
+        "turbo": "13d6bec1a87f5a01775dcc4d9ad7b35e82636be47ba7c015ef7640f5b3630078"
+      }
+    },
+    "to_rdflib/1000": {
+      "comparison": "diagnostic",
+      "backends": {
+        "turbo": "13d6bec1a87f5a01775dcc4d9ad7b35e82636be47ba7c015ef7640f5b3630078"
+      }
+    },
+    "roundtrip/1000": {
+      "comparison": "diagnostic",
+      "backends": {
+        "turbo": "13d6bec1a87f5a01775dcc4d9ad7b35e82636be47ba7c015ef7640f5b3630078"
+      }
+    },
+    "validate/1000": {
+      "comparison": "report_graph_equal",
+      "backends": {
+        "turbo": "4f9379bf816215b3f3c09382e5b5ae27911387f5f2989ec388dd5a6388a2acc3",
+        "reference": "4f9379bf816215b3f3c09382e5b5ae27911387f5f2989ec388dd5a6388a2acc3"
+      }
+    },
+    "pipeline_rdfs/1000": {
+      "comparison": "different",
+      "backends": {
+        "turbo": "2f24173effcbbd38fb31d591e56ff4657365fbf0490a7c2dc29e2df5757b04de",
+        "reference": "dd1c830f1cd6805856b530e4c16eec5c30e7d81de7edb88cb47f829654737f82"
+      }
+    },
+    "pipeline_owlrl/1000": {
+      "comparison": "different",
+      "backends": {
+        "reference": "e81f0792e9856f49f08d318dc3d53971d8bac74b1dba3112ac958d2f47533c83",
+        "turbo": "b6bbf144dda8f95d93249cc001159cb3d56ecb380199246e16a451a4c619a1a0"
+      }
+    }
+  }
+}

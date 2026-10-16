@@ -1,0 +1,39 @@
+name: Companion benchmark correctness
+on:
+  pull_request:
+    paths:
+      - benchmarks/companions*
+      - tests/test_companion_benchmark.py
+      - tests/test_companion_baseline.py
+      - benchmarks/check_companions.py
+      - tests/upstream_support/process_launch.py
+      - .github/workflows/companions.yml
+  workflow_dispatch:
+  schedule:
+    - cron: '43 5 * * 1'
+permissions:
+  contents: read
+defaults:
+  run:
+    shell: bash {0}
+jobs:
+  benchmark:
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10.3.0
+      - run: uv venv --python 3.13 .venv-companions
+      - run: uv pip sync --python .venv-companions/bin/python --require-hashes --only-binary :all: benchmarks/companions-requirements.lock
+      - run: .venv-companions/bin/python -I benchmarks/companions.py --nodes 100 --repeats 2 --memory-repeats 1 --output benchmark-artifacts/companions.json
+      - run: .venv-companions/bin/python -I benchmarks/check_companions.py --report benchmark-artifacts/companions.json --baseline benchmarks/companions-baseline.json
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: companion-benchmarks-${{ matrix.os }}
+          path: benchmark-artifacts/
+          if-no-files-found: warn
