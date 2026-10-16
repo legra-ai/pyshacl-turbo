@@ -89,8 +89,15 @@ pub fn serialize(store: &Dataset) -> Result<String> {
         .map_err(|e| Error::Runtime(e.to_string()))
 }
 
+#[cfg(test)]
+thread_local! {
+    pub(crate) static UNION_BUILDS: std::cell::Cell<usize> = const { std::cell::Cell::new(0) };
+}
+
 /// Default-union view retaining the original named graphs for GRAPH clauses.
 pub fn with_union(data: &Dataset) -> Dataset {
+    #[cfg(test)]
+    UNION_BUILDS.with(|count| count.set(count.get() + 1));
     let mut union = data.clone();
     union.extend(
         data.iter()

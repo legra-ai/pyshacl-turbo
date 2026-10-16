@@ -6,7 +6,7 @@ use crate::graph::*;
 use crate::{Error, Result};
 use shacl_structural_model::ShaclPath;
 
-#[derive(Clone)]
+#[derive(Clone, Eq, PartialEq, Hash)]
 pub(crate) enum Path {
     Predicate(NamedNode),
     Sequence(Vec<Path>),
@@ -122,6 +122,8 @@ impl Path {
     }
 
     pub fn values(&self, data: &Dataset, focus: &Term) -> Result<Vec<Term>> {
+        #[cfg(test)]
+        PATH_EVALUATIONS.with(|count| count.set(count.get() + 1));
         let mut result: Vec<_> = self.walk(data, focus, false)?.into_iter().collect();
         result.sort_by_key(ToString::to_string);
         Ok(result)
@@ -185,6 +187,11 @@ impl Path {
             }
         }
     }
+}
+
+#[cfg(test)]
+thread_local! {
+    pub(crate) static PATH_EVALUATIONS: std::cell::Cell<usize> = const { std::cell::Cell::new(0) };
 }
 
 impl From<ShaclPath> for Path {

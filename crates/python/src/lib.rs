@@ -1,3 +1,5 @@
+mod terms;
+
 use pyo3::exceptions::{PyNotImplementedError, PyRuntimeError, PyValueError};
 use pyo3::prelude::*;
 use pyshacl_turbo_engine::oxigraph::io::RdfFormat;
@@ -99,19 +101,28 @@ fn parse_rdf(
 }
 
 #[pyfunction]
-fn additions(py: Python<'_>, before: &str, rdf_format: &str, after: &str) -> PyResult<String> {
-    let rdf_format = format(rdf_format)?;
-    py.detach(|| {
-        let before = rdf_format.parse(before, None)?;
-        let after = parse_dataset(after, RdfFormat::NQuads, None)?;
-        let additions = after
-            .iter()
-            .filter(|q| !before.contains(*q))
-            .map(|q| q.into_owned())
-            .collect();
-        serialize_graph(&additions)
-    })
-    .map_err(error)
+fn additions(
+    py: Python<'_>,
+    before: &Bound<'_, PyAny>,
+    rdf_format: &str,
+    after: &Bound<'_, PyAny>,
+) -> PyResult<Py<PyAny>> {
+    let direct = !after.is_instance_of::<pyo3::types::PyString>();
+    let before = terms::Input::read(before, rdf_format, None)?;
+    let after = terms::Input::read(after, if direct { "terms" } else { "nquads" }, None)?;
+    let output = py
+        .detach(|| {
+            let before = before.parse()?;
+            let after = after.parse()?;
+            let additions = after
+                .iter()
+                .filter(|q| !before.contains(*q))
+                .map(|q| q.into_owned())
+                .collect();
+            terms::Output::graph(&additions, direct)
+        })
+        .map_err(error)?;
+    output.into_python(py)
 }
 
 #[pyfunction]
@@ -249,7 +260,7 @@ impl PyTargetData {
     }
 }
 
-type ReportOutput = (bool, String, String, Option<String>, Vec<String>);
+type ReportOutput = (bool, Py<PyAny>, String, Option<Py<PyAny>>, Vec<String>);
 
 #[pymethods]
 impl PyCompiledShapes {
@@ -349,7 +360,7 @@ impl PyCompiledShapes {
     fn validate(
         &self,
         py: Python<'_>,
-        source: &str,
+        source: &Bound<'_, PyAny>,
         rdf_format: &str,
         base: Option<&str>,
         iterate_rules: bool,
@@ -363,51 +374,60 @@ impl PyCompiledShapes {
         use_shapes: Vec<String>,
         namespaces: Vec<(String, String)>,
     ) -> PyResult<ReportOutput> {
-        let rdf_format = format(rdf_format)?;
-        py.detach(|| {
-            let mut data = rdf_format.parse(source, base)?;
-            let report = self.inner.validate(
-                &mut data,
-                Options {
-                    iterate_rules,
-                    max_rule_iterations,
-                    max_validation_depth,
-                    allow_infos,
-                    allow_warnings,
-                    abort_on_first,
-                    namespaces,
-                    focus_nodes: focus_nodes
-                        .into_iter()
-                        .map(|s| NamedNode::new(s).map(Term::from))
-                        .collect::<std::result::Result<_, _>>()
-                        .map_err(|e| Error::Invalid(e.to_string()))?,
-                    use_shapes: use_shapes
-                        .into_iter()
-                        .map(|s| NamedNode::new(s).map(Term::from))
-                        .collect::<std::result::Result<_, _>>()
-                        .map_err(|e| Error::Invalid(e.to_string()))?,
-                },
-            )?;
-            Ok((
-                report.conforms,
-                serialize_graph(&report.graph)?,
-                report.text,
-                if include_data {
-                    Some(serialize_graph(&data)?)
-                } else {
-                    None
-                },
-                report.recursion_warnings,
-            ))
-        })
-        .map_err(error)
+        let direct = rdf_format == "terms";
+        let input = terms::Input::read(source, rdf_format, base)?;
+        let (conforms, report, text, expanded, warnings) = py
+            .detach(|| {
+                let mut data = input.parse()?;
+                let report = self.inner.validate(
+                    &mut data,
+                    Options {
+                        iterate_rules,
+                        max_rule_iterations,
+                        max_validation_depth,
+                        allow_infos,
+                        allow_warnings,
+                        abort_on_first,
+                        namespaces,
+                        focus_nodes: focus_nodes
+                            .into_iter()
+                            .map(|s| NamedNode::new(s).map(Term::from))
+                            .collect::<std::result::Result<_, _>>()
+                            .map_err(|e| Error::Invalid(e.to_string()))?,
+                        use_shapes: use_shapes
+                            .into_iter()
+                            .map(|s| NamedNode::new(s).map(Term::from))
+                            .collect::<std::result::Result<_, _>>()
+                            .map_err(|e| Error::Invalid(e.to_string()))?,
+                    },
+                )?;
+                Ok((
+                    report.conforms,
+                    terms::Output::graph(&report.graph, direct)?,
+                    report.text,
+                    if include_data {
+                        Some(terms::Output::graph(&data, direct)?)
+                    } else {
+                        None
+                    },
+                    report.recursion_warnings,
+                ))
+            })
+            .map_err(error)?;
+        Ok((
+            conforms,
+            report.into_python(py)?,
+            text,
+            expanded.map(|value| value.into_python(py)).transpose()?,
+            warnings,
+        ))
     }
 
     #[allow(clippy::too_many_arguments)]
     fn expand(
         &self,
         py: Python<'_>,
-        source: &str,
+        source: &Bound<'_, PyAny>,
         rdf_format: &str,
         base: Option<&str>,
         iterate_rules: bool,
@@ -415,13 +435,14 @@ impl PyCompiledShapes {
         max_validation_depth: usize,
         focus_nodes: Vec<String>,
         use_shapes: Vec<String>,
-    ) -> PyResult<(String, Vec<String>)> {
-        let rdf_format = format(rdf_format)?;
-        py.detach(|| {
-            let mut data = rdf_format.parse(source, base)?;
-            let warnings = self.inner.expand_rules(
-                &mut data,
-                Options {
+        additions_only: bool,
+    ) -> PyResult<(Py<PyAny>, Vec<String>)> {
+        let direct = rdf_format == "terms";
+        let input = terms::Input::read(source, rdf_format, base)?;
+        let (output, warnings) = py
+            .detach(|| {
+                let mut data = input.parse()?;
+                let options = Options {
                     iterate_rules,
                     max_rule_iterations,
                     max_validation_depth,
@@ -436,11 +457,20 @@ impl PyCompiledShapes {
                         .collect::<std::result::Result<_, _>>()
                         .map_err(|e| Error::Invalid(e.to_string()))?,
                     ..Options::default()
-                },
-            )?;
-            Ok((serialize_graph(&data)?, warnings))
-        })
-        .map_err(error)
+                };
+                if additions_only {
+                    let delta = self.inner.expand_rules_delta(&mut data, options)?;
+                    Ok((
+                        terms::Output::graph(&delta.graph, direct)?,
+                        delta.recursion_warnings,
+                    ))
+                } else {
+                    let warnings = self.inner.expand_rules(&mut data, options)?;
+                    Ok((terms::Output::graph(&data, direct)?, warnings))
+                }
+            })
+            .map_err(error)?;
+        Ok((output.into_python(py)?, warnings))
     }
 }
 

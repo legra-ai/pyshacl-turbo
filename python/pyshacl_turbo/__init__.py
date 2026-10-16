@@ -117,7 +117,7 @@ class CompiledShapes:
             isinstance(data_graph, (Graph, Input)) or is_oxigraph_store(data_graph)
         ):
             raise TypeError("inplace=True requires an RDFLib Graph or pyoxigraph Store")
-        data = _input(data_graph, data_graph_format)
+        data = _input(data_graph, data_graph_format, direct=True)
         conforms, report, text, expanded, recursion_warnings = self._native.validate(
             data.source,
             data.format,
@@ -158,7 +158,7 @@ class CompiledShapes:
             isinstance(data_graph, (Graph, Input)) or is_oxigraph_store(data_graph)
         ):
             raise TypeError("inplace=True requires an RDFLib Graph or pyoxigraph Store")
-        data = _input(data_graph, data_graph_format)
+        data = _input(data_graph, data_graph_format, direct=True)
         expanded, recursion_warnings = self._native.expand(
             data.source,
             data.format,
@@ -168,8 +168,12 @@ class CompiledShapes:
             15 if max_validation_depth is None else max_validation_depth,
             _expand_names(data.namespaces or dict(self.graph.namespaces()), focus_nodes),
             _expand_names(self.graph, use_shapes),
+            inplace and isinstance(data_graph, Graph),
         )
         _emit_recursion_warnings(recursion_warnings)
+        if inplace and isinstance(data_graph, Graph):
+            commit_serialized(data_graph, expanded, data.blank_nodes)
+            return data_graph
         result = _graph(
             expanded,
             data.blank_nodes,
@@ -180,7 +184,6 @@ class CompiledShapes:
             result.bind(prefix, namespace)
         if inplace:
             commit_serialized(data_graph, expanded, data.blank_nodes, before=data)
-            return data_graph if isinstance(data_graph, Graph) else result
         return result
 
 
