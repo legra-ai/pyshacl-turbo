@@ -15,7 +15,7 @@
 SHACL validation for Python, powered by Rust. The goal is a **complete drop-in
 replacement for pySHACL**, with additional features and better performance.
 
-Companion projects in the Legra RDF stack are
+Companion turbo projects are
 [rdflib-turbo](https://github.com/legra-ai/rdflib-turbo), for native RDF datasets,
 parsing and SPARQL, and [owlrl-turbo](https://github.com/legra-ai/owlrl-turbo), for
 native RDFS/OWL-RL inference using that dataset runtime. Both begin with limited
