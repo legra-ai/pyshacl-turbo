@@ -1,27 +1,21 @@
 # pyshacl-turbo
 
-[![Python line coverage](https://legra-ai.github.io/pyshacl-turbo/python-lines.svg)](https://legra-ai.github.io/pyshacl-turbo/)
-[![Python branch coverage](https://legra-ai.github.io/pyshacl-turbo/python-branches.svg)](https://legra-ai.github.io/pyshacl-turbo/)
-[![Rust line coverage](https://legra-ai.github.io/pyshacl-turbo/rust-lines.svg)](https://legra-ai.github.io/pyshacl-turbo/)
-[![Rust region coverage](https://legra-ai.github.io/pyshacl-turbo/rust-regions.svg)](https://legra-ai.github.io/pyshacl-turbo/)
-[![Rust function coverage](https://legra-ai.github.io/pyshacl-turbo/rust-functions.svg)](https://legra-ai.github.io/pyshacl-turbo/)
-
-Coverage badges update from successful main-branch CI measurements, including the
-daily scheduled run. Python lines and branches are separate; Rust badges measure
-owned native source exercised by Rust and Python integration tests.
-Rust branch coverage and dependency/vendored-patch coverage are not measured by these badges.
-
 [![PyPI version](https://img.shields.io/pypi/v/pyshacl-turbo)](https://pypi.org/project/pyshacl-turbo/)
 [![PyPI downloads](https://img.shields.io/pypi/dm/pyshacl-turbo)](https://pypi.org/project/pyshacl-turbo/)
 [![Python 3.11+](https://img.shields.io/badge/Python-3.11%2B-3776AB?logo=python&logoColor=white)](https://github.com/legra-ai/pyshacl-turbo/blob/main/pyproject.toml)
-[![Rust](https://img.shields.io/badge/Rust-1.98%2B-DEA584?logo=rust&logoColor=black)](https://github.com/legra-ai/pyshacl-turbo/blob/main/rust-toolchain.toml)
+[![Rust](https://img.shields.io/badge/Rust-1.99.1%2B-DEA584?logo=rust&logoColor=black)](https://github.com/legra-ai/pyshacl-turbo/blob/main/rust-toolchain.toml)
 [![License: MIT OR Apache-2.0](https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-blue)](https://github.com/legra-ai/pyshacl-turbo/blob/main/LICENSE-MIT)
-[![Python coverage measured by pytest-cov](https://legra-ai.github.io/pyshacl-turbo/coverage.svg)](https://legra-ai.github.io/pyshacl-turbo/)
 [![pySHACL non-JS suite: 100% (403/403)](https://img.shields.io/badge/pySHACL%20non--JS%20suite-100%25-brightgreen)](https://github.com/legra-ai/pyshacl-turbo/blob/main/docs/compatibility.md#measurements)
 
 [![Tests and wheels](https://github.com/legra-ai/pyshacl-turbo/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/legra-ai/pyshacl-turbo/actions/workflows/ci.yml)
 [![Compatibility](https://github.com/legra-ai/pyshacl-turbo/actions/workflows/compatibility.yml/badge.svg?branch=main)](https://github.com/legra-ai/pyshacl-turbo/actions/workflows/compatibility.yml)
 [![Regex](https://github.com/legra-ai/pyshacl-turbo/actions/workflows/regex.yml/badge.svg?branch=main)](https://github.com/legra-ai/pyshacl-turbo/actions/workflows/regex.yml)
+
+[![Python line coverage](https://legra-ai.github.io/pyshacl-turbo/python-lines.svg)](https://legra-ai.github.io/pyshacl-turbo/)
+[![Python branch coverage](https://legra-ai.github.io/pyshacl-turbo/python-branches.svg)](https://legra-ai.github.io/pyshacl-turbo/)
+[![Rust line coverage](https://legra-ai.github.io/pyshacl-turbo/rust-lines.svg)](https://legra-ai.github.io/pyshacl-turbo/)
+[![Rust region coverage](https://legra-ai.github.io/pyshacl-turbo/rust-regions.svg)](https://legra-ai.github.io/pyshacl-turbo/)
+[![Rust function coverage](https://legra-ai.github.io/pyshacl-turbo/rust-functions.svg)](https://legra-ai.github.io/pyshacl-turbo/)
 
 SHACL validation for Python, powered by Rust. The goal is a **complete drop-in
 replacement for pySHACL**, with additional features and better performance.
@@ -328,14 +322,19 @@ pull requests, daily, and on manual dispatch:
 | Compatibility | Pinned W3C Core/SPARQL cases through document and Graph APIs, the adapted non-JS pySHACL suite, and direct API/CLI comparisons. Suite adaptations are independently checked against both engines. Detailed reports are uploaded as artifacts. |
 | Regex | The patched matcher's full upstream suite, unit tests with Turbo's base features, Python-mode VM regressions, and formatting, using its own pinned test dependencies. |
 
-The [Python coverage report](https://legra-ai.github.io/pyshacl-turbo/) measures
-the complete `pyshacl_turbo` Python package with `pytest-cov`, including uncovered
-files and branches. CI requires **100% line and branch coverage**
-on Linux Python 3.13. XML, JSON and HTML reports are uploaded for each run; passing
-`main` runs publish the HTML report and measured percentage badge to GitHub Pages.
-`make test-coverage` generates the same report locally in `htmlcov/`.
-This measures Python API/CLI code coverage; it does not measure Rust code coverage
-or SHACL compatibility. No package files are omitted from the denominator.
+The [coverage reports](https://legra-ai.github.io/pyshacl-turbo/) update after
+successful main-branch CI, including the daily scheduled run. Python lines and
+branches are measured separately across the complete `pyshacl_turbo` package;
+CI requires **100% line and branch coverage**. Rust lines, regions and functions
+measure owned native source exercised by Rust and Python integration tests.
+Rust branches and dependency/vendored-patch coverage are not measured.
+Each published snapshot records its tested revision and measurement date.
+
+Run `make test-coverage` for Python reports in `htmlcov/`, or
+`make test-rust-coverage` for combined native reports in `native-coverage/`.
+See [native coverage](https://github.com/legra-ai/pyshacl-turbo/blob/main/docs/native-coverage.md)
+for measurement scope and provenance. Code coverage is separate from SHACL
+compatibility.
 
 A green Compatibility badge means the documented suite baselines hold. The
 [compatibility report](https://github.com/legra-ai/pyshacl-turbo/blob/main/docs/compatibility.md) records suite adaptations and the
