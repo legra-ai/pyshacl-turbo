@@ -1,7 +1,11 @@
-import hashlib, json, statistics, time
+import hashlib
+import json
+import statistics
+import time
 from pathlib import Path
+
 import pyshacl_turbo as t
-from rdflib import Graph, Namespace, Literal
+from rdflib import Graph, Literal, Namespace
 
 E = Namespace("urn:function-bench:")
 g = Graph()
