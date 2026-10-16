@@ -170,6 +170,9 @@ class CompiledShapes:
             _expand_names(self.graph, use_shapes),
         )
         _emit_recursion_warnings(recursion_warnings)
+        if inplace and isinstance(data_graph, Graph):
+            commit_serialized(data_graph, expanded, data.blank_nodes, before=data)
+            return data_graph
         result = _graph(
             expanded,
             data.blank_nodes,
@@ -180,7 +183,6 @@ class CompiledShapes:
             result.bind(prefix, namespace)
         if inplace:
             commit_serialized(data_graph, expanded, data.blank_nodes, before=data)
-            return data_graph if isinstance(data_graph, Graph) else result
         return result
 
 

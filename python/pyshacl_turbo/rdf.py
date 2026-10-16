@@ -223,6 +223,8 @@ def commit_serialized(target, source, nodes=None, *, before=None):
     elif isinstance(target, Input):
         target.source, target.format = source, "nquads"
     else:
+        if before is not None:
+            source = _native.additions(before.source, before.format, source)
         merge_graph(target, decode(source, nodes, preserve_ids=True))
 
 
