@@ -104,7 +104,8 @@ def test_toolchains_and_hook_dependencies():
 def test_formatting_jobs_install_the_pinned_nightly(workflow, job):
     document = yaml.safe_load((ROOT / ".github/workflows" / workflow).read_text())
     assert any(
-        step.get("uses") == "dtolnay/rust-toolchain@nightly-2026-10-16"
+        step.get("uses") == "dtolnay/rust-toolchain@nightly"
+        and step.get("with", {}).get("toolchain") == "nightly-2026-10-16"
         for step in document["jobs"][job]["steps"]
     )
 

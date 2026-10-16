@@ -89,8 +89,9 @@ jobs:
       - name: Build native extension and install pinned test dependencies
         # Formatting uses its own nightly pin; compilation remains on 1.99.1.
         run: make dev PYTHON=${{ matrix.python }}
-      - uses: dtolnay/rust-toolchain@nightly-2026-10-16
+      - uses: dtolnay/rust-toolchain@nightly
         with:
+          toolchain: nightly-2026-10-16
           components: rustfmt
       - name: Python, Rust, formatting and lint checks
         run: make check
