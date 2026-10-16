@@ -117,7 +117,7 @@ class CompiledShapes:
             isinstance(data_graph, (Graph, Input)) or is_oxigraph_store(data_graph)
         ):
             raise TypeError("inplace=True requires an RDFLib Graph or pyoxigraph Store")
-        data = _input(data_graph, data_graph_format)
+        data = _input(data_graph, data_graph_format, direct=True)
         conforms, report, text, expanded, recursion_warnings = self._native.validate(
             data.source,
             data.format,
@@ -158,7 +158,7 @@ class CompiledShapes:
             isinstance(data_graph, (Graph, Input)) or is_oxigraph_store(data_graph)
         ):
             raise TypeError("inplace=True requires an RDFLib Graph or pyoxigraph Store")
-        data = _input(data_graph, data_graph_format)
+        data = _input(data_graph, data_graph_format, direct=True)
         expanded, recursion_warnings = self._native.expand(
             data.source,
             data.format,
