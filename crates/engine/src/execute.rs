@@ -1,4 +1,4 @@
-use std::collections::{HashMap, HashSet, VecDeque};
+use std::collections::{HashMap, HashSet};
 
 use oxigraph::model::*;
 use oxigraph::sparql::QueryResults;
@@ -7,6 +7,7 @@ use crate::compile::{CompiledShapes, Shape, Target};
 use crate::constraints::Constraint;
 use crate::functions::Functions;
 use crate::graph::*;
+use crate::path::Path;
 use crate::{Error, Result};
 
 #[derive(Clone, Debug)]
@@ -57,6 +58,10 @@ struct EvaluationStep {
 }
 
 struct Evaluation {
+    path_values: HashMap<(Path, Term), Vec<Term>>,
+    memberships: HashMap<(Term, Term), bool>,
+    class_targets: HashMap<Term, HashSet<Term>>,
+    cached_terms: usize,
     functions: Functions,
     path: Vec<EvaluationStep>,
     max_depth: usize,
@@ -74,12 +79,74 @@ struct EvaluationBatch {
 impl Evaluation {
     fn new(max_depth: usize) -> Self {
         Self {
+            path_values: HashMap::new(),
+            memberships: HashMap::new(),
+            class_targets: HashMap::new(),
+            cached_terms: 0,
             functions: Functions::default(),
             path: Vec::new(),
             max_depth,
             warnings: Vec::new(),
             batch: None,
         }
+    }
+
+    fn clear_traversals(&mut self) {
+        self.cached_terms = 0;
+        self.path_values.clear();
+        self.memberships.clear();
+        self.class_targets.clear();
+    }
+
+    fn reserve_traversal(&mut self, terms: usize) -> bool {
+        if terms > 32768 {
+            return false;
+        }
+        if self.path_values.len() + self.memberships.len() + self.class_targets.len() >= 1024
+            || self.cached_terms + terms > 32768
+        {
+            self.clear_traversals();
+        }
+        self.cached_terms += terms;
+        true
+    }
+
+    fn values(&mut self, path: &Path, data: &Dataset, focus: &Term) -> Result<Vec<Term>> {
+        if matches!(path, Path::Predicate(_)) {
+            return path.values(data, focus);
+        }
+        let key = (path.clone(), focus.clone());
+        if let Some(values) = self.path_values.get(&key) {
+            return Ok(values.clone());
+        }
+        let values = path.values(data, focus)?;
+        if self.reserve_traversal(values.len()) {
+            self.path_values.insert(key, values.clone());
+        }
+        Ok(values)
+    }
+
+    fn is_instance(&mut self, data: &Dataset, value: &Term, class: &Term) -> Result<bool> {
+        let key = (value.clone(), class.clone());
+        if let Some(result) = self.memberships.get(&key) {
+            return Ok(*result);
+        }
+        let result = is_instance(data, value, class)?;
+        if self.reserve_traversal(1) {
+            self.memberships.insert(key, result);
+        }
+        Ok(result)
+    }
+
+    fn targets(&mut self, data: &Dataset, class: &Term) -> Result<HashSet<Term>> {
+        if let Some(nodes) = self.class_targets.get(class) {
+            return Ok(nodes.clone());
+        }
+        let nodes = instances(data, class)?;
+        if self.reserve_traversal(nodes.len()) {
+            self.class_targets.insert(class.clone(), nodes.clone());
+        }
+        Ok(nodes)
     }
 
     fn describe_path(&self, shapes: &[Shape], current: Option<EvaluationStep>) -> String {
@@ -189,11 +256,16 @@ impl CompiledShapes {
             .iter()
             .find(|shape| shape.node.to_string() == node)
             .ok_or_else(|| Error::Invalid(format!("Unknown shape: {node}")))?;
-        self.focus_nodes_with_advanced(shape, data, advanced)
+        self.focus_nodes_with_advanced(shape, data, advanced, &mut Evaluation::new(15))
     }
 
-    fn focus_nodes(&self, shape: &Shape, data: &Dataset) -> Result<Vec<Term>> {
-        self.focus_nodes_with_advanced(shape, data, true)
+    fn focus_nodes(
+        &self,
+        shape: &Shape,
+        data: &Dataset,
+        evaluation: &mut Evaluation,
+    ) -> Result<Vec<Term>> {
+        self.focus_nodes_with_advanced(shape, data, true, evaluation)
     }
 
     /// Reverse declared targets for active node shapes. Data is a reusable
@@ -203,12 +275,13 @@ impl CompiledShapes {
         data: &Dataset,
         skip: &HashSet<Term>,
     ) -> Result<HashMap<Term, Vec<Term>>> {
+        let mut evaluation = Evaluation::new(15);
         let mut index: HashMap<Term, Vec<Term>> = HashMap::new();
         for shape in &self.shapes {
             if shape.deactivated || shape.path.is_some() || skip.contains(&shape.node) {
                 continue;
             }
-            for node in self.focus_nodes(shape, data)? {
+            for node in self.focus_nodes(shape, data, &mut evaluation)? {
                 index.entry(node).or_default().push(shape.node.clone());
             }
         }
@@ -223,6 +296,7 @@ impl CompiledShapes {
         shape: &Shape,
         data: &Dataset,
         advanced: bool,
+        evaluation: &mut Evaluation,
     ) -> Result<Vec<Term>> {
         let mut nodes = HashSet::new();
         for target in &shape.targets {
@@ -231,15 +305,7 @@ impl CompiledShapes {
                     nodes.insert(node.clone());
                 }
                 Target::Class(class) => {
-                    let mut pending = VecDeque::from([class.clone()]);
-                    let mut visited = HashSet::new();
-                    while let Some(class) = pending.pop_front() {
-                        if !visited.insert(class.clone()) {
-                            continue;
-                        }
-                        nodes.extend(subjects(data, &iri(RDF, "type"), Some(&class))?);
-                        pending.extend(subjects(data, &iri(RDFS, "subClassOf"), Some(&class))?);
-                    }
+                    nodes.extend(evaluation.targets(data, class)?);
                 }
                 Target::Subjects(predicate) => {
                     nodes.extend(subjects(data, predicate, None)?);
@@ -335,7 +401,7 @@ impl CompiledShapes {
             let mut has_values = shape.path.is_none();
             if let Some(path) = &shape.path {
                 for node in focus {
-                    if !path.values(data, node)?.is_empty() {
+                    if !evaluation.values(path, data, node)?.is_empty() {
                         has_values = true;
                         break;
                     }
@@ -377,7 +443,7 @@ impl CompiledShapes {
             )));
         }
         let values = if let Some(path) = &shape.path {
-            path.values(data, focus)?
+            evaluation.values(path, data, focus)?
         } else {
             vec![focus.clone()]
         };
@@ -485,7 +551,7 @@ impl CompiledShapes {
                 }
                 Constraint::Class(class) => {
                     for value in &values {
-                        if !is_instance(data, value, class)? {
+                        if !evaluation.is_instance(data, value, class)? {
                             results.push(violation("ClassConstraintComponent", Some(value)));
                         }
                     }
@@ -813,13 +879,18 @@ impl CompiledShapes {
 
     /// Mutates only this explicitly supplied store. Python validates a fresh store
     /// and commits additions to the caller's Graph only after successful execution.
+    fn has_active_rules(&self, options: &Options) -> bool {
+        self.execution_order.iter().any(|&index| {
+            let shape = &self.shapes[index];
+            (options.use_shapes.is_empty() || options.use_shapes.contains(&shape.node))
+                && shape.rules.iter().any(|rule| !rule.deactivated)
+        })
+    }
+
     pub fn expand_rules(&self, data: &mut Dataset, options: Options) -> Result<Vec<String>> {
-        if data.iter().any(|q| !q.graph_name.is_default_graph()) {
-            let before = with_union(data);
-            let mut working = before.clone();
-            let warnings = self.expand_rules_inner(&mut working, options, None)?;
-            commit_additions(data, &before, &working);
-            return Ok(warnings);
+        if self.has_active_rules(&options) && data.iter().any(|q| !q.graph_name.is_default_graph())
+        {
+            return Ok(self.expand_rules_delta(data, options)?.recursion_warnings);
         }
         self.expand_rules_inner(data, options, None)
     }
@@ -831,9 +902,10 @@ impl CompiledShapes {
         options: Options,
     ) -> Result<RuleExpansion> {
         let mut additions = Dataset::new();
-        let recursion_warnings = if data.iter().any(|q| !q.graph_name.is_default_graph()) {
-            let before = with_union(data);
-            let mut working = before.clone();
+        let recursion_warnings = if self.has_active_rules(&options)
+            && data.iter().any(|q| !q.graph_name.is_default_graph())
+        {
+            let mut working = with_union(data);
             let warnings = self.expand_rules_inner(&mut working, options, Some(&mut additions))?;
             data.extend(additions.iter());
             warnings
@@ -880,7 +952,8 @@ impl CompiledShapes {
                     if rule.deactivated {
                         continue;
                     }
-                    let focus = self.selected_focus_nodes(shape, data, &options)?;
+                    let focus =
+                        self.selected_focus_nodes(shape, data, &options, &mut evaluation)?;
                     let functions = self.functions.for_dataset(data);
                     evaluation.functions = functions.clone();
                     let mut additions = HashSet::new();
@@ -956,13 +1029,18 @@ impl CompiledShapes {
                     }
                     // All focus nodes of a rule see the same snapshot; subsequent
                     // rules see the complete batch of additions.
+                    let mut rule_changed = false;
                     for quad in additions {
                         if data.insert(&quad) {
+                            rule_changed = true;
                             if let Some(delta) = delta.as_deref_mut() {
                                 delta.insert(&quad);
                             }
                             changed = true;
                         }
+                    }
+                    if rule_changed {
+                        evaluation.clear_traversals();
                     }
                 }
                 if !options.iterate_rules || !changed {
@@ -978,11 +1056,12 @@ impl CompiledShapes {
         shape: &Shape,
         data: &Dataset,
         options: &Options,
+        evaluation: &mut Evaluation,
     ) -> Result<Vec<Term>> {
         if !options.use_shapes.is_empty() && !options.focus_nodes.is_empty() {
             return Ok(options.focus_nodes.clone());
         }
-        let mut nodes = self.focus_nodes(shape, data)?;
+        let mut nodes = self.focus_nodes(shape, data, evaluation)?;
         if !options.focus_nodes.is_empty() {
             nodes.retain(|node| options.focus_nodes.contains(node));
         }
@@ -1011,7 +1090,7 @@ impl CompiledShapes {
             if shape.deactivated {
                 continue;
             }
-            let focus_nodes = self.selected_focus_nodes(shape, data, &options)?;
+            let focus_nodes = self.selected_focus_nodes(shape, data, &options, &mut evaluation)?;
             self.evaluate_batch(index, &focus_nodes, data, &mut violations, &mut evaluation)?;
             if options.abort_on_first && !violations.is_empty() {
                 break;
@@ -1386,4 +1465,90 @@ fn commit_store(store: &oxigraph::store::Store, before: &Dataset, after: &Datase
                 .map(|q| q.into_owned()),
         )
         .map_err(|e| Error::Runtime(format!("Store commit failed: {e}")))
+}
+
+#[cfg(test)]
+mod union_tests {
+    use super::*;
+    use oxigraph::io::RdfFormat;
+
+    #[test]
+    fn validation_without_active_rules_builds_only_its_validation_union() {
+        let shapes = parse("@prefix sh:<http://www.w3.org/ns/shacl#> . <urn:S> sh:targetNode <urn:s>; sh:path <urn:p>; sh:minCount 1.", RdfFormat::Turtle, None).unwrap();
+        let program = CompiledShapes::compile(shapes, true).unwrap();
+        let mut data =
+            parse_dataset("<urn:g> { <urn:s> <urn:p> 1 }", RdfFormat::TriG, None).unwrap();
+        UNION_BUILDS.with(|count| count.set(0));
+        assert!(
+            program
+                .validate(&mut data, Options::default())
+                .unwrap()
+                .conforms
+        );
+        assert_eq!(UNION_BUILDS.with(std::cell::Cell::get), 1);
+        assert_eq!(data.len(), 1);
+        assert!(!data.iter().any(|q| q.graph_name.is_default_graph()));
+        assert!(
+            program
+                .expand_rules(
+                    &mut data,
+                    Options {
+                        max_rule_iterations: 0,
+                        ..Options::default()
+                    }
+                )
+                .is_err()
+        );
+    }
+}
+
+#[cfg(test)]
+mod traversal_tests {
+    use super::*;
+    use crate::path::{PATH_EVALUATIONS, Path};
+
+    #[test]
+    fn traversal_cache_retention_is_bounded() {
+        let mut evaluation = Evaluation::new(15);
+        let path = Path::OneOrMore(Box::new(Path::Predicate(iri("urn:", "p"))));
+        let data = Dataset::new();
+        for index in 0..1025 {
+            let focus = Term::from(iri("urn:node:", &index.to_string()));
+            assert!(evaluation.values(&path, &data, &focus).unwrap().is_empty());
+            assert!(evaluation.path_values.len() <= 1024);
+        }
+        assert!(!evaluation.reserve_traversal(32769));
+        evaluation.clear_traversals();
+        assert!(evaluation.path_values.is_empty());
+        assert_eq!(evaluation.cached_terms, 0);
+    }
+
+    #[test]
+    fn property_paths_are_reused_only_until_the_phase_changes() {
+        let mut evaluation = Evaluation::new(15);
+        let path = Path::OneOrMore(Box::new(Path::Predicate(iri("urn:", "next"))));
+        let focus = Term::from(iri("urn:", "s"));
+        let mut data = parse(
+            "<urn:s> <urn:next> <urn:t> .",
+            oxigraph::io::RdfFormat::Turtle,
+            None,
+        )
+        .unwrap();
+        PATH_EVALUATIONS.with(|count| count.set(0));
+        assert_eq!(evaluation.values(&path, &data, &focus).unwrap().len(), 1);
+        assert_eq!(evaluation.values(&path, &data, &focus).unwrap().len(), 1);
+        assert_eq!(PATH_EVALUATIONS.with(std::cell::Cell::get), 1);
+        data.insert(
+            Quad::new(
+                iri("urn:", "t"),
+                iri("urn:", "next"),
+                iri("urn:", "u"),
+                GraphName::DefaultGraph,
+            )
+            .as_ref(),
+        );
+        evaluation.clear_traversals();
+        assert_eq!(evaluation.values(&path, &data, &focus).unwrap().len(), 2);
+        assert_eq!(PATH_EVALUATIONS.with(std::cell::Cell::get), 2);
+    }
 }

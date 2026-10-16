@@ -57,6 +57,8 @@ class _NativeBlankNodes(dict):
 
 
 def decode(source, blank_nodes=None, multigraph=False, preserve_ids=False, identifier=None):
+    if not isinstance(source, str):
+        return _decode_terms(source, blank_nodes, multigraph, preserve_ids, identifier)
     dataset = Dataset(default_union=True)
     parser = _Parser()
     parser.sink = dataset
@@ -70,6 +72,70 @@ def decode(source, blank_nodes=None, multigraph=False, preserve_ids=False, ident
     graph = Graph(identifier=identifier)
     graph += dataset.default_graph
     return graph
+
+
+def _decode_terms(source, blank_nodes, multigraph, preserve_ids, identifier):
+    records, quads = source
+    nodes = blank_nodes if blank_nodes is not None else {}
+    if preserve_ids:
+        nodes = _NativeBlankNodes(nodes)
+    terms = []
+    for kind, value, datatype, language in records:
+        if kind == 0:
+            term = URIRef(value)
+        elif kind == 1:
+            term = nodes.get(value)
+            if term is None:
+                term = nodes.setdefault(value, BNode())
+        elif kind == 2:
+            term = Literal(value, language, URIRef(datatype) if datatype else None, normalize=False)
+        else:
+            raise ValueError("Invalid native RDF term record")
+        terms.append(term)
+    named = multigraph or any(g is not None for _, _, _, g in quads)
+    result = Dataset(default_union=True) if named else Graph(identifier=identifier)
+    for s, p, o, g in quads:
+        destination = (
+            (result.default_graph if g is None else result.graph(terms[g])) if named else result
+        )
+        destination.add((terms[s], terms[p], terms[o]))
+    return result
+
+
+def _term_input(source):
+    records, quads, indices, nodes = [], [], {}, {}
+
+    def intern(term):
+        index = indices.get(term)
+        if index is not None:
+            return index
+        if isinstance(term, URIRef):
+            record = (0, str(term), None, None)
+        elif isinstance(term, BNode):
+            nodes[str(term)] = term
+            record = (1, str(term), None, None)
+        elif isinstance(term, Literal):
+            record = (
+                2,
+                str(term),
+                str(term.datatype) if term.datatype and not term.language else None,
+                term.language,
+            )
+        else:
+            raise TypeError("Expected an RDFLib IRI, blank node or literal")
+        index = len(records)
+        indices[term] = index
+        records.append(record)
+        return index
+
+    if source.context_aware:
+        default = source.default_graph.identifier
+        for s, p, o, g in source.quads():
+            quads.append((intern(s), intern(p), intern(o), None if g == default else intern(g)))
+    else:
+        for s, p, o in source:
+            quads.append((intern(s), intern(p), intern(o), None))
+    return Input((records, quads), "terms", None, nodes, dict(source.namespaces()))
 
 
 def union(source):
@@ -196,7 +262,7 @@ def load_from_source(
 
 @dataclass
 class Input:
-    source: str
+    source: str | tuple
     format: str
     base: str | None
     blank_nodes: dict
@@ -221,14 +287,15 @@ def commit_serialized(target, source, nodes=None, *, before=None):
             pyoxigraph.parse(source, format=pyoxigraph.RdfFormat.N_QUADS, rename_blank_nodes=False)
         )
     elif isinstance(target, Input):
-        target.source, target.format = source, "nquads"
+        target.source = source
+        target.format = "nquads" if isinstance(source, str) else "terms"
     else:
         if before is not None:
             source = _native.additions(before.source, before.format, source)
         merge_graph(target, decode(source, nodes, preserve_ids=True))
 
 
-def input_graph(source, rdf_format=None, *, flatten=False):
+def input_graph(source, rdf_format=None, *, flatten=False, direct=False):
     if isinstance(source, Input):
         if flatten:
             return input_graph(load_from_source(source), flatten=True)
@@ -245,6 +312,8 @@ def input_graph(source, rdf_format=None, *, flatten=False):
         )
     if not isinstance(source, Graph):
         source = load_from_source(source, rdf_format=rdf_format)
+    if direct:
+        return _term_input(source)
     graph = union(source) if source.context_aware else source
     nodes = {str(n): n for n in graph.all_nodes() if isinstance(n, BNode)}
     if source.context_aware and not flatten:
