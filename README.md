@@ -164,6 +164,13 @@ program = compile_shapes("shapes.ttl", advanced=True)
 conforms, report_graph, report_text = program.validate("data.ttl")
 ```
 
+Repeated calls automatically reuse native compilation for matching shapes content,
+namespace bindings and compilation options. SPARQL execution also reuses optimized
+algebra for matching statements and initially bound variable names. Both caches
+retain at most 128 entries; each execution reads current data and bindings.
+Explicit `compile_shapes()` still avoids loading and serializing unchanged shapes
+on every call. See [automatic preparation](https://github.com/legra-ai/pyshacl-turbo/blob/main/docs/preparation.md).
+
 Inputs include RDFLib Graph/Dataset objects, paths, URLs, file objects, RDF text
 and bytes. Supported formats include Turtle, N-Triples, N-Quads, TriG, RDF/XML,
 N3 and JSON-LD. Named graphs remain available to SPARQL GRAPH clauses; Core

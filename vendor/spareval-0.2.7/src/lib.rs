@@ -9,6 +9,8 @@ mod error;
 mod eval;
 mod expression;
 mod model;
+#[cfg(feature = "cached-query-plans")]
+mod plan_cache;
 mod service;
 mod update;
 
@@ -80,6 +82,27 @@ impl QueryEvaluator {
     #[inline]
     pub fn new() -> Self {
         Self::default()
+    }
+
+    fn prepare_pattern(
+        &self,
+        pattern: &spargebra::algebra::GraphPattern,
+        substitutions: &HashMap<Variable, Term>,
+    ) -> Arc<GraphPattern> {
+        if self.without_optimizations {
+            return Arc::new(GraphPattern::from(pattern));
+        }
+        #[cfg(feature = "cached-query-plans")]
+        {
+            plan_cache::prepare(pattern, substitutions.keys().cloned().collect())
+        }
+        #[cfg(not(feature = "cached-query-plans"))]
+        {
+            Arc::new(Optimizer::optimize_graph_pattern_with_bound_variables(
+                GraphPattern::from(pattern),
+                substitutions.keys().cloned(),
+            ))
+        }
     }
 
     /// Prepare the SPARQL query to be executed.
@@ -686,13 +709,7 @@ impl PreparedQuery<'_> {
             Query::Select {
                 pattern, base_iri, ..
             } => {
-                let mut pattern = GraphPattern::from(pattern);
-                if !self.evaluator.without_optimizations {
-                    pattern = Optimizer::optimize_graph_pattern_with_bound_variables(
-                        pattern,
-                        self.substitutions.keys().cloned(),
-                    );
-                }
+                let pattern = self.evaluator.prepare_pattern(pattern, &self.substitutions);
                 let planning_duration = start_planning.elapsed();
                 let (results, explanation) =
                     match self
@@ -711,13 +728,7 @@ impl PreparedQuery<'_> {
             Query::Ask {
                 pattern, base_iri, ..
             } => {
-                let mut pattern = GraphPattern::from(pattern);
-                if !self.evaluator.without_optimizations {
-                    pattern = Optimizer::optimize_graph_pattern_with_bound_variables(
-                        pattern,
-                        self.substitutions.keys().cloned(),
-                    );
-                }
+                let pattern = self.evaluator.prepare_pattern(pattern, &self.substitutions);
                 let planning_duration = start_planning.elapsed();
                 let (results, explanation) =
                     match self
@@ -739,13 +750,7 @@ impl PreparedQuery<'_> {
                 base_iri,
                 ..
             } => {
-                let mut pattern = GraphPattern::from(pattern);
-                if !self.evaluator.without_optimizations {
-                    pattern = Optimizer::optimize_graph_pattern_with_bound_variables(
-                        pattern,
-                        self.substitutions.keys().cloned(),
-                    );
-                }
+                let pattern = self.evaluator.prepare_pattern(pattern, &self.substitutions);
                 let planning_duration = start_planning.elapsed();
                 let (results, explanation) =
                     match self
@@ -766,13 +771,7 @@ impl PreparedQuery<'_> {
             Query::Describe {
                 pattern, base_iri, ..
             } => {
-                let mut pattern = GraphPattern::from(pattern);
-                if !self.evaluator.without_optimizations {
-                    pattern = Optimizer::optimize_graph_pattern_with_bound_variables(
-                        pattern,
-                        self.substitutions.keys().cloned(),
-                    );
-                }
+                let pattern = self.evaluator.prepare_pattern(pattern, &self.substitutions);
                 let planning_duration = start_planning.elapsed();
                 let (results, explanation) =
                     match self
@@ -1102,6 +1101,110 @@ mod tests {
     use oxrdf::vocab::xsd;
     use oxrdf::{Literal, Term};
     use sparopt::algebra::{Expression, GraphPattern};
+
+    #[cfg(feature = "cached-query-plans")]
+    #[test]
+    fn cached_plans_keep_base_iris_and_generated_blank_nodes_per_execution() {
+        let evaluator = QueryEvaluator::new();
+        let data = oxrdf::Dataset::new();
+        let mut previous_node = None;
+        for base in ["https://first.example/", "https://second.example/"] {
+            let query = spargebra::SparqlParser::new()
+                .with_base_iri(base)
+                .unwrap()
+                .parse_query("SELECT (IRI(\"relative\") AS ?iri) (BNODE() AS ?node) WHERE {}")
+                .unwrap();
+            let QueryResults::Solutions(mut rows) =
+                evaluator.prepare(&query).execute(&data).unwrap()
+            else {
+                panic!("expected solutions")
+            };
+            let row = rows.next().unwrap().unwrap();
+            assert_eq!(
+                row.get("iri"),
+                Some(&NamedNode::new(format!("{base}relative")).unwrap().into())
+            );
+            let node = row.get("node").unwrap().clone();
+            assert!(matches!(node, Term::BlankNode(_)));
+            assert_ne!(Some(&node), previous_node.as_ref());
+            previous_node = Some(node);
+        }
+    }
+
+    #[cfg(feature = "cached-query-plans")]
+    #[test]
+    fn cached_plans_keep_binding_values_and_function_callbacks_per_execution() {
+        let query = spargebra::SparqlParser::new()
+            .parse_query("SELECT ?this (<urn:current>() AS ?value) WHERE { FILTER(BOUND(?this)) }")
+            .unwrap();
+        let data = oxrdf::Dataset::new();
+        for value in [1, 2, 3] {
+            let evaluator = QueryEvaluator::new()
+                .with_custom_function(NamedNode::new("urn:current").unwrap(), move |_| {
+                    Some(Literal::from(value).into())
+                });
+            let this = Term::BlankNode(oxrdf::BlankNode::new(format!("node{value}")).unwrap());
+            let QueryResults::Solutions(mut rows) = evaluator
+                .prepare(&query)
+                .substitute_variable(Variable::new("this").unwrap(), this.clone())
+                .execute(&data)
+                .unwrap()
+            else {
+                panic!("expected solutions")
+            };
+            let row = rows.next().unwrap().unwrap();
+            assert_eq!(row.get("this"), Some(&this));
+            assert_eq!(row.get("value"), Some(&Literal::from(value).into()));
+            assert!(rows.next().is_none());
+            let QueryResults::Solutions(mut unbound) =
+                evaluator.prepare(&query).execute(&data).unwrap()
+            else {
+                panic!("expected solutions")
+            };
+            assert!(unbound.next().is_none());
+        }
+    }
+
+    #[cfg(feature = "cached-query-plans")]
+    #[test]
+    fn cached_plans_read_current_data_for_all_query_forms() {
+        for text in [
+            "SELECT ?s WHERE { ?s <urn:p> ?o }",
+            "ASK { ?s <urn:p> ?o }",
+            "CONSTRUCT { ?s <urn:q> ?o } WHERE { ?s <urn:p> ?o }",
+            "DESCRIBE ?s WHERE { ?s <urn:p> ?o }",
+        ] {
+            let query = spargebra::SparqlParser::new().parse_query(text).unwrap();
+            let evaluator = QueryEvaluator::new();
+            let mut data = oxrdf::Dataset::new();
+            for populated in [false, true, false] {
+                if populated {
+                    data.insert(
+                        oxrdf::Quad::new(
+                            NamedNode::new("urn:s").unwrap(),
+                            NamedNode::new("urn:p").unwrap(),
+                            Literal::from(1),
+                            GraphName::DefaultGraph,
+                        )
+                        .as_ref(),
+                    );
+                } else {
+                    data.clear();
+                }
+                for evaluator in [&evaluator, &evaluator.clone().without_optimizations()] {
+                    match evaluator.prepare(&query).execute(&data).unwrap() {
+                        QueryResults::Boolean(value) => assert_eq!(value, populated),
+                        QueryResults::Solutions(rows) => {
+                            assert_eq!(rows.count(), usize::from(populated))
+                        }
+                        QueryResults::Graph(rows) => {
+                            assert_eq!(rows.count(), usize::from(populated))
+                        }
+                    }
+                }
+            }
+        }
+    }
 
     fn check_custom_function_term_policy(exact: bool) {
         let name = NamedNode::new("urn:test:identity").unwrap();

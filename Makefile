@@ -4,7 +4,7 @@ MATURIN := $(CURDIR)/.venv/bin/maturin
 REGEX_MANIFEST := vendor/fancy-regex-0.19.2/Cargo.toml
 SPARQL_MANIFEST := vendor/spareval-0.2.7/Cargo.toml
 
-.PHONY: dev test test-compatibility test-regex test-sparql-evaluator test-coverage lint check benchmark benchmark-pipeline benchmark-targeting coverage
+.PHONY: dev test test-compatibility test-regex test-sparql-evaluator test-coverage lint check benchmark benchmark-pipeline benchmark-targeting benchmark-preparation coverage
 
 .venv/bin/python:
 	uv venv --python $(PYTHON) .venv
@@ -30,7 +30,7 @@ test-regex:
 
 test-sparql-evaluator:
 	cargo test --manifest-path $(SPARQL_MANIFEST) --locked --lib
-	cargo test --manifest-path $(SPARQL_MANIFEST) --locked --lib --features exact-custom-function-terms,undefined-functions-as-expression-errors
+	cargo test --manifest-path $(SPARQL_MANIFEST) --locked --lib --features exact-custom-function-terms,undefined-functions-as-expression-errors,cached-query-plans
 
 test-coverage:
 	$(VENV_PYTHON) -m pytest -q --cov --cov-context=test --cov-report=term-missing --cov-report=xml:python-coverage.xml --cov-report=json:python-coverage.json --cov-report=html:htmlcov
@@ -52,6 +52,9 @@ benchmark-pipeline:
 
 benchmark-targeting:
 	$(VENV_PYTHON) benchmarks/targeting.py --nodes 1000 --shapes 10 --repeats 5 --output benchmarks/targeting.json
+
+benchmark-preparation:
+	$(VENV_PYTHON) benchmarks/preparation.py --repeats 7 --output benchmarks/preparation.json
 
 coverage:
 	$(VENV_PYTHON) scripts/coverage_inventory.py

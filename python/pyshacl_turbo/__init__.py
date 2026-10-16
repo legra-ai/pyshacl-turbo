@@ -4,7 +4,7 @@ import logging
 import warnings
 from collections.abc import Iterable, Sequence
 from dataclasses import replace
-from functools import wraps
+from functools import lru_cache, wraps
 from importlib.metadata import version
 from pathlib import Path
 
@@ -68,6 +68,13 @@ __all__ = [
 ]
 
 
+@lru_cache(maxsize=128)
+def _compile_native(source, rdf_format, base, advanced, numeric_booleans, namespaces):
+    return _native.CompiledShapes(
+        source, rdf_format, base, advanced, numeric_booleans, list(namespaces)
+    )
+
+
 class CompiledShapes:
     """Reusable immutable shapes; each call gets its own Rust data store."""
 
@@ -75,13 +82,13 @@ class CompiledShapes:
         self.graph = load_from_source(shacl_graph, rdf_format=shacl_graph_format)
         shapes = _input(self.graph, flatten=True)
         self._blank_nodes = shapes.blank_nodes
-        self._native = _native.CompiledShapes(
-            shapes.source,
+        self._native = _compile_native(
+            "\n".join(sorted(shapes.source.splitlines())),
             shapes.format,
             shapes.base,
             advanced,
             isinstance(shacl_graph, Graph),
-            [(p, str(ns)) for p, ns in self.graph.namespaces()],
+            tuple((p, str(ns)) for p, ns in self.graph.namespaces()),
         )
 
     def targeting(
