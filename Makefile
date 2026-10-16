@@ -26,7 +26,7 @@ test-regex:
 	cargo test --manifest-path $(REGEX_MANIFEST) --locked
 	cargo test --manifest-path $(REGEX_MANIFEST) --locked --lib --no-default-features --features std,perf,unicode
 	cargo test --manifest-path $(REGEX_MANIFEST) --locked --lib --no-default-features --features std,perf,unicode,python-re python_re_tests
-	cargo fmt --manifest-path $(REGEX_MANIFEST) -- --check
+	cargo +nightly-2026-10-16 fmt --manifest-path $(REGEX_MANIFEST) -- --check
 
 test-sparql-evaluator:
 	cargo test --manifest-path $(SPARQL_MANIFEST) --locked --lib
@@ -51,6 +51,10 @@ benchmark-pipeline:
 	$(VENV_PYTHON) benchmarks/compare.py --nodes 100 1000 --repeats 5 --output benchmarks/latest.json
 
 .PHONY: benchmark-companions
+.PHONY: test-rust-coverage
+test-rust-coverage:
+	uv run --no-project --python 3.13 python scripts/native_coverage.py
+
 benchmark-companions:
 	uv venv --python $(PYTHON) .venv-companions
 	uv pip sync --python .venv-companions/bin/python --require-hashes --only-binary :all: benchmarks/companions-requirements.lock

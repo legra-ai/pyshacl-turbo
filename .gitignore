@@ -1,4 +1,5 @@
 /target/
+/native-coverage/
 /vendor/spareval-0.2.7/target/
 /.venv/
 /.venv-companions/

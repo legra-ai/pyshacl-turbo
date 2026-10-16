@@ -50,7 +50,7 @@ def test_release_checks_and_builds_the_prepared_revision():
         assert checkouts and all(
             step["with"]["ref"] == "${{ needs.prepare.outputs.revision }}" for step in checkouts
         )
-    for name in ["compatibility", "regex"]:
+    for name in ["compatibility", "regex", "native-coverage"]:
         assert jobs[name]["with"]["revision"] == "${{ needs.prepare.outputs.revision }}"
     assert set(jobs["test"]["needs"]) == {
         "prepare",
@@ -59,6 +59,7 @@ def test_release_checks_and_builds_the_prepared_revision():
         "regex",
         "sdist",
         "wheels",
+        "native-coverage",
     }
     assert any(
         step.get("run") == "python scripts/release_packages.py check-build"
@@ -91,16 +92,23 @@ def test_release_checks_and_builds_the_prepared_revision():
 def test_toolchains_and_hook_dependencies():
     rust = tomllib.loads((ROOT / "Cargo.toml").read_text())["workspace"]["package"]
     toolchain = tomllib.loads((ROOT / "rust-toolchain.toml").read_text())["toolchain"]
-    assert (
-        toolchain["channel"]
-        == rust["rust-version"]
-        == (ROOT / "rustfmt-toolchain").read_text().strip()
-    )
+    assert toolchain["channel"] == rust["rust-version"] == "1.99.1"
+    assert (ROOT / "rustfmt-toolchain").read_text().strip() == "nightly-2026-10-16"
     lock = tomllib.loads((ROOT / "Cargo.lock").read_text())
     names = {package["name"] for package in lock["package"]}
     assert "rhusky" in names
     assert "sloughi" not in names
     assert "./scripts/fmt.sh --check" in (ROOT / ".githooks/pre-commit").read_text()
+
+
+@pytest.mark.parametrize("workflow,job", [("ci.yml", "verify"), ("regex.yml", "regex")])
+def test_formatting_jobs_install_the_pinned_nightly(workflow, job):
+    document = yaml.safe_load((ROOT / ".github/workflows" / workflow).read_text())
+    assert any(
+        step.get("uses") == "dtolnay/rust-toolchain@nightly"
+        and step.get("with", {}).get("toolchain") == "nightly-2026-10-16"
+        for step in document["jobs"][job]["steps"]
+    )
 
 
 @pytest.mark.parametrize(

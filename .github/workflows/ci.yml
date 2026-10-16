@@ -60,6 +60,12 @@ jobs:
     with:
       revision: ${{ needs.prepare.outputs.revision }}
 
+  native-coverage:
+    needs: prepare
+    uses: ./.github/workflows/native-coverage.yml
+    with:
+      revision: ${{ needs.prepare.outputs.revision }}
+
   verify:
     needs: [prepare]
     strategy:
@@ -87,7 +93,12 @@ jobs:
           toolchain: 1.99.1
           components: rustfmt, clippy
       - name: Build native extension and install pinned test dependencies
+        # Formatting uses its own nightly pin; compilation remains on 1.99.1.
         run: make dev PYTHON=${{ matrix.python }}
+      - uses: dtolnay/rust-toolchain@nightly
+        with:
+          toolchain: nightly-2026-10-16
+          components: rustfmt
       - name: Python, Rust, formatting and lint checks
         run: make check
       - name: SPARQL evaluator defaults and opt-in compatibility features
@@ -108,15 +119,10 @@ jobs:
             python-coverage.json
             htmlcov/
           if-no-files-found: error
-      - name: Package the coverage report and badge for GitHub Pages
-        if: github.ref == 'refs/heads/main' && matrix.os == 'ubuntu-latest' && matrix.python == '3.13'
-        uses: actions/upload-pages-artifact@v5
-        with:
-          path: htmlcov
 
   test:
     name: test
-    needs: [prepare, verify, compatibility, regex, sdist, wheels]
+    needs: [prepare, verify, compatibility, regex, sdist, wheels, native-coverage]
     if: always()
     runs-on: ubuntu-latest
     steps:
@@ -302,18 +308,33 @@ jobs:
         run: gh release edit "v$RELEASE_VERSION" --draft=false
 
   publish-coverage:
-    name: Publish Python coverage
-    needs: test
+    name: Publish measured coverage
+    needs: [prepare, test]
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
+      contents: read
       pages: write
       id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.prepare.outputs.revision }}
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.13'
+      - uses: actions/download-artifact@v8
+        with:
+          name: native-rust-coverage
+          path: coverage-site/reports
+      - run: python scripts/coverage_site.py --python coverage-site/reports/python-coverage.json --rust coverage-site/reports/summary.json --output coverage-site --project pyshacl-turbo --revision "${{ needs.prepare.outputs.revision }}"
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: coverage-site
       - name: Publish the measured coverage report and badge
         id: deployment
         uses: actions/deploy-pages@v5
