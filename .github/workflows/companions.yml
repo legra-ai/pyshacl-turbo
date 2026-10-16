@@ -28,7 +28,8 @@ jobs:
       - uses: actions/checkout@v7
       - uses: astral-sh/setup-uv@v10.3.0
       - run: uv venv --python 3.13 .venv-companions
-      - run: uv pip sync --python .venv-companions/bin/python --require-hashes --only-binary :all: benchmarks/companions-requirements.lock
+      - run: |
+          uv pip sync --python .venv-companions/bin/python --require-hashes --only-binary :all: benchmarks/companions-requirements.lock
       - run: .venv-companions/bin/python -I benchmarks/companions.py --nodes 100 --repeats 2 --memory-repeats 1 --output benchmark-artifacts/companions.json
       - run: .venv-companions/bin/python -I benchmarks/check_companions.py --report benchmark-artifacts/companions.json --baseline benchmarks/companions-baseline.json
       - uses: actions/upload-artifact@v7

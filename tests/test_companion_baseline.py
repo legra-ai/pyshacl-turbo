@@ -7,6 +7,7 @@ from copy import deepcopy
 from pathlib import Path
 
 import pytest
+import yaml
 
 
 def checker():
@@ -73,3 +74,13 @@ def test_checked_in_baseline_matches_all_original_observations():
     baseline = json.loads((root / "companions-baseline.json").read_text())
     assert len(report["runs"]) == 32
     checker().check(report, baseline)
+
+
+def test_companion_workflow_parses_and_executes_every_command_as_text():
+    path = Path(__file__).resolve().parents[1] / ".github/workflows/companions.yml"
+    workflow = yaml.safe_load(path.read_text())
+    steps = workflow["jobs"]["benchmark"]["steps"]
+    commands = [step["run"] for step in steps if "run" in step]
+    assert all(isinstance(command, str) for command in commands)
+    assert any("--only-binary :all:" in command for command in commands)
+    assert any("check_companions.py" in command for command in commands)
