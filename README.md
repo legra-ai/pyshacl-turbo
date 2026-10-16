@@ -232,7 +232,7 @@ identity. See [ADR 0017](https://github.com/legra-ai/pyshacl-turbo/blob/main/doc
 
 ## Performance
 
-The [companion-project benchmark suite](benchmarks/companions.md) measures
+The [companion-project benchmark suite](https://github.com/legra-ai/pyshacl-turbo/blob/main/benchmarks/companions.md) measures
 rdflib-turbo, owlrl-turbo and pyshacl-turbo together against their reference
 packages, including parsing, queries, inference, RDFLib conversion costs and
 complete validation pipelines. Run `make benchmark-companions` for the pinned
