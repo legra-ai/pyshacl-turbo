@@ -54,6 +54,7 @@ jobs:
         if: always()
         with:
           name: pipeline-reports-${{ matrix.os }}
+          include-hidden-files: true
           path: |
             benchmark-artifacts/releases.json
             benchmark-artifacts/releases.md

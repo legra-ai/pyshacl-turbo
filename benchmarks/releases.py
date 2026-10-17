@@ -115,7 +115,9 @@ def setup(env, directory, wheels, python):
     project = directory / env["id"]
     if project.exists():
         raise ValueError(f"Benchmark environments must be fresh: {project}")
-    command(["uv", "init", "--bare", "--python", python, project])
+    command(
+        ["uv", "init", "--bare", "--no-workspace", "--vcs", "none", "--python", python, project]
+    )
     command(["uv", "python", "pin", "--project", project, python])
     with (project / "pyproject.toml").open("a") as manifest:
         manifest.write('\n[tool.uv]\nprerelease = "allow"\n')

@@ -103,6 +103,12 @@ the originating workflow run. PRs cannot publish history. Coverage Pages are
 independent of this history. Existing results are preserved; failed or incomplete
 platform runs cannot update the public index.
 
+Every branch requires signed commits. The owner initializes the artifact-only
+branch once with `uv run --no-project python scripts/init_benchmark_history.py`,
+using the existing Git signing identity and an isolated index. CI then appends
+GitHub-signed commits with an exact-parent check; no signing secret, unsigned
+push, source-tree copying, or workflow-file write permission is needed.
+
 Release order: merge/publish owlrl-turbo's compatible dependency range, then the
 dataset-owning rdflib-turbo runtime, then the pyshacl-turbo facade. The source pins
 allow all three candidate wheels to be tested together before those releases.

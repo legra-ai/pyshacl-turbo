@@ -73,3 +73,21 @@ def test_harness_identity_is_stable_when_started_through_a_symlink(tmp_path, mon
         "benchmarks/companions.py",
         "tests/upstream_support/process_launch.py",
     }
+
+
+def test_version_environment_does_not_join_or_modify_a_parent_uv_project(tmp_path):
+    bench = module()
+    parent = tmp_path / "checkout"
+    parent.mkdir()
+    manifest = '[project]\nname="unrelated-parent"\nversion="0.1.0"\nrequires-python=">=3.13"\n'
+    (parent / "pyproject.toml").write_text(manifest)
+    env = {
+        "id": "python-reference",
+        "backend": "reference",
+        "requirements": {"rdflib": "==7.6.0", "owlrl": "==7.6.2", "pyshacl": "==0.40.1"},
+    }
+    executable, installed = bench.setup(env, parent / "output/environments", None, "3.13")
+    assert executable.exists()
+    assert (parent / "pyproject.toml").read_text() == manifest
+    assert not (parent / "uv.lock").exists()
+    assert installed["packages"]["rdflib"]["version"] == "7.6.0"

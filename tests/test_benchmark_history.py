@@ -63,3 +63,77 @@ def test_failed_or_missing_platforms_cannot_replace_published_measurements(tmp_p
     with pytest.raises(ValueError, match="failed"):
         bench.stage_reports(source, destination, "123-1", "https://github.com/example/run/123")
     assert not destination.exists()
+
+
+def test_history_commit_requires_a_verified_server_signature_and_exact_parent():
+    bench = module()
+    requests = []
+
+    def client(path, method="GET", payload=None):
+        requests.append((path, method, payload))
+        return {
+            "data": {
+                "createCommitOnBranch": {
+                    "commit": {"oid": "b" * 40, "signature": {"isValid": True}}
+                }
+            }
+        }
+
+    oid = bench.signed_commit(
+        client,
+        "owner/repo",
+        "benchmark-results",
+        "a" * 40,
+        "perf(history): retain measured results",
+        [{"path": "report.json.gz", "contents": "AA=="}],
+        [],
+    )
+    assert oid == "b" * 40
+    request = requests[0][2]["variables"]["input"]
+    assert request["expectedHeadOid"] == "a" * 40
+    assert request["branch"]["branchName"] == "benchmark-results"
+
+    def unsigned(*args, **kwargs):
+        return {"data": {"createCommitOnBranch": {"commit": {"oid": "b" * 40, "signature": None}}}}
+
+    with pytest.raises(RuntimeError, match="verified"):
+        bench.signed_commit(
+            unsigned,
+            "owner/repo",
+            "benchmark-results",
+            "a" * 40,
+            "perf(history): retain measured results",
+            [],
+            [],
+        )
+
+
+def test_missing_history_branch_cannot_fall_back_to_unsigned_or_source_commits(
+    tmp_path, monkeypatch
+):
+    import sys
+
+    bench = module()
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "history",
+            "--artifacts",
+            str(tmp_path),
+            "--repository",
+            "owner/repo",
+            "--run-id",
+            "123-1",
+            "--run-url",
+            "https://github.com/owner/repo/actions/runs/123",
+        ],
+    )
+    monkeypatch.setattr(bench, "run", lambda *args: "")
+
+    def forbidden(*args, **kwargs):
+        raise AssertionError("Missing initialization must not mutate GitHub")
+
+    monkeypatch.setattr(bench, "api", forbidden)
+    with pytest.raises(RuntimeError, match="Initialize the signed"):
+        bench.main()

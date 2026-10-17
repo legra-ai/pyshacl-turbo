@@ -1,15 +1,21 @@
 """Publish successful measurements to the generated benchmark-results branch."""
 
 import argparse
+import base64
 import gzip
 import json
 import re
 import shutil
 import subprocess
+import sys
 import tempfile
 from pathlib import Path
 
 PLATFORMS = {"ubuntu-latest", "macos-latest"}
+FORMAT = {"schema": 1, "kind": "turbo-pipeline-history"}
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "tests"))
+from upstream_support.process_launch import Popen
 
 
 def stage_reports(artifacts, destination, run_id, run_url):
@@ -79,8 +85,88 @@ def stage_reports(artifacts, destination, run_id, run_url):
     (destination / "README.md").write_text("\n".join(lines) + "\n")
 
 
+def command(arguments, payload=None):
+    with Popen(
+        list(map(str, arguments)),
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+    ) as process:
+        try:
+            stdout, stderr = process.communicate(
+                json.dumps(payload) if payload is not None else None, timeout=120
+            )
+        except subprocess.TimeoutExpired:
+            process.kill()
+            process.communicate()
+            raise RuntimeError("Benchmark history command timed out") from None
+        if process.returncode:
+            raise RuntimeError(f"Benchmark history command failed: {arguments}\n{stderr}")
+    return stdout.strip()
+
+
 def run(*arguments):
-    return subprocess.check_output(list(map(str, arguments)), text=True).strip()
+    return command(arguments)
+
+
+def api(path, method="GET", payload=None):
+    arguments = ["gh", "api", path, "--method", method]
+    if payload is not None:
+        arguments += ["--input", "-"]
+    result = command(arguments, payload)
+    value = json.loads(result) if result else {}
+    if value.get("errors"):
+        raise RuntimeError(f"GitHub rejected benchmark publication: {value['errors']}")
+    return value
+
+
+def signed_commit(client, repository, branch, head, message, additions, deletions):
+    query = """mutation($input:CreateCommitOnBranchInput!) {
+      createCommitOnBranch(input:$input) { commit { oid signature { isValid } } }
+    }"""
+    response = client(
+        "graphql",
+        "POST",
+        {
+            "query": query,
+            "variables": {
+                "input": {
+                    "branch": {"repositoryNameWithOwner": repository, "branchName": branch},
+                    "expectedHeadOid": head,
+                    "message": {"headline": message},
+                    "fileChanges": {
+                        "additions": additions,
+                        "deletions": [{"path": path} for path in deletions],
+                    },
+                }
+            },
+        },
+    )
+    commit = response["data"]["createCommitOnBranch"]["commit"]
+    if not commit.get("signature") or commit["signature"].get("isValid") is not True:
+        raise RuntimeError("GitHub did not return a verified signed history commit")
+    return commit["oid"]
+
+
+def additions(directory, run_id):
+    files = list((directory / "runs" / run_id).rglob("*"))
+    files += [
+        directory / name for name in ("README.md", "history.json", ".benchmark-history-format.json")
+    ]
+    files += [
+        directory / f"latest-{platform}.{suffix}"
+        for platform in PLATFORMS
+        for suffix in ("md", "json.gz")
+    ]
+    return [
+        {
+            "path": path.relative_to(directory).as_posix(),
+            "contents": base64.b64encode(path.read_bytes()).decode("ascii"),
+        }
+        for path in sorted(files)
+        if path.is_file()
+    ]
 
 
 def main():
@@ -96,46 +182,39 @@ def main():
         return
     if not re.fullmatch(r"[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+", args.repository):
         raise ValueError("Expected owner/repository")
-    run("gh", "auth", "setup-git")
     with tempfile.TemporaryDirectory(prefix="turbo-benchmark-history-") as temporary:
         checkout = Path(temporary) / "history"
         url = f"https://github.com/{args.repository}.git"
         exists = bool(run("git", "ls-remote", "--heads", url, "refs/heads/benchmark-results"))
-        run("git", "clone", "--no-checkout", "--filter=blob:none", url, checkout)
-        if exists:
-            run(
-                "git",
-                "-C",
-                checkout,
-                "checkout",
-                "-b",
-                "benchmark-results",
-                "origin/benchmark-results",
+        if not exists:
+            raise RuntimeError(
+                "Initialize the signed artifact branch with scripts/init_benchmark_history.py before publishing"
             )
-        else:
-            run("git", "-C", checkout, "switch", "--orphan", "benchmark-results")
+        run(
+            "git",
+            "clone",
+            "--depth",
+            "1",
+            "--single-branch",
+            "--branch",
+            "benchmark-results",
+            url,
+            checkout,
+        )
+        if json.loads((checkout / ".benchmark-history-format.json").read_text()) != FORMAT:
+            raise RuntimeError("The benchmark-results branch is not owned by this publisher")
+        head = run("git", "-C", checkout, "rev-parse", "HEAD")
         stage_reports(args.artifacts, checkout, args.run_id, args.run_url)
-        run("git", "-C", checkout, "config", "user.name", "github-actions[bot]")
-        run(
-            "git",
-            "-C",
-            checkout,
-            "config",
-            "user.email",
-            "41898282+github-actions[bot]@users.noreply.github.com",
-        )
-        run("git", "-C", checkout, "add", ".")
-        run(
-            "git",
-            "-C",
-            checkout,
-            "-c",
-            "commit.gpgsign=false",
-            "commit",
-            "-m",
+        files = additions(checkout, args.run_id)
+        signed_commit(
+            api,
+            args.repository,
+            "benchmark-results",
+            head,
             f"perf(history): record measured pipeline run {args.run_id}",
+            files,
+            [],
         )
-        run("git", "-C", checkout, "push", "origin", "HEAD:refs/heads/benchmark-results")
 
 
 if __name__ == "__main__":
