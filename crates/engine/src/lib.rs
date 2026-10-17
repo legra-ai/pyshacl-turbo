@@ -9,6 +9,9 @@ mod execute;
 mod expression;
 mod functions;
 mod graph;
+#[cfg(test)]
+mod graph_backend_tests;
+mod graph_read;
 mod inference;
 mod ontology;
 mod path;
@@ -29,6 +32,7 @@ pub use graph::{
     parse as parse_graph, parse_dataset, parse_store_snapshot, serialize as serialize_graph,
     store_quad,
 };
+pub use graph_read::GraphRead;
 pub use inference::{expand as infer, expand_into as infer_into};
 pub use ontology::inoculate;
 pub use oxigraph;
