@@ -121,3 +121,59 @@ fn scalar_callbacks_validate_arity_and_keep_the_pattern_cache_bounded() {
         assert!(functions.cache.lock().unwrap().len() <= CACHE_LIMIT);
     }
 }
+
+#[test]
+fn regex_lowering_reaches_nested_expressions_and_every_query_kind() {
+    for expression in [
+        "REGEX(?s, 'x') > false",
+        "REGEX(?s, 'x') >= false",
+        "REGEX(?s, 'x') < true",
+        "REGEX(?s, 'x') <= true",
+        "1 - IF(REGEX(?s, 'x'), 1, 0)",
+        "1 * IF(REGEX(?s, 'x'), 1, 0)",
+        "1 / IF(REGEX(?s, 'x'), 1, 0)",
+        "!REGEX(?s, 'x')",
+        "+IF(REGEX(?s, 'x'), 1, 0)",
+        "-IF(REGEX(?s, 'x'), 1, 0)",
+        "?s IN (REGEX(?s, 'x'))",
+    ] {
+        let mut query = spargebra::SparqlParser::new()
+            .parse_query(&format!("SELECT ({expression} AS ?value) WHERE {{}}"))
+            .unwrap();
+        assert!(RegexFunctions::lower(&mut query).required(), "{expression}");
+        assert!(!query.to_string().contains("REGEX("));
+        assert!(
+            spargebra::SparqlParser::new()
+                .parse_query(&query.to_string())
+                .is_ok()
+        );
+    }
+    for text in [
+        "ASK {FILTER(REGEX('x', 'x'))}",
+        "CONSTRUCT {?s ?p ?o} WHERE {?s ?p ?o FILTER(REGEX(STR(?o), 'x'))}",
+        "DESCRIBE ?s WHERE {?s ?p ?o FILTER(REGEX(STR(?o), 'x'))}",
+        "SELECT REDUCED ?s WHERE {?s ?p ?o MINUS {?s ?q ?v FILTER(REGEX(STR(?v), 'x'))}}",
+        "SELECT ?s WHERE {?s ?p ?o OPTIONAL {?s ?q ?v FILTER(REGEX(STR(?v), 'x'))}} ORDER BY DESC(REGEX(STR(?s), 'x'))",
+    ] {
+        let mut query = spargebra::SparqlParser::new().parse_query(text).unwrap();
+        assert!(RegexFunctions::lower(&mut query).required(), "{text}");
+        assert!(!query.to_string().contains("REGEX("));
+    }
+    let mut lateral = GraphPattern::Lateral {
+        left: Box::new(GraphPattern::Bgp { patterns: vec![] }),
+        right: Box::new(GraphPattern::Filter {
+            expr: Expression::FunctionCall(
+                Function::Regex,
+                vec![
+                    Expression::Literal(Literal::new_simple_literal("x")),
+                    Expression::Literal(Literal::new_simple_literal("x")),
+                ],
+            ),
+            inner: Box::new(GraphPattern::Bgp { patterns: vec![] }),
+        }),
+    };
+    let mut functions = RegexFunctions::default();
+    functions.pattern(&mut lateral);
+    assert!(functions.required());
+    assert!(!lateral.to_string().contains("REGEX("));
+}

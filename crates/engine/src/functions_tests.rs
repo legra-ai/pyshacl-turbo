@@ -136,3 +136,46 @@ fn regex_backed_graph_queries_use_checked_triple_results() {
             .contains("already failed")
     );
 }
+
+#[test]
+fn external_bindings_survive_every_query_kind_and_projection_modifier() {
+    let binding = Variable::new("supplied").unwrap();
+    let existing = Variable::new("s").unwrap();
+    for text in [
+        "SELECT DISTINCT ?s WHERE {?s ?p ?o} ORDER BY ?s LIMIT 3 OFFSET 1",
+        "SELECT REDUCED ?s WHERE {?s ?p ?o}",
+        "ASK {?s ?p ?o}",
+        "CONSTRUCT {?s ?p ?o} WHERE {?s ?p ?o}",
+        "DESCRIBE ?s WHERE {?s ?p ?o}",
+    ] {
+        let mut query = SparqlParser::new().parse_query(text).unwrap();
+        project_bindings(
+            &mut query,
+            &[existing.clone(), binding.clone(), binding.clone()],
+        );
+        let (Query::Select { pattern, .. }
+        | Query::Ask { pattern, .. }
+        | Query::Construct { pattern, .. }
+        | Query::Describe { pattern, .. }) = &query;
+        let mut variables = Vec::new();
+        pattern.on_in_scope_variable(|v| variables.push(v.clone()));
+        assert!(variables.contains(&existing), "{text}");
+        assert_eq!(
+            variables.iter().filter(|v| **v == binding).count(),
+            1,
+            "{text}"
+        );
+        assert!(SparqlParser::new().parse_query(&query.to_string()).is_ok());
+    }
+    let data = graph("ex:f sh:parameter [sh:path ex:z], [sh:path ex:a].");
+    let lowered =
+        lower_parameters(read_parameters(&data, &iri("https://example.org/", "f").into()).unwrap())
+            .unwrap();
+    assert_eq!(
+        lowered
+            .iter()
+            .map(|p| p.variable.as_str())
+            .collect::<Vec<_>>(),
+        vec!["a", "z"]
+    );
+}

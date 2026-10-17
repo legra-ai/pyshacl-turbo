@@ -141,3 +141,43 @@ fn equal_order_rules_are_sorted_by_node_identity() {
         vec![iri("urn:", "a").into(), iri("urn:", "z").into()]
     );
 }
+
+#[test]
+fn executable_resources_reject_unsupported_features_and_disabled_advanced_rules() {
+    for (body, advanced) in [
+        ("<urn:f> a sh:Function.", true),
+        ("<urn:f> a sh:SHACLFunction.", true),
+        ("<urn:f> a sh:JSFunction.", true),
+        ("<urn:S> sh:targetNode <urn:s>; a sh:UnknownShape.", true),
+        ("<urn:S> sh:targetNode <urn:s>; sh:unknown true.", true),
+        (
+            "<urn:S> sh:targetNode <urn:s>; sh:rule [a sh:TripleRule; sh:subject sh:this; sh:predicate <urn:p>; sh:object true].",
+            false,
+        ),
+    ] {
+        let data = parse(
+            &format!("@prefix sh: <http://www.w3.org/ns/shacl#>. {body}"),
+            RdfFormat::Turtle,
+            None,
+        )
+        .unwrap();
+        assert!(
+            matches!(
+                CompiledShapes::compile(data, advanced),
+                Err(Error::Unsupported(_))
+            ),
+            "{body}"
+        );
+    }
+    let mut data = Dataset::new();
+    data.insert(&Quad::new(
+        iri("urn:", "S"),
+        iri(SH, "targetNode"),
+        iri("urn:", "s"),
+        iri("urn:", "graph"),
+    ));
+    assert!(matches!(
+        CompiledShapes::compile(data, true),
+        Err(Error::Unsupported(_))
+    ));
+}

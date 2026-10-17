@@ -123,3 +123,50 @@ fn subclass_cycles_do_not_duplicate_instances_and_named_contexts_remain_separate
     assert_eq!(subjects(&data, &iri(RDF, "type"), None).unwrap().len(), 1);
     assert_eq!(with_union(&data).len(), data.len() + 1);
 }
+
+#[test]
+fn deeply_nested_blank_descriptions_stop_at_the_display_depth_limit() {
+    let mut data = Dataset::new();
+    let nodes: Vec<Term> = (0..24)
+        .map(|i| BlankNode::new(format!("b{i}")).unwrap().into())
+        .collect();
+    for pair in nodes.windows(2) {
+        add(&mut data, &pair[0], iri("urn:", "p"), pair[1].clone()).unwrap();
+    }
+    let display = crate::display::Display {
+        shape_namespaces: vec![],
+        data_namespaces: vec![],
+        data: &data,
+        shapes: &data,
+    };
+    let rendered = display.term(&nodes[0], false);
+    assert!(rendered.contains("[ ... ]"));
+    assert_eq!(rendered.matches("<urn:p>").count(), 20);
+}
+
+#[test]
+fn malformed_lists_and_deep_paths_fail_before_evaluation() {
+    for text in [
+        "_:a <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> <urn:p>; <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> _:a.",
+        "_:a <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> <urn:p>.",
+    ] {
+        let data = parse(text, RdfFormat::Turtle, None).unwrap();
+        let head: Term = data.iter().next().unwrap().subject.into_owned().into();
+        assert!(crate::path::rdf_list(&data, &head).is_err());
+    }
+    assert!(crate::path::rdf_list(&Dataset::new(), &Literal::from(1).into()).is_err());
+    let mut data = Dataset::new();
+    let nodes: Vec<Term> = (0..258)
+        .map(|i| BlankNode::new(format!("b{i}")).unwrap().into())
+        .collect();
+    for pair in nodes.windows(2) {
+        add(&mut data, &pair[0], iri(SH, "inversePath"), pair[1].clone()).unwrap();
+    }
+    assert!(
+        crate::path::Path::read(&data, &nodes[0])
+            .err()
+            .unwrap()
+            .to_string()
+            .contains("nesting limit")
+    );
+}
