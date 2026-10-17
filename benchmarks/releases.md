@@ -38,6 +38,11 @@ The [matrix](releases.json) compares four separately locked uv environments:
 4. Exact candidate wheels built from coordinated source archives. Full source
    revisions are pinned in [runtime-sources.json](runtime-sources.json).
 
+The wheel builder rejects tracked edits and untracked inputs before building.
+It builds every source archive from a separate detached Git checkout, including
+pyshacl-turbo, so ignored local artifacts cannot enter the build. Checkout
+identities are checked again after building.
+
 The historical/reference sets remain fixed; the latest-published set continuously
 tracks release improvements. Add exact environment entries to the matrix to
 compare any other release combinations. Every report records the actual package

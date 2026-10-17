@@ -32,7 +32,7 @@ jobs:
         with:
           version: "0.13.1"
       - run: uv sync --project benchmarks --locked --no-build --python 3.13
-      - run: uv run --project benchmarks --locked --no-sync python -I benchmarks/companions.py --nodes 100 --repeats 2 --memory-repeats 1 --output benchmark-artifacts/companions.json
+      - run: uv run --project benchmarks --locked --no-sync python -I benchmarks/companions.py --observation-encoder rdflib-v1 --nodes 100 --repeats 2 --memory-repeats 1 --output benchmark-artifacts/companions.json
       - run: uv run --project benchmarks --locked --no-sync python -I benchmarks/check_companions.py --report benchmark-artifacts/companions.json --baseline benchmarks/companions-baseline.json
       - uses: actions/upload-artifact@v7
         if: always()

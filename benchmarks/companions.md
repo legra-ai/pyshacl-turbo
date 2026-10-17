@@ -94,6 +94,12 @@ update. Merely completing a run does not pass this correctness gate.
 
 ## First baseline findings
 
+The historical correctness catalogue explicitly selects `--observation-encoder
+rdflib-v1`, as its Make target and CI do. This retains the original fingerprint
+format and immutable baseline. Versioned release comparisons use the scalable
+`unique-anchors-v1` encoder instead; its complete-graph digests identify their
+method. Encoder selection happens before execution, and unknown versions fail.
+
 The [original macOS run](companions-baseline-run.md) contains five warm timing
 samples and three cold RSS samples per backend for each of 32 cases. At 1,000
 records, native Turtle parsing was 9.26× faster, SELECT 9.94× faster and CONSTRUCT

@@ -34,6 +34,13 @@ loops and generalized blank-node predicates. Raw digests name the encoder, and
 harness hashes identify the implementation. Do not equate hashes from different
 encoder versions across historical reports.
 
+The historical companion catalogue explicitly selects the `rdflib-v1` encoder
+in its Make target and CI. Keep that exact wire format and its original immutable
+baseline. New release workers explicitly select `unique-anchors-v1`. A per-worker
+context prevents encoder selection from leaking between calls; unknown versions
+and conflicting declarations fail before execution. This is upfront version
+selection, never a retry after comparison failure.
+
 Keep all observation encoding after the operation timer and RSS capture, as ADR
 0031 requires. Every repeat still retains complete observations. The weekly
 10,000-record workload has a larger explicit per-worker time budget; worker
