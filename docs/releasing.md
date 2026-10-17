@@ -12,8 +12,8 @@ All release wheels are built from the tested source distribution. Rust and
 Python versions are synchronized through `cargo version-info`; do not edit
 versions in an independent publishing script.
 
-Every platform wheel is installed through uv's pip interface, added to a locked
-uv project, run through `uvx`, and installed as a uv tool. The checks exercise
+Every platform wheel is added to an isolated uv project, synced from its lock,
+run through `uv run` and `uv tool run`, and installed as a uv tool. The checks exercise
 both console commands with valid and invalid data, rule output, Python imports
 and optional PyOxigraph Store input. Each run uses temporary environments,
 caches and tool directories, with no reference reasoner installed.
@@ -104,3 +104,10 @@ releases and disabled schedules. Recovery after complete upload is proven;
 partial-upload recovery has regression coverage but has not been induced on the
 live registry. These are limits on adoption evidence, not claims of complete
 fleet-policy certification.
+
+
+Source distributions and wheels are built with `uv build`, including native
+manylinux builds inside the platform containers. Publication uses `uv publish`
+with the existing trusted publisher and PEP 740 attestations for the original
+tested archives. Normal development uses `uv sync --locked --extra test` and
+`uv run --locked --extra test`; no pip interface or tox environment is used.

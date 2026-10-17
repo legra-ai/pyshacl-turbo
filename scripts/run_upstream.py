@@ -39,7 +39,12 @@ def main():
         env["PYSHACL_TURBO_TEST_REDIRECT"] = "1"
     result = subprocess.run(
         [
+            "uv",
+            "run",
+            "--no-project",
+            "--python",
             sys.executable,
+            "python",
             "-m",
             "pytest",
             "-p",

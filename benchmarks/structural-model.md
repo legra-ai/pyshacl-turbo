@@ -59,12 +59,12 @@ Full reports, raw samples and source hashes: [before](structural-before.json), [
 
 ## Reproduce
 
-Build both revisions with `maturin develop --release --locked` in separate environments/checkouts, or copy each built Python package including its native extension before rebuilding. Run each process with `PYTHONPATH` selecting that package and `--source-root` pointing to its matching source tree. The package-root arguments below contain the `pyshacl_turbo` directory.
+Build both revisions with `uv build --wheel --no-sources -C maturin.build-args=--locked` in separate environments/checkouts, or copy each built Python package including its native extension before rebuilding. Run each process with `PYTHONPATH` selecting that package and `--source-root` pointing to its matching source tree. The package-root arguments below contain the `pyshacl_turbo` directory.
 
 ```sh
-PYTHONPATH=/path/to/before-package .venv/bin/python benchmarks/compiler.py --source-root /path/to/before-checkout --repeats 7 --load-note "Describe host load" --output benchmarks/structural-before.json
-PYTHONPATH=/path/to/after-package .venv/bin/python benchmarks/compiler.py --source-root /path/to/after-checkout --repeats 7 --load-note "Describe host load" --output benchmarks/structural-after.json
-.venv/bin/python benchmarks/compile_pair.py --baseline-package /path/to/before-package --candidate-package /path/to/after-package --output benchmarks/structural-compile-paired.json
+PYTHONPATH=/path/to/before-package uv run --locked --extra test python benchmarks/compiler.py --source-root /path/to/before-checkout --repeats 7 --load-note "Describe host load" --output benchmarks/structural-before.json
+PYTHONPATH=/path/to/after-package uv run --locked --extra test python benchmarks/compiler.py --source-root /path/to/after-checkout --repeats 7 --load-note "Describe host load" --output benchmarks/structural-after.json
+uv run --locked --extra test python benchmarks/compile_pair.py --baseline-package /path/to/before-package --candidate-package /path/to/after-package --output benchmarks/structural-compile-paired.json
 ```
 
 The timing scripts fail if report parity fails. The paired script also verifies which native package each worker loaded. Compatibility remains a separate, incomplete measurement; these workloads do not establish 100% pySHACL compatibility.

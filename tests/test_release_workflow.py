@@ -19,14 +19,25 @@ def test_linux_release_builds_use_native_manylinux_linkers_with_fatal_warnings()
         "quay.io/pypa/manylinux_2_28_x86_64:latest",
         "quay.io/pypa/manylinux_2_28_aarch64:latest",
     }
-    build = next(step for step in wheels["steps"] if step.get("uses") == "PyO3/maturin-action@v1")
+    build = next(
+        step for step in wheels["steps"] if "sh scripts/build_manylinux.sh" in step.get("run", "")
+    )
     assert build["if"] == "runner.os == 'Linux'"
-    assert build["with"]["manylinux"] == "2_28"
-    assert build["with"]["container"] == "${{ matrix.container }}"
-    assert build["with"]["docker-options"] == "-e CARGO_BUILD_WARNINGS=deny"
-    assert build["with"]["working-directory"] == "source-build"
-    assert "--locked" in build["with"]["args"]
-    assert "--release" in build["with"]["args"]
+    assert "${{ matrix.container }}" in build["run"]
+    assert "${{ matrix.target }}" in build["run"]
+    driver = (ROOT / "scripts/build_manylinux.sh").read_text()
+    inner = (ROOT / "scripts/build_manylinux_inner.sh").read_text()
+    assert "--env CARGO_BUILD_WARNINGS=deny" in driver
+    assert "--workdir /build" in driver
+    assert '--volume "$PWD/source-build:/build"' in driver
+    assert '--volume "$PWD:/io"' not in driver
+    assert "uv build --wheel" in inner
+    assert "--compatibility manylinux_2_28" in inner
+    assert "--locked" in inner
+    assert (
+        tomllib.loads((ROOT / "pyproject.toml").read_text())["tool"]["maturin"]["profile"]
+        == "release"
+    )
     assert "--zig" not in str(wheels)
     assert any("--strip-components=1" in step.get("run", "") for step in wheels["steps"])
 
@@ -62,7 +73,7 @@ def test_release_checks_and_builds_the_prepared_revision():
         "native-coverage",
     }
     assert any(
-        step.get("run") == "python scripts/release_packages.py check-build"
+        step.get("run") == "uv run --no-project python scripts/release_packages.py check-build"
         for step in jobs["test"]["steps"]
     )
     publish = jobs["publish"]
@@ -71,10 +82,15 @@ def test_release_checks_and_builds_the_prepared_revision():
     assert publish["permissions"]["id-token"] == "write"
     assert "needs.prepare.outputs.release == 'true'" in publish["if"]
     steps = publish["steps"]
-    upload = next(
-        step for step in steps if step.get("uses", "").startswith("pypa/gh-action-pypi-publish@")
+    upload = next(step for step in steps if step.get("run", "").startswith("uv publish "))
+    assert "skip-existing" not in upload["run"]
+    assert "--trusted-publishing always" in upload["run"]
+    attest = next(
+        i
+        for i, step in enumerate(steps)
+        if step.get("uses", "").startswith("astral-sh/attest-action@")
     )
-    assert "skip-existing" not in upload.get("with", {})
+    assert attest < steps.index(upload)
     assert upload["if"] == "steps.pending.outputs.missing == 'true'"
     draft = next(
         step for step in steps if step.get("uses", "").startswith("softprops/action-gh-release@")
@@ -83,7 +99,7 @@ def test_release_checks_and_builds_the_prepared_revision():
     verify = next(
         i
         for i, step in enumerate(steps)
-        if step.get("run") == "python scripts/release_packages.py verify"
+        if step.get("run") == "uv run --no-project python scripts/release_packages.py verify"
     )
     finalize = next(i for i, step in enumerate(steps) if "--draft=false" in step.get("run", ""))
     assert verify < finalize

@@ -86,38 +86,9 @@ def verify(directory):
         # Change the harness directory before launching: cwd= would require
         # unsafe fork on macOS. Every child still uses the guarded launcher.
         with contextlib.chdir(directory):
-            venv = directory / "venv"
-            run(["uv", "venv", "--python", sys.executable, venv], environment)
-            bin_dir = venv / ("Scripts" if sys.platform == "win32" else "bin")
-            python = executable(bin_dir, "python")
-            run(["uv", "pip", "install", "--python", python, wheel], environment)
-            run([python, "-I", smoke], environment)
-            run([python, "-I", "-m", "pyshacl_turbo", "--help"], environment)
-            check_commands(
-                [executable(bin_dir, "pyshacl-turbo")],
-                [executable(bin_dir, "pyshacl-turbo-rules")],
-                directory,
-                environment,
-                version,
-            )
-            run(
-                [
-                    "uv",
-                    "pip",
-                    "install",
-                    "--python",
-                    python,
-                    f"pyshacl-turbo[oxigraph] @ {wheel.as_uri()}",
-                ],
-                environment,
-            )
-            run([python, "-I", smoke, "--oxigraph"], environment)
-            print(
-                "uv venv / uv pip: API, both CLIs, exit codes and Store extra passed.", flush=True
-            )
-
             project = directory / "project"
-            run(["uv", "init", "--bare", "--vcs", "none", project], environment)
+            run(["uv", "init", "--bare", "--no-workspace", "--vcs", "none", project], environment)
+            run(["uv", "python", "pin", "--project", project, sys.executable], environment)
             run(["uv", "--directory", project, "add", wheel], environment)
             project_run = ["uv", "run", "--project", project, "--locked"]
             run([*project_run, "python", "-I", smoke], environment)
@@ -137,13 +108,13 @@ def verify(directory):
             )
 
             check_commands(
-                ["uvx", "--from", wheel, "pyshacl-turbo"],
-                ["uvx", "--from", wheel, "pyshacl-turbo-rules"],
+                ["uv", "tool", "run", "--from", wheel, "pyshacl-turbo"],
+                ["uv", "tool", "run", "--from", wheel, "pyshacl-turbo-rules"],
                 directory,
                 environment,
                 version,
             )
-            print("uvx: isolated validation and rules commands passed.", flush=True)
+            print("uv tool run: isolated validation and rules commands passed.", flush=True)
 
             run(["uv", "tool", "install", wheel], environment)
             check_commands(

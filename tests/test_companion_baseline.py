@@ -82,5 +82,8 @@ def test_companion_workflow_parses_and_executes_every_command_as_text():
     steps = workflow["jobs"]["benchmark"]["steps"]
     commands = [step["run"] for step in steps if "run" in step]
     assert all(isinstance(command, str) for command in commands)
-    assert any("--only-binary :all:" in command for command in commands)
+    assert any(
+        "uv sync" in command and "--no-build" in command and "--locked" in command
+        for command in commands
+    )
     assert any("check_companions.py" in command for command in commands)
