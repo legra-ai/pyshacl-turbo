@@ -12,6 +12,9 @@ mod graph;
 #[cfg(test)]
 mod graph_backend_tests;
 mod graph_read;
+mod graph_views;
+#[cfg(test)]
+mod graph_views_tests;
 mod inference;
 mod ontology;
 mod path;
@@ -33,6 +36,7 @@ pub use graph::{
     store_quad,
 };
 pub use graph_read::GraphRead;
+pub use graph_views::{OverlayGraph, UnionGraph};
 pub use inference::{expand as infer, expand_into as infer_into};
 pub use ontology::inoculate;
 pub use oxigraph;
