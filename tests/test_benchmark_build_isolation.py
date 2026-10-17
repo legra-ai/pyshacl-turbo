@@ -202,7 +202,7 @@ def test_candidate_fetches_engine_revision_outside_its_squashed_history(monkeypa
     dependency, canonical = repositories
     revision = builder.checked_revision(dependency)
     absent = subprocess.run(
-        ["git", "-C", str(canonical), "cat-file", "-e", revision], capture_output=True
+        ["git", "-C", str(canonical), "cat-file", "-e", revision], capture_output=True, check=False
     )
     assert absent.returncode != 0
     runtime = tmp_path / "runtime"
