@@ -1,0 +1,70 @@
+{
+  "schema": 1,
+  "date": "2026-10-17T18:04:45.258088+00:00",
+  "kind": "requested-native-Rust-heap-bytes",
+  "source_revision": "107a382acb42282069f5be3a58a51f687ef3e14e",
+  "source_tree_dirty": false,
+  "platform": "macOS-27.0.1-arm64-arm-64bit-Mach-O",
+  "python": "3.13.0 (main, Oct 16 2024, 08:05:40) [Clang 18.1.8 ]",
+  "inference": "owlrl",
+  "fixtures": {
+    "data": {
+      "sha256": "652268e993845042c07329d34eb39f749bfe5df0ad024fe87354e4eaf6ca2470",
+      "bytes": 1012041
+    },
+    "shapes": {
+      "sha256": "5bd32c2b1bb3624b567213b1512dcddc3fe4bf9fa49938144095b0130796466d",
+      "bytes": 192
+    }
+  },
+  "phases": [
+    {
+      "allocated_bytes": 1045041,
+      "allocation_calls": 253,
+      "live_bytes": 1017458,
+      "peak_bytes": 1017498,
+      "phase": "setup",
+      "quads": 0
+    },
+    {
+      "allocated_bytes": 74760713,
+      "allocation_calls": 362573,
+      "live_bytes": 41894732,
+      "peak_bytes": 55003529,
+      "phase": "parse",
+      "quads": 39002
+    },
+    {
+      "allocated_bytes": 969017063,
+      "allocation_calls": 8944750,
+      "live_bytes": 72297453,
+      "peak_bytes": 108384413,
+      "phase": "inference",
+      "quads": 69114
+    },
+    {
+      "allocated_bytes": 70200,
+      "allocation_calls": 730,
+      "live_bytes": 72309259,
+      "peak_bytes": 72320135,
+      "phase": "compile_shapes",
+      "quads": 69114
+    },
+    {
+      "allocated_bytes": 59552531,
+      "allocation_calls": 1087793,
+      "live_bytes": 73769483,
+      "peak_bytes": 84729100,
+      "phase": "validation_native_report",
+      "quads": 69114
+    },
+    {
+      "allocated_bytes": 0,
+      "allocation_calls": 0,
+      "live_bytes": 1141578,
+      "peak_bytes": 73769483,
+      "phase": "released",
+      "quads": 0
+    }
+  ]
+}

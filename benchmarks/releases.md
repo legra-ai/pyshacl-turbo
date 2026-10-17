@@ -5,6 +5,9 @@ The [first measured shared-runtime report](releases-initial-run.md) and its
 candidate's exact source revisions, wheel identities and measurements. Current
 CI reports use the candidate built from their recorded source pins.
 
+The [inference memory report](inference-memory.md) retains the journaled-runtime
+before/after comparison, phase heap profiles, process RSS, locks and raw evidence.
+
 The canonical workload in `companions.py` now supports a native shared pipeline:
 
 ```python

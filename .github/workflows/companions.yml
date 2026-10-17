@@ -6,6 +6,8 @@ on:
       - benchmarks/pyproject.toml
       - benchmarks/uv.lock
       - tests/test_companion_benchmark.py
+      - tests/test_benchmark_canonicalization.py
+      - tests/test_benchmark_encoder_versions.py
       - tests/test_companion_baseline.py
       - benchmarks/check_companions.py
       - tests/upstream_support/process_launch.py
