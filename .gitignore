@@ -30,6 +30,8 @@ __pycache__/
 *.profdata
 
 /benchmarks/.venv/
+/benchmark-artifacts/
+/pipeline-wheels/
 .mypy_cache/
 
 /source-build/

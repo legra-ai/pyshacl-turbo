@@ -23,13 +23,24 @@ pub const SOURCES: &[(&str, &[u8])] = &[
     ("value.rs", include_bytes!("value.rs")),
 ];
 
+fn update_source(digest: &mut Sha256, source: &[u8]) {
+    for line in source.split_inclusive(|byte| *byte == b'\n') {
+        if let Some(prefix) = line.strip_suffix(b"\r\n") {
+            digest.update(prefix);
+            digest.update(b"\n");
+        } else {
+            digest.update(line);
+        }
+    }
+}
+
 pub fn fingerprint() -> String {
     let mut digest = Sha256::new();
-    digest.update(include_bytes!("../Cargo.toml"));
+    update_source(&mut digest, include_bytes!("../Cargo.toml"));
     for (name, source) in SOURCES {
         digest.update(name.as_bytes());
         digest.update([0]);
-        digest.update(source);
+        update_source(&mut digest, source);
         digest.update([0]);
     }
     digest
@@ -41,6 +52,21 @@ pub fn fingerprint() -> String {
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn transport_line_endings_do_not_change_source_identity() {
+        use sha2::{Digest, Sha256};
+        let mut unix = Sha256::new();
+        let mut windows = Sha256::new();
+        super::update_source(&mut unix, b"first\nsecond\nlast\r");
+        super::update_source(&mut windows, b"first\r\nsecond\r\nlast\r");
+        assert_eq!(unix.finalize(), windows.finalize());
+        let mut bare = Sha256::new();
+        let mut empty = Sha256::new();
+        super::update_source(&mut bare, b"\r");
+        super::update_source(&mut empty, b"");
+        assert_ne!(bare.finalize(), empty.finalize());
+    }
+
     #[test]
     fn fingerprint_covers_every_engine_implementation_file() {
         fn visit(root: &std::path::Path, directory: &std::path::Path, names: &mut Vec<String>) {

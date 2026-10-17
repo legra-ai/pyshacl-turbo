@@ -24,7 +24,8 @@ remain internal and must never be committed as caller quads.
 Version the Python runtime integration protocol explicitly and compare the SHA-256
 fingerprint of all canonical engine implementation files before execution. The
 source inventory test rejects newly added implementation files missing from the
-fingerprint. Updating engine source requires updating the runtime's immutable
+fingerprint. Normalize CRLF transport line endings to LF, while preserving other
+bytes, so Windows checkouts agree with source archives. Updating engine source requires updating the runtime's immutable
 engine pin and the coordinated benchmark source pins; metadata-only package
 version changes do not imply a different engine. Missing/incompatible protocols
 or engine sources are hard errors, with no RDFLib or serialized-data fallback. Preserve
