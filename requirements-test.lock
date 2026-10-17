@@ -30,7 +30,7 @@ pyparsing==3.3.3
     # via rdflib
 pyshacl==0.40.1
     # via pyshacl-turbo
-pytest==8.4.2
+pytest==9.1.1
     # via
     #   pyshacl-turbo
     #   pytest-cov
