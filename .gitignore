@@ -28,3 +28,8 @@ __pycache__/
 
 *.profraw
 *.profdata
+
+/benchmarks/.venv/
+.mypy_cache/
+
+/source-build/

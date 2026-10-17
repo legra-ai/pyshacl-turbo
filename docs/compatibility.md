@@ -19,7 +19,7 @@ percentage. Class availability is separate from class behavior.
 Reproduce it with:
 
 ```sh
-.venv/bin/python scripts/compare_contract.py --output direct-contract.json
+uv run --locked --extra test python scripts/compare_contract.py --output direct-contract.json
 ```
 
 CI checks the committed inventory and rejects regressions from equal cases.

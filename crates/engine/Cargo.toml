@@ -14,8 +14,8 @@ include = ["src/**", "tests/**", "Cargo.toml", "LICENSE-MIT", "LICENSE-APACHE"]
 rhusky = "=0.0.6"
 
 [package.metadata.version-info]
-pre_bump_hooks = ["python3 scripts/sync_version.py {{version}}"]
-additional_files = ["pyproject.toml"]
+pre_bump_hooks = ["uv run --no-project python scripts/sync_version.py {{version}}"]
+additional_files = ["pyproject.toml", "uv.lock"]
 
 [dependencies]
 oxigraph.workspace = true

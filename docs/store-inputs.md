@@ -18,7 +18,7 @@ conforms, report, text = program.validate(store)
 ```
 
 Store inputs work for data, shapes and ontology arguments. Reports remain RDFLib
-graphs. PyOxigraph is optional; install this source tree with `pip install '.[oxigraph]'`,
+graphs. PyOxigraph is optional; install this source tree with `uv sync --locked --extra oxigraph --extra test`,
 or install the built wheel with its `oxigraph` extra. The tested
 version is PyOxigraph 0.5.11. Runtime inference does not require owlrl.
 

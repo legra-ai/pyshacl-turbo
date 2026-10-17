@@ -29,6 +29,9 @@ jobs:
       version: ${{ steps.release.outputs.version }}
       release: ${{ steps.release.outputs.release }}
     steps:
+      - uses: astral-sh/setup-uv@v10.3.0
+        with:
+          version: "0.13.1"
       - uses: actions/checkout@v7
         with:
           fetch-depth: 0
@@ -88,6 +91,8 @@ jobs:
         with:
           python-version: ${{ matrix.python }}
       - uses: astral-sh/setup-uv@v10.3.0
+        with:
+          version: "0.13.1"
       - uses: actions-rust-lang/setup-rust-toolchain@v2
         with:
           toolchain: 1.99.1
@@ -111,7 +116,7 @@ jobs:
         run: make test-coverage
       - name: Add coverage to the job summary
         if: matrix.os == 'ubuntu-latest' && matrix.python == '3.13'
-        run: .venv/bin/python -m coverage report --format=markdown >> "$GITHUB_STEP_SUMMARY"
+        run: uv run --locked --extra test coverage report --format=markdown >> "$GITHUB_STEP_SUMMARY"
       - uses: actions/upload-artifact@v7
         if: always() && matrix.os == 'ubuntu-latest' && matrix.python == '3.13'
         with:
@@ -128,10 +133,13 @@ jobs:
     if: always()
     runs-on: ubuntu-latest
     steps:
+      - uses: astral-sh/setup-uv@v10.3.0
+        with:
+          version: "0.13.1"
       - name: Require every platform to pass
         env:
           RESULTS: ${{ toJSON(needs) }}
-        shell: python
+        shell: uv run --no-project python {0}
         run: |
           import json, os
           results = json.loads(os.environ['RESULTS'])
@@ -150,7 +158,7 @@ jobs:
           merge-multiple: true
           path: dist
       - name: Verify complete release artifact inventory before tagging is allowed
-        run: python scripts/release_packages.py check-build
+        run: uv run --no-project python scripts/release_packages.py check-build
 
   sdist:
     needs: [prepare]
@@ -164,15 +172,17 @@ jobs:
         with:
           python-version: '3.13'
       - uses: astral-sh/setup-uv@v10.3.0
+        with:
+          version: "0.13.1"
       - uses: actions-rust-lang/setup-rust-toolchain@v2
         with:
           toolchain: 1.99.1
       - name: Build source distribution
         run: uv build --sdist --out-dir dist
       - name: Check source inventory, patched dependencies and license texts
-        run: python scripts/check_package.py dist/*.tar.gz
+        run: uv run --no-project python scripts/check_package.py dist/*.tar.gz
       - name: Check PyPI metadata rendering
-        run: uvx --from twine==6.2.0 twine check --strict dist/*
+        run: uv tool run --from twine==6.2.0 twine check --strict dist/*
       - uses: actions/upload-artifact@v7
         with:
           name: release-sdist
@@ -212,6 +222,8 @@ jobs:
         with:
           python-version: '3.13'
       - uses: astral-sh/setup-uv@v10.3.0
+        with:
+          version: "0.13.1"
       - uses: actions-rust-lang/setup-rust-toolchain@v2
         with:
           toolchain: 1.99.1
@@ -227,26 +239,18 @@ jobs:
           tar -xzf source-dist/*.tar.gz --strip-components=1 -C source-build || exit 1
       - name: Build Linux release wheel with the native manylinux toolchain
         if: runner.os == 'Linux'
-        uses: PyO3/maturin-action@v1
-        with:
-          maturin-version: '1.15.0'
-          target: ${{ matrix.target }}
-          manylinux: '2_28'
-          container: ${{ matrix.container }}
-          docker-options: -e CARGO_BUILD_WARNINGS=deny
-          working-directory: source-build
-          args: --release --locked --out ../dist --interpreter python3.13
+        run: sh scripts/build_manylinux.sh '${{ matrix.container }}' '${{ matrix.target }}' cp313-cp313
       - name: Build release wheel from the verified source archive
         if: runner.os != 'Linux'
         env:
           MACOSX_DEPLOYMENT_TARGET: ${{ matrix.deployment_target }}
         run: uv build --wheel --out-dir dist -C 'maturin.build-args=--locked --target ${{ matrix.target }} ${{ matrix.args }}' source-dist/*.tar.gz
       - name: Check wheel metadata, native extension and licenses
-        run: python scripts/check_package.py dist/*.whl
+        run: uv run --no-project python scripts/check_package.py dist/*.whl
       - name: Check PyPI metadata rendering
-        run: uvx --from twine==6.2.0 twine check --strict dist/*
+        run: uv tool run --from twine==6.2.0 twine check --strict dist/*
       - name: Verify uv environments, locked projects, tools and optional Store input
-        run: python scripts/test_wheel.py dist
+        run: uv run --no-project python scripts/test_wheel.py dist
       - uses: actions/upload-artifact@v7
         with:
           name: release-wheel-${{ matrix.target }}
@@ -269,6 +273,9 @@ jobs:
       RELEASE_VERSION: ${{ needs.prepare.outputs.version }}
       RELEASE_REVISION: ${{ needs.prepare.outputs.revision }}
     steps:
+      - uses: astral-sh/setup-uv@v10.3.0
+        with:
+          version: "0.13.1"
       - uses: actions/checkout@v7
         with:
           ref: ${{ needs.prepare.outputs.revision }}
@@ -295,17 +302,20 @@ jobs:
           merge-multiple: true
           path: dist
       - name: Persist original tested archives for interrupted-release recovery
-        run: python scripts/release_packages.py stage
+        run: uv run --no-project python scripts/release_packages.py stage
       - name: Verify existing registry files and select only missing archives
         id: pending
-        run: python scripts/release_packages.py filter
+        run: uv run --no-project python scripts/release_packages.py filter
+      - name: Attest the original tested archives
+        if: steps.pending.outputs.missing == 'true'
+        uses: astral-sh/attest-action@f589a42a7efb6fe400b4f400de60b4bc90390027
+        with:
+          paths: pending-packages/*
       - name: Publish through PyPI trusted publishing
         if: steps.pending.outputs.missing == 'true'
-        uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          packages-dir: pending-packages/
+        run: uv publish --trusted-publishing always pending-packages/*
       - name: Verify complete PyPI release against original hashes
-        run: python scripts/release_packages.py verify
+        run: uv run --no-project python scripts/release_packages.py verify
       - name: Publish the completed GitHub release
         run: gh release edit "v$RELEASE_VERSION" --draft=false
 
@@ -323,6 +333,9 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
+      - uses: astral-sh/setup-uv@v10.3.0
+        with:
+          version: "0.13.1"
       - uses: actions/checkout@v7
         with:
           ref: ${{ needs.prepare.outputs.revision }}
@@ -333,7 +346,7 @@ jobs:
         with:
           name: native-rust-coverage
           path: coverage-site/reports
-      - run: python scripts/coverage_site.py --python coverage-site/reports/python-coverage.json --rust coverage-site/reports/summary.json --output coverage-site --project pyshacl-turbo --revision "${{ needs.prepare.outputs.revision }}"
+      - run: uv run --no-project python scripts/coverage_site.py --python coverage-site/reports/python-coverage.json --rust coverage-site/reports/summary.json --output coverage-site --project pyshacl-turbo --revision "${{ needs.prepare.outputs.revision }}"
       - uses: actions/upload-pages-artifact@v5
         with:
           path: coverage-site

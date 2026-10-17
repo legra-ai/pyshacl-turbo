@@ -74,14 +74,6 @@ For optional PyOxigraph Store input, use:
 uv add 'pyshacl-turbo[oxigraph]'
 ```
 
-Alternatively, use pip:
-
-```sh
-python -m pip install pyshacl-turbo
-```
-
-The `oxigraph` extra is also available with pip.
-
 ## Command line
 
 Run validation or rules in your uv project:
@@ -94,8 +86,8 @@ uv run pyshacl-turbo-rules data.ttl -s rules.ttl
 Or run directly in an isolated [uv tool environment](https://docs.astral.sh/uv/guides/tools/):
 
 ```sh
-uvx pyshacl-turbo data.ttl -s shapes.ttl
-uvx --from pyshacl-turbo pyshacl-turbo-rules data.ttl -s rules.ttl
+uv tool run pyshacl-turbo data.ttl -s shapes.ttl
+uv tool run --from pyshacl-turbo pyshacl-turbo-rules data.ttl -s rules.ttl
 ```
 
 To install both commands for regular use:
@@ -287,16 +279,22 @@ speedup. Benchmark your own workloads before drawing capacity estimates.
 
 ```sh
 # Run alone, separately from builds and other tests.
-.venv/bin/python benchmarks/check_core.py
+uv run --locked --extra test python benchmarks/check_core.py
 
 # Full-report-gated SPARQL regex and replacement comparison.
-.venv/bin/python benchmarks/matrix.py --kinds sparql-patterns --repeats 7 --output benchmarks/sparql-patterns.json
+uv run --locked --extra test python benchmarks/matrix.py --kinds sparql-patterns --repeats 7 --output benchmarks/sparql-patterns.json
 
 # Original SPARQL pipeline comparison, including both reference backends.
 make benchmark-pipeline
 ```
 
 ## Verification and architecture
+
+Development uses native uv project commands and the committed `uv.lock`.
+Run `make dev` to sync the project and test tools, then `make check`. Add or update
+Python dependencies with `uv add`; run Ruff, mypy and pytest through `uv run`.
+Build wheels and source distributions with `uv build`. The coverage and release
+harnesses create isolated uv projects and install the exact built wheels.
 
 Local regressions compare full reports, rule output, graph mutation, blank-node
 identity, namespace handling, Store inputs and errors. Pinned W3C and pySHACL
@@ -308,9 +306,9 @@ make test-compatibility
 make test-regex
 make test-sparql-evaluator
 make test-coverage
-.venv/bin/python scripts/run_upstream.py
-.venv/bin/python scripts/run_upstream.py --reference
-.venv/bin/python scripts/audit_reference_fixture.py
+uv run --locked --extra test python scripts/run_upstream.py
+uv run --locked --extra test python scripts/run_upstream.py --reference
+uv run --locked --extra test python scripts/audit_reference_fixture.py
 ```
 
 The three workflow badges report required CI checks on `main`. Each workflow also runs on
@@ -318,7 +316,7 @@ pull requests, daily, and on manual dispatch:
 
 | Workflow | What it verifies |
 | --- | --- |
-| Tests and wheels | Python and Rust regressions, formatting and lint on Linux Python 3.11/3.13 and macOS Python 3.13; SPARQL evaluator tests with compatibility features disabled and enabled; source archive rebuilt into all five platform wheels. Every wheel is checked with `uv pip`, locked `uv add`/`uv run` projects, the optional Store extra, `uvx` and `uv tool install`, including both CLIs and validation exit codes. The release also requires Compatibility and Regex at the same prepared revision. |
+| Tests and wheels | Python and Rust regressions, formatting and lint on Linux Python 3.11/3.13 and macOS Python 3.13; SPARQL evaluator tests with compatibility features disabled and enabled; source archive rebuilt into all five platform wheels. Every wheel is checked with locked `uv add`/`uv sync`/`uv run` projects, the optional Store extra, `uv tool run` and `uv tool install`, including both CLIs and validation exit codes. The release also requires Compatibility and Regex at the same prepared revision. |
 | Compatibility | Pinned W3C Core/SPARQL cases through document and Graph APIs, the adapted non-JS pySHACL suite, and direct API/CLI comparisons. Suite adaptations are independently checked against both engines. Detailed reports are uploaded as artifacts. |
 | Regex | The patched matcher's full upstream suite, unit tests with Turbo's base features, Python-mode VM regressions, and formatting, using its own pinned test dependencies. |
 

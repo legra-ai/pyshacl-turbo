@@ -466,6 +466,8 @@ def environment():
     files = [
         Path(__file__),
         ROOT / "benchmarks/companions-requirements.lock",
+        ROOT / "benchmarks/uv.lock",
+        ROOT / "benchmarks/pyproject.toml",
         ROOT / "tests/upstream_support/process_launch.py",
     ]
     return {

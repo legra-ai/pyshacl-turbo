@@ -16,7 +16,7 @@ updates:
     commit-message:
       prefix: build
       include: scope
-  - package-ecosystem: pip
+  - package-ecosystem: uv
     directory: /
     schedule:
       interval: daily
@@ -43,4 +43,11 @@ updates:
         patterns: ['*']
     commit-message:
       prefix: ci
+      include: scope
+  - package-ecosystem: uv
+    directory: /benchmarks
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: build
       include: scope

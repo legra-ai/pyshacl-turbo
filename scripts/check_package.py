@@ -29,6 +29,7 @@ def check(path):
         prefix = ""
         for name in [
             "Cargo.lock",
+            "uv.lock",
             "Cargo.toml",
             "pyproject.toml",
             "python/pyshacl_turbo/py.typed",
