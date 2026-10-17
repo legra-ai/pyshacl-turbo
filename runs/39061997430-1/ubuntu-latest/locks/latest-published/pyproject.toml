@@ -1,0 +1,13 @@
+[project]
+name = "latest-published"
+version = "0.1.0"
+requires-python = ">=3.13"
+dependencies = [
+    "owlrl-turbo>=0.1.0a2,<0.2",
+    "pyshacl-turbo>=0.2.4,<0.4",
+    "rdflib==7.6.0",
+    "rdflib-turbo>=0.1.0a2,<0.3",
+]
+
+[tool.uv]
+prerelease = "allow"
