@@ -24,7 +24,7 @@ def synchronize(root, version):
     if count != 1:
         raise ValueError("Expected exactly one Python project version")
     path.write_text(content)
-    subprocess.run(["uv", "lock", "--offline", "--project", str(root)], check=True)
+    subprocess.run(["uv", "lock", "--project", str(root)], check=True)
 
 
 if __name__ == "__main__":
