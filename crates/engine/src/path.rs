@@ -3,7 +3,7 @@ use std::collections::HashSet;
 use oxigraph::model::*;
 
 use crate::graph::*;
-use crate::{Error, Result};
+use crate::{Error, GraphRead, Result};
 use shacl_structural_model::ShaclPath;
 
 #[derive(Clone, Eq, PartialEq, Hash)]
@@ -121,7 +121,7 @@ impl Path {
             .collect()
     }
 
-    pub fn values(&self, data: &Dataset, focus: &Term) -> Result<Vec<Term>> {
+    pub fn values(&self, data: &(impl GraphRead + ?Sized), focus: &Term) -> Result<Vec<Term>> {
         #[cfg(test)]
         PATH_EVALUATIONS.with(|count| count.set(count.get() + 1));
         let mut result: Vec<_> = self.walk(data, focus, false)?.into_iter().collect();
@@ -129,7 +129,12 @@ impl Path {
         Ok(result)
     }
 
-    fn walk(&self, data: &Dataset, focus: &Term, reverse: bool) -> Result<HashSet<Term>> {
+    fn walk(
+        &self,
+        data: &(impl GraphRead + ?Sized),
+        focus: &Term,
+        reverse: bool,
+    ) -> Result<HashSet<Term>> {
         match self {
             Self::Predicate(p) => Ok(if reverse {
                 subjects(data, p, Some(focus))?

@@ -10,6 +10,7 @@ pub const SOURCES: &[(&str, &[u8])] = &[
     ("expression.rs", include_bytes!("expression.rs")),
     ("functions.rs", include_bytes!("functions.rs")),
     ("graph.rs", include_bytes!("graph.rs")),
+    ("graph_read.rs", include_bytes!("graph_read.rs")),
     ("inference.rs", include_bytes!("inference.rs")),
     ("inference/axioms.rs", include_bytes!("inference/axioms.rs")),
     ("lib.rs", include_bytes!("lib.rs")),

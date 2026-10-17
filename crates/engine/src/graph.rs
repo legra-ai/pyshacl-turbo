@@ -3,7 +3,7 @@ use std::collections::{HashMap, HashSet, VecDeque};
 use oxigraph::io::{RdfFormat, RdfParser};
 use oxigraph::model::*;
 
-use crate::{Error, Result};
+use crate::{Error, GraphRead, Result};
 
 #[cfg(test)]
 #[path = "graph_tests.rs"]
@@ -119,26 +119,30 @@ pub fn commit_additions(data: &mut Dataset, before: &Dataset, after: &Dataset) {
     );
 }
 
-pub fn objects(store: &Dataset, node: &Term, predicate: &NamedNode) -> Result<Vec<Term>> {
+pub fn objects(
+    store: &(impl GraphRead + ?Sized),
+    node: &Term,
+    predicate: &NamedNode,
+) -> Result<Vec<Term>> {
     let Ok(node) = subject(node) else {
         return Ok(Vec::new());
     };
-    Ok(store
-        .quads_for_pattern(
+    store
+        .matching_quads(
             Some(node.as_ref()),
             Some(predicate.as_ref()),
             None,
             Some(GraphNameRef::DefaultGraph),
         )
-        .map(|q| q.object.into_owned())
-        .collect())
+        .map(|q| q.map(|q| q.object))
+        .collect()
 }
 
-pub fn values(store: &Dataset, node: &Term, name: &str) -> Result<Vec<Term>> {
+pub fn values(store: &(impl GraphRead + ?Sized), node: &Term, name: &str) -> Result<Vec<Term>> {
     objects(store, node, &iri(SH, name))
 }
 
-pub fn one(store: &Dataset, node: &Term, name: &str) -> Result<Option<Term>> {
+pub fn one(store: &(impl GraphRead + ?Sized), node: &Term, name: &str) -> Result<Option<Term>> {
     let mut terms = values(store, node, name)?;
     if terms.len() > 1 {
         return Err(Error::Invalid(format!(
@@ -148,7 +152,7 @@ pub fn one(store: &Dataset, node: &Term, name: &str) -> Result<Option<Term>> {
     Ok(terms.pop())
 }
 
-pub fn boolean(store: &Dataset, node: &Term, name: &str) -> Result<bool> {
+pub fn boolean(store: &(impl GraphRead + ?Sized), node: &Term, name: &str) -> Result<bool> {
     match one(store, node, name)? {
         None => Ok(false),
         Some(Term::Literal(v)) if v.datatype() == iri(XSD, "boolean").as_ref() => match v.value() {
@@ -165,19 +169,19 @@ pub fn boolean(store: &Dataset, node: &Term, name: &str) -> Result<bool> {
 }
 
 pub fn subjects(
-    store: &Dataset,
+    store: &(impl GraphRead + ?Sized),
     predicate: &NamedNode,
     object: Option<&Term>,
 ) -> Result<Vec<Term>> {
-    Ok(store
-        .quads_for_pattern(
+    store
+        .matching_quads(
             None,
             Some(predicate.as_ref()),
             object.map(Term::as_ref),
             Some(GraphNameRef::DefaultGraph),
         )
-        .map(|q| q.subject.into_owned().into())
-        .collect())
+        .map(|q| q.map(|q| q.subject.into()))
+        .collect()
 }
 
 pub fn add(store: &mut Dataset, s: &Term, p: NamedNode, o: Term) -> Result<()> {
@@ -226,7 +230,7 @@ impl ReportClones {
     }
 }
 
-pub(crate) fn instances(graph: &Dataset, class: &Term) -> Result<HashSet<Term>> {
+pub(crate) fn instances(graph: &(impl GraphRead + ?Sized), class: &Term) -> Result<HashSet<Term>> {
     let mut result = HashSet::new();
     let mut seen = HashSet::new();
     let mut pending = vec![class.clone()];
