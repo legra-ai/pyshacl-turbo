@@ -60,3 +60,16 @@ def test_workers_fail_fast_on_errors_and_timeouts():
         bench.command([sys.executable, "-c", "raise SystemExit(7)"], timeout=10)
     with pytest.raises(RuntimeError, match="timeout"):
         bench.command([sys.executable, "-c", "import time; time.sleep(60)"], timeout=0.1)
+
+
+def test_harness_identity_is_stable_when_started_through_a_symlink(tmp_path, monkeypatch):
+    bench = module()
+    link = tmp_path / "linked-release.py"
+    link.symlink_to(bench.ROOT / "benchmarks/releases.py")
+    monkeypatch.setattr(bench, "__file__", str(link))
+    hashes = bench.harness_hashes()
+    assert set(hashes) == {
+        "benchmarks/releases.py",
+        "benchmarks/companions.py",
+        "tests/upstream_support/process_launch.py",
+    }

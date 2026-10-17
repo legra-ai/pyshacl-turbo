@@ -10,6 +10,7 @@ import argparse
 import hashlib
 import importlib.util
 import json
+import os
 import platform
 import random
 import re
@@ -33,6 +34,17 @@ companions = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(companions)
 TURBO = {"rdflib-turbo", "owlrl-turbo", "pyshacl-turbo"}
 REFERENCE = {"rdflib", "owlrl", "pyshacl"}
+
+
+def harness_hashes():
+    paths = [
+        Path(__file__).resolve(),
+        ROOT / "benchmarks/companions.py",
+        ROOT / "tests/upstream_support/process_launch.py",
+    ]
+    return {
+        str(path.relative_to(ROOT)): hashlib.sha256(path.read_bytes()).hexdigest() for path in paths
+    }
 
 
 def command(arguments, *, timeout=600):
@@ -251,6 +263,7 @@ def write_report(report, output):
         report["method"],
         "",
         f"Measured: {report['date']}; platform: {platform.platform()}.",
+        f"Harness revision: `{report['source_revision']}`; dirty source tree: `{report['source_tree_dirty']}`. Candidate wheel source revisions and hashes are retained in the raw evidence.",
         "",
         "| Pipeline | Nodes | Environment | Median ms | Min–max ms | Peak MiB | Full-output parity | Speedup vs Python |",
         "|---|---:|---|---:|---:|---:|---|---:|",
@@ -314,16 +327,10 @@ def main():
         if args.candidate_wheels and (args.candidate_wheels / "sources.json").exists()
         else None,
         "source_tree_dirty": bool(command(["git", "-C", ROOT, "status", "--porcelain"])),
+        "host": {"logical_cpus": os.cpu_count(), "load_average_start": os.getloadavg()},
         "source_revision": command(["git", "-C", ROOT, "rev-parse", "HEAD"]).strip(),
         "uv_version": command(["uv", "--version"]).strip(),
-        "harness_sha256": {
-            str(path.relative_to(ROOT)): hashlib.sha256(path.read_bytes()).hexdigest()
-            for path in [
-                Path(__file__),
-                ROOT / "benchmarks/companions.py",
-                ROOT / "tests/upstream_support/process_launch.py",
-            ]
-        },
+        "harness_sha256": harness_hashes(),
         "method": "Serial isolated wheel environments; parse → in-place inference → validation, including shape compilation and full public report output. Shapes are parsed before timing. Python uses the original three libraries; shared Turbo retains one native dataset; historical Turbo includes RDFLib conversion. One warmup precedes retained timing samples. Independent cold processes measure whole-process peak RSS before observation encoding. Full-output speedups require stable, completely equal outputs. Generalized RDF differences remain visible. No timing threshold on shared CI runners.",
     }
     executables = {}
@@ -408,6 +415,7 @@ def main():
         write_report(report, output)
         raise
     finally:
+        report["host"]["load_average_end"] = os.getloadavg()
         # Retain manifests/locks, never publish virtual environments or executables.
         for executable in executables.values():
             project = executable.parents[2]

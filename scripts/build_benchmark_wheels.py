@@ -3,6 +3,7 @@
 import argparse
 import json
 import re
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -15,6 +16,17 @@ from upstream_support.process_launch import install
 
 def run(*arguments):
     subprocess.run(list(map(str, arguments)), check=True)
+
+
+def build_archive(archive, output, isolated_output):
+    """uv unpacks beside --out-dir, so never build inside a caller's checkout."""
+    run("uv", "build", "--wheel", "--python", "3.13", "--out-dir", isolated_output, archive)
+    wheels = list(isolated_output.glob("*.whl"))
+    if len(wheels) != 1:
+        raise RuntimeError(f"Expected exactly one built wheel: {archive}")
+    destination = output / wheels[0].name
+    shutil.copy2(wheels[0], destination)
+    return destination
 
 
 def main():
@@ -49,9 +61,7 @@ def main():
             if len(artifacts) != 1:
                 raise RuntimeError(f"Expected exactly one source archive: {name}")
             # Build from the archive outside any parent checkout's Cargo config.
-            run(
-                "uv", "build", "--wheel", "--python", "3.13", "--out-dir", args.output, artifacts[0]
-            )
+            build_archive(artifacts[0], args.output, build_root / f"{name}-wheel")
     (args.output / "sources.json").write_text(
         json.dumps(
             {
