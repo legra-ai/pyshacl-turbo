@@ -28,7 +28,7 @@ Issues = "https://github.com/legra-ai/pyshacl-turbo/issues"
 [project.optional-dependencies]
 oxigraph = ["pyoxigraph>=0.5,<0.6"]
 test = [
-    "pytest>=8,<9",
+    "pytest>=8,<10",
     "pytest-cov>=7.1,<8",
     "pyshacl[oxigraph]==0.40.1",
     "ruff>=0.12",
