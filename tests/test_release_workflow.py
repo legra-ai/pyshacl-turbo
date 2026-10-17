@@ -28,7 +28,9 @@ def test_linux_release_builds_use_native_manylinux_linkers_with_fatal_warnings()
     driver = (ROOT / "scripts/build_manylinux.sh").read_text()
     inner = (ROOT / "scripts/build_manylinux_inner.sh").read_text()
     assert "--env CARGO_BUILD_WARNINGS=deny" in driver
-    assert "--workdir /io/source-build" in driver
+    assert "--workdir /build" in driver
+    assert '--volume "$PWD/source-build:/build"' in driver
+    assert '--volume "$PWD:/io"' not in driver
     assert "uv build --wheel" in inner
     assert "--compatibility manylinux_2_28" in inner
     assert "--locked" in inner
