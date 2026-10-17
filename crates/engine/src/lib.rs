@@ -13,6 +13,7 @@ mod inference;
 mod ontology;
 mod path;
 mod pattern;
+mod revision;
 mod sparql;
 mod sparql_regex;
 mod structural;
@@ -31,6 +32,7 @@ pub use graph::{
 pub use inference::{expand as infer, expand_into as infer_into};
 pub use ontology::inoculate;
 pub use oxigraph;
+pub use revision::fingerprint as engine_fingerprint;
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {

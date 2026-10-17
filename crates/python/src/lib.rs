@@ -476,6 +476,10 @@ impl PyCompiledShapes {
 
 #[pymodule]
 fn _native(module: &Bound<'_, PyModule>) -> PyResult<()> {
+    module.add(
+        "SHACL_ENGINE_FINGERPRINT",
+        pyshacl_turbo_engine::engine_fingerprint(),
+    )?;
     module.add_class::<PyCompiledShapes>()?;
     module.add_class::<PyTargetData>()?;
     module.add_function(wrap_pyfunction!(parse_rdf, module)?)?;
