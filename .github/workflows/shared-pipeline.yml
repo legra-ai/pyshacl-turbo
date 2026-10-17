@@ -1,0 +1,96 @@
+name: Shared dataset performance
+on:
+  workflow_call:
+    inputs:
+      revision:
+        type: string
+        required: true
+  workflow_dispatch:
+  schedule:
+    - cron: '17 7 * * 1'
+
+permissions:
+  contents: read
+defaults:
+  run:
+    shell: bash {0}
+
+jobs:
+  benchmark:
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.revision || github.sha }}
+          fetch-depth: 0
+      - uses: astral-sh/setup-uv@v10.3.0
+        with:
+          version: "0.13.1"
+      - uses: actions-rust-lang/setup-rust-toolchain@v2
+        with:
+          toolchain: 1.99.1
+      - name: Build all three wheels from exact source archives
+        run: uv run --no-project --python 3.13 python scripts/build_benchmark_wheels.py --output "$GITHUB_WORKSPACE/pipeline-wheels" || exit 1
+      - name: Verify the shared path and measure versioned pipelines
+        env:
+          BENCHMARK_NODES: ${{ github.event_name == 'schedule' && '100 1000 10000' || '100 1000' }}
+        run: uv run --no-project --python 3.13 python benchmarks/releases.py --candidate-wheels "$GITHUB_WORKSPACE/pipeline-wheels" --integration-tests "$GITHUB_WORKSPACE/integration" --nodes $BENCHMARK_NODES --repeats 7 --memory-repeats 3 --output benchmark-artifacts/releases.json || exit 1
+      - name: Summarize measured results
+        if: always()
+        shell: uv run --no-project --python 3.13 python {0}
+        run: |
+          import os
+          from pathlib import Path
+          report = Path('benchmark-artifacts/releases.md')
+          if report.exists():
+              with open(os.environ['GITHUB_STEP_SUMMARY'], 'a') as output:
+                  output.write(report.read_text())
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: pipeline-reports-${{ matrix.os }}
+          include-hidden-files: true
+          path: |
+            benchmark-artifacts/releases.json
+            benchmark-artifacts/releases.md
+            benchmark-artifacts/locks/
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: pipeline-wheels-${{ matrix.os }}
+          path: pipeline-wheels/*.whl
+          if-no-files-found: error
+
+  publish-history:
+    needs: benchmark
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    concurrency:
+      group: measured-benchmark-history
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.revision || github.sha }}
+      - uses: astral-sh/setup-uv@v10.3.0
+        with:
+          version: "0.13.1"
+      - uses: actions/download-artifact@v8
+        with:
+          pattern: pipeline-reports-*
+          path: measured-reports
+      - name: Publish successful measurements without replacing coverage Pages
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BENCHMARK_REPOSITORY: ${{ github.repository }}
+          BENCHMARK_RUN_ID: ${{ github.run_id }}-${{ github.run_attempt }}
+          BENCHMARK_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: uv run --no-project --python 3.13 python scripts/benchmark_history.py --artifacts measured-reports --repository "$BENCHMARK_REPOSITORY" --run-id "$BENCHMARK_RUN_ID" --run-url "$BENCHMARK_RUN_URL" || exit 1

@@ -69,6 +69,14 @@ jobs:
     with:
       revision: ${{ needs.prepare.outputs.revision }}
 
+  shared-pipeline:
+    needs: prepare
+    uses: ./.github/workflows/shared-pipeline.yml
+    permissions:
+      contents: write
+    with:
+      revision: ${{ needs.prepare.outputs.revision }}
+
   verify:
     needs: [prepare]
     strategy:
@@ -129,7 +137,7 @@ jobs:
 
   test:
     name: test
-    needs: [prepare, verify, compatibility, regex, sdist, wheels, native-coverage]
+    needs: [prepare, verify, compatibility, regex, sdist, wheels, native-coverage, shared-pipeline]
     if: always()
     runs-on: ubuntu-latest
     steps:

@@ -25,7 +25,12 @@ Companion turbo projects are
 parsing and SPARQL, and [owlrl-turbo](https://github.com/legra-ai/owlrl-turbo), for
 native RDFS/OWL-RL inference using that dataset runtime. Both begin with limited
 alpha APIs. They currently connect to pyshacl-turbo through explicit RDFLib
-conversion; pyshacl-turbo does not yet share their native dataset handles.
+conversion on the initial releases. The shared-dataset releases accept an
+rdflib-turbo Dataset directly: parse with rdflib-turbo, infer with owlrl-turbo's
+`inplace=True`, then call `validate(data, shacl_graph=...)` on that same object.
+Ordinary validation borrows the native dataset; only the report becomes an RDFLib
+graph. The runtime protocol and canonical engine-source fingerprint must match.
+See [versioned pipeline benchmarks](https://github.com/legra-ai/pyshacl-turbo/blob/main/benchmarks/releases.md).
 
 In our [benchmarks](https://github.com/legra-ai/pyshacl-turbo/blob/main/benchmarks/drop-in.md), Turbo was **27–31× faster for SHACL
 rules** and **123–126× faster for SPARQL pattern workloads** than pySHACL 0.40.1

@@ -43,6 +43,9 @@ rdflib==7.6.0
     #   owlrl
     #   pyshacl
     #   pyshacl-turbo
+    #   rdflib-turbo
+rdflib-turbo==0.1.0a2
+    # via pyshacl-turbo
 ruff==0.17.0
     # via pyshacl-turbo
 tomli==2.5.0 ; python_full_version <= '3.11'
