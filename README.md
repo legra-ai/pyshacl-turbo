@@ -1,5 +1,10 @@
 # Companion turbo performance history
 
-This artifact-only branch is initialized with a verified owner signature. Successful main-branch CI appends measured Linux/macOS reports and raw evidence using GitHub-signed commits. No measurements have been published here yet.
+Generated from successful shared-dataset benchmarks. PRs cannot publish here.
+Each run compares the original Python trio, the initial turbo releases, the latest compatible published turbo set, and exact candidate wheels.
+Timing and whole-process peak RSS are descriptive measurements on shared CI machines. Compare the recorded hardware/platform and full-output parity before interpreting changes.
 
-The [initial candidate measurements](https://github.com/legra-ai/pyshacl-turbo/pull/51) are retained in the implementation PR.
+| Date | Platform | Candidate versions | Report | Raw evidence | CI run |
+|---|---|---|---|---|---|
+| 2026-10-17T17:33:18.360787+00:00 | macos-latest | owlrl-turbo 0.1.0a3, pyshacl-turbo 0.3.0, rdflib-turbo 0.2.0a1 | [report](runs/39053804306-1/macos-latest/releases.md) | [JSON.gz](runs/39053804306-1/macos-latest/releases.json.gz) | [run](https://github.com/legra-ai/pyshacl-turbo/actions/runs/39053804306) |
+| 2026-10-17T17:29:33.842501+00:00 | ubuntu-latest | owlrl-turbo 0.1.0a3, pyshacl-turbo 0.3.0, rdflib-turbo 0.2.0a1 | [report](runs/39053804306-1/ubuntu-latest/releases.md) | [JSON.gz](runs/39053804306-1/ubuntu-latest/releases.json.gz) | [run](https://github.com/legra-ai/pyshacl-turbo/actions/runs/39053804306) |
