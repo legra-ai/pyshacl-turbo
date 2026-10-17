@@ -31,7 +31,7 @@ rdflib-turbo Dataset directly: parse with rdflib-turbo, infer with owlrl-turbo's
 Ordinary validation borrows the native dataset; only the report becomes an RDFLib
 graph. The runtime protocol and canonical engine-source fingerprint must match.
 See [versioned pipeline benchmarks](https://github.com/legra-ai/pyshacl-turbo/blob/main/benchmarks/releases.md).
-The [inference memory report](benchmarks/inference-memory.md) includes measured
+The [inference memory report](https://github.com/legra-ai/pyshacl-turbo/blob/ff8e693488115e4a1920308b35e5927084b9a9d2/benchmarks/inference-memory.md) includes measured
 before/after heap, process memory and runtime for the shared pipeline.
 
 In our [benchmarks](https://github.com/legra-ai/pyshacl-turbo/blob/main/benchmarks/drop-in.md), Turbo was **27–31× faster for SHACL
