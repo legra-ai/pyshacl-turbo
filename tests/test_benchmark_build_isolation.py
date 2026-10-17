@@ -116,3 +116,45 @@ edition = "2024"
     assert wheel.is_file() and wheel.parent == output
     assert not list(parent.glob("pipeline-wheels/.tmp*"))
     assert subprocess.Popen is original_spawner
+
+
+def test_candidate_rejects_stale_embedded_engine_before_build(tmp_path):
+    builder = builder_module()
+    canonical = tmp_path / "canonical"
+    committed_source(builder, canonical)
+    stale = builder.checked_revision(canonical)
+    implementation = canonical / "crates/engine/src"
+    implementation.mkdir(parents=True)
+    (implementation / "lib.rs").write_text("pub trait GraphRead {}\n")
+    builder.run("git", "-C", canonical, "add", ".")
+    builder.run(
+        "git",
+        "-C",
+        canonical,
+        "-c",
+        "commit.gpgsign=false",
+        "-c",
+        "core.hooksPath=no-hooks",
+        "-c",
+        "user.name=Fixture",
+        "-c",
+        "user.email=fixture@example.invalid",
+        "commit",
+        "-m",
+        "test: add canonical reader",
+    )
+    current = builder.checked_revision(canonical)
+    runtime = tmp_path / "runtime"
+    runtime.mkdir()
+
+    def declare(revision):
+        (runtime / "Cargo.toml").write_text(
+            "[dependencies]\npyshacl-turbo-engine = {git = "
+            '"https://github.com/legra-ai/pyshacl-turbo", rev = "' + revision + '"}\n'
+        )
+
+    declare(stale)
+    with pytest.raises(RuntimeError, match="canonical SHACL engine"):
+        builder.ensure_shared_engine(canonical, runtime)
+    declare(current)
+    builder.ensure_shared_engine(canonical, runtime)

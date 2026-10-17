@@ -34,3 +34,8 @@ report descriptions, query evaluation and snapshot-free function callbacks must
 adopt them before that API is exposed. Existing per-path/target result collections,
 reports and transaction deltas remain separate memory costs. No new storage or
 wire version, side table, whole-graph snapshot or global mutable cache is added.
+
+Canonical engine-source changes also require a coordinated rdflib-turbo consumer
+pin and benchmark source revision. The wheel builder checks implementation source
+differences before building; the installed-wheel fingerprint check remains strict.
+Never rewrite candidate archives or relax source identity to make a mixed pair pass.
