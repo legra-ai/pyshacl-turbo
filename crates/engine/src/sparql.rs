@@ -13,6 +13,10 @@ use crate::graph::*;
 use crate::path::Path;
 use crate::{Error, Result};
 
+#[cfg(test)]
+#[path = "sparql_tests.rs"]
+mod tests;
+
 pub(crate) struct SparqlConstraint {
     pub node: Term,
     pub query: NativeQuery,

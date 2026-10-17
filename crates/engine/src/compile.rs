@@ -13,6 +13,10 @@ use crate::path::Path;
 use crate::{Error, Result};
 use shacl_structural_model as model;
 
+#[cfg(test)]
+#[path = "compile_tests.rs"]
+mod tests;
+
 pub(crate) enum Target {
     Node(Term),
     Class(Term),

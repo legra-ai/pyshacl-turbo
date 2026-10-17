@@ -16,6 +16,10 @@ use crate::graph::*;
 use crate::sparql_regex::RegexFunctions;
 use crate::{Error, Result};
 
+#[cfg(test)]
+#[path = "functions_tests.rs"]
+mod tests;
+
 pub(crate) struct NativeQuery {
     pub parsed: Query,
     prepared: PreparedSparqlQuery,

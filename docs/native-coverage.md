@@ -43,3 +43,18 @@ unmeasured quantities. Inline test modules remain in LLVM's source mapping.
 There is no numerical Rust threshold for this initial measurement; inventory,
 instrumented-wheel identity, native execution and report consistency are mandatory
 CI gates. Badge percentages round down to a tenth, never up to 100%.
+
+
+Standalone native tests now cover internal graph helpers, malformed declarations,
+inference atomicity and boundary failures alongside public Python integration.
+Remaining unexecuted regions stay in the denominator. Examples include errors
+from serializing valid RDF into an in-memory byte vector, parsing built-in query
+constants and impossible result variants after query-kind validation. These are
+not assigned synthetic hits. The HTML report is the per-revision gap inventory;
+a high aggregate percentage does not establish exhaustive behavioral coverage.
+
+The Rust test executables embed the selected Python distribution. Their runtime
+uses that interpreter's absolute base prefix, separately from the wheel-test
+venv, so relocatable Python installations load the matching standard library.
+The shared datatype parser correction and required upstream tests are recorded
+in the datatype-parser ADR and vendored patch note.

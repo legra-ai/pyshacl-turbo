@@ -25,3 +25,4 @@ sparopt = { path = "vendor/sparopt-0.3.7" }
 spareval = { path = "vendor/spareval-0.2.7" }
 
 spargebra = { path = "vendor/spargebra-0.4.7" }
+oxsdatatypes = { path = "vendor/oxsdatatypes-0.2.3" }

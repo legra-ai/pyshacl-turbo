@@ -11,6 +11,10 @@ use crate::graph::*;
 use crate::path::rdf_list;
 use crate::{Error, Result};
 
+#[cfg(test)]
+#[path = "constraints_tests.rs"]
+mod coverage_tests;
+
 pub(crate) const PARAMETERS: &[&str] = &[
     "sparql",
     "minCount",

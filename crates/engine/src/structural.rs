@@ -16,6 +16,10 @@ use crate::graph::*;
 use crate::path::rdf_list;
 use crate::{Error, Result};
 
+#[cfg(test)]
+#[path = "structural_boundary_tests.rs"]
+mod boundary_tests;
+
 pub(crate) enum ShapeDeclaration {
     Node(Box<model::NodeShape<Term>>),
     Property(Box<model::PropertyShape<Term>>),

@@ -101,6 +101,8 @@ jobs:
           components: rustfmt
       - name: Python, Rust, formatting and lint checks
         run: make check
+      - name: Patched datatype parser regressions
+        run: cargo test --locked -p oxsdatatypes --lib
       - name: SPARQL evaluator defaults and opt-in compatibility features
         if: matrix.os == 'ubuntu-latest' && matrix.python == '3.13'
         run: make test-sparql-evaluator
