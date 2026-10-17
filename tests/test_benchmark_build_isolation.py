@@ -118,7 +118,7 @@ edition = "2024"
     assert subprocess.Popen is original_spawner
 
 
-def test_candidate_rejects_stale_embedded_engine_before_build(tmp_path):
+def test_candidate_rejects_stale_embedded_engine_before_build(monkeypatch, tmp_path):
     builder = builder_module()
     canonical = tmp_path / "canonical"
     committed_source(builder, canonical)
@@ -153,8 +153,74 @@ def test_candidate_rejects_stale_embedded_engine_before_build(tmp_path):
             '"https://github.com/legra-ai/pyshacl-turbo", rev = "' + revision + '"}\n'
         )
 
+    run = builder.run
+    monkeypatch.setattr(
+        builder,
+        "run",
+        lambda *args: run(
+            *(
+                canonical if arg == "https://github.com/legra-ai/pyshacl-turbo" else arg
+                for arg in args
+            )
+        ),
+    )
     declare(stale)
     with pytest.raises(RuntimeError, match="canonical SHACL engine"):
         builder.ensure_shared_engine(canonical, runtime)
     declare(current)
     builder.ensure_shared_engine(canonical, runtime)
+
+
+def test_candidate_fetches_engine_revision_outside_its_squashed_history(monkeypatch, tmp_path):
+    builder = builder_module()
+    repositories = []
+    for name in ("dependency", "candidate"):
+        source = tmp_path / name
+        committed_source(builder, source)
+        implementation = source / "crates/engine/src"
+        implementation.mkdir(parents=True)
+        (implementation / "lib.rs").write_text("pub trait GraphRead {}\n")
+        (source / "unrelated.txt").write_text(name)
+        builder.run("git", "-C", source, "add", ".")
+        builder.run(
+            "git",
+            "-C",
+            source,
+            "-c",
+            "commit.gpgsign=false",
+            "-c",
+            "core.hooksPath=no-hooks",
+            "-c",
+            "user.name=Fixture",
+            "-c",
+            "user.email=fixture@example.invalid",
+            "commit",
+            "-m",
+            "test: record independent engine history",
+        )
+        repositories.append(source)
+    dependency, canonical = repositories
+    revision = builder.checked_revision(dependency)
+    absent = subprocess.run(
+        ["git", "-C", str(canonical), "cat-file", "-e", revision], capture_output=True
+    )
+    assert absent.returncode != 0
+    runtime = tmp_path / "runtime"
+    runtime.mkdir()
+    (runtime / "Cargo.toml").write_text(
+        "[dependencies]\npyshacl-turbo-engine = {git = "
+        '"https://github.com/legra-ai/pyshacl-turbo", rev = "' + revision + '"}\n'
+    )
+    run = builder.run
+    monkeypatch.setattr(
+        builder,
+        "run",
+        lambda *args: run(
+            *(
+                dependency if arg == "https://github.com/legra-ai/pyshacl-turbo" else arg
+                for arg in args
+            )
+        ),
+    )
+    builder.ensure_shared_engine(canonical, runtime)
+    subprocess.run(["git", "-C", str(canonical), "cat-file", "-e", revision], check=True)

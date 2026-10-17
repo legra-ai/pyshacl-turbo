@@ -65,6 +65,8 @@ def ensure_shared_engine(canonical, runtime):
     revision = dependency["rev"]
     if not re.fullmatch(r"[0-9a-f]{40}", revision):
         raise ValueError("The canonical SHACL engine requires an immutable source revision")
+    # A pinned PR commit may be absent from a later squash-merged checkout.
+    run("git", "-C", canonical, "fetch", "--no-tags", dependency["git"], revision)
     changed = output(
         "git",
         "-C",
