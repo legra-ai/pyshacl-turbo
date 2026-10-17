@@ -883,7 +883,8 @@ impl CompiledShapes {
 
     /// Mutates only this explicitly supplied store. Python validates a fresh store
     /// and commits additions to the caller's Graph only after successful execution.
-    fn has_active_rules(&self, options: &Options) -> bool {
+    /// Whether validation needs a mutable working dataset for selected SHACL rules.
+    pub fn has_active_rules(&self, options: &Options) -> bool {
         self.execution_order.iter().any(|&index| {
             let shape = &self.shapes[index];
             (options.use_shapes.is_empty() || options.use_shapes.contains(&shape.node))
@@ -1074,15 +1075,41 @@ impl CompiledShapes {
 
     /// Expand rules, then discover validation targets on the resulting graph.
     pub fn validate(&self, data: &mut Dataset, options: Options) -> Result<ValidationReport> {
+        let warnings = self.expand_rules(data, options.clone())?;
+        self.validate_expanded(data, options, warnings)
+    }
+
+    /// Validate a borrowed dataset without copying it or permitting rule mutation.
+    /// Named-graph union materialization remains local to this validation call.
+    pub fn validate_readonly(&self, data: &Dataset, options: Options) -> Result<ValidationReport> {
+        if options.max_rule_iterations == 0 {
+            return Err(Error::Invalid(
+                "max_rule_iterations must be positive".into(),
+            ));
+        }
+        if self.has_active_rules(&options) {
+            return Err(Error::Invalid(
+                "Readonly validation cannot execute active rules".into(),
+            ));
+        }
+        self.validate_expanded(data, options, Vec::new())
+    }
+
+    fn validate_expanded(
+        &self,
+        data: &Dataset,
+        options: Options,
+        warnings: Vec<String>,
+    ) -> Result<ValidationReport> {
         let mut evaluation = Evaluation::new(options.max_validation_depth);
-        evaluation.warnings = self.expand_rules(data, options.clone())?;
-        let display_data = &*data;
+        evaluation.warnings = warnings;
+        let display_data = data;
         let joined;
         let data = if data.iter().any(|q| !q.graph_name.is_default_graph()) {
             joined = with_union(data);
             &joined
         } else {
-            &*data
+            data
         };
         evaluation.functions = self.functions.for_dataset(data);
         let mut violations = Vec::new();
