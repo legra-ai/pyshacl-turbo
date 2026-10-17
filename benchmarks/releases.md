@@ -88,6 +88,14 @@ remain differences. These synthetic fixtures and shared CI runners provide
 descriptive comparisons, not universal performance claims or precise production
 capacity predictions; CI does not impose noisy timing thresholds.
 
+Correctness encoding preserves every triple and blank-node link. When each blank
+node has a unique label-independent local structural signature, those signatures
+provide a canonical bijection directly. Ambiguous graphs use RDFLib's general
+canonicalizer. The raw digest records the encoding method, and the harness hash
+identifies its implementation. Compare output digests with the same encoder;
+older report hashes are not interchangeable across harness changes. Encoding
+remains outside both the operation timer and captured peak RSS.
+
 ## Continuous reports
 
 The required `shared-pipeline` CI gate builds coordinated wheel sets and checks the

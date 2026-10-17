@@ -87,10 +87,41 @@ def nquads_fixture(nodes):
 
 
 def digest_graph(graph):
+    from rdflib import BNode
     from rdflib.compare import to_canonical_graph
 
-    lines = sorted(" ".join(term.n3() for term in triple) for triple in to_canonical_graph(graph))
-    return {"triples": len(graph), "sha256": hashlib.sha256("\n".join(lines).encode()).hexdigest()}
+    # A unique, label-independent local signature gives a canonical bijection
+    # directly. Keep every triple and every blank-node edge in the final digest.
+    # Ambiguous signatures require the general canonicalizer, chosen before any
+    # comparison. No failed comparison is retried or weakened.
+    signatures = {}
+    for triple in graph:
+        for node in {term for term in triple if isinstance(term, BNode)}:
+            pattern = tuple(
+                ("self",)
+                if term == node
+                else ("blank",)
+                if isinstance(term, BNode)
+                else ("term", term.n3())
+                for term in triple
+            )
+            signatures.setdefault(node, []).append(pattern)
+    labels = {
+        node: BNode("anchor" + hashlib.sha256(json.dumps(sorted(patterns)).encode()).hexdigest())
+        for node, patterns in signatures.items()
+    }
+    if len(set(labels.values())) == len(labels):
+        triples = (tuple(labels.get(term, term) for term in triple) for triple in graph)
+        method = "unique-anchors-v1"
+    else:
+        triples = to_canonical_graph(graph)
+        method = "rdflib-canonical-v1"
+    lines = sorted(" ".join(term.n3() for term in triple) for triple in triples)
+    return {
+        "triples": len(graph),
+        "sha256": hashlib.sha256("\n".join(lines).encode()).hexdigest(),
+        "canonicalization": method,
+    }
 
 
 def graph_observation(graph):
