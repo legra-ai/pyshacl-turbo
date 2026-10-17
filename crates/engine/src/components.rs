@@ -8,6 +8,10 @@ use crate::graph::*;
 use crate::path::Path;
 use crate::{Error, Result};
 
+#[cfg(test)]
+#[path = "components_tests.rs"]
+mod tests;
+
 pub(crate) struct Parameter {
     pub declaration: model::Parameter<Term>,
     variable: Variable,

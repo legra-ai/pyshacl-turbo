@@ -7,6 +7,10 @@ use crate::graph::{RDF, iri, objects, subject, subjects};
 use crate::path::rdf_list;
 use crate::{Error, Result};
 
+#[cfg(test)]
+#[path = "inference_tests.rs"]
+mod tests;
+
 mod axioms;
 
 const OWL: &str = "http://www.w3.org/2002/07/owl#";

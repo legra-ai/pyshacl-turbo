@@ -33,3 +33,11 @@ def test_issue70_missing_geometry_class_is_a_real_violation():
     data.add((EX.point, RDF.type, URIRef("http://www.opengis.net/ont/geosparql#Geometry")))
     assert pyshacl.validate(data, shacl_graph=shapes)[0]
     assert turbo.validate(data, shacl_graph=shapes)[0]
+
+
+def test_multiple_classes_report_the_complete_declared_class_set():
+    shapes = graph("ex:S sh:targetNode ex:value; sh:class ex:A, ex:B.")
+    _, report, _ = compare(graph("ex:value a ex:A."), shapes)
+    assert set(report.objects(None, SH.resultMessage)) == {
+        Literal("Value class is not in classes (ex:A, ex:B)")
+    }

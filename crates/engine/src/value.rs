@@ -5,6 +5,10 @@ use oxigraph::sparql::{PreparedSparqlQuery, QueryResults};
 use crate::graph::*;
 use crate::{Error, Result};
 
+#[cfg(test)]
+#[path = "value_tests.rs"]
+mod tests;
+
 pub(crate) fn lexical(term: &Term) -> Option<&str> {
     match term {
         Term::NamedNode(n) => Some(n.as_str()),

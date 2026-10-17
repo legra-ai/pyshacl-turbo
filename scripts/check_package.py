@@ -40,6 +40,7 @@ def check(path):
             "scripts/smoke_wheel.py",
             "vendor/fancy-regex-0.19.2/src/lib.rs",
             "vendor/oxrdf-0.3.4/src/lib.rs",
+            "vendor/oxsdatatypes-0.2.3/src/lib.rs",
             "vendor/spargebra-0.4.7/src/lib.rs",
             "vendor/sparopt-0.3.7/src/lib.rs",
             "vendor/spareval-0.2.7/src/lib.rs",
@@ -51,7 +52,13 @@ def check(path):
     assert metadata["License-Expression"] == "MIT OR Apache-2.0"
     for name in ["LICENSE-MIT", "LICENSE-APACHE"]:
         assert files[prefix + name] == (Path(__file__).parents[1] / name).read_bytes()
-        for vendor in ["oxrdf-0.3.4", "spargebra-0.4.7", "sparopt-0.3.7", "spareval-0.2.7"]:
+        for vendor in [
+            "oxrdf-0.3.4",
+            "oxsdatatypes-0.2.3",
+            "spargebra-0.4.7",
+            "sparopt-0.3.7",
+            "spareval-0.2.7",
+        ]:
             assert prefix + f"vendor/{vendor}/{name}" in files, f"Missing {vendor} attribution"
     assert not any("CHANGELOG" in name for name in files), "Generated changelog must not ship"
     assert not any("/target/" in name or "/.venv/" in name for name in files)

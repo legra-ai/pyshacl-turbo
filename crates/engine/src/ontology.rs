@@ -6,6 +6,10 @@ use oxigraph::model::*;
 
 use crate::graph::{RDF, RDFS, iri, with_union};
 
+#[cfg(test)]
+#[path = "ontology_tests.rs"]
+mod tests;
+
 const OWL: &str = "http://www.w3.org/2002/07/owl#";
 const RDFS_CLASSES: &[&str] = &[
     "Class",

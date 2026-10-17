@@ -5,6 +5,10 @@ use oxigraph::model::*;
 
 use crate::{Error, Result};
 
+#[cfg(test)]
+#[path = "graph_tests.rs"]
+mod tests;
+
 pub const SH: &str = "http://www.w3.org/ns/shacl#";
 pub const RDF: &str = "http://www.w3.org/1999/02/22-rdf-syntax-ns#";
 pub const RDFS: &str = "http://www.w3.org/2000/01/rdf-schema#";

@@ -36,3 +36,7 @@ No upstream PRs have been submitted for these local Rust patches.
 It reapplies the local pySHACL patch, fails if the patch cannot apply, and records
 its checksum in `../tests/suite-sources.json`.
 It does not overwrite the patched Rust dependencies.
+
+- `oxsdatatypes-0.2.3/`: published Oxigraph datatype sources with one parser correction
+  for `xsd:gMonthDay` February 29. See its `TURBO-PATCH.md` and original archive
+  checksum in `rust-sources.json`. MIT and Apache license texts are retained.

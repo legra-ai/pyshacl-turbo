@@ -16,6 +16,10 @@ use crate::functions::FunctionErrors;
 use crate::pattern::Pattern;
 use crate::{Error, Result};
 
+#[cfg(test)]
+#[path = "sparql_regex_tests.rs"]
+mod tests;
+
 const REGEX: &str = "urn:pyshacl-turbo:internal:regex";
 const REPLACE: &str = "urn:pyshacl-turbo:internal:replace";
 const CACHE_LIMIT: usize = 128;

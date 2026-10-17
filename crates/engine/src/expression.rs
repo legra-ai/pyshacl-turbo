@@ -7,6 +7,10 @@ use crate::graph::*;
 use crate::path::{Path, rdf_list};
 use crate::{Error, Result};
 
+#[cfg(test)]
+#[path = "expression_tests.rs"]
+mod tests;
+
 pub(crate) enum NodeExpression {
     This,
     Constant(Term),

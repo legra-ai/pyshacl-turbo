@@ -10,6 +10,10 @@ use crate::graph::*;
 use crate::path::Path;
 use crate::{Error, Result};
 
+#[cfg(test)]
+#[path = "execute_tests.rs"]
+mod coverage_tests;
+
 #[derive(Clone, Debug)]
 pub struct Options {
     pub iterate_rules: bool,
