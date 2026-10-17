@@ -85,4 +85,4 @@ show_contexts = true
 line-length = 100
 
 [dependency-groups]
-dev = ["mypy>=1.15,<2"]
+dev = ["mypy>=1.15,<3"]
