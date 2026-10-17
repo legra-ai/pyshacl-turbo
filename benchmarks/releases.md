@@ -95,6 +95,8 @@ actual shared path on Linux and macOS, including regressions that prohibit datas
 copying/serialization/conversion while measuring the pipeline. Main-branch runs,
 manual runs and the weekly schedule retain raw JSON, locks, wheel artifacts and a
 Markdown report in GitHub Actions. Weekly runs also include 10,000 records.
+Those larger workers have an explicit 900-second budget, including repeated
+full-output encoding; ordinary 100/1,000-record CI workers retain 180 seconds.
 
 Successful main runs append both platform reports to the generated
 [`benchmark-results` history branch](https://github.com/legra-ai/pyshacl-turbo/tree/benchmark-results).
