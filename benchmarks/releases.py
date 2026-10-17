@@ -390,6 +390,7 @@ def main():
                             "backend": env["backend"],
                             "operation": f"pipeline_{mode}",
                             "nodes": nodes,
+                            "observation_encoder": "unique-anchors-v1",
                         },
                         args.repeats,
                         args.memory_repeats,

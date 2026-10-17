@@ -41,6 +41,20 @@ def build_archive(archive, output, isolated_output):
     return destination
 
 
+def checked_revision(source):
+    if output("git", "-C", source, "status", "--porcelain", "--untracked-files=all"):
+        raise RuntimeError(f"Benchmark wheels require a clean source checkout: {source}")
+    return output("git", "-C", source, "rev-parse", "HEAD")
+
+
+def checkout_source(url, revision, destination):
+    run("git", "clone", "--no-checkout", url, destination)
+    run("git", "-C", destination, "fetch", "origin", revision)
+    run("git", "-C", destination, "checkout", "--detach", revision)
+    if checked_revision(destination) != revision:
+        raise RuntimeError(f"Source checkout identity mismatch: {destination}")
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--sources", type=Path, default=ROOT / "benchmarks/runtime-sources.json")
@@ -49,20 +63,18 @@ def main():
     pins = json.loads(args.sources.read_text())
     if pins.keys() != {"rdflib-turbo", "owlrl-turbo"}:
         raise ValueError("Declare both companion source revisions")
+    root_revision = checked_revision(ROOT)
     args.output.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory(prefix="turbo-benchmark-build-") as temporary:
         build_root = Path(temporary)
-        sources = {"pyshacl-turbo": ROOT}
+        root_source = build_root / "pyshacl-turbo"
+        checkout_source(ROOT, root_revision, root_source)
+        sources = {"pyshacl-turbo": root_source}
         for name, revision in pins.items():
             if not re.fullmatch(r"[0-9a-f]{40}", revision):
                 raise ValueError("Companion source revisions must be full immutable Git SHAs")
             source = build_root / name
-            run("git", "clone", "--no-checkout", f"https://github.com/legra-ai/{name}.git", source)
-            run("git", "-C", source, "fetch", "origin", revision)
-            run("git", "-C", source, "checkout", "--detach", revision)
-            actual = output("git", "-C", source, "rev-parse", "HEAD")
-            if actual != revision:
-                raise RuntimeError(f"Source checkout identity mismatch: {name}")
+            checkout_source(f"https://github.com/legra-ai/{name}.git", revision, source)
             sources[name] = source
         for name, source in sources.items():
             archives = build_root / f"{name}-archive"
@@ -72,10 +84,13 @@ def main():
                 raise RuntimeError(f"Expected exactly one source archive: {name}")
             # Build from the archive outside any parent checkout's Cargo config.
             build_archive(artifacts[0], args.output, build_root / f"{name}-wheel")
+            expected = root_revision if name == "pyshacl-turbo" else pins[name]
+            if checked_revision(source) != expected:
+                raise RuntimeError(f"Source checkout changed during build: {name}")
     (args.output / "sources.json").write_text(
         json.dumps(
             {
-                "pyshacl-turbo": output("git", "-C", ROOT, "rev-parse", "HEAD"),
+                "pyshacl-turbo": root_revision,
                 **pins,
             },
             indent=2,

@@ -1,8 +1,83 @@
 """uv extracts source archives beside its wheel output; keep Cargo isolated."""
 
 import importlib.util
+import json
 import subprocess
 from pathlib import Path
+
+import pytest
+
+
+def builder_module():
+    path = Path(__file__).resolve().parents[1] / "scripts/build_benchmark_wheels.py"
+    spec = importlib.util.spec_from_file_location("benchmark_builder", path)
+    builder = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(builder)
+    return builder
+
+
+def committed_source(builder, source):
+    source.mkdir()
+    (source / "payload.py").write_text("value = 1\n")
+    (source / ".gitignore").write_text("ignored-output/\n")
+    builder.run("git", "init", source)
+    builder.run("git", "-C", source, "add", ".")
+    builder.run(
+        "git",
+        "-C",
+        source,
+        "-c",
+        "commit.gpgsign=false",
+        "-c",
+        "core.hooksPath=no-hooks",
+        "-c",
+        "user.name=Fixture",
+        "-c",
+        "user.email=fixture@example.invalid",
+        "commit",
+        "-m",
+        "test: record fixture",
+    )
+
+
+def test_dirty_candidate_fails_before_any_network_or_build(monkeypatch, tmp_path):
+    import sys
+
+    builder = builder_module()
+    source = tmp_path / "source"
+    committed_source(builder, source)
+    (source / "payload.py").write_text("value = 2\n")
+    pins = tmp_path / "pins.json"
+    pins.write_text(json.dumps({"rdflib-turbo": "a" * 40, "owlrl-turbo": "b" * 40}))
+    monkeypatch.setattr(builder, "ROOT", source)
+    monkeypatch.setattr(
+        sys, "argv", ["builder", "--sources", str(pins), "--output", str(tmp_path / "wheels")]
+    )
+
+    def unexpected(*args):
+        raise AssertionError("Dirty input must fail before clone/build")
+
+    monkeypatch.setattr(builder, "run", unexpected)
+    with pytest.raises(RuntimeError, match="clean source"):
+        builder.main()
+
+
+def test_source_snapshots_are_committed_and_exclude_ignored_artifacts(tmp_path):
+    builder = builder_module()
+    source = tmp_path / "source"
+    committed_source(builder, source)
+    revision = builder.checked_revision(source)
+    ignored = source / "ignored-output"
+    ignored.mkdir()
+    (ignored / "artifact.txt").write_text("must not enter a source build")
+    assert builder.checked_revision(source) == revision
+    checkout = tmp_path / "checkout"
+    builder.checkout_source(source, revision, checkout)
+    assert builder.checked_revision(checkout) == revision
+    assert not (checkout / "ignored-output").exists()
+    (source / "untracked.py").write_text("must fail, not be attributed to HEAD")
+    with pytest.raises(RuntimeError, match="clean source"):
+        builder.checked_revision(source)
 
 
 def test_companion_archive_build_ignores_the_destination_cargo_workspace(tmp_path):

@@ -52,7 +52,7 @@ test-rust-coverage:
 
 benchmark-companions:
 	uv sync --project benchmarks --locked --no-build --python $(PYTHON)
-	uv run --project benchmarks --locked --no-sync python -I benchmarks/companions.py --nodes 100 1000 --repeats 5 --memory-repeats 3 --output benchmarks/companions-current.json
+	uv run --project benchmarks --locked --no-sync python -I benchmarks/companions.py --observation-encoder rdflib-v1 --nodes 100 1000 --repeats 5 --memory-repeats 3 --output benchmarks/companions-current.json
 	uv run --project benchmarks --locked --no-sync python -I benchmarks/check_companions.py --report benchmarks/companions-current.json --baseline benchmarks/companions-baseline.json
 
 benchmark-targeting:

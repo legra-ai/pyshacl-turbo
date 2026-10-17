@@ -5,6 +5,9 @@ The [first measured shared-runtime report](releases-initial-run.md) and its
 candidate's exact source revisions, wheel identities and measurements. Current
 CI reports use the candidate built from their recorded source pins.
 
+The [inference memory report](inference-memory.md) retains the journaled-runtime
+before/after comparison, phase heap profiles, process RSS, locks and raw evidence.
+
 The canonical workload in `companions.py` now supports a native shared pipeline:
 
 ```python
@@ -37,6 +40,11 @@ The [matrix](releases.json) compares four separately locked uv environments:
    pipeline before timing. A failing shared call is never retried via conversion.
 4. Exact candidate wheels built from coordinated source archives. Full source
    revisions are pinned in [runtime-sources.json](runtime-sources.json).
+
+The wheel builder rejects tracked edits and untracked inputs before building.
+It builds every source archive from a separate detached Git checkout, including
+pyshacl-turbo, so ignored local artifacts cannot enter the build. Checkout
+identities are checked again after building.
 
 The historical/reference sets remain fixed; the latest-published set continuously
 tracks release improvements. Add exact environment entries to the matrix to
@@ -88,6 +96,14 @@ remain differences. These synthetic fixtures and shared CI runners provide
 descriptive comparisons, not universal performance claims or precise production
 capacity predictions; CI does not impose noisy timing thresholds.
 
+Correctness encoding preserves every triple and blank-node link. When each blank
+node has a unique label-independent local structural signature, those signatures
+provide a canonical bijection directly. Ambiguous graphs use RDFLib's general
+canonicalizer. The raw digest records the encoding method, and the harness hash
+identifies its implementation. Compare output digests with the same encoder;
+older report hashes are not interchangeable across harness changes. Encoding
+remains outside both the operation timer and captured peak RSS.
+
 ## Continuous reports
 
 The required `shared-pipeline` CI gate builds coordinated wheel sets and checks the
@@ -95,6 +111,8 @@ actual shared path on Linux and macOS, including regressions that prohibit datas
 copying/serialization/conversion while measuring the pipeline. Main-branch runs,
 manual runs and the weekly schedule retain raw JSON, locks, wheel artifacts and a
 Markdown report in GitHub Actions. Weekly runs also include 10,000 records.
+Those larger workers have an explicit 900-second budget, including repeated
+full-output encoding; ordinary 100/1,000-record CI workers retain 180 seconds.
 
 Successful main runs append both platform reports to the generated
 [`benchmark-results` history branch](https://github.com/legra-ai/pyshacl-turbo/tree/benchmark-results).

@@ -14,11 +14,14 @@ import statistics
 import subprocess
 import sys
 import time
+from contextvars import ContextVar
 from datetime import UTC, datetime
 from importlib.metadata import distribution
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+_GRAPH_ENCODER = ContextVar("benchmark_graph_encoder", default="unique-anchors-v1")
+ENCODERS = ("unique-anchors-v1", "rdflib-v1")
 CONVERSIONS = {"from_rdflib", "to_rdflib", "roundtrip"}
 OPERATIONS = (
     "parse_turtle",
@@ -87,10 +90,51 @@ def nquads_fixture(nodes):
 
 
 def digest_graph(graph):
+    from rdflib import BNode
     from rdflib.compare import to_canonical_graph
 
-    lines = sorted(" ".join(term.n3() for term in triple) for triple in to_canonical_graph(graph))
-    return {"triples": len(graph), "sha256": hashlib.sha256("\n".join(lines).encode()).hexdigest()}
+    if _GRAPH_ENCODER.get() == "rdflib-v1":
+        # Explicit historical wire format: preserve its immutable fingerprints.
+        lines = sorted(
+            " ".join(term.n3() for term in triple) for triple in to_canonical_graph(graph)
+        )
+        return {
+            "triples": len(graph),
+            "sha256": hashlib.sha256("\n".join(lines).encode()).hexdigest(),
+        }
+
+    # A unique, label-independent local signature gives a canonical bijection
+    # directly. Keep every triple and every blank-node edge in the final digest.
+    # Ambiguous signatures require the general canonicalizer, chosen before any
+    # comparison. No failed comparison is retried or weakened.
+    signatures = {}
+    for triple in graph:
+        for node in {term for term in triple if isinstance(term, BNode)}:
+            pattern = tuple(
+                ("self",)
+                if term == node
+                else ("blank",)
+                if isinstance(term, BNode)
+                else ("term", term.n3())
+                for term in triple
+            )
+            signatures.setdefault(node, []).append(pattern)
+    labels = {
+        node: BNode("anchor" + hashlib.sha256(json.dumps(sorted(patterns)).encode()).hexdigest())
+        for node, patterns in signatures.items()
+    }
+    if len(set(labels.values())) == len(labels):
+        triples = (tuple(labels.get(term, term) for term in triple) for triple in graph)
+        method = "unique-anchors-v1"
+    else:
+        triples = to_canonical_graph(graph)
+        method = "rdflib-canonical-v1"
+    lines = sorted(" ".join(term.n3() for term in triple) for triple in triples)
+    return {
+        "triples": len(graph),
+        "sha256": hashlib.sha256("\n".join(lines).encode()).hexdigest(),
+        "canonicalization": method,
+    }
 
 
 def graph_observation(graph):
@@ -328,6 +372,17 @@ def without_report_text(observation):
 
 
 def worker(job, repeats, measurement):
+    encoder = job.get("observation_encoder", "unique-anchors-v1")
+    if encoder not in ENCODERS:
+        raise ValueError(f"Unknown observation encoder: {encoder}")
+    token = _GRAPH_ENCODER.set(encoder)
+    try:
+        return measure_worker(job, repeats, measurement)
+    finally:
+        _GRAPH_ENCODER.reset(token)
+
+
+def measure_worker(job, repeats, measurement):
     import resource
 
     samples, observations = [], []
@@ -528,6 +583,7 @@ def main():
     parser.add_argument("--memory-repeats", type=int, default=3)
     parser.add_argument("--timeout", type=float, default=120)
     parser.add_argument("--operations", choices=OPERATIONS, nargs="+", default=list(OPERATIONS))
+    parser.add_argument("--observation-encoder", choices=ENCODERS, default=None)
     parser.add_argument("--output", type=Path, default=ROOT / "benchmarks/companions-current.json")
     parser.add_argument("--worker", help=argparse.SUPPRESS)
     parser.add_argument(
@@ -538,12 +594,18 @@ def main():
         parser.error("sizes, repetitions and timeout must be positive")
     rss_bytes(0, sys.platform)
     if args.worker:
-        print(json.dumps(worker(json.loads(args.worker), args.repeats, args.measurement)))
+        job = json.loads(args.worker)
+        if args.observation_encoder:
+            if job.get("observation_encoder", args.observation_encoder) != args.observation_encoder:
+                parser.error("Conflicting observation encoders")
+            job["observation_encoder"] = args.observation_encoder
+        print(json.dumps(worker(job, args.repeats, args.measurement)))
         return
     result = {
         "environment": environment(),
         "repeats": args.repeats,
         "memory_repeats": args.memory_repeats,
+        "observation_encoder": args.observation_encoder or "unique-anchors-v1",
         "method": "Serial isolated workers. One warmup then retained timing samples; inputs rebuilt outside timers. Pipeline includes data parsing, inference, RDFLib conversion and complete validation output; shapes prepared outside timer. Separate cold workers measure whole-process peak RSS immediately after one operation, before observation encoding, including interpreter, backend imports, fixtures and retained output. Setup high-water marks are recorded, not subtracted. No process startup, file I/O or correctness hashing in timings. Generalized reference triples remain visible; full-output speedups require every observation to agree. Phase times are independent and must not be summed. Conversions are unpaired diagnostics. No timing thresholds.",
         "runs": [],
     }
@@ -558,7 +620,12 @@ def main():
             rng.shuffle(order)
             for backend in order:
                 row["backends"][backend] = measure(
-                    {"operation": job["operation"], "nodes": job["nodes"], "backend": backend},
+                    {
+                        "operation": job["operation"],
+                        "nodes": job["nodes"],
+                        "backend": backend,
+                        "observation_encoder": args.observation_encoder or "unique-anchors-v1",
+                    },
                     args.repeats,
                     args.memory_repeats,
                     args.timeout,
