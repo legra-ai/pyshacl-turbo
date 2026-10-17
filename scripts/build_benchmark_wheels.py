@@ -11,11 +11,23 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "tests"))
-from upstream_support.process_launch import install
+from upstream_support.process_launch import Popen
 
 
 def run(*arguments):
-    subprocess.run(list(map(str, arguments)), check=True)
+    with Popen(list(map(str, arguments))) as process:
+        code = process.wait()
+    if code:
+        raise subprocess.CalledProcessError(code, arguments)
+
+
+def output(*arguments):
+    with Popen(list(map(str, arguments)), stdout=subprocess.PIPE, text=True) as process:
+        value, _ = process.communicate()
+        code = process.returncode
+    if code:
+        raise subprocess.CalledProcessError(code, arguments)
+    return value.strip()
 
 
 def build_archive(archive, output, isolated_output):
@@ -30,7 +42,6 @@ def build_archive(archive, output, isolated_output):
 
 
 def main():
-    install()
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--sources", type=Path, default=ROOT / "benchmarks/runtime-sources.json")
     parser.add_argument("--output", type=Path, required=True)
@@ -47,10 +58,9 @@ def main():
                 raise ValueError("Companion source revisions must be full immutable Git SHAs")
             source = build_root / name
             run("git", "clone", "--no-checkout", f"https://github.com/legra-ai/{name}.git", source)
+            run("git", "-C", source, "fetch", "origin", revision)
             run("git", "-C", source, "checkout", "--detach", revision)
-            actual = subprocess.check_output(
-                ["git", "-C", str(source), "rev-parse", "HEAD"], text=True
-            ).strip()
+            actual = output("git", "-C", source, "rev-parse", "HEAD")
             if actual != revision:
                 raise RuntimeError(f"Source checkout identity mismatch: {name}")
             sources[name] = source
@@ -65,9 +75,7 @@ def main():
     (args.output / "sources.json").write_text(
         json.dumps(
             {
-                "pyshacl-turbo": subprocess.check_output(
-                    ["git", "-C", str(ROOT), "rev-parse", "HEAD"], text=True
-                ).strip(),
+                "pyshacl-turbo": output("git", "-C", ROOT, "rev-parse", "HEAD"),
                 **pins,
             },
             indent=2,

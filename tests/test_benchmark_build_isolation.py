@@ -1,6 +1,7 @@
 """uv extracts source archives beside its wheel output; keep Cargo isolated."""
 
 import importlib.util
+import subprocess
 from pathlib import Path
 
 
@@ -9,7 +10,7 @@ def test_companion_archive_build_ignores_the_destination_cargo_workspace(tmp_pat
     spec = importlib.util.spec_from_file_location("benchmark_builder", path)
     builder = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(builder)
-    builder.install()
+    original_spawner = subprocess.Popen
     source = tmp_path / "source"
     source.mkdir()
     (source / "src").mkdir()
@@ -39,3 +40,4 @@ edition = "2024"
     wheel = builder.build_archive(archive, output, tmp_path / "isolated-output")
     assert wheel.is_file() and wheel.parent == output
     assert not list(parent.glob("pipeline-wheels/.tmp*"))
+    assert subprocess.Popen is original_spawner

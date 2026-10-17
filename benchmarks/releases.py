@@ -180,6 +180,8 @@ def identity():
             "dataset": getattr(_native, "SHARED_SHACL_PROTOCOL", None),
             "validation": getattr(pyshacl_turbo, "SHARED_DATASET_PROTOCOL", None),
         }
+        if any(value not in (None, 1) for value in protocols.values()):
+            raise RuntimeError("Installed release declares an unsupported shared-dataset protocol")
         engines = {
             "dataset": getattr(_native, "SHACL_ENGINE_FINGERPRINT", None),
             "validation": getattr(pyshacl_turbo._native, "SHACL_ENGINE_FINGERPRINT", None),

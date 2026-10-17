@@ -1,5 +1,10 @@
 # Versioned shared-dataset pipeline benchmarks
 
+The [first measured shared-runtime report](releases-initial-run.md) and its
+[compressed raw evidence](releases-initial-run.json.gz) retain the initial
+candidate's exact source revisions, wheel identities and measurements. Current
+CI reports use the candidate built from their recorded source pins.
+
 The canonical workload in `companions.py` now supports a native shared pipeline:
 
 ```python
