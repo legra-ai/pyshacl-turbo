@@ -33,6 +33,7 @@ test = [
     "pyshacl[oxigraph]==0.40.1",
     "ruff>=0.12",
     "pyyaml>=6,<7",
+    "rdflib-turbo==0.1.0a2",
 ]
 
 [project.scripts]

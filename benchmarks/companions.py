@@ -161,7 +161,7 @@ def prepare(job):
 
     rdflib.NORMALIZE_LITERALS = False
     operation, backend = job["operation"], job["backend"]
-    native = backend == "turbo"
+    native = backend in {"turbo", "turbo_shared"}
     named = operation in {"parse_nquads", "serialize_nquads", "select_named"}
     text = fixture(job["nodes"], named=named)
     if operation == "validate" or operation.startswith("pipeline_"):
@@ -184,7 +184,9 @@ def prepare(job):
 
             def run():
                 dataset = NativeDataset().parse(data=text)
-                closure = expand(dataset, inference=mode, inplace=True).to_rdflib().default_graph
+                closure = expand(dataset, inference=mode, inplace=True)
+                if backend == "turbo":
+                    closure = closure.to_rdflib().default_graph
                 return closure, validate(closure, shacl_graph=shapes, inference="none")
         else:
             from owlrl import DeductiveClosure, OWLRL_Semantics, RDFS_Semantics
@@ -198,7 +200,9 @@ def prepare(job):
                 return closure, validate(closure, shacl_graph=shapes, inference="none")
 
         return run, lambda value: {
-            "closure": graph_observation(value[0]),
+            "closure": graph_observation(
+                value[0].to_rdflib().default_graph if backend == "turbo_shared" else value[0]
+            ),
             "report": report_observation(value[1]),
         }
     if not native or operation in CONVERSIONS or operation == "validate":

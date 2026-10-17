@@ -1,6 +1,8 @@
 """pySHACL compatibility layer. All SHACL execution happens in Rust."""
 
+import json
 import logging
+import sys
 import warnings
 from collections.abc import Iterable, Sequence
 from dataclasses import replace
@@ -28,6 +30,7 @@ from .target_data import TargetData, prepare_target_data
 
 ValidationFailure = _native.ValidationFailure
 __version__ = version("pyshacl-turbo")
+SHARED_DATASET_PROTOCOL = 1
 
 
 def _failure_result(function):
@@ -76,12 +79,19 @@ def _compile_native(source, rdf_format, base, advanced, numeric_booleans, namesp
 
 
 class CompiledShapes:
-    """Reusable immutable shapes; each call gets its own Rust data store."""
+    """Reusable immutable shapes; native Dataset validation borrows its runtime."""
 
     def __init__(self, shacl_graph, *, shacl_graph_format=None, advanced=False):
         self.graph = load_from_source(shacl_graph, rdf_format=shacl_graph_format)
         shapes = _input(self.graph, flatten=True)
         self._blank_nodes = shapes.blank_nodes
+        self._shared_spec = (
+            shapes.source,
+            advanced,
+            tuple((p, str(ns)) for p, ns in self.graph.namespaces()),
+            isinstance(shacl_graph, Graph),
+        )
+        self._shared_program = None
         self._native = _compile_native(
             "\n".join(sorted(shapes.source.splitlines())),
             shapes.format,
@@ -120,6 +130,46 @@ class CompiledShapes:
         focus_nodes=None,
         use_shapes=None,
     ):
+        runtime = sys.modules.get("rdflib_turbo")
+        if runtime is not None and isinstance(data_graph, runtime.Dataset):
+            if data_graph_format is not None:
+                raise ValueError("data_graph_format is unavailable for a native Dataset")
+            from rdflib_turbo import _native as shared
+
+            if getattr(shared, "SHARED_SHACL_PROTOCOL", None) != 1:
+                raise RuntimeError("rdflib-turbo does not implement shared SHACL protocol 1")
+            if shared.SHACL_ENGINE_FINGERPRINT != _native.SHACL_ENGINE_FINGERPRINT:
+                raise RuntimeError(
+                    "rdflib-turbo and pyshacl-turbo have different SHACL engine sources"
+                )
+            if self._shared_program is None:
+                source, advanced, namespaces, numeric_booleans = self._shared_spec
+                self._shared_program = shared.SharedShapes(
+                    source, advanced, list(namespaces), numeric_booleans
+                )
+            settings = {
+                "iterate_rules": iterate_rules,
+                "max_rule_iterations": max_rule_iterations,
+                "max_validation_depth": 15
+                if max_validation_depth is None
+                else max_validation_depth,
+                "allow_infos": allow_infos,
+                "allow_warnings": allow_warnings,
+                "abort_on_first": abort_on_first,
+                "focus_nodes": _expand_names(dict(data_graph.namespaces()), focus_nodes),
+                "use_shapes": _expand_names(self.graph, use_shapes),
+            }
+            try:
+                conforms, report, text, recursion_warnings = self._shared_program.validate(
+                    data_graph._native, json.dumps(settings), inplace
+                )
+            except shared.SharedValidationFailure as failure:
+                raise ValidationFailure(str(failure)) from failure
+            _emit_recursion_warnings(recursion_warnings)
+            report_graph = _graph(report, self._blank_nodes, preserve_ids=True)
+            for prefix, namespace in self.graph.namespaces():
+                report_graph.bind(prefix, namespace)
+            return conforms, report_graph, text
         if inplace and not (
             isinstance(data_graph, (Graph, Input)) or is_oxigraph_store(data_graph)
         ):
@@ -441,6 +491,11 @@ def _expand_names(graph, names):
 def _prepare_data(data, rdf_format, ontology, ontology_format, inference, imports):
     if ontology is None and inference in (None, "none"):
         return data
+    runtime = sys.modules.get("rdflib_turbo")
+    if runtime is not None and isinstance(data, runtime.Dataset):
+        raise NotImplementedError(
+            "Prepare native inference with owlrl-turbo before validation; native ontology inoculation is not supported"
+        )
     multigraph = not isinstance(data, Graph) or data.context_aware
     if not isinstance(data, (Graph, Input)) and not is_oxigraph_store(data):
         data = load_from_source(data, rdf_format=rdf_format, multigraph=True)
