@@ -1,5 +1,9 @@
 //! SHACL engine. Unsupported SHACL features are explicit errors.
 //! Python is not involved in compilation, targeting, rules, or validation.
+//!
+//! The diagram and example below describe the borrowed graph query foundation.
+#![doc = concat!("<div>\n", include_str!("architecture.svg"), "\n</div>\n\n")]
+#![doc = include_str!("architecture.md")]
 
 mod compile;
 mod components;
@@ -19,6 +23,9 @@ mod inference;
 mod ontology;
 mod path;
 mod pattern;
+mod query_graph;
+#[cfg(test)]
+mod query_graph_tests;
 mod revision;
 mod sparql;
 mod sparql_regex;
@@ -40,6 +47,7 @@ pub use graph_views::{OverlayGraph, UnionGraph};
 pub use inference::{expand as infer, expand_into as infer_into};
 pub use ontology::inoculate;
 pub use oxigraph;
+pub use query_graph::QueryGraph;
 pub use revision::fingerprint as engine_fingerprint;
 
 #[derive(Debug, thiserror::Error)]

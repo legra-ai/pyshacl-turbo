@@ -35,6 +35,8 @@ def check(path):
             "python/pyshacl_turbo/py.typed",
             "rust-toolchain.toml",
             "crates/engine/src/lib.rs",
+            "crates/engine/src/architecture.svg",
+            "crates/engine/src/architecture.md",
             "crates/engine/tests/pipeline.rs",
             "crates/python/src/lib.rs",
             "tests/test_release.py",

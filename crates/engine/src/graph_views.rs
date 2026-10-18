@@ -21,10 +21,10 @@ impl<'a, G: GraphRead + ?Sized> UnionGraph<'a, G> {
 
     fn default_matches<'b>(
         &'b self,
-        subject: Option<NamedOrBlankNodeRef<'b>>,
-        predicate: Option<NamedNodeRef<'b>>,
-        object: Option<TermRef<'b>>,
-    ) -> impl Iterator<Item = Result<Quad>> + 'b {
+        subject: Option<NamedOrBlankNodeRef<'_>>,
+        predicate: Option<NamedNodeRef<'_>>,
+        object: Option<TermRef<'_>>,
+    ) -> impl Iterator<Item = Result<Quad>> + use<'a, 'b, G> {
         self.source
             .matching_quads(subject, predicate, object, None)
             .filter_map(|quad| match quad {
@@ -58,14 +58,14 @@ impl<'a, G: GraphRead + ?Sized> UnionGraph<'a, G> {
     }
 }
 
-impl<G: GraphRead + ?Sized> GraphRead for UnionGraph<'_, G> {
+impl<'source, G: GraphRead + ?Sized> GraphRead for UnionGraph<'source, G> {
     fn matching_quads<'a>(
         &'a self,
-        subject: Option<NamedOrBlankNodeRef<'a>>,
-        predicate: Option<NamedNodeRef<'a>>,
-        object: Option<TermRef<'a>>,
-        graph: Option<GraphNameRef<'a>>,
-    ) -> impl Iterator<Item = Result<Quad>> + 'a {
+        subject: Option<NamedOrBlankNodeRef<'_>>,
+        predicate: Option<NamedNodeRef<'_>>,
+        object: Option<TermRef<'_>>,
+        graph: Option<GraphNameRef<'_>>,
+    ) -> impl Iterator<Item = Result<Quad>> + use<'a, 'source, G> {
         let matches: Matches<'a> = match graph {
             Some(GraphNameRef::DefaultGraph) => {
                 Box::new(self.default_matches(subject, predicate, object))
@@ -86,6 +86,10 @@ impl<G: GraphRead + ?Sized> GraphRead for UnionGraph<'_, G> {
             ),
         };
         matches
+    }
+
+    fn named_graphs(&self) -> impl Iterator<Item = Result<NamedOrBlankNode>> + '_ {
+        self.source.named_graphs()
     }
 
     fn contains_named_graph(&self, graph: &NamedOrBlankNode) -> Result<bool> {
@@ -119,10 +123,10 @@ impl<'a, G: GraphRead + ?Sized, S: GraphRead + ?Sized> OverlayGraph<'a, G, S> {
 
     fn overlay_matches<'b>(
         &'b self,
-        subject: Option<NamedOrBlankNodeRef<'b>>,
-        predicate: Option<NamedNodeRef<'b>>,
-        object: Option<TermRef<'b>>,
-    ) -> impl Iterator<Item = Result<Quad>> + 'b {
+        subject: Option<NamedOrBlankNodeRef<'_>>,
+        predicate: Option<NamedNodeRef<'_>>,
+        object: Option<TermRef<'_>>,
+    ) -> impl Iterator<Item = Result<Quad>> + use<'a, 'b, G, S> {
         self.shapes
             .matching_quads(subject, predicate, object, Some(GraphNameRef::DefaultGraph))
             .map(|quad| {
@@ -134,14 +138,16 @@ impl<'a, G: GraphRead + ?Sized, S: GraphRead + ?Sized> OverlayGraph<'a, G, S> {
     }
 }
 
-impl<G: GraphRead + ?Sized, S: GraphRead + ?Sized> GraphRead for OverlayGraph<'_, G, S> {
+impl<'source, G: GraphRead + ?Sized, S: GraphRead + ?Sized> GraphRead
+    for OverlayGraph<'source, G, S>
+{
     fn matching_quads<'a>(
         &'a self,
-        subject: Option<NamedOrBlankNodeRef<'a>>,
-        predicate: Option<NamedNodeRef<'a>>,
-        object: Option<TermRef<'a>>,
-        graph: Option<GraphNameRef<'a>>,
-    ) -> impl Iterator<Item = Result<Quad>> + 'a {
+        subject: Option<NamedOrBlankNodeRef<'_>>,
+        predicate: Option<NamedNodeRef<'_>>,
+        object: Option<TermRef<'_>>,
+        graph: Option<GraphNameRef<'_>>,
+    ) -> impl Iterator<Item = Result<Quad>> + use<'a, 'source, G, S> {
         let matches: Matches<'a> = match graph {
             Some(graph) if graph == self.graph.as_ref() => {
                 Box::new(self.overlay_matches(subject, predicate, object))
@@ -157,6 +163,16 @@ impl<G: GraphRead + ?Sized, S: GraphRead + ?Sized> GraphRead for OverlayGraph<'_
             ),
         };
         matches
+    }
+
+    fn named_graphs(&self) -> impl Iterator<Item = Result<NamedOrBlankNode>> + '_ {
+        self.source
+            .named_graphs()
+            .chain(std::iter::once(Ok(match &self.graph {
+                GraphName::NamedNode(node) => node.clone().into(),
+                GraphName::BlankNode(node) => node.clone().into(),
+                GraphName::DefaultGraph => unreachable!("overlay reserves a named graph"),
+            })))
     }
 
     fn contains_named_graph(&self, graph: &NamedOrBlankNode) -> Result<bool> {
