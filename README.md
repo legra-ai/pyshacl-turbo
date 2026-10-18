@@ -231,7 +231,7 @@ Compiled programs are shareable across threads; parallelism is caller-controlled
 
 ### Borrowed SPARQL graph architecture
 
-![An in-memory Dataset or open Oxigraph transaction supplies GraphRead; optional union and shapes-overlay views feed QueryGraph and the SPARQL evaluator.](crates/engine/src/architecture.svg)
+![An in-memory Dataset or open Oxigraph transaction supplies GraphRead; optional union and shapes-overlay views feed QueryGraph and the SPARQL evaluator.](https://raw.githubusercontent.com/legra-ai/pyshacl-turbo/main/crates/engine/src/architecture.svg)
 
 `GraphRead` streams indexed quads and named-graph metadata from a borrowed Dataset
 or an open native transaction. `UnionGraph` exposes the data union in the default
