@@ -88,6 +88,9 @@ impl GraphRead for FailingGraph {
     ) -> impl Iterator<Item = Result<Quad>> + 'a {
         std::iter::once(Err(Error::Runtime("storage read failed".into())))
     }
+    fn contains_named_graph(&self, _: &NamedOrBlankNode) -> Result<bool> {
+        Err(Error::Runtime("storage read failed".into()))
+    }
 }
 
 #[test]

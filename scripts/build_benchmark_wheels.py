@@ -7,6 +7,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import tomllib
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -55,6 +56,37 @@ def checkout_source(url, revision, destination):
         raise RuntimeError(f"Source checkout identity mismatch: {destination}")
 
 
+def ensure_shared_engine(canonical, runtime):
+    """Reject mismatched source pins before building the coordinated wheels."""
+    manifest = tomllib.loads((runtime / "Cargo.toml").read_text())
+    dependency = manifest["dependencies"]["pyshacl-turbo-engine"]
+    if dependency["git"] != "https://github.com/legra-ai/pyshacl-turbo":
+        raise ValueError("The runtime must use the canonical SHACL engine repository")
+    revision = dependency["rev"]
+    if not re.fullmatch(r"[0-9a-f]{40}", revision):
+        raise ValueError("The canonical SHACL engine requires an immutable source revision")
+    # A pinned PR commit may be absent from a later squash-merged checkout.
+    run("git", "-C", canonical, "fetch", "--no-tags", dependency["git"], revision)
+    changed = output(
+        "git",
+        "-C",
+        canonical,
+        "diff",
+        "--name-only",
+        revision,
+        "HEAD",
+        "--",
+        "crates/engine/Cargo.toml",
+        "crates/engine/src",
+    )
+    implementation = [name for name in changed.splitlines() if not name.endswith("_tests.rs")]
+    if implementation:
+        raise RuntimeError(
+            "The runtime pins different canonical SHACL engine sources: "
+            + ", ".join(implementation)
+        )
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--sources", type=Path, default=ROOT / "benchmarks/runtime-sources.json")
@@ -76,6 +108,7 @@ def main():
             source = build_root / name
             checkout_source(f"https://github.com/legra-ai/{name}.git", revision, source)
             sources[name] = source
+        ensure_shared_engine(root_source, sources["rdflib-turbo"])
         for name, source in sources.items():
             archives = build_root / f"{name}-archive"
             run("uv", "build", "--sdist", "--python", "3.13", "--out-dir", archives, source)
