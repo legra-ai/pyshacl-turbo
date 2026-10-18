@@ -28,6 +28,28 @@ SHACL rules use a staged working copy and commit only after complete success whe
 claim that the entire process is allocation-free: shape compilation, evaluation
 indexes, union views and the public report have their own allocations.
 
+## Candidate validation and published-stack monitoring
+
+Release CI explicitly selects [candidate-releases.json](candidate-releases.json):
+the exact candidate wheels, the pinned Python reference, and the pinned historical
+Turbo baseline. Candidate integration tests, canonical engine fingerprints and
+complete report parity remain mandatory on both Linux and macOS. No failed
+operation is retried through another backend.
+
+The independent weekly run selects the full [releases.json](releases.json) matrix,
+which also resolves the floating published stack. Its incompatible engines,
+installation failures and worker errors remain hard failures with retained
+reports. Manual runs and calls from tested-revision CI use the candidate matrix;
+pass `--matrix benchmarks/releases.json` explicitly for a local published-stack
+comparison.
+
+Independently released packages can temporarily expose different canonical engine
+sources. Treating that registry state as a prerequisite for candidate validation
+would prevent a corrected candidate from passing and being published. Keeping the
+published-stack health check separate avoids that release deadlock without
+relaxing source identity, hiding its error or replacing its resolved versions.
+Reports retain their selected matrix, so these two comparisons stay identifiable.
+
 ## Repeatable comparisons
 
 The [matrix](releases.json) compares four separately locked uv environments:

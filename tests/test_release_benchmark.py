@@ -1,9 +1,11 @@
 """Prevent version comparisons from inventing performance equivalence."""
 
 import importlib.util
+import json
 from pathlib import Path
 
 import pytest
+import yaml
 
 
 def module():
@@ -91,3 +93,39 @@ def test_version_environment_does_not_join_or_modify_a_parent_uv_project(tmp_pat
     assert (parent / "pyproject.toml").read_text() == manifest
     assert not (parent / "uv.lock").exists()
     assert installed["packages"]["rdflib"]["version"] == "7.6.0"
+
+
+def test_candidate_gate_uses_pinned_baselines_and_keeps_published_health_monitor():
+    bench = module()
+    root = bench.ROOT
+    candidate = json.loads((root / "benchmarks/candidate-releases.json").read_text())
+    environments = bench.validate_matrix(candidate)
+    assert {env["id"] for env in environments} == {
+        "python-reference",
+        "turbo-historical",
+        "candidate",
+    }
+    for env in environments:
+        if env["id"] != "candidate":
+            assert all(pin.startswith("==") for pin in env["requirements"].values())
+    published = json.loads((root / "benchmarks/releases.json").read_text())
+    bench.validate_matrix(published)
+    assert (
+        next(env for env in published["environments"] if env["id"] == "latest-published")["backend"]
+        == "published"
+    )
+    assert [
+        env for env in published["environments"] if env["id"] != "latest-published"
+    ] == environments
+    workflow = yaml.safe_load((root / ".github/workflows/shared-pipeline.yml").read_text())
+    step = next(
+        step
+        for step in workflow["jobs"]["benchmark"]["steps"]
+        if "benchmarks/releases.py" in step.get("run", "")
+    )
+    assert (
+        step["env"]["BENCHMARK_MATRIX"]
+        == "${{ github.event_name == 'schedule' && inputs.revision == '' && 'benchmarks/releases.json' || 'benchmarks/candidate-releases.json' }}"
+    )
+    assert '--matrix "$BENCHMARK_MATRIX"' in step["run"]
+    assert "continue-on-error" not in step
