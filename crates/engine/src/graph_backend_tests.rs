@@ -81,13 +81,17 @@ struct FailingGraph;
 impl GraphRead for FailingGraph {
     fn matching_quads<'a>(
         &'a self,
-        _: Option<NamedOrBlankNodeRef<'a>>,
-        _: Option<NamedNodeRef<'a>>,
-        _: Option<TermRef<'a>>,
-        _: Option<GraphNameRef<'a>>,
-    ) -> impl Iterator<Item = Result<Quad>> + 'a {
+        _: Option<NamedOrBlankNodeRef<'_>>,
+        _: Option<NamedNodeRef<'_>>,
+        _: Option<TermRef<'_>>,
+        _: Option<GraphNameRef<'_>>,
+    ) -> impl Iterator<Item = Result<Quad>> + use<'a> {
         std::iter::once(Err(Error::Runtime("storage read failed".into())))
     }
+    fn named_graphs(&self) -> impl Iterator<Item = Result<NamedOrBlankNode>> + '_ {
+        std::iter::once(Err(crate::Error::Runtime("graph metadata error".into())))
+    }
+
     fn contains_named_graph(&self, _: &NamedOrBlankNode) -> Result<bool> {
         Err(Error::Runtime("storage read failed".into()))
     }

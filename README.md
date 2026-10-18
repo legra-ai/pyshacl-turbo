@@ -229,6 +229,30 @@ values and `oxigraph::Store` inputs. `CompiledShapes::validate_store` and
 Their `inplace` flag controls atomic addition of derived quads to the Store.
 Compiled programs are shareable across threads; parallelism is caller-controlled.
 
+### Borrowed SPARQL graph architecture
+
+![An in-memory Dataset or open Oxigraph transaction supplies GraphRead; optional union and shapes-overlay views feed QueryGraph and the SPARQL evaluator.](https://raw.githubusercontent.com/legra-ai/pyshacl-turbo/main/crates/engine/src/architecture.svg)
+
+`GraphRead` streams indexed quads and named-graph metadata from a borrowed Dataset
+or an open native transaction. `UnionGraph` exposes the data union in the default
+graph and preserves named contexts. `OverlayGraph` then adds a separate borrowed
+shapes graph; shapes stay outside the data union. Both views are optional.
+
+`QueryGraph` adapts that logical dataset to the existing SPARQL evaluator's
+`QueryableDataset` interface. Parsing, plans, joins, filters and property paths
+remain in the evaluator. The adapter preserves empty named graphs, translates
+SPARQL's named-graph-only wildcard matching and propagates storage errors.
+Transaction reads see pending writes and deletions; the caller owns commit and
+rollback. No whole-base snapshot or graph-name collection is introduced by the
+adapter. Query execution and result construction retain their own memory costs.
+
+These are Rust foundation APIs: complete transaction-backed SHACL validation and
+snapshot-free function callbacks still need adoption. The existing Store
+validation APIs described above continue to copy a consistent snapshot.
+See the [published Rust API documentation and runnable example](https://legra-ai.github.io/pyshacl-turbo/rustdoc/pyshacl_turbo_engine/#borrowed-sparql-graph-architecture).
+Rustdoc is built from the tested revision and published with the main-branch
+reports; the diagram is embedded directly and requires no JavaScript renderer.
+
 Shape compilation uses [shacl-structural-model](https://github.com/legra-ai/shacl-structural-model)
 with Turbo's exact RDF terms, then prepares native queries, regexes and indexes
 for execution. The original graph remains available for reports and source

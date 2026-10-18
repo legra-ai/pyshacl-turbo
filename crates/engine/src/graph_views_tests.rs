@@ -106,11 +106,11 @@ struct FallibleTail(std::cell::Cell<bool>);
 impl GraphRead for FallibleTail {
     fn matching_quads<'a>(
         &'a self,
-        subject: Option<NamedOrBlankNodeRef<'a>>,
-        _: Option<NamedNodeRef<'a>>,
-        _: Option<TermRef<'a>>,
-        _: Option<GraphNameRef<'a>>,
-    ) -> impl Iterator<Item = crate::Result<Quad>> + 'a {
+        subject: Option<NamedOrBlankNodeRef<'_>>,
+        _: Option<NamedNodeRef<'_>>,
+        _: Option<TermRef<'_>>,
+        _: Option<GraphNameRef<'_>>,
+    ) -> impl Iterator<Item = crate::Result<Quad>> + use<'a> {
         let exact = subject.is_some();
         std::iter::once(Ok(Quad::new(node("a"), node("p"), node("b"), node("g")))).chain(
             std::iter::once_with(move || {
@@ -119,6 +119,10 @@ impl GraphRead for FallibleTail {
             })
             .take(usize::from(!exact)),
         )
+    }
+
+    fn named_graphs(&self) -> impl Iterator<Item = crate::Result<NamedOrBlankNode>> + '_ {
+        std::iter::once(Err(crate::Error::Runtime("graph metadata error".into())))
     }
 
     fn contains_named_graph(&self, _: &NamedOrBlankNode) -> crate::Result<bool> {

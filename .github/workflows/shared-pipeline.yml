@@ -39,8 +39,12 @@ jobs:
       - name: Verify the shared path and measure versioned pipelines
         env:
           BENCHMARK_NODES: ${{ github.event_name == 'schedule' && '100 1000 10000' || '100 1000' }}
+          # An independent weekly run monitors the floating registry stack.
+          # Calls from release CI supply a tested revision and validate candidates
+          # against pinned baselines, so broken published pairs cannot block repair.
+          BENCHMARK_MATRIX: ${{ github.event_name == 'schedule' && inputs.revision == '' && 'benchmarks/releases.json' || 'benchmarks/candidate-releases.json' }}
           BENCHMARK_TIMEOUT: ${{ github.event_name == 'schedule' && '900' || '180' }}
-        run: uv run --no-project --python 3.13 python benchmarks/releases.py --candidate-wheels "$GITHUB_WORKSPACE/pipeline-wheels" --integration-tests "$GITHUB_WORKSPACE/integration" --nodes $BENCHMARK_NODES --repeats 7 --memory-repeats 3 --timeout "$BENCHMARK_TIMEOUT" --output benchmark-artifacts/releases.json || exit 1
+        run: uv run --no-project --python 3.13 python benchmarks/releases.py --matrix "$BENCHMARK_MATRIX" --candidate-wheels "$GITHUB_WORKSPACE/pipeline-wheels" --integration-tests "$GITHUB_WORKSPACE/integration" --nodes $BENCHMARK_NODES --repeats 7 --memory-repeats 3 --timeout "$BENCHMARK_TIMEOUT" --output benchmark-artifacts/releases.json || exit 1
       - name: Summarize measured results
         if: always()
         shell: uv run --no-project --python 3.13 python {0}
