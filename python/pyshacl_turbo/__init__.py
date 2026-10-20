@@ -87,7 +87,8 @@ class CompiledShapes:
         shapes = _input(self.graph, direct=True, flatten=True)
         self._blank_nodes = shapes.blank_nodes
         source = _native.canonical_shapes(shapes.source)
-        namespaces = tuple((p, str(ns)) for p, ns in self.graph.namespaces())
+        namespaces = tuple((p, str(ns)) for p, ns in shapes.namespaces.items())
+        del shapes
         self._native, source = _compile_native(
             source, advanced, isinstance(shacl_graph, Graph), namespaces
         )

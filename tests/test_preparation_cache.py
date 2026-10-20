@@ -225,3 +225,24 @@ def test_compilation_union_does_not_retain_context_only_blank_nodes():
 def test_native_shapes_key_rejects_malformed_term_batches():
     with pytest.raises(ValueError, match="Invalid RDF term record"):
         turbo._native.canonical_shapes(([(99, "invalid", None, None)], []))
+
+
+def test_compilation_releases_transfer_batch_before_native_compile(monkeypatch):
+    import weakref
+
+    original_input = turbo._input
+    original_compile = turbo._native.CompiledShapes
+    snapshots = []
+
+    def snapshot(*args, **kwargs):
+        result = original_input(*args, **kwargs)
+        snapshots.append(weakref.ref(result))
+        return result
+
+    def compile_native(*args):
+        assert snapshots[-1]() is None, "Typed transfer batch outlived canonicalization"
+        return original_compile(*args)
+
+    monkeypatch.setattr(turbo, "_input", snapshot)
+    monkeypatch.setattr(turbo._native, "CompiledShapes", compile_native)
+    turbo.compile_shapes(graph("ex:ReleasedBatch sh:targetNode ex:s."))
