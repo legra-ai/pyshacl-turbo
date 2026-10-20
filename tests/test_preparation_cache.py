@@ -105,9 +105,7 @@ def test_compilation_reuse_keeps_document_and_graph_boolean_semantics_separate()
 
 
 @pytest.mark.parametrize("dataset", [False, True])
-def test_compilation_hits_avoid_serialization_sorting_and_union_copies(dataset, monkeypatch):
-    import builtins
-
+def test_compilation_hits_avoid_python_serialization_and_union_copies(dataset, monkeypatch):
     from pyshacl_turbo import rdf
     from rdflib import BNode, Dataset, Graph, URIRef
 
@@ -125,7 +123,6 @@ def test_compilation_hits_avoid_serialization_sorting_and_union_copies(dataset, 
     with monkeypatch.context() as patch:
         patch.setattr(Graph, "serialize", forbidden)
         patch.setattr(rdf, "union", forbidden)
-        patch.setattr(builtins, "sorted", forbidden)
         patch.setattr(turbo._native, "CompiledShapes", forbidden)
         for term_type in (URIRef, BNode, Literal):
             patch.setattr(term_type, "n3", forbidden)
@@ -188,3 +185,26 @@ def test_compilation_snapshot_rejects_non_rdf_terms():
     shapes.add((EX.InvalidShape, SH.message, Variable("unsupported")))
     with pytest.raises(TypeError, match="RDFLib IRI, blank node or literal"):
         turbo.compile_shapes(shapes)
+
+
+def test_native_shapes_key_preserves_exact_terms_and_deduplicates_union():
+    from pyshacl_turbo.rdf import decode, input_graph
+    from rdflib import BNode, Dataset
+    from rdflib.namespace import XSD
+
+    shapes = graph("")
+    blank = BNode("canonical-shape")
+    values = [
+        Literal('quote " and newline\n漢字'),
+        Literal("value", datatype=XSD.string),
+        Literal("01", datatype=XSD.integer, normalize=False),
+        Literal("message", lang="fr"),
+    ]
+    for value in values:
+        shapes.add((blank, SH.message, value))
+    source = Dataset(default_union=True)
+    source.graph(EX.first).__iadd__(shapes)
+    source.graph(EX.second).__iadd__(shapes)
+    canonical = turbo._native.canonical_shapes(input_graph(source, direct=True).source)
+    assert set(decode(canonical, preserve_ids=True)) == set(shapes)
+    assert canonical == turbo._native.canonical_shapes(input_graph(shapes, direct=True).source)

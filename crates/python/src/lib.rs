@@ -1,3 +1,4 @@
+mod canonical;
 mod terms;
 
 use pyo3::exceptions::{PyNotImplementedError, PyRuntimeError, PyValueError};
@@ -488,6 +489,7 @@ fn _native(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_class::<PyCompiledShapes>()?;
     module.add_class::<PyTargetData>()?;
     module.add_function(wrap_pyfunction!(parse_rdf, module)?)?;
+    module.add_function(wrap_pyfunction!(canonical::canonical_shapes, module)?)?;
     module.add_function(wrap_pyfunction!(additions, module)?)?;
     module.add_function(wrap_pyfunction!(infer, module)?)?;
     module.add_function(wrap_pyfunction!(inoculate, module)?)?;

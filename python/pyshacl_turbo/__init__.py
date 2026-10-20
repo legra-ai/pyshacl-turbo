@@ -26,7 +26,6 @@ from .rdf import decode as _graph
 from .rdf import input_graph as _input
 from .shape import Shape
 from .shapes_graph import ShapesGraph
-from .shapes_snapshot import serialize_shapes, snapshot_shapes
 from .target_data import TargetData, prepare_target_data
 
 ValidationFailure = _native.ValidationFailure
@@ -73,8 +72,7 @@ __all__ = [
 
 
 @lru_cache(maxsize=128)
-def _compile_native(snapshot, advanced, numeric_booleans, namespaces):
-    source = serialize_shapes(snapshot)
+def _compile_native(source, advanced, numeric_booleans, namespaces):
     return (
         _native.CompiledShapes(source, "nt", None, advanced, numeric_booleans, list(namespaces)),
         source,
@@ -86,10 +84,12 @@ class CompiledShapes:
 
     def __init__(self, shacl_graph, *, shacl_graph_format=None, advanced=False):
         self.graph = load_from_source(shacl_graph, rdf_format=shacl_graph_format)
-        snapshot, self._blank_nodes = snapshot_shapes(self.graph)
+        shapes = _input(self.graph, direct=True)
+        self._blank_nodes = shapes.blank_nodes
+        source = _native.canonical_shapes(shapes.source)
         namespaces = tuple((p, str(ns)) for p, ns in self.graph.namespaces())
         self._native, source = _compile_native(
-            snapshot, advanced, isinstance(shacl_graph, Graph), namespaces
+            source, advanced, isinstance(shacl_graph, Graph), namespaces
         )
         self._shared_spec = (
             source,
