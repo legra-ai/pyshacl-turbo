@@ -28,6 +28,7 @@ mod query_graph;
 #[cfg(test)]
 mod query_graph_tests;
 mod revision;
+mod rule_delta;
 mod sparql;
 mod sparql_regex;
 mod structural;

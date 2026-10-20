@@ -22,6 +22,7 @@ pub const SOURCES: &[(&str, &[u8])] = &[
     ("pattern.rs", include_bytes!("pattern.rs")),
     ("query_graph.rs", include_bytes!("query_graph.rs")),
     ("revision.rs", include_bytes!("revision.rs")),
+    ("rule_delta.rs", include_bytes!("rule_delta.rs")),
     ("sparql.rs", include_bytes!("sparql.rs")),
     ("sparql_regex.rs", include_bytes!("sparql_regex.rs")),
     ("structural.rs", include_bytes!("structural.rs")),

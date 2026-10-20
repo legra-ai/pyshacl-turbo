@@ -75,3 +75,41 @@ fn rule_validation_stages_additions_in_the_callers_transaction_until_commit() {
         assert_eq!(store.len().unwrap(), if commit { 2 } else { 0 });
     }
 }
+
+#[test]
+fn staged_validation_retains_only_rule_additions_and_does_not_change_pending_input() {
+    let shapes = parse(
+        r#"@prefix sh: <http://www.w3.org/ns/shacl#> .
+      <urn:S> sh:targetNode <urn:s>;
+        sh:rule [a sh:TripleRule; sh:subject sh:this; sh:predicate <urn:derived>; sh:object true];
+        sh:property [sh:path <urn:derived>; sh:hasValue true]."#,
+        RdfFormat::Turtle,
+        None,
+    )
+    .unwrap();
+    let program = CompiledShapes::compile(shapes, true).unwrap();
+    let store = Store::new().unwrap();
+    let mut transaction = store.start_transaction().unwrap();
+    let source = Quad::new(
+        NamedNode::new_unchecked("urn:s"),
+        NamedNode::new_unchecked("urn:p"),
+        Literal::from(true),
+        GraphName::DefaultGraph,
+    );
+    let derived = Quad::new(
+        NamedNode::new_unchecked("urn:s"),
+        NamedNode::new_unchecked("urn:derived"),
+        Literal::from(true),
+        GraphName::DefaultGraph,
+    );
+    transaction.insert(source.as_ref());
+    assert!(
+        program
+            .validate_staged(&transaction, Options::default())
+            .unwrap()
+            .conforms
+    );
+    assert!(transaction.contains(source.as_ref()).unwrap());
+    assert!(!transaction.contains(derived.as_ref()).unwrap());
+    assert_eq!(store.len().unwrap(), 0);
+}
