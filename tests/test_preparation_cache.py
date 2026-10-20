@@ -102,3 +102,89 @@ def test_compilation_reuse_keeps_document_and_graph_boolean_semantics_separate()
     direct = turbo.compile_shapes(graph(text))
     from_document = turbo.compile_shapes(graph(text).serialize(format="turtle"))
     assert direct._native is not from_document._native
+
+
+@pytest.mark.parametrize("dataset", [False, True])
+def test_compilation_hits_avoid_serialization_sorting_and_union_copies(dataset, monkeypatch):
+    import builtins
+
+    from pyshacl_turbo import rdf
+    from rdflib import BNode, Dataset, Graph, URIRef
+
+    source = graph('ex:FastCache sh:targetNode ex:s; sh:message "message".')
+    source.add((BNode("cache-blank"), SH.targetNode, EX.s))
+    if dataset:
+        named = Dataset(default_union=True)
+        named.graph(EX.context).__iadd__(source)
+        source = named
+    first = turbo.compile_shapes(source)
+
+    def forbidden(*args, **kwargs):
+        raise AssertionError("Compilation cache hits must inspect terms without text conversion")
+
+    with monkeypatch.context() as patch:
+        patch.setattr(Graph, "serialize", forbidden)
+        patch.setattr(rdf, "union", forbidden)
+        patch.setattr(builtins, "sorted", forbidden)
+        patch.setattr(turbo._native, "CompiledShapes", forbidden)
+        for term_type in (URIRef, BNode, Literal):
+            patch.setattr(term_type, "n3", forbidden)
+        second = turbo.compile_shapes(source)
+    assert second._native is first._native
+    assert turbo._compile_native.cache_info().hits == 1
+
+
+def test_dataset_union_and_reordered_graph_share_exact_cache_contents():
+    from rdflib import BNode, Dataset, Graph
+
+    source = graph('ex:UnionCache sh:targetSubjectsOf ex:p; sh:message "message".')
+    blank = BNode("stable-cache-shape")
+    source.add((blank, SH.targetNode, EX.s))
+    dataset = Dataset(default_union=True)
+    dataset.graph(EX.first).__iadd__(source)
+    dataset.graph(EX.second).__iadd__(source)
+    reordered = Graph()
+    for prefix, namespace in dataset.namespaces():
+        reordered.bind(prefix, namespace)
+    for triple in reversed(list(source)):
+        reordered.add(triple)
+    first = turbo.compile_shapes(dataset)
+    second = turbo.compile_shapes(reordered)
+    assert first._native is second._native
+    assert first._blank_nodes[str(blank)] is blank
+    assert first.targeting(graph(""), EX.s) == [blank]
+
+
+@pytest.mark.parametrize("dataset", [False, True])
+def test_exact_cache_key_tracks_literal_and_shared_store_mutations(dataset):
+    from rdflib import Dataset, Graph
+    from rdflib.namespace import XSD
+
+    source = graph('ex:ExactCache sh:targetNode ex:s; sh:path ex:p; sh:hasValue "value".')
+    owner = Dataset(default_union=True) if dataset else source
+    if dataset:
+        owner.graph(EX.named).__iadd__(source)
+        mutable = owner.graph(EX.named)
+    else:
+        mutable = Graph(store=source.store, identifier=source.identifier)
+    first = turbo.compile_shapes(owner)
+    original_count = len(mutable)
+    typed = Literal("value", datatype=XSD.string, normalize=False)
+    mutable.set((EX.ExactCache, SH.hasValue, typed))
+    second = turbo.compile_shapes(owner)
+    assert len(mutable) == original_count
+    assert first._native is not second._native
+    assert first.validate(graph('ex:s ex:p "value".'))[0]
+    typed_data = graph("")
+    typed_data.add((EX.s, EX.p, typed))
+    assert second.validate(typed_data)[0]
+    assert not second.validate(graph('ex:s ex:p "value".'))[0]
+
+
+def test_compilation_snapshot_rejects_non_rdf_terms():
+    from rdflib import Variable
+
+    shapes = graph("")
+    shapes.add((EX.InvalidShape, SH.message, Variable("unsupported")))
+    with pytest.raises(TypeError, match="RDFLib IRI, blank node or literal"):
+        turbo.compile_shapes(shapes)
