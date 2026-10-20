@@ -498,14 +498,9 @@ impl SparqlConstraint {
         } else {
             data
         };
-        let functions = if self.shapes_graph {
-            functions.for_dataset(dataset)
-        } else {
-            functions.clone()
-        };
         let mut evaluation = self
             .query
-            .prepare(&functions, dataset)
+            .prepare(functions)
             .on_queryable_dataset(dataset)
             .substitute_variable(Variable::new_unchecked("this"), focus.clone())
             .substitute_variable(Variable::new_unchecked("currentShape"), shape.clone())

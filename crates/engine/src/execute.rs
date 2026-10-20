@@ -328,8 +328,8 @@ impl CompiledShapes {
                     if !advanced {
                         continue;
                     }
-                    let functions = self.functions.for_dataset(data);
-                    let mut evaluation = query.prepare(&functions, data).on_queryable_dataset(data);
+                    let functions = self.functions.clone();
+                    let mut evaluation = query.prepare(&functions).on_queryable_dataset(data);
                     for (variable, value) in bindings {
                         evaluation =
                             evaluation.substitute_variable(variable.clone(), value.clone());
@@ -959,7 +959,7 @@ impl CompiledShapes {
                     }
                     let focus =
                         self.selected_focus_nodes(shape, data, &options, &mut evaluation)?;
-                    let functions = self.functions.for_dataset(data);
+                    let functions = self.functions.clone();
                     evaluation.functions = functions.clone();
                     let mut additions = HashSet::new();
                     for node in focus {
@@ -1012,7 +1012,7 @@ impl CompiledShapes {
                         }
                         for query in &rule.queries {
                             let result = query
-                                .prepare(&functions, data)
+                                .prepare(&functions)
                                 .on_queryable_dataset(&*data)
                                 .substitute_variable(Variable::new_unchecked("this"), node.clone())
                                 .execute()?;
@@ -1111,7 +1111,7 @@ impl CompiledShapes {
         } else {
             data
         };
-        evaluation.functions = self.functions.for_dataset(data);
+        evaluation.functions = self.functions.clone();
         let mut violations = Vec::new();
         for &index in &self.execution_order {
             let shape = &self.shapes[index];

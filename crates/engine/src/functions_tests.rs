@@ -1,5 +1,6 @@
 use super::*;
 use oxigraph::io::RdfFormat;
+use oxigraph::sparql::SparqlEvaluator;
 
 fn graph(body: &str) -> Dataset {
     crate::parse_graph(
@@ -68,7 +69,7 @@ fn optional_arguments_and_empty_function_results_have_explicit_semantics() {
     assert!(functions.call(&iri("urn:", "unknown"), &[], &data).is_err());
     assert!(
         functions
-            .call_inner(&f, &[], Arc::new(data), 64)
+            .call_inner(&f, &[], &data, 64)
             .unwrap_err()
             .to_string()
             .contains("recursion limit")
@@ -121,6 +122,8 @@ fn regex_backed_graph_queries_use_checked_triple_results() {
         Literal::new_simple_literal("axbc").into()
     );
     let prepared = NativePrepared {
+        functions: Functions::default(),
+        depth: 0,
         query: SparqlEvaluator::new().parse_query("ASK {}").unwrap(),
         errors: Some(Arc::new(Mutex::new(Some(Error::Invalid(
             "already failed".into(),
