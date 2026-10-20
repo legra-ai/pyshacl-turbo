@@ -151,7 +151,7 @@ impl NodeExpression {
     pub fn evaluate(
         &self,
         focus: &Term,
-        data: &Dataset,
+        data: &(impl crate::GraphRead + ?Sized),
         functions: &Functions,
         conforms: &mut impl FnMut(usize, &Term) -> Result<bool>,
     ) -> Result<HashSet<Term>> {

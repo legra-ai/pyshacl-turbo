@@ -8,7 +8,7 @@ use crate::constraints::Constraint;
 use crate::functions::Functions;
 use crate::graph::*;
 use crate::path::Path;
-use crate::{Error, Result};
+use crate::{Error, GraphRead, Result, UnionGraph};
 
 #[cfg(test)]
 #[path = "execute_tests.rs"]
@@ -115,7 +115,12 @@ impl Evaluation {
         true
     }
 
-    fn values(&mut self, path: &Path, data: &Dataset, focus: &Term) -> Result<Vec<Term>> {
+    fn values(
+        &mut self,
+        path: &Path,
+        data: &(impl GraphRead + ?Sized),
+        focus: &Term,
+    ) -> Result<Vec<Term>> {
         if matches!(path, Path::Predicate(_)) {
             return path.values(data, focus);
         }
@@ -130,7 +135,12 @@ impl Evaluation {
         Ok(values)
     }
 
-    fn is_instance(&mut self, data: &Dataset, value: &Term, class: &Term) -> Result<bool> {
+    fn is_instance(
+        &mut self,
+        data: &(impl GraphRead + ?Sized),
+        value: &Term,
+        class: &Term,
+    ) -> Result<bool> {
         let key = (value.clone(), class.clone());
         if let Some(result) = self.memberships.get(&key) {
             return Ok(*result);
@@ -142,7 +152,7 @@ impl Evaluation {
         Ok(result)
     }
 
-    fn targets(&mut self, data: &Dataset, class: &Term) -> Result<HashSet<Term>> {
+    fn targets(&mut self, data: &(impl GraphRead + ?Sized), class: &Term) -> Result<HashSet<Term>> {
         if let Some(nodes) = self.class_targets.get(class) {
             return Ok(nodes.clone());
         }
@@ -252,7 +262,7 @@ impl CompiledShapes {
     pub fn shape_focus_nodes(
         &self,
         node: &str,
-        data: &Dataset,
+        data: &(impl GraphRead + ?Sized),
         advanced: bool,
     ) -> Result<Vec<Term>> {
         let shape = self
@@ -266,7 +276,7 @@ impl CompiledShapes {
     fn focus_nodes(
         &self,
         shape: &Shape,
-        data: &Dataset,
+        data: &(impl GraphRead + ?Sized),
         evaluation: &mut Evaluation,
     ) -> Result<Vec<Term>> {
         self.focus_nodes_with_advanced(shape, data, true, evaluation)
@@ -276,7 +286,7 @@ impl CompiledShapes {
     /// default-union view. Skipped shapes are never evaluated.
     pub fn targeting_index(
         &self,
-        data: &Dataset,
+        data: &(impl GraphRead + ?Sized),
         skip: &HashSet<Term>,
     ) -> Result<HashMap<Term, Vec<Term>>> {
         let mut evaluation = Evaluation::new(15);
@@ -298,7 +308,7 @@ impl CompiledShapes {
     fn focus_nodes_with_advanced(
         &self,
         shape: &Shape,
-        data: &Dataset,
+        data: &(impl GraphRead + ?Sized),
         advanced: bool,
         evaluation: &mut Evaluation,
     ) -> Result<Vec<Term>> {
@@ -315,13 +325,13 @@ impl CompiledShapes {
                     nodes.extend(subjects(data, predicate, None)?);
                 }
                 Target::Objects(predicate) => {
-                    for quad in data.quads_for_pattern(
+                    for quad in data.matching_quads(
                         None,
                         Some(predicate.as_ref()),
                         None,
                         Some(GraphNameRef::DefaultGraph),
                     ) {
-                        nodes.insert(quad.object.into_owned());
+                        nodes.insert(quad?.object);
                     }
                 }
                 Target::Sparql { query, bindings } => {
@@ -364,7 +374,7 @@ impl CompiledShapes {
         component: &'static str,
         index: usize,
         focus: &Term,
-        data: &Dataset,
+        data: &(impl GraphRead + ?Sized),
         results: &mut Vec<Violation>,
         evaluation: &mut Evaluation,
     ) -> Result<()> {
@@ -387,7 +397,7 @@ impl CompiledShapes {
         &self,
         index: usize,
         focus: &[Term],
-        data: &Dataset,
+        data: &(impl GraphRead + ?Sized),
         results: &mut Vec<Violation>,
         evaluation: &mut Evaluation,
     ) -> Result<()> {
@@ -431,7 +441,7 @@ impl CompiledShapes {
         &self,
         index: usize,
         focus: &Term,
-        data: &Dataset,
+        data: &(impl GraphRead + ?Sized),
         results: &mut Vec<Violation>,
         evaluation: &mut Evaluation,
     ) -> Result<()> {
@@ -832,13 +842,13 @@ impl CompiledShapes {
                         let Ok(node) = subject(value) else {
                             continue;
                         };
-                        for quad in data.quads_for_pattern(
+                        for quad in data.matching_quads(
                             Some(node.as_ref()),
                             None,
                             None,
                             Some(GraphNameRef::DefaultGraph),
                         ) {
-                            let quad = quad.into_owned();
+                            let quad = quad?;
                             if quad.predicate == iri(RDF, "type")
                                 && quad.object == Term::from(iri(RDFS, "Resource"))
                             {
@@ -1059,7 +1069,7 @@ impl CompiledShapes {
     fn selected_focus_nodes(
         &self,
         shape: &Shape,
-        data: &Dataset,
+        data: &(impl GraphRead + ?Sized),
         options: &Options,
         evaluation: &mut Evaluation,
     ) -> Result<Vec<Term>> {
@@ -1079,9 +1089,13 @@ impl CompiledShapes {
         self.validate_expanded(data, options, warnings)
     }
 
-    /// Validate a borrowed dataset without copying it or permitting rule mutation.
-    /// Named-graph union materialization remains local to this validation call.
-    pub fn validate_readonly(&self, data: &Dataset, options: Options) -> Result<ValidationReport> {
+    /// Validate a borrowed indexed source without copying it or permitting rule mutation.
+    /// Named graphs participate through a streaming union; callbacks borrow the same source.
+    pub fn validate_readonly(
+        &self,
+        data: &(impl GraphRead + ?Sized),
+        options: Options,
+    ) -> Result<ValidationReport> {
         if options.max_rule_iterations == 0 {
             return Err(Error::Invalid(
                 "max_rule_iterations must be positive".into(),
@@ -1097,20 +1111,15 @@ impl CompiledShapes {
 
     fn validate_expanded(
         &self,
-        data: &Dataset,
+        data: &(impl GraphRead + ?Sized),
         options: Options,
         warnings: Vec<String>,
     ) -> Result<ValidationReport> {
         let mut evaluation = Evaluation::new(options.max_validation_depth);
         evaluation.warnings = warnings;
         let display_data = data;
-        let joined;
-        let data = if data.iter().any(|q| !q.graph_name.is_default_graph()) {
-            joined = with_union(data);
-            &joined
-        } else {
-            data
-        };
+        let union = UnionGraph::new(data);
+        let data = &union;
         evaluation.functions = self.functions.clone();
         let mut violations = Vec::new();
         for &index in &self.execution_order {
@@ -1199,10 +1208,10 @@ impl CompiledShapes {
         parent: &Term,
         edge: &str,
         violation: &Violation,
-        data: &Dataset,
+        data: &(impl GraphRead + ?Sized),
         text: &mut String,
         clones: &mut ReportClones,
-        display: &crate::display::Display<'_>,
+        display: &crate::display::Display<'_, impl GraphRead + ?Sized>,
     ) -> Result<()> {
         let shape = &self.shapes[violation.shape];
         let result: Term = BlankNode::default().into();
@@ -1244,7 +1253,7 @@ impl CompiledShapes {
             let message = if !violation.message.is_empty() {
                 violation.message.clone()
             } else {
-                let focus = display.term(&violation.focus, false);
+                let focus = display.term(&violation.focus, false)?;
                 let component = violation
                     .component
                     .as_str()
@@ -1266,7 +1275,7 @@ impl CompiledShapes {
                             .expect("cardinality violation requires a compiled count constraint");
                         let direction = if minimum { "Less" } else { "More" };
                         let location = if let Some(path) = &violation.path {
-                            format!("{focus}->{}", display.term(path, true))
+                            format!("{focus}->{}", display.term(path, true)?)
                         } else {
                             focus
                         };
@@ -1322,7 +1331,7 @@ impl CompiledShapes {
                         }
                         format!(
                             "Focus node does not conform to shape{counts}: {}",
-                            display.term(&self.shapes[target].node, true)
+                            display.term(&self.shapes[target].node, true)?
                         )
                     }
                     "PatternConstraintComponent" => {
@@ -1344,7 +1353,7 @@ impl CompiledShapes {
                         let mut classes = values(&self.graph, &shape.node, "class")?
                             .iter()
                             .map(|n| display.term(n, true))
-                            .collect::<Vec<_>>();
+                            .collect::<Result<Vec<_>>>()?;
                         classes.sort();
                         if classes.len() == 1 {
                             format!("Value does not have class {}", classes[0])
@@ -1355,8 +1364,8 @@ impl CompiledShapes {
                     "NodeConstraintComponent" => {
                         let mut nodes = values(&self.graph, &shape.node, "node")?
                             .iter()
-                            .map(|n| format!("'{}'", display.term(n, true)))
-                            .collect::<Vec<_>>();
+                            .map(|n| display.term(n, true).map(|term| format!("'{term}'")))
+                            .collect::<Result<Vec<_>>>()?;
                         nodes.sort();
                         if nodes.len() == 1 {
                             format!(
@@ -1374,7 +1383,7 @@ impl CompiledShapes {
                         let mut nodes = values(&self.graph, &shape.node, "not")?
                             .iter()
                             .map(|n| display.term(n, true))
-                            .collect::<Vec<_>>();
+                            .collect::<Result<Vec<_>>>()?;
                         nodes.sort();
                         format!(
                             "Node {focus} must not conform to shape {}",
@@ -1412,19 +1421,19 @@ impl CompiledShapes {
             "{category} in {title} ({}):\n\tSeverity: {}\n\tSource Shape: {}\n\tFocus Node: {}\n",
             violation.component.as_str(),
             display.iri(&shape.severity),
-            display.term(&shape.node, true),
-            display.term(&violation.focus, false)
+            display.term(&shape.node, true)?,
+            display.term(&violation.focus, false)?
         ));
         if let Some(value) = &violation.value {
-            text.push_str(&format!("\tValue Node: {}\n", display.term(value, false)));
+            text.push_str(&format!("\tValue Node: {}\n", display.term(value, false)?));
         }
         if let Some(path) = &violation.path {
-            text.push_str(&format!("\tResult Path: {}\n", display.term(path, true)));
+            text.push_str(&format!("\tResult Path: {}\n", display.term(path, true)?));
         }
         if let Some(source) = &violation.source_constraint {
             text.push_str(&format!(
                 "\tSource Constraint: {}\n",
-                display.term(source, true)
+                display.term(source, true)?
             ));
         }
         let mut messages = messages;
@@ -1465,7 +1474,7 @@ impl CompiledShapes {
     }
 }
 
-fn is_instance(data: &Dataset, value: &Term, class: &Term) -> Result<bool> {
+fn is_instance(data: &(impl GraphRead + ?Sized), value: &Term, class: &Term) -> Result<bool> {
     let mut pending = objects(data, value, &iri(RDF, "type"))?;
     let mut seen = HashSet::new();
     while let Some(current) = pending.pop() {
@@ -1583,3 +1592,7 @@ mod traversal_tests {
         assert_eq!(PATH_EVALUATIONS.with(std::cell::Cell::get), 2);
     }
 }
+
+#[cfg(test)]
+#[path = "execute_borrowed_tests.rs"]
+mod borrowed_tests;

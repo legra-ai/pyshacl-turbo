@@ -196,11 +196,17 @@ pub fn add(store: &mut Dataset, s: &Term, p: NamedNode, o: Term) -> Result<()> {
 pub(crate) struct ReportClones(HashSet<(usize, Term)>);
 
 impl ReportClones {
-    pub fn copy(&mut self, source: &Dataset, target: &mut Dataset, node: &Term) -> Result<()> {
+    pub fn copy(
+        &mut self,
+        source: &(impl GraphRead + ?Sized),
+        target: &mut Dataset,
+        node: &Term,
+    ) -> Result<()> {
         if !matches!(node, Term::BlankNode(_))
-            || !self
-                .0
-                .insert((std::ptr::from_ref(source) as usize, node.clone()))
+            || !self.0.insert((
+                std::ptr::from_ref(source).cast::<()>() as usize,
+                node.clone(),
+            ))
         {
             return Ok(());
         }
@@ -212,8 +218,9 @@ impl ReportClones {
                 continue;
             }
             let cloned = mapping[&node].clone();
-            for quad in source.quads_for_subject(subject(&node)?.as_ref()) {
-                let object = quad.object.into_owned();
+            for quad in source.matching_quads(Some(subject(&node)?.as_ref()), None, None, None) {
+                let quad = quad?;
+                let object = quad.object;
                 let copied = if matches!(object, Term::BlankNode(_)) {
                     queue.push_back(object.clone());
                     mapping
@@ -223,7 +230,7 @@ impl ReportClones {
                 } else {
                     object
                 };
-                add(target, &cloned, quad.predicate.into_owned(), copied)?;
+                add(target, &cloned, quad.predicate, copied)?;
             }
         }
         Ok(())
