@@ -205,9 +205,11 @@ def test_native_shapes_key_preserves_exact_terms_and_deduplicates_union():
     source = Dataset(default_union=True)
     source.graph(EX.first).__iadd__(shapes)
     source.graph(EX.second).__iadd__(shapes)
-    canonical = turbo._native.canonical_shapes(input_graph(source, direct=True).source)
+    canonical = turbo._native.canonical_shapes(iter([input_graph(source, direct=True).source]))
     assert set(decode(canonical, preserve_ids=True)) == set(shapes)
-    assert canonical == turbo._native.canonical_shapes(input_graph(shapes, direct=True).source)
+    assert canonical == turbo._native.canonical_shapes(
+        iter([input_graph(shapes, direct=True).source])
+    )
 
 
 def test_compilation_union_does_not_retain_context_only_blank_nodes():
@@ -224,25 +226,94 @@ def test_compilation_union_does_not_retain_context_only_blank_nodes():
 
 def test_native_shapes_key_rejects_malformed_term_batches():
     with pytest.raises(ValueError, match="Invalid RDF term record"):
-        turbo._native.canonical_shapes(([(99, "invalid", None, None)], []))
+        turbo._native.canonical_shapes(iter([([(99, "invalid", None, None)], [])]))
 
 
 def test_compilation_releases_transfer_batch_before_native_compile(monkeypatch):
     import weakref
 
-    original_input = turbo._input
+    from pyshacl_turbo import rdf
+
+    original_batch = rdf._TermBatch
     original_compile = turbo._native.CompiledShapes
     snapshots = []
 
-    def snapshot(*args, **kwargs):
-        result = original_input(*args, **kwargs)
-        snapshots.append(weakref.ref(result))
-        return result
+    class TrackedBatch(original_batch):
+        def __init__(self, *args):
+            super().__init__(*args)
+            snapshots.append(weakref.ref(self))
 
     def compile_native(*args):
-        assert snapshots[-1]() is None, "Typed transfer batch outlived canonicalization"
+        assert snapshots and all(snapshot() is None for snapshot in snapshots), (
+            "Typed transfer batch outlived canonicalization"
+        )
         return original_compile(*args)
 
-    monkeypatch.setattr(turbo, "_input", snapshot)
+    monkeypatch.setattr(rdf, "_TermBatch", TrackedBatch)
     monkeypatch.setattr(turbo._native, "CompiledShapes", compile_native)
     turbo.compile_shapes(graph("ex:ReleasedBatch sh:targetNode ex:s."))
+
+
+@pytest.mark.parametrize("dataset", [False, True])
+def test_shape_transfer_batches_are_bounded_and_preserve_blank_identity(dataset):
+    from pyshacl_turbo.rdf import shape_batches
+    from rdflib import BNode, Dataset
+
+    source = graph("")
+    shape = BNode("batched-shape")
+    for index in range(513):
+        source.add((shape, SH.targetNode, EX[f"node{index}"]))
+    if dataset:
+        named = Dataset(default_union=True)
+        named.graph(BNode("context-only")).__iadd__(source)
+        named.graph(EX.second).__iadd__(source)
+        source = named
+    nodes = {}
+    batches = list(shape_batches(source, nodes))
+    assert all(0 < len(quads) <= 256 for records, quads in batches)
+    assert all(len(records) <= 3 * 256 for records, quads in batches)
+    assert sum(len(quads) for records, quads in batches) == 513 * (2 if dataset else 1)
+    assert all(g is None for records, quads in batches for s, p, o, g in quads)
+    assert nodes == {str(shape): shape}
+    assert turbo._native.canonical_shapes(iter(batches)).count(" .\n") == 513
+
+
+def test_invalid_late_shape_batch_does_not_cache_partial_compilation(monkeypatch):
+    from pyshacl_turbo.rdf import input_graph
+
+    shapes = graph("ex:LateBatch sh:targetNode ex:s.")
+    valid = input_graph(shapes, direct=True).source
+
+    def invalid_batches(*args):
+        yield valid
+        yield [], [(0, 0, 0, None)]
+
+    with monkeypatch.context() as patch:
+        patch.setattr(turbo, "shape_batches", invalid_batches)
+        with pytest.raises(ValueError, match="Invalid RDF term index"):
+            turbo.compile_shapes(shapes)
+    assert turbo._compile_native.cache_info().currsize == 0
+    assert turbo.compile_shapes(shapes).targeting(graph(""), EX.s) == [EX.LateBatch]
+
+
+@pytest.mark.parametrize(
+    "batch",
+    [([], [(0, 0, 0, None)] * 257), ([(0, "urn:s", None, None)] * 1025, [])],
+)
+def test_canonical_shapes_rejects_oversized_transfer_batches(batch):
+    with pytest.raises(ValueError, match="256"):
+        turbo._native.canonical_shapes(iter([batch]))
+
+
+def test_compilation_reads_namespace_metadata_once(monkeypatch):
+    shapes = graph("ex:MetadataOnce sh:targetNode ex:s.")
+    original = shapes.namespaces
+    calls = []
+
+    def namespaces():
+        calls.append(None)
+        return original()
+
+    monkeypatch.setattr(shapes, "namespaces", namespaces)
+    turbo.compile_shapes(shapes)
+    assert len(calls) == 1

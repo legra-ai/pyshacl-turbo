@@ -30,10 +30,15 @@ Keep namespace bindings and compilation settings as separate key components.
 Context-only blank nodes are not part of flattened shape input. Preserve typed
 literal spellings and blank labels; this is content ordering, not RDF blank-node
 canonicalization. No additional cache or engine protocol is introduced.
-Canonicalization streams validated quads from an owned term table rather than
-building throwaway graph indexes. Ordinary direct input consumes the same
-validated stream when it needs a dataset. Release the transfer batch before
-native compilation so its lifetime does not overlap compilation's graph storage.
+Canonicalization consumes batches of at most 256 triples, sharing the direct
+input encoder and validating each batch through an owned term table and streamed
+quads rather than building throwaway graph indexes. Native code enforces the
+batch limit before extracting records. Ordinary direct input consumes the same
+validated quad stream when it needs a dataset. Read namespace metadata once and
+release all transfer batches before native compilation. Retain only rendered
+output needed for sorting; input transfer does not retain a whole shapes batch.
+Late batch or iterator failures propagate without returning or caching a partial
+program.
 
 Add an opt-in `cached-query-plans` feature to the existing vendored spareval.
 Enable it for the engine. Share a process-local 128-entry LRU of immutable

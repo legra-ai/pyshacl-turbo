@@ -482,6 +482,7 @@ impl PyCompiledShapes {
 
 #[pymodule]
 fn _native(module: &Bound<'_, PyModule>) -> PyResult<()> {
+    module.add("SHAPES_BATCH_SIZE", canonical::BATCH_SIZE)?;
     module.add(
         "SHACL_ENGINE_FINGERPRINT",
         pyshacl_turbo_engine::engine_fingerprint(),

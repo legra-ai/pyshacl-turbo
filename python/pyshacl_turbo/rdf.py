@@ -23,6 +23,7 @@ from rdflib.plugins.parsers.ntriples import (
 from rdflib.util import guess_format
 
 from . import _native
+from .term_input import _TermBatch
 
 
 class _Parser(NQuadsParser):
@@ -103,41 +104,34 @@ def _decode_terms(source, blank_nodes, multigraph, preserve_ids, identifier):
 
 
 def _term_input(source, *, flatten=False):
-    records, quads, indices, nodes = [], [], {}, {}
-
-    def intern(term):
-        index = indices.get(term)
-        if index is not None:
-            return index
-        if isinstance(term, URIRef):
-            record = (0, str(term), None, None)
-        elif isinstance(term, BNode):
-            nodes[str(term)] = term
-            record = (1, str(term), None, None)
-        elif isinstance(term, Literal):
-            record = (
-                2,
-                str(term),
-                str(term.datatype) if term.datatype and not term.language else None,
-                term.language,
-            )
-        else:
-            raise TypeError("Expected an RDFLib IRI, blank node or literal")
-        index = len(records)
-        indices[term] = index
-        records.append(record)
-        return index
-
+    nodes = {}
+    batch = _TermBatch(nodes)
     if source.context_aware:
         default = source.default_graph.identifier
         for s, p, o, g in source.quads():
-            quads.append(
-                (intern(s), intern(p), intern(o), None if flatten or g == default else intern(g))
-            )
+            batch.append(s, p, o, None if flatten or g == default else g)
     else:
         for s, p, o in source:
-            quads.append((intern(s), intern(p), intern(o), None))
-    return Input((records, quads), "terms", None, nodes, dict(source.namespaces()))
+            batch.append(s, p, o)
+    return Input((batch.records, batch.quads), "terms", None, nodes, dict(source.namespaces()))
+
+
+def shape_batches(source, nodes):
+    """Transfer flattened shape triples with bounded input ownership."""
+    batch = _TermBatch(nodes)
+    triples = (
+        ((s, p, o) for s, p, o, _ in source.quads((None, None, None, None)))
+        if source.context_aware
+        else iter(source)
+    )
+    limit = _native.SHAPES_BATCH_SIZE
+    for s, p, o in triples:
+        batch.append(s, p, o)
+        if len(batch.quads) == limit:
+            yield batch.records, batch.quads
+            batch = _TermBatch(nodes)
+    if batch.quads:
+        yield batch.records, batch.quads
 
 
 def union(source):
