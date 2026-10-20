@@ -17,8 +17,9 @@ native-coverage runner still verifies loaded extension bytes against the exact
 instrumented wheel, requires actual Python-to-Rust execution, and checks the
 complete owned-source denominator. It uses uv build with Cargo's dev profile for
 instrumentation. Coverage requirements and Python/Rust package contracts remain
-unchanged. Legacy requirements snapshots are generated with uv export and imported
-into isolated test projects with uv add; uv.lock is their source of dependency data.
+unchanged. ADR 0039 supersedes the original committed requirements snapshots:
+coverage exports the authoritative uv.lock into each measurement's private work
+directory and imports that generated snapshot into its isolated uv project.
 
 Native release wheels are built from the verified source archive with uv build,
 including manylinux builds inside the existing platform images. Publication uses
