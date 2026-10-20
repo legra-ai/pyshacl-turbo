@@ -19,6 +19,7 @@ mod graph_read;
 mod graph_views;
 #[cfg(test)]
 mod graph_views_tests;
+mod graph_write;
 mod inference;
 mod ontology;
 mod path;

@@ -28,11 +28,11 @@ fn rust_store_validation_and_rule_apis_commit_only_when_requested() {
                 let expansion = program
                     .expand_store(&store, Options::default(), inplace)
                     .unwrap();
-                assert_eq!(expansion.graph.len(), 2);
+                assert_eq!(expansion.graph.len(), 1);
                 assert!(expansion.recursion_warnings.is_empty());
             }
             assert_eq!(store.len().unwrap(), if inplace { 2 } else { 1 });
-            let snapshot = store_snapshot(&store).unwrap();
+            let snapshot: Dataset = store.iter().map(|quad| store_quad(quad.unwrap())).collect();
             assert!(snapshot.iter().any(|q| matches!(q.object, TermRef::Literal(l) if l.value()=="plain" && l.has_explicit_datatype())));
         }
     }

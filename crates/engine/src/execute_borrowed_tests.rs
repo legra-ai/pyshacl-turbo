@@ -35,3 +35,43 @@ fn readonly_validation_uses_pending_named_graph_changes_and_borrowed_shapes_over
     drop(transaction);
     assert_eq!(store.len().unwrap(), 0);
 }
+
+#[test]
+fn rule_validation_stages_additions_in_the_callers_transaction_until_commit() {
+    let shapes = parse(r#"@prefix sh: <http://www.w3.org/ns/shacl#> .
+      <urn:S> sh:targetNode <urn:s>;
+        sh:rule [a sh:SPARQLRule; sh:construct "CONSTRUCT { $this <urn:derived> ?value } WHERE { $this <urn:p> ?value }"];
+        sh:property [sh:path <urn:derived>; sh:hasValue true]."#, RdfFormat::Turtle, None).unwrap();
+    let program = CompiledShapes::compile(shapes, true).unwrap();
+    for commit in [false, true] {
+        let store = Store::new().unwrap();
+        let mut transaction = store.start_transaction().unwrap();
+        let source = Quad::new(
+            NamedNode::new_unchecked("urn:s"),
+            NamedNode::new_unchecked("urn:p"),
+            Literal::from(true),
+            NamedNode::new_unchecked("urn:g"),
+        );
+        let derived = Quad::new(
+            NamedNode::new_unchecked("urn:s"),
+            NamedNode::new_unchecked("urn:derived"),
+            Literal::from(true),
+            GraphName::DefaultGraph,
+        );
+        transaction.insert(source.as_ref());
+        assert!(
+            program
+                .validate_transaction(&mut transaction, Options::default())
+                .unwrap()
+                .conforms
+        );
+        assert!(transaction.contains(derived.as_ref()).unwrap());
+        assert_eq!(store.len().unwrap(), 0);
+        if commit {
+            transaction.commit().unwrap();
+        } else {
+            drop(transaction);
+        }
+        assert_eq!(store.len().unwrap(), if commit { 2 } else { 0 });
+    }
+}

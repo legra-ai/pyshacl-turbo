@@ -7,6 +7,7 @@ use crate::compile::{CompiledShapes, Shape, Target};
 use crate::constraints::Constraint;
 use crate::functions::Functions;
 use crate::graph::*;
+use crate::graph_write::GraphWrite;
 use crate::path::Path;
 use crate::{Error, GraphRead, Result, UnionGraph};
 
@@ -221,38 +222,59 @@ struct Violation {
 }
 
 impl CompiledShapes {
-    /// Validate a consistent Store snapshot without RDF text conversion.
-    /// Rule additions commit in one Store transaction only after success.
+    /// Validate and expand directly on a caller-owned transaction.
+    /// Pending writes are visible. The caller must abort on an error and owns
+    /// the decision to commit a conforming report; this method never commits.
+    pub fn validate_transaction(
+        &self,
+        transaction: &mut oxigraph::store::Transaction<'_>,
+        options: Options,
+    ) -> Result<ValidationReport> {
+        let warnings = self.expand_rules_inner(transaction, options.clone(), None)?;
+        self.validate_expanded(&*transaction, options, warnings)
+    }
+
+    /// Validate a consistent Store transaction without copying its base data.
+    /// Commit rule additions only when inplace is requested and execution succeeds.
     pub fn validate_store(
         &self,
         store: &oxigraph::store::Store,
         options: Options,
         inplace: bool,
     ) -> Result<ValidationReport> {
-        let before = store_snapshot(store)?;
-        let mut working = before.clone();
-        let report = self.validate(&mut working, options)?;
+        let mut transaction = store
+            .start_transaction()
+            .map_err(|error| Error::Runtime(error.to_string()))?;
+        let report = self.validate_transaction(&mut transaction, options)?;
         if inplace {
-            commit_store(store, &before, &working)?;
+            transaction
+                .commit()
+                .map_err(|error| Error::Runtime(error.to_string()))?;
         }
         Ok(report)
     }
 
-    /// Expand rules over a Store snapshot; optionally commit the additions.
+    /// Expand rules directly on a Store transaction, returning only additions.
+    /// With inplace=false, the transaction is aborted after producing its delta.
     pub fn expand_store(
         &self,
         store: &oxigraph::store::Store,
         options: Options,
         inplace: bool,
     ) -> Result<RuleExpansion> {
-        let before = store_snapshot(store)?;
-        let mut working = before.clone();
-        let recursion_warnings = self.expand_rules(&mut working, options)?;
+        let mut transaction = store
+            .start_transaction()
+            .map_err(|error| Error::Runtime(error.to_string()))?;
+        let mut graph = Dataset::new();
+        let recursion_warnings =
+            self.expand_rules_inner(&mut transaction, options, Some(&mut graph))?;
         if inplace {
-            commit_store(store, &before, &working)?;
+            transaction
+                .commit()
+                .map_err(|error| Error::Runtime(error.to_string()))?;
         }
         Ok(RuleExpansion {
-            graph: working,
+            graph,
             recursion_warnings,
         })
     }
@@ -903,10 +925,6 @@ impl CompiledShapes {
     }
 
     pub fn expand_rules(&self, data: &mut Dataset, options: Options) -> Result<Vec<String>> {
-        if self.has_active_rules(&options) && data.iter().any(|q| !q.graph_name.is_default_graph())
-        {
-            return Ok(self.expand_rules_delta(data, options)?.recursion_warnings);
-        }
         self.expand_rules_inner(data, options, None)
     }
 
@@ -916,26 +934,17 @@ impl CompiledShapes {
         data: &mut Dataset,
         options: Options,
     ) -> Result<RuleExpansion> {
-        let mut additions = Dataset::new();
-        let recursion_warnings = if self.has_active_rules(&options)
-            && data.iter().any(|q| !q.graph_name.is_default_graph())
-        {
-            let mut working = with_union(data);
-            let warnings = self.expand_rules_inner(&mut working, options, Some(&mut additions))?;
-            data.extend(additions.iter());
-            warnings
-        } else {
-            self.expand_rules_inner(data, options, Some(&mut additions))?
-        };
+        let mut graph = Dataset::new();
+        let recursion_warnings = self.expand_rules_inner(data, options, Some(&mut graph))?;
         Ok(RuleExpansion {
-            graph: additions,
+            graph,
             recursion_warnings,
         })
     }
 
     fn expand_rules_inner(
         &self,
-        data: &mut Dataset,
+        data: &mut (impl GraphWrite + ?Sized),
         options: Options,
         mut delta: Option<&mut Dataset>,
     ) -> Result<Vec<String>> {
@@ -967,8 +976,9 @@ impl CompiledShapes {
                     if rule.deactivated {
                         continue;
                     }
+                    let view = UnionGraph::new(&*data);
                     let focus =
-                        self.selected_focus_nodes(shape, data, &options, &mut evaluation)?;
+                        self.selected_focus_nodes(shape, &view, &options, &mut evaluation)?;
                     let functions = self.functions.clone();
                     evaluation.functions = functions.clone();
                     let mut additions = HashSet::new();
@@ -978,7 +988,7 @@ impl CompiledShapes {
                             self.evaluate_batch(
                                 condition,
                                 std::slice::from_ref(&node),
-                                data,
+                                &view,
                                 &mut condition_results,
                                 &mut evaluation,
                             )?;
@@ -992,18 +1002,18 @@ impl CompiledShapes {
                                 self.evaluate_batch(
                                     i,
                                     std::slice::from_ref(n),
-                                    data,
+                                    &view,
                                     &mut results,
                                     &mut evaluation,
                                 )?;
                                 Ok(results.is_empty())
                             };
                             let subjects =
-                                expressions[0].evaluate(&node, data, &functions, &mut filter)?;
+                                expressions[0].evaluate(&node, &view, &functions, &mut filter)?;
                             let predicates =
-                                expressions[1].evaluate(&node, data, &functions, &mut filter)?;
+                                expressions[1].evaluate(&node, &view, &functions, &mut filter)?;
                             let objects =
-                                expressions[2].evaluate(&node, data, &functions, &mut filter)?;
+                                expressions[2].evaluate(&node, &view, &functions, &mut filter)?;
                             for s in subjects {
                                 for p in &predicates {
                                     for o in &objects {
@@ -1023,7 +1033,7 @@ impl CompiledShapes {
                         for query in &rule.queries {
                             let result = query
                                 .prepare(&functions)
-                                .on_queryable_dataset(&*data)
+                                .on_queryable_dataset(&view)
                                 .substitute_variable(Variable::new_unchecked("this"), node.clone())
                                 .execute()?;
                             let QueryResults::Graph(triples) = result else {
@@ -1042,11 +1052,21 @@ impl CompiledShapes {
                             }
                         }
                     }
-                    // All focus nodes of a rule see the same snapshot; subsequent
+                    // All focus nodes of a rule see the same phase; subsequent
                     // rules see the complete batch of additions.
                     let mut rule_changed = false;
                     for quad in additions {
-                        if data.insert(&quad) {
+                        let present = data
+                            .matching_quads(
+                                Some(quad.subject.as_ref()),
+                                Some(quad.predicate.as_ref()),
+                                Some(quad.object.as_ref()),
+                                None,
+                            )
+                            .next()
+                            .transpose()?
+                            .is_some();
+                        if !present && data.insert_quad(quad.as_ref())? {
                             rule_changed = true;
                             if let Some(delta) = delta.as_deref_mut() {
                                 delta.insert(&quad);
@@ -1486,25 +1506,6 @@ fn is_instance(data: &(impl GraphRead + ?Sized), value: &Term, class: &Term) -> 
         }
     }
     Ok(false)
-}
-
-fn store_snapshot(store: &oxigraph::store::Store) -> Result<Dataset> {
-    store
-        .iter()
-        .map(|q| q.map(store_quad))
-        .collect::<std::result::Result<Dataset, _>>()
-        .map_err(|e| Error::Runtime(format!("Store snapshot failed: {e}")))
-}
-
-fn commit_store(store: &oxigraph::store::Store, before: &Dataset, after: &Dataset) -> Result<()> {
-    store
-        .extend(
-            after
-                .iter()
-                .filter(|q| !before.contains(*q))
-                .map(|q| q.into_owned()),
-        )
-        .map_err(|e| Error::Runtime(format!("Store commit failed: {e}")))
 }
 
 #[cfg(test)]
