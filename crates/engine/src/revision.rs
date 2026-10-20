@@ -7,6 +7,34 @@ pub const SOURCES: &[(&str, &[u8])] = &[
     ("constraints.rs", include_bytes!("constraints.rs")),
     ("display.rs", include_bytes!("display.rs")),
     ("execute.rs", include_bytes!("execute.rs")),
+    ("execute/backend.rs", include_bytes!("execute/backend.rs")),
+    (
+        "execute/constraint_advanced.rs",
+        include_bytes!("execute/constraint_advanced.rs"),
+    ),
+    (
+        "execute/constraint_relational.rs",
+        include_bytes!("execute/constraint_relational.rs"),
+    ),
+    (
+        "execute/constraint_scalar.rs",
+        include_bytes!("execute/constraint_scalar.rs"),
+    ),
+    (
+        "execute/constraints.rs",
+        include_bytes!("execute/constraints.rs"),
+    ),
+    (
+        "execute/evaluation.rs",
+        include_bytes!("execute/evaluation.rs"),
+    ),
+    ("execute/report.rs", include_bytes!("execute/report.rs")),
+    ("execute/rules.rs", include_bytes!("execute/rules.rs")),
+    ("execute/targets.rs", include_bytes!("execute/targets.rs")),
+    (
+        "execute/validation.rs",
+        include_bytes!("execute/validation.rs"),
+    ),
     ("expression.rs", include_bytes!("expression.rs")),
     ("functions.rs", include_bytes!("functions.rs")),
     ("functions/query.rs", include_bytes!("functions/query.rs")),

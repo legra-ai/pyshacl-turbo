@@ -1,0 +1,72 @@
+use super::*;
+
+impl CompiledShapes {
+    /// Validate with private rule additions while borrowing the unchanged base.
+    /// Neither pending caller writes nor committed data are modified.
+    pub fn validate_staged(
+        &self,
+        source: &(impl GraphRead + ?Sized),
+        options: Options,
+    ) -> Result<ValidationReport> {
+        let mut data = crate::rule_delta::RuleDelta::new(source);
+        let warnings = self.expand_rules_inner(&mut data, options.clone(), None)?;
+        self.validate_expanded(&data, options, warnings)
+    }
+
+    /// Validate and expand directly on a caller-owned transaction.
+    /// Pending writes are visible. The caller must abort on an error and owns
+    /// the decision to commit a conforming report; this method never commits.
+    pub fn validate_transaction(
+        &self,
+        transaction: &mut oxigraph::store::Transaction<'_>,
+        options: Options,
+    ) -> Result<ValidationReport> {
+        let warnings = self.expand_rules_inner(transaction, options.clone(), None)?;
+        self.validate_expanded(&*transaction, options, warnings)
+    }
+
+    /// Validate a consistent Store transaction without copying its base data.
+    /// Commit rule additions only when inplace is requested and execution succeeds.
+    pub fn validate_store(
+        &self,
+        store: &oxigraph::store::Store,
+        options: Options,
+        inplace: bool,
+    ) -> Result<ValidationReport> {
+        let mut transaction = store
+            .start_transaction()
+            .map_err(|error| Error::Runtime(error.to_string()))?;
+        let report = self.validate_transaction(&mut transaction, options)?;
+        if inplace {
+            transaction
+                .commit()
+                .map_err(|error| Error::Runtime(error.to_string()))?;
+        }
+        Ok(report)
+    }
+
+    /// Expand rules directly on a Store transaction, returning only additions.
+    /// With inplace=false, the transaction is aborted after producing its delta.
+    pub fn expand_store(
+        &self,
+        store: &oxigraph::store::Store,
+        options: Options,
+        inplace: bool,
+    ) -> Result<RuleExpansion> {
+        let mut transaction = store
+            .start_transaction()
+            .map_err(|error| Error::Runtime(error.to_string()))?;
+        let mut graph = Dataset::new();
+        let recursion_warnings =
+            self.expand_rules_inner(&mut transaction, options, Some(&mut graph))?;
+        if inplace {
+            transaction
+                .commit()
+                .map_err(|error| Error::Runtime(error.to_string()))?;
+        }
+        Ok(RuleExpansion {
+            graph,
+            recursion_warnings,
+        })
+    }
+}
