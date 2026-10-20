@@ -102,7 +102,7 @@ def _decode_terms(source, blank_nodes, multigraph, preserve_ids, identifier):
     return result
 
 
-def _term_input(source):
+def _term_input(source, *, flatten=False):
     records, quads, indices, nodes = [], [], {}, {}
 
     def intern(term):
@@ -131,7 +131,9 @@ def _term_input(source):
     if source.context_aware:
         default = source.default_graph.identifier
         for s, p, o, g in source.quads():
-            quads.append((intern(s), intern(p), intern(o), None if g == default else intern(g)))
+            quads.append(
+                (intern(s), intern(p), intern(o), None if flatten or g == default else intern(g))
+            )
     else:
         for s, p, o in source:
             quads.append((intern(s), intern(p), intern(o), None))
@@ -313,7 +315,7 @@ def input_graph(source, rdf_format=None, *, flatten=False, direct=False):
     if not isinstance(source, Graph):
         source = load_from_source(source, rdf_format=rdf_format)
     if direct:
-        return _term_input(source)
+        return _term_input(source, flatten=flatten)
     graph = union(source) if source.context_aware else source
     nodes = {str(n): n for n in graph.all_nodes() if isinstance(n, BNode)}
     if source.context_aware and not flatten:

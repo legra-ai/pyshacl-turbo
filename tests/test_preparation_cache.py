@@ -208,3 +208,20 @@ def test_native_shapes_key_preserves_exact_terms_and_deduplicates_union():
     canonical = turbo._native.canonical_shapes(input_graph(source, direct=True).source)
     assert set(decode(canonical, preserve_ids=True)) == set(shapes)
     assert canonical == turbo._native.canonical_shapes(input_graph(shapes, direct=True).source)
+
+
+def test_compilation_union_does_not_retain_context_only_blank_nodes():
+    from rdflib import BNode, Dataset
+
+    source = Dataset(default_union=True)
+    context = BNode("context-only")
+    shape = BNode("shape-node")
+    source.graph(context).add((shape, SH.targetNode, EX.s))
+    compiled = turbo.compile_shapes(source)
+    assert compiled._blank_nodes == {str(shape): shape}
+    assert compiled.targeting(graph(""), EX.s) == [shape]
+
+
+def test_native_shapes_key_rejects_malformed_term_batches():
+    with pytest.raises(ValueError, match="Invalid RDF term record"):
+        turbo._native.canonical_shapes(([(99, "invalid", None, None)], []))

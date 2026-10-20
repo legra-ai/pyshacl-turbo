@@ -84,7 +84,7 @@ class CompiledShapes:
 
     def __init__(self, shacl_graph, *, shacl_graph_format=None, advanced=False):
         self.graph = load_from_source(shacl_graph, rdf_format=shacl_graph_format)
-        shapes = _input(self.graph, direct=True)
+        shapes = _input(self.graph, direct=True, flatten=True)
         self._blank_nodes = shapes.blank_nodes
         source = _native.canonical_shapes(shapes.source)
         namespaces = tuple((p, str(ns)) for p, ns in self.graph.namespaces())

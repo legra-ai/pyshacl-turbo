@@ -20,6 +20,17 @@ current shapes snapshot, namespace bindings and all native compilation settings.
 Construct fresh Python wrappers and read inputs on each call. Cache no failures.
 Retain blank-node identity rather than canonicalizing isomorphic shape graphs.
 
+Build the compilation key from direct typed term batches. Native code renders,
+sorts and deduplicates exact union triples into one canonical N-Triples string;
+ordinary calls still inspect current graph content. Avoid Python term rendering,
+graph serialization and materializing an RDFLib union graph before cache lookup.
+The existing LRU key and returned shared-runtime source reference the same string;
+wrappers reuse that cached source instead of retaining independent equal copies.
+Keep namespace bindings and compilation settings as separate key components.
+Context-only blank nodes are not part of flattened shape input. Preserve typed
+literal spellings and blank labels; this is content ordering, not RDF blank-node
+canonicalization. No additional cache or engine protocol is introduced.
+
 Add an opt-in `cached-query-plans` feature to the existing vendored spareval.
 Enable it for the engine. Share a process-local 128-entry LRU of immutable
 optimized graph patterns across all four query forms. Key on parsed algebra and
