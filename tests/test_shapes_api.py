@@ -127,9 +127,9 @@ def test_prepared_target_data_reuses_snapshot_and_keeps_mutations_explicit(monke
     snapshots = []
     original = target_data.input_graph
 
-    def capture(data):
+    def capture(data, **kwargs):
         snapshots.append(data)
-        return original(data)
+        return original(data, **kwargs)
 
     monkeypatch.setattr(target_data, "input_graph", capture)
     prepared = turbo.prepare_target_data(source)

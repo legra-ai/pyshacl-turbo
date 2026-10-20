@@ -142,3 +142,53 @@ def test_targeting_handles_parameterized_sparql_target_types():
     snapshot = turbo.prepare_target_data(data)
     for node in (EX.a, EX.b):
         assert program.targeting(snapshot, node) == reference_targeting(shapes, data, node)
+
+
+@pytest.mark.parametrize("dataset", [False, True])
+def test_target_data_uses_term_batches_without_serializing(dataset, monkeypatch):
+    from rdflib import Graph, URIRef
+    from rdflib.namespace import XSD
+
+    shapes = graph("""ex:Class sh:targetClass ex:Person.
+        ex:Objects sh:targetObjectsOf ex:p.
+        [] a sh:NodeShape; sh:targetSubjectsOf ex:p.""")
+    subject = BNode("direct-target-subject")
+    value = Literal("01", datatype=XSD.integer, normalize=False)
+    data = Graph()
+    data.add((subject, RDF.type, EX.Person))
+    data.add((subject, EX.p, value))
+    if dataset:
+        source = Dataset(default_union=True)
+        source.graph(BNode("direct-target-context")).__iadd__(data)
+        data = source
+    program = turbo.compile_shapes(shapes)
+    expected = {
+        node: reference_targeting(shapes, data, node) for node in (subject, value, EX.absent)
+    }
+
+    def forbidden(*args, **kwargs):
+        raise AssertionError("TargetData must transfer RDF terms without serialization")
+
+    with monkeypatch.context() as patch:
+        patch.setattr(Graph, "serialize", forbidden)
+        for term_type in (URIRef, BNode, Literal):
+            patch.setattr(term_type, "n3", forbidden)
+        snapshot = turbo.prepare_target_data(data)
+
+    for node, targets in expected.items():
+        assert program.targeting(snapshot, node) == targets
+    shape = next(shape for shape in turbo.ShapesGraph(shapes).shapes if shape.node == EX.Class)
+    assert shape.focus_nodes(snapshot) == {subject}
+
+
+def test_target_data_accepts_serialized_input_and_documents(tmp_path):
+    from pyshacl_turbo.rdf import Input
+    from rdflib import URIRef
+
+    source = '<urn:subject> <urn:predicate> "value" .'
+    path = tmp_path / "target-data.nt"
+    path.write_text(source)
+    program = turbo.compile_shapes(graph("ex:S sh:targetSubjectsOf <urn:predicate>."))
+    for data in (source, path, Input(source, "nt", None, {})):
+        snapshot = turbo.prepare_target_data(data)
+        assert program.targeting(snapshot, URIRef("urn:subject")) == [EX.S]

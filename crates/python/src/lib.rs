@@ -237,10 +237,15 @@ struct PyTargetData {
 #[pymethods]
 impl PyTargetData {
     #[new]
-    fn new(py: Python<'_>, source: &str, rdf_format: &str, base: Option<&str>) -> PyResult<Self> {
-        let rdf_format = format(rdf_format)?;
+    fn new(
+        py: Python<'_>,
+        source: &Bound<'_, PyAny>,
+        rdf_format: &str,
+        base: Option<&str>,
+    ) -> PyResult<Self> {
+        let input = terms::Input::read(source, rdf_format, base)?;
         py.detach(|| {
-            let mut data = rdf_format.parse(source, base)?;
+            let mut data = input.parse()?;
             let default: Vec<_> = data
                 .iter()
                 .filter(|quad| !quad.graph_name.is_default_graph())
