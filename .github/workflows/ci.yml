@@ -46,7 +46,7 @@ jobs:
       - uses: actions-rust-lang/setup-rust-toolchain@v2
         with:
           toolchain: 1.99.1
-      - uses: legra-ai/github-actions/.github/actions/prepare-cargo-release@8f56349fbf11b804d3f04bfb313d781dbd07da22
+      - uses: legra-ai/github-actions/.github/actions/prepare-cargo-release@0d8d26076087886d4741bafd9c34d4066df34075
         id: release
         with:
           token: ${{ steps.writer.outputs.token || github.token }}
