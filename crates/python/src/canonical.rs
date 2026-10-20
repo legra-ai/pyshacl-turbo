@@ -2,17 +2,21 @@
 
 use pyo3::prelude::*;
 
-use crate::terms::Input;
+use crate::terms::{Batch, DecodedTerms};
 
 #[pyfunction]
 pub(crate) fn canonical_shapes(py: Python<'_>, source: &Bound<'_, PyAny>) -> PyResult<String> {
-    let input = Input::read(source, "terms", None)?;
+    let input: Batch = source.extract()?;
     py.detach(|| {
-        let data = input.parse()?;
-        let mut lines: Vec<_> = data
-            .iter()
-            .map(|quad| format!("{} {} {} .\n", quad.subject, quad.predicate, quad.object))
-            .collect();
+        let mut lines = DecodedTerms::new(input)?
+            .map(|quad| {
+                let quad = quad?;
+                Ok(format!(
+                    "{} {} {} .\n",
+                    quad.subject, quad.predicate, quad.object
+                ))
+            })
+            .collect::<pyshacl_turbo_engine::Result<Vec<_>>>()?;
         lines.sort_unstable();
         lines.dedup();
         Ok(lines.concat())
