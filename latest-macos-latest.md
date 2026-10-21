@@ -2,23 +2,23 @@
 
 Serial isolated wheel environments; parse → in-place inference → validation, including shape compilation and full public report output. Shapes are parsed before timing. Python uses the original three libraries; shared Turbo retains one native dataset; historical Turbo includes RDFLib conversion. One warmup precedes retained timing samples. Independent cold processes measure whole-process peak RSS before observation encoding. Full-output speedups require stable, completely equal outputs. Generalized RDF differences remain visible. No timing threshold on shared CI runners.
 
-Measured: 2026-10-21T14:23:18.315880+00:00; platform: macOS-26.6.2-arm64-arm-64bit-Mach-O.
-Harness revision: `f1a7d3ba9dee70d6ce95b75836dc8f511e03627c`; dirty source tree: `False`. Candidate wheel source revisions and hashes are retained in the raw evidence.
+Measured: 2026-10-21T15:35:36.964772+00:00; platform: macOS-26.6.2-arm64-arm-64bit-Mach-O.
+Harness revision: `36b887b30bef8498dc6ec570eb87ad4f133871bc`; dirty source tree: `False`. Candidate wheel source revisions and hashes are retained in the raw evidence.
 
 | Pipeline | Nodes | Environment | Median ms | Min–max ms | Peak MiB | Full-output parity | Speedup vs Python |
 |---|---:|---|---:|---:|---:|---|---:|
-| rdfs | 100 | candidate | 11.666 | 7.989–13.271 | 47.88 | report_graph_equal | — |
-| rdfs | 100 | python-reference | 81.207 | 65.754–96.498 | 47.58 | reference | — |
-| rdfs | 100 | turbo-historical | 33.905 | 29.657–47.145 | 47.73 | different | — |
-| owlrl | 100 | candidate | 19.601 | 12.275–29.797 | 48.33 | report_graph_equal | — |
-| owlrl | 100 | python-reference | 202.176 | 182.887–240.262 | 47.86 | reference | — |
-| owlrl | 100 | turbo-historical | 28.945 | 25.924–40.791 | 50.52 | different | — |
-| rdfs | 1000 | turbo-historical | 244.288 | 204.715–300.616 | 103.66 | different | — |
-| rdfs | 1000 | python-reference | 757.565 | 637.295–1000.233 | 55.30 | reference | — |
-| rdfs | 1000 | candidate | 61.725 | 58.874–157.141 | 52.86 | report_graph_equal | — |
-| owlrl | 1000 | python-reference | 1211.625 | 1070.295–1716.099 | 56.14 | reference | — |
-| owlrl | 1000 | candidate | 97.957 | 82.164–128.021 | 53.89 | report_graph_equal | — |
-| owlrl | 1000 | turbo-historical | 231.564 | 212.588–280.866 | 113.11 | different | — |
+| rdfs | 100 | candidate | 7.403 | 6.621–9.742 | 48.12 | report_graph_equal | — |
+| rdfs | 100 | python-reference | 60.122 | 53.694–76.364 | 47.50 | reference | — |
+| rdfs | 100 | turbo-historical | 15.122 | 14.177–19.199 | 47.62 | different | — |
+| owlrl | 100 | candidate | 10.782 | 10.355–11.124 | 48.62 | report_graph_equal | — |
+| owlrl | 100 | python-reference | 135.988 | 134.272–173.302 | 47.72 | reference | — |
+| owlrl | 100 | turbo-historical | 24.908 | 24.345–26.697 | 50.28 | different | — |
+| rdfs | 1000 | turbo-historical | 166.435 | 147.730–267.586 | 103.45 | different | — |
+| rdfs | 1000 | python-reference | 696.730 | 628.013–745.935 | 55.19 | reference | — |
+| rdfs | 1000 | candidate | 63.539 | 56.940–112.299 | 53.30 | report_graph_equal | — |
+| owlrl | 1000 | python-reference | 1102.320 | 976.010–1495.933 | 56.06 | reference | — |
+| owlrl | 1000 | candidate | 71.175 | 70.205–72.908 | 54.23 | report_graph_equal | — |
+| owlrl | 1000 | turbo-historical | 187.823 | 185.218–197.782 | 112.81 | different | — |
 
 ## Exact product versions
 
