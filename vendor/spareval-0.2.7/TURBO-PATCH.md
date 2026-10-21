@@ -59,3 +59,11 @@ functions take precedence. The expression evaluator resolves both ordinary and
 exact-term calls through this capability. No callback or source is retained
 beyond the query lifetime, and the source need not be cloned into an Arc Dataset.
 
+# Independent RDFLib join lookup
+
+Original independent joins distinguish the explicit solution domain from
+initial-binding lookup. Directional compatibility consults initial values for
+missing right-side keys without restoring hidden projected keys to the domain.
+These joins stream left rows against a distinct right-hand solution set.
+Ordinary SPARQL joins retain their existing compatibility rule.
+
