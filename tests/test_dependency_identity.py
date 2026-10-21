@@ -1,7 +1,9 @@
 """Compiled dependency identity must detect source and semantic profile drift."""
 
+import json
 import shutil
 import subprocess
+import tomllib
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -73,3 +75,36 @@ def test_only_audited_persistence_capabilities_are_separate(tmp_path):
         semantic, changed_backend = identity(crate, capability)
         assert semantic == original
         assert changed_backend != backend
+
+
+def test_actual_backend_feature_graph_does_not_leak_implicit_semantic_features(tmp_path):
+    features = tomllib.loads((ROOT / "vendor/oxigraph-0.5.11/Cargo.toml").read_text())["features"]
+    crate = tmp_path / "source"
+    dependency = tmp_path / "backend"
+    (crate / "src").mkdir(parents=True)
+    (dependency / "src").mkdir(parents=True)
+    (crate / "src/lib.rs").write_text("")
+    (dependency / "src/lib.rs").write_text("")
+    (dependency / "Cargo.toml").write_text(
+        '[package]\nname="oxrocksdb-sys"\nversion="0.0.0"\n[features]\npkg-config=[]\n'
+    )
+    manifest = '[package]\nname="oxigraph"\nversion="0.0.0"\n[features]\n'
+    capabilities = ("rocksdb", "rocksdb-debug", "rocksdb-pkg-config")
+    for capability in capabilities:
+        manifest += f"{capability}={json.dumps(features[capability])}\n"
+    manifest += '[dependencies]\noxrocksdb-sys={path="../backend",optional=true}\n'
+    (crate / "Cargo.toml").write_text(manifest)
+    for capability in capabilities:
+        result = subprocess.run(
+            ["cargo", "metadata", "--format-version", "1", "--offline", "--features", capability],
+            cwd=crate,
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        metadata = json.loads(result.stdout)
+        root = metadata["resolve"]["root"]
+        active = next(
+            node["features"] for node in metadata["resolve"]["nodes"] if node["id"] == root
+        )
+        assert set(active) <= set(capabilities), active
