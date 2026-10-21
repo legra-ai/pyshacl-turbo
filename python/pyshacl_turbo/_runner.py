@@ -2,7 +2,7 @@
 
 import logging
 
-from rdflib import Dataset, Graph
+from rdflib import Dataset, Graph, URIRef
 
 from .graph_abstraction import DataGraph
 from .shapes_graph import ShapesGraph
@@ -43,6 +43,20 @@ class Runner:
     def target_graph(self):
         return self._target_graph
 
+    def mix_in_ontology(self):
+        from . import _prepare_data
+        from .rdf import merge_graph
+
+        target = self.data_graph if self.inplace else self.data_graph.clone()
+        schema = _prepare_data(Graph(), None, self.ont_graph, None, None, False)
+        destination = (
+            target.impl.graph(URIRef("urn:pyshacl:inoculation"))
+            if self.data_graph_is_multigraph
+            else target.impl
+        )
+        merge_graph(destination, schema)
+        return target
+
     def _prepare_target(self, rules=False):
         from . import _prepare_data
         from .rdf import merge_graph
@@ -60,10 +74,13 @@ class Runner:
             or self.ont_graph is not None
             or (inference not in (None, "none"))
         )
-        target = self.data_graph.clone() if modifies and (not self.inplace) else self.data_graph
+        if self.ont_graph is not None:
+            target = self.mix_in_ontology()
+        else:
+            target = self.data_graph.clone() if modifies and not self.inplace else self.data_graph
         if not modifies and (not self.inplace):
             self.inplace = True
-        prepared = _prepare_data(target.impl, None, self.ont_graph, None, inference, False)
+        prepared = _prepare_data(target.impl, None, None, None, inference, False)
         if prepared is not target.impl:
             merge_graph(target.impl, prepared)
         if inference not in (None, "none"):

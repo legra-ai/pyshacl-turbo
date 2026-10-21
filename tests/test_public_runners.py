@@ -18,6 +18,36 @@ def test_public_runner_classes_are_independent_reference_types():
 
 
 @pytest.mark.parametrize("runner_name", ["Validator", "RuleExpandRunner"])
+@pytest.mark.parametrize("dataset", [False, True])
+@pytest.mark.parametrize("inplace", [False, True])
+def test_public_ontology_mixing_preserves_reference_scope_and_identity(
+    runner_name, dataset, inplace
+):
+    from rdflib.namespace import RDFS
+
+    outputs = []
+    for engine, module in ((pyshacl, "pyshacl"), (turbo, "pyshacl_turbo")):
+        data, shapes = fixture(dataset)
+        source = wrapped(module, data)
+        before = set(source)
+        ontology = Graph()
+        ontology.add((EX.Child, RDFS.subClassOf, EX.Parent))
+        runner = getattr(engine, runner_name)(
+            source, shacl_graph=shapes, ont_graph=ontology, options={"inplace": inplace}
+        )
+        result = runner.mix_in_ontology()
+        assert isinstance(result, type(source))
+        assert (result is source) is inplace
+        assert runner.target_graph is None
+        assert not runner.pre_inferenced
+        assert (EX.Child, RDFS.subClassOf, EX.Parent) in result
+        if not inplace:
+            assert set(source) == before
+        outputs.append(set(result))
+    assert outputs[0] == outputs[1]
+
+
+@pytest.mark.parametrize("runner_name", ["Validator", "RuleExpandRunner"])
 def test_runner_executor_options_match_reference(runner_name):
     executors = []
     for engine, module in ((pyshacl, "pyshacl"), (turbo, "pyshacl_turbo")):
