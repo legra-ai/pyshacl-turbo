@@ -17,6 +17,47 @@ def test_public_runner_classes_are_independent_reference_types():
         assert not isinstance(runner, engine.Validator)
 
 
+@pytest.mark.parametrize("conforms", [False, True])
+def test_public_report_builder_preserves_result_terms_closure_and_sorted_text(conforms):
+    source = Graph()
+    node, child = BNode("source-shape"), BNode("child")
+    source.add((node, EX.link, child))
+    source.add((child, EX.link, node))
+    source.add((child, EX.label, Literal("01", normalize=False)))
+    result = BNode("result")
+    results = [
+        ("Z result\n", result, [(result, SH.sourceShape, (source, node))]),
+        (
+            "A result\n",
+            BNode("other-result"),
+            [
+                (result, SH.value, (source, Literal("value"))),
+                (result, SH.focusNode, (source, EX.a)),
+                (result, SH.sourceShape, (source, node)),
+            ],
+        ),
+    ]
+    reports = []
+    for engine in (pyshacl, turbo):
+        shapes = engine.ShapesGraph(Graph())
+        report, text = engine.Validator.create_validation_report(shapes, conforms, results)
+        assert (node, EX.link, None) in report
+        assert (None, EX.label, Literal("01", normalize=False)) in report
+        assert text.endswith("A result\nZ result\n")
+        reports.append((report, text))
+    assert isomorphic(reports[0][0], reports[1][0])
+    assert reports[0][1] == reports[1][1]
+
+
+def test_public_report_builder_requires_results_for_nonconformance():
+    for engine in (pyshacl, turbo):
+        shapes = engine.ShapesGraph(Graph())
+        with pytest.raises(RuntimeError, match="at least one result"):
+            engine.Validator.create_validation_report(shapes, False, [])
+        graph, text = engine.Validator.create_validation_report(shapes, True, [])
+        assert len(graph) == 2 and text == "Validation Report\nConforms: True\n"
+
+
 @pytest.mark.parametrize("runner_name", ["Validator", "RuleExpandRunner"])
 @pytest.mark.parametrize("dataset", [False, True])
 @pytest.mark.parametrize("inplace", [False, True])

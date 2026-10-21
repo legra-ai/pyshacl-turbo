@@ -2,6 +2,7 @@
 
 from typing import Any, ClassVar
 
+from ._report import ReportBuilder
 from ._runner import Runner
 from .pytypes import SHACLExecutor
 
@@ -22,6 +23,10 @@ class Validator(Runner):
         "focus_nodes": None,
         "use_shapes": None,
     }
+
+    @classmethod
+    def create_validation_report(cls, sg, conforms, results):
+        return ReportBuilder.build(sg, conforms, results)
 
     def make_executor(self):
         return SHACLExecutor(
