@@ -126,6 +126,25 @@ def test_public_rules_forward_native_input_without_replacing_wrapper(provider):
     assert turbo.shacl_rules(data, shacl_graph=SHAPES, inplace=True) is data
 
 
+@pytest.mark.parametrize("rdf_format", ["nquads", "json-ld"])
+def test_public_native_rules_delegate_requested_serialization(provider, monkeypatch, rdf_format):
+    serialized = []
+
+    def serialize(self, *, format):
+        serialized.append((self, format))
+        return "native output"
+
+    monkeypatch.setattr(rdflib_turbo.Dataset, "serialize", serialize)
+    result = turbo.shacl_rules(
+        rdflib_turbo.Dataset(),
+        shacl_graph=SHAPES,
+        serialize_expanded_graph=True,
+        serialize_expanded_graph_format=rdf_format,
+    )
+    assert result == "native output"
+    assert len(serialized) == 1 and serialized[0][1] == rdf_format
+
+
 @pytest.mark.parametrize("inplace", [False, True])
 def test_native_rules_reject_invalid_provider_ownership_result(provider, inplace):
     data = rdflib_turbo.Dataset()

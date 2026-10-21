@@ -514,7 +514,11 @@ def shacl_rules(
         commit_serialized(original, _input(data_graph).source, before=original_snapshot)
     if serialize_expanded_graph:
         rdf_format = serialize_expanded_graph_format or "trig"
-        if rdf_format in {"json-ld", "nquads"} and not result.context_aware:
+        if (
+            rdf_format in {"json-ld", "nquads"}
+            and isinstance(result, Graph)
+            and not result.context_aware
+        ):
             dataset = Dataset()
             context = dataset.graph(result.identifier)
             context += result
