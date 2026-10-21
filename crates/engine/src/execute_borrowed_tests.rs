@@ -113,3 +113,52 @@ fn staged_validation_retains_only_rule_additions_and_does_not_change_pending_inp
     assert!(!transaction.contains(derived.as_ref()).unwrap());
     assert_eq!(store.len().unwrap(), 0);
 }
+
+struct IndexedOnly<'source, G: GraphRead + ?Sized>(&'source G);
+
+impl<'source, G: GraphRead + ?Sized> GraphRead for IndexedOnly<'source, G> {
+    fn matching_quads<'a>(
+        &'a self,
+        subject: Option<NamedOrBlankNodeRef<'_>>,
+        predicate: Option<NamedNodeRef<'_>>,
+        object: Option<TermRef<'_>>,
+        graph: Option<GraphNameRef<'_>>,
+    ) -> impl Iterator<Item = Result<Quad>> + use<'a, 'source, G> {
+        if subject.is_none() && predicate.is_none() && object.is_none() && graph.is_none() {
+            return Box::new(std::iter::once(Err(Error::Runtime(
+                "Full base enumeration forbidden".into(),
+            )))) as Box<dyn Iterator<Item = _>>;
+        }
+        Box::new(self.0.matching_quads(subject, predicate, object, graph))
+    }
+    fn named_graphs(&self) -> impl Iterator<Item = Result<NamedOrBlankNode>> + '_ {
+        self.0.named_graphs()
+    }
+    fn contains_named_graph(&self, graph: &NamedOrBlankNode) -> Result<bool> {
+        self.0.contains_named_graph(graph)
+    }
+}
+
+#[test]
+fn staged_core_sparql_functions_and_reports_do_not_enumerate_the_base() {
+    let shapes = parse(r#"@prefix sh: <http://www.w3.org/ns/shacl#> .
+      <urn:has> a sh:SPARQLFunction; sh:ask "ASK { <urn:s> <urn:p> ?value }" .
+      <urn:S> sh:targetNode <urn:s>;
+        sh:rule [a sh:TripleRule; sh:subject sh:this; sh:predicate <urn:derived>; sh:object true];
+        sh:property [sh:path <urn:derived>; sh:hasValue true];
+        sh:sparql [sh:select "SELECT $this WHERE { GRAPH $shapesGraph { $currentShape <http://www.w3.org/ns/shacl#targetNode> $this } FILTER(!<urn:has>()) }"] ."#, RdfFormat::Turtle, None).unwrap();
+    let program = CompiledShapes::compile(shapes, true).unwrap();
+    let data = parse_dataset("<urn:g> {<urn:s> <urn:p> 1}", RdfFormat::TriG, None).unwrap();
+    assert!(
+        program
+            .validate_staged(&IndexedOnly(&data), Options::default())
+            .unwrap()
+            .conforms
+    );
+    let empty = Dataset::new();
+    let report = program
+        .validate_staged(&IndexedOnly(&empty), Options::default())
+        .unwrap();
+    assert!(!report.conforms);
+    assert!(report.text.contains("SPARQLConstraintComponent"));
+}
