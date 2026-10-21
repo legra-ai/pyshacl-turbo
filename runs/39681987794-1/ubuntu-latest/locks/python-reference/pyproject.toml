@@ -1,0 +1,12 @@
+[project]
+name = "python-reference"
+version = "0.1.0"
+requires-python = ">=3.13"
+dependencies = [
+    "owlrl==7.6.2",
+    "pyshacl==0.40.1",
+    "rdflib==7.6.0",
+]
+
+[tool.uv]
+prerelease = "allow"
