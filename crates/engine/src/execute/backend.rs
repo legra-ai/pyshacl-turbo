@@ -1,6 +1,21 @@
 use super::*;
 
 impl CompiledShapes {
+    /// Expand rules into private additions while borrowing the unchanged source.
+    /// The caller owns warning policy and the atomic decision to apply additions.
+    pub fn expand_staged(
+        &self,
+        source: &(impl GraphRead + ?Sized),
+        options: Options,
+    ) -> Result<RuleExpansion> {
+        let mut data = crate::rule_delta::RuleDelta::new(source);
+        let recursion_warnings = self.expand_rules_inner(&mut data, options, None)?;
+        Ok(RuleExpansion {
+            graph: data.into_additions(),
+            recursion_warnings,
+        })
+    }
+
     /// Validate with private rule additions while borrowing the unchanged base.
     /// Neither pending caller writes nor committed data are modified.
     pub fn validate_staged(

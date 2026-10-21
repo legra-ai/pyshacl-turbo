@@ -220,6 +220,24 @@ class CompiledShapes:
             commit_serialized(data_graph, expanded, nodes, before=data)
         return conforms, report_graph, text
 
+    def _shared_runtime(self, data_graph, data_graph_format):
+        runtime = sys.modules.get("rdflib_turbo")
+        if runtime is None or not isinstance(data_graph, runtime.Dataset):
+            return None
+        if data_graph_format is not None:
+            raise ValueError("data_graph_format is unavailable for a native Dataset")
+        shared = runtime._native
+        if getattr(shared, "SHARED_SHACL_PROTOCOL", None) != 1:
+            raise RuntimeError("rdflib-turbo does not implement shared SHACL protocol 1")
+        if shared.SHACL_ENGINE_FINGERPRINT != _native.SHACL_ENGINE_FINGERPRINT:
+            raise RuntimeError("rdflib-turbo and pyshacl-turbo have different SHACL engine sources")
+        if self._shared_program is None:
+            source, advanced, namespaces, numeric_booleans = self._shared_spec
+            self._shared_program = shared.SharedShapes(
+                source, advanced, list(namespaces), numeric_booleans
+            )
+        return runtime, shared
+
     def shacl_rules(
         self,
         data_graph,
@@ -232,6 +250,34 @@ class CompiledShapes:
         focus_nodes=None,
         use_shapes=None,
     ):
+        native_runtime = self._shared_runtime(data_graph, data_graph_format)
+        if native_runtime is not None:
+            runtime, shared = native_runtime
+            settings = {
+                "iterate_rules": iterate_rules,
+                "max_rule_iterations": max_rule_iterations,
+                "max_validation_depth": 15
+                if max_validation_depth is None
+                else max_validation_depth,
+                "focus_nodes": _expand_names(dict(data_graph.namespaces()), focus_nodes),
+                "use_shapes": _expand_names(self.graph, use_shapes),
+            }
+            try:
+                expanded, recursion_warnings = self._shared_program.expand(
+                    data_graph._native, json.dumps(settings), inplace
+                )
+            except shared.SharedValidationFailure as failure:
+                raise ValidationFailure(str(failure)) from failure
+            _emit_recursion_warnings(recursion_warnings)
+            if inplace:
+                if expanded is not None:
+                    raise RuntimeError("Invalid inplace native rule expansion result")
+                return data_graph
+            if expanded is None:
+                raise RuntimeError("Missing native rule expansion result")
+            result = runtime.Dataset()
+            result._native = expanded
+            return result
         if inplace and not (
             isinstance(data_graph, (Graph, Input)) or is_oxigraph_store(data_graph)
         ):
@@ -470,7 +516,11 @@ def shacl_rules(
         commit_serialized(original, _input(data_graph).source, before=original_snapshot)
     if serialize_expanded_graph:
         rdf_format = serialize_expanded_graph_format or "trig"
-        if rdf_format in {"json-ld", "nquads"} and not result.context_aware:
+        if (
+            rdf_format in {"json-ld", "nquads"}
+            and isinstance(result, Graph)
+            and not result.context_aware
+        ):
             dataset = Dataset()
             context = dataset.graph(result.identifier)
             context += result
