@@ -27,7 +27,7 @@ class Runner:
         self.pre_inferenced = kwargs.pop("pre_inferenced", False)
         self.inplace = options["inplace"]
         if not isinstance(data_graph, DataGraph):
-            raise RuntimeError("data_graph must be a DataGraph object")
+            raise RuntimeError("data_graph must be a DataGraph object")  # noqa: TRY004 - reference API
         self.data_graph = data_graph
         self._target_graph = None
         self.ont_graph = ont_graph
