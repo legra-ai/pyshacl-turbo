@@ -34,7 +34,7 @@ class DataGraph(Dataset):
         _reject_native_store_graph(source)
         if not isinstance(source, Graph):
             raise ValueError("Invalid rdflib source type")  # noqa: TRY004 - reference API
-        return source if isinstance(source, DataGraph) else cls(source.store, impl=source)
+        return cls(source.store, impl=source)
 
 
 class RdfLibDataGraph(DataGraph):

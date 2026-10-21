@@ -130,8 +130,9 @@ def test_datagraph_clone_and_factory_cannot_hide_native_backing():
         DataGraph.from_rdflib(data)
 
 
-def test_datagraph_factory_invalid_source_and_direct_store_construction():
-    abstraction = importlib.import_module("pyshacl_turbo.graph_abstraction")
+@pytest.mark.parametrize("module", ["pyshacl", "pyshacl_turbo"])
+def test_datagraph_factory_invalid_source_and_direct_store_construction(module):
+    abstraction = importlib.import_module(module + ".graph_abstraction")
     with pytest.raises(ValueError, match="Invalid rdflib source type"):
         abstraction.DataGraph.from_rdflib("not a graph")
     store = Graph().store
@@ -140,7 +141,8 @@ def test_datagraph_factory_invalid_source_and_direct_store_construction():
     dataset = Dataset(default_union=True)
     data = abstraction.DataGraph.from_rdflib_dataset(dataset)
     assert data.impl is dataset
-    assert abstraction.DataGraph.from_rdflib(data) is data
+    nested = abstraction.DataGraph.from_rdflib(data)
+    assert nested is not data and nested.impl is data
 
 
 def test_graph_access_methods_follow_reference_and_query_bindings():
