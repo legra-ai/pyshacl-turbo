@@ -51,18 +51,14 @@ class ReportBuilder:
         # bounded: the public report view follows the reference's ten-level limit.
         if depth >= 10:
             return result
-        predicates = set(source.predicates(node))
-        if RDF.first in predicates:
+        if (node, RDF.first, None) in source:
             collection = Collection(self.graph, result)
             for value in source.items(node):
                 collection.append(self.clone_node(source, value, depth + 1))
             return result
-        for predicate in predicates:
+        for predicate, value in source.predicate_objects(node):
             copied_predicate = self.clone_node(source, predicate, depth + 1)
-            for value in source.objects(node, predicate):
-                self.graph.add(
-                    (result, copied_predicate, self.clone_node(source, value, depth + 1))
-                )
+            self.graph.add((result, copied_predicate, self.clone_node(source, value, depth + 1)))
         return result
 
     def clone_node(self, source, node, depth):
