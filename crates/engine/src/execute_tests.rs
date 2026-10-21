@@ -56,3 +56,12 @@ fn membership_traversal_handles_cycles_literals_and_missing_classes() {
     assert_eq!(options.clone().max_validation_depth, 15);
     assert!(format!("{options:?}").contains("max_rule_iterations"));
 }
+
+#[test]
+fn borrowed_rule_expansion_returns_only_additions_without_mutating_source() {
+    let data = parse("<urn:s> <urn:p> <urn:o>.", RdfFormat::Turtle, None).unwrap();
+    let expansion = rules().expand_staged(&data, Options::default()).unwrap();
+    assert_eq!(data.len(), 1);
+    assert_eq!(expansion.graph.len(), 1);
+    assert!(expansion.graph.iter().all(|quad| !data.contains(quad)));
+}
