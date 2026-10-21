@@ -107,6 +107,25 @@ def test_native_rules_translate_failure_without_replacing_dataset(provider):
     assert data._native is original
 
 
+def test_compiled_rules_do_not_convert_or_copy_native_input(provider, monkeypatch):
+    data = rdflib_turbo.Dataset()
+    program = turbo.compile_shapes(SHAPES)
+
+    def forbidden(*args, **kwargs):
+        raise AssertionError("native rules must stay in the dataset-owning runtime")
+
+    monkeypatch.setattr(turbo, "_input", forbidden)
+    for name in ("serialize", "to_rdflib", "from_rdflib", "copy"):
+        monkeypatch.setattr(rdflib_turbo.Dataset, name, forbidden, raising=False)
+    assert program.shacl_rules(data, inplace=True) is data
+    assert isinstance(program.shacl_rules(data), rdflib_turbo.Dataset)
+
+
+def test_public_rules_forward_native_input_without_replacing_wrapper(provider):
+    data = rdflib_turbo.Dataset()
+    assert turbo.shacl_rules(data, shacl_graph=SHAPES, inplace=True) is data
+
+
 @pytest.mark.parametrize("inplace", [False, True])
 def test_native_rules_reject_invalid_provider_ownership_result(provider, inplace):
     data = rdflib_turbo.Dataset()

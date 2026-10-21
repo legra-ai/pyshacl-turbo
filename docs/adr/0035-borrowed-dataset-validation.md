@@ -32,6 +32,13 @@ or engine sources are hard errors, with no RDFLib or serialized-data fallback. P
 namespace bindings, exact RDF terms, graph scope and caller blank-node identity.
 Native dataset input is an additional API; ordinary RDFLib behavior is unchanged.
 
+Compiled rule expansion uses the same runtime-owned shapes and strict protocol
+and engine checks. The runtime stages rule changes and applies warning policy
+outside its lock before committing against the original dataset revision.
+Inplace expansion returns the identical caller Dataset wrapper; non-inplace
+expansion returns a new native Dataset retaining namespaces, contexts and exact
+terms. Expansion never converts its input through RDFLib or serialized text.
+
 The shared benchmark must exercise this actual runtime path and verify that it
 cannot call dataset conversion/serialization. Keep historical conversion-based
 measurements separately labeled. Release comparisons use separately locked uv
