@@ -14,6 +14,7 @@ from rdflib import BNode, Dataset, Graph, Literal, URIRef
 
 from . import _native
 from .errors import ReportableRuntimeError, ShapeRecursionWarning, ValidationWarning
+from .graph_abstraction import _reject_native_store_graph
 from .rdf import (
     Input,
     commit_serialized,
@@ -98,6 +99,7 @@ class CompiledShapes:
     """Reusable immutable shapes; native Dataset validation borrows its runtime."""
 
     def __init__(self, shacl_graph, *, shacl_graph_format=None, advanced=False):
+        _reject_native_store_graph(shacl_graph)
         self.graph = load_from_source(shacl_graph, rdf_format=shacl_graph_format)
         self._blank_nodes = {}
         source = _native.canonical_shapes(shape_batches(self.graph, self._blank_nodes))
