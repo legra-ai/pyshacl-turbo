@@ -115,7 +115,17 @@ def verify(wheel):
         )
         uv = ["uv", "--no-config", "--directory", project]
         run(
-            [*uv, "add", "--no-sync", "--extra", "test", "--default-index", INDEX, wheel],
+            [
+                *uv,
+                "add",
+                "--no-sync",
+                "--refresh",
+                "--extra",
+                "test",
+                "--default-index",
+                INDEX,
+                wheel,
+            ],
             environment,
         )
         lock = tomllib.loads((project / "uv.lock").read_text())
