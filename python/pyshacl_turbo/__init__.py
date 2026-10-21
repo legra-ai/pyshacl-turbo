@@ -24,9 +24,11 @@ from .rdf import (
 )
 from .rdf import decode as _graph
 from .rdf import input_graph as _input
+from .rule_expand_runner import RuleExpandRunner
 from .shape import Shape
 from .shapes_graph import ShapesGraph
 from .target_data import TargetData, prepare_target_data
+from .validator import Validator
 
 ValidationFailure = _native.ValidationFailure
 __version__ = version("pyshacl-turbo")
@@ -52,12 +54,14 @@ def _failure_result(function):
 __all__ = [
     "CompiledShapes",
     "ReportableRuntimeError",
+    "RuleExpandRunner",
     "Shape",
     "ShapeRecursionWarning",
     "ShapesGraph",
     "TargetData",
     "ValidationFailure",
     "ValidationWarning",
+    "Validator",
     "__version__",
     "compile_shapes",
     "evaluate_query_testcase",
