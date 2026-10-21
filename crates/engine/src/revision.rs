@@ -49,6 +49,7 @@ pub const SOURCES: &[(&str, &[u8])] = &[
     ("path.rs", include_bytes!("path.rs")),
     ("pattern.rs", include_bytes!("pattern.rs")),
     ("query_graph.rs", include_bytes!("query_graph.rs")),
+    ("rdf11_store.rs", include_bytes!("rdf11_store.rs")),
     ("revision.rs", include_bytes!("revision.rs")),
     ("rule_delta.rs", include_bytes!("rule_delta.rs")),
     ("sparql.rs", include_bytes!("sparql.rs")),
@@ -77,6 +78,8 @@ pub fn fingerprint() -> String {
         update_source(&mut digest, source);
         digest.update([0]);
     }
+    digest.update(b"compiled-spareval\0");
+    digest.update(spareval::implementation_fingerprint().as_bytes());
     digest
         .finalize()
         .iter()

@@ -182,3 +182,64 @@ fn external_bindings_survive_every_query_kind_and_projection_modifier() {
         vec!["a", "z"]
     );
 }
+
+#[test]
+fn shacl_functions_borrow_pending_transaction_and_nested_function_reads() {
+    let shapes = graph(
+        "ex:lookup a sh:SPARQLFunction; sh:parameter [ sh:path ex:x ]; sh:select 'SELECT ?result WHERE { $x <https://example.org/value> ?result }'. ex:outer a sh:SPARQLFunction; sh:parameter [ sh:path ex:x ]; sh:select 'SELECT (<https://example.org/lookup>($x) AS ?result) WHERE {}'.",
+    );
+    let functions = Functions::compile(&shapes, &[]).unwrap();
+    let store = oxigraph::store::Store::new().unwrap();
+    let subject = iri("https://example.org/", "s");
+    let predicate = iri("https://example.org/", "value");
+    let old = Quad::new(
+        subject.clone(),
+        predicate.clone(),
+        Literal::from(0),
+        GraphName::DefaultGraph,
+    );
+    store.insert(&old).unwrap();
+    let mut transaction = store.start_transaction().unwrap();
+    transaction.remove(&old);
+    let exact = Literal::new_typed_literal("01", iri("urn:", "exact-datatype"));
+    transaction.insert(&Quad::new(
+        subject.clone(),
+        predicate,
+        exact.clone(),
+        GraphName::DefaultGraph,
+    ));
+    for function in ["lookup", "outer"] {
+        assert_eq!(
+            functions
+                .call(
+                    &iri("https://example.org/", function),
+                    &[subject.clone().into()],
+                    &transaction
+                )
+                .unwrap(),
+            Some(exact.clone().into())
+        );
+    }
+    drop(transaction);
+    assert!(store.contains(&old).unwrap());
+    assert_eq!(store.len().unwrap(), 1);
+}
+
+#[test]
+fn shared_evaluator_profile_preserves_term_builtins_and_rdf_union_bags() {
+    let data = crate::parse_dataset("@prefix xsd: <http://www.w3.org/2001/XMLSchema#>. <urn:g1> { <urn:s> <urn:p> '01'^^xsd:integer. <urn:t> <urn:p> '01'^^xsd:integer. } <urn:g2> { <urn:s> <urn:p> '01'^^xsd:integer. }", RdfFormat::TriG, None).unwrap();
+    let QueryResults::Solutions(rows) = evaluate_query(&data, &Dataset::new(), "SELECT (STR(?o) AS ?text) (DATATYPE(?o) AS ?datatype) FROM <urn:g1> FROM <urn:g2> WHERE { ?s <urn:p> ?o }", &[]).unwrap() else { panic!("expected solutions") };
+    let rows = rows.map(std::result::Result::unwrap).collect::<Vec<_>>();
+    assert_eq!(
+        rows.len(),
+        2,
+        "RDF union removes repeated source triples while distinct triples retain solution bags"
+    );
+    for row in rows {
+        assert_eq!(
+            row.get("text"),
+            Some(&Literal::new_simple_literal("01").into())
+        );
+        assert_eq!(row.get("datatype"), Some(&iri(XSD, "integer").into()));
+    }
+}
