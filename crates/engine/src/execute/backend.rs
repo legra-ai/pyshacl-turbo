@@ -64,7 +64,11 @@ impl CompiledShapes {
         let mut transaction = store
             .start_transaction()
             .map_err(|error| Error::Runtime(error.to_string()))?;
-        let report = self.validate_transaction(&mut transaction, options)?;
+        let report = {
+            let mut source = crate::rdf11_store::Rdf11Transaction::new(&mut transaction);
+            let warnings = self.expand_rules_inner(&mut source, options.clone(), None)?;
+            self.validate_expanded(&source, options, warnings)?
+        };
         if inplace {
             transaction
                 .commit()
@@ -85,8 +89,10 @@ impl CompiledShapes {
             .start_transaction()
             .map_err(|error| Error::Runtime(error.to_string()))?;
         let mut graph = Dataset::new();
-        let recursion_warnings =
-            self.expand_rules_inner(&mut transaction, options, Some(&mut graph))?;
+        let recursion_warnings = {
+            let mut source = crate::rdf11_store::Rdf11Transaction::new(&mut transaction);
+            self.expand_rules_inner(&mut source, options, Some(&mut graph))?
+        };
         if inplace {
             transaction
                 .commit()

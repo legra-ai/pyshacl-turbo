@@ -66,3 +66,19 @@ it with an exception, bootstrap tag, replacement Git object or manual upload.
 Compatibility and coverage claims retain the separate denominators and limits
 defined by earlier ADRs. Public registry badges are added after the first
 successful publication.
+
+## Declared companion availability before publication
+
+Candidate CI may use immutable Git development sources, but a published wheel's
+`test` extra declares registry dependencies. The aggregate release gate installs
+the actual local release wheel with that extra in a fresh uv consumer project,
+using only PyPI and refusing source builds. It verifies the resolved runtime's
+registry provenance, actual compiled engine identity, protocol and borrowed
+Store/transaction validation, including invalid and valid reports. Git source
+substitutions and direct companion wheel overrides cannot satisfy this gate.
+
+Run this publication prerequisite only for a prepared main-branch release, after
+artifact inventory verification and before the existing publisher can tag, stage,
+attest or upload anything. An unavailable or incompatible declared companion is a
+hard failure. Publish the matching companion through its own tested pipeline
+first; never invent another dependency floor or fall back to an older runtime.

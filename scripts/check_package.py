@@ -42,13 +42,27 @@ def check(path):
             "tests/test_release.py",
             "scripts/smoke_wheel.py",
             "vendor/fancy-regex-0.19.2/src/lib.rs",
+            "vendor/oxigraph-0.5.11/src/lib.rs",
             "vendor/oxrdf-0.3.4/src/lib.rs",
             "vendor/oxsdatatypes-0.2.3/src/lib.rs",
             "vendor/spargebra-0.4.7/src/lib.rs",
             "vendor/sparopt-0.3.7/src/lib.rs",
             "vendor/spareval-0.2.7/src/lib.rs",
+            "vendor/turbo-source-identity.rs",
         ]:
             assert name in files, f"Source distribution cannot be verified/rebuilt: missing {name}"
+        for vendor in (
+            "oxigraph-0.5.11",
+            "oxrdf-0.3.4",
+            "oxsdatatypes-0.2.3",
+            "spargebra-0.4.7",
+            "sparopt-0.3.7",
+            "spareval-0.2.7",
+        ):
+            for name in ("build.rs", "src/source_identity.rs"):
+                assert f"vendor/{vendor}/{name}" in files, (
+                    f"Missing compiled identity: {vendor}/{name}"
+                )
         assert ".cargo/config.toml" not in files, "Repository hook opt-in must not ship"
         assert "crates/engine/build.rs" not in files, "Repository hook installer must not ship"
     assert metadata["Name"] == "pyshacl-turbo"
@@ -56,6 +70,7 @@ def check(path):
     for name in ["LICENSE-MIT", "LICENSE-APACHE"]:
         assert files[prefix + name] == (Path(__file__).parents[1] / name).read_bytes()
         for vendor in [
+            "oxigraph-0.5.11",
             "oxrdf-0.3.4",
             "oxsdatatypes-0.2.3",
             "spargebra-0.4.7",

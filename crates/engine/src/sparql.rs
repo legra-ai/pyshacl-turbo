@@ -422,7 +422,10 @@ impl ConstraintQuery<'_> {
                 }
                 self.pattern(inner)?;
             }
-            G::Project { inner, variables } => {
+            G::Project { inner, variables }
+            | G::ProjectWithSourceScope {
+                inner, variables, ..
+            } => {
                 if !variables.iter().any(|v| v.as_str() == "this") {
                     return Err(Error::ValidationFailure(
                         "Every SELECT in a SPARQL constraint must project ?this".into(),

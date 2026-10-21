@@ -167,6 +167,9 @@ jobs:
           path: dist
       - name: Verify complete release artifact inventory before tagging is allowed
         run: uv run --no-project python scripts/release_packages.py check-build
+      - name: Verify declared registry companion before publication
+        if: github.ref == 'refs/heads/main' && needs.prepare.outputs.release == 'true'
+        run: uv run --no-project python scripts/check_registry_pair.py dist/*manylinux*x86_64.whl
 
   sdist:
     needs: [prepare]

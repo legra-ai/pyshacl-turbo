@@ -27,6 +27,7 @@ mod pattern;
 mod query_graph;
 #[cfg(test)]
 mod query_graph_tests;
+mod rdf11_store;
 mod revision;
 mod rule_delta;
 mod sparql;
@@ -45,7 +46,7 @@ pub use graph::{
     store_quad,
 };
 pub use graph_read::GraphRead;
-pub use graph_views::{OverlayGraph, UnionGraph};
+pub use graph_views::{OverlayGraph, ScopedGraph, UnionGraph};
 pub use inference::{expand as infer, expand_into as infer_into};
 pub use ontology::inoculate;
 pub use oxigraph;

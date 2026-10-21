@@ -30,6 +30,7 @@ use sparopt::algebra::{
 };
 use std::cell::Cell;
 use std::cmp::Ordering;
+use std::collections::HashMap;
 use std::hash::{Hash, Hasher};
 use std::iter::{Peekable, empty, once};
 use std::marker::PhantomData;
@@ -159,6 +160,8 @@ impl<'a, D: QueryableDataset<'a>> EvalDataset<'a, D> {
                         }),
                     )
                 } else {
+                    #[cfg(feature = "rdf-set-union")]
+                    let mut seen = FxHashSet::default();
                     let iters = default_graph_graphs
                         .iter()
                         .map(|graph_name| {
@@ -170,16 +173,59 @@ impl<'a, D: QueryableDataset<'a>> EvalDataset<'a, D> {
                             )
                         })
                         .collect::<Vec<_>>();
-                    Box::new(iters.into_iter().flatten().map(|quad| {
-                        let mut quad = quad?;
-                        quad.graph_name = None;
-                        Ok(quad)
-                    }))
+                    Box::new(
+                        iters
+                            .into_iter()
+                            .flatten()
+                            .filter(move |quad| {
+                                #[cfg(feature = "rdf-set-union")]
+                                {
+                                    match quad {
+                                        Err(_) => true,
+                                        Ok(quad) => seen.insert((
+                                            quad.subject.clone(),
+                                            quad.predicate.clone(),
+                                            quad.object.clone(),
+                                        )),
+                                    }
+                                }
+                                #[cfg(not(feature = "rdf-set-union"))]
+                                {
+                                    let _ = quad;
+                                    true
+                                }
+                            })
+                            .map(|quad| {
+                                let mut quad = quad?;
+                                quad.graph_name = None;
+                                Ok(quad)
+                            }),
+                    )
                 }
             } else {
                 // The default graph has not been set, it is the union of all graphs, we query all graphs
+                #[cfg(feature = "rdf-set-union")]
+                let mut seen = FxHashSet::default();
                 Box::new(
                     self.underlying_internal_quads_for_pattern(subject, predicate, object, None)
+                        .filter(move |quad| {
+                            #[cfg(feature = "rdf-set-union")]
+                            {
+                                match quad {
+                                    Err(_) => true,
+                                    Ok(quad) => seen.insert((
+                                        quad.subject.clone(),
+                                        quad.predicate.clone(),
+                                        quad.object.clone(),
+                                    )),
+                                }
+                            }
+                            #[cfg(not(feature = "rdf-set-union"))]
+                            {
+                                let _ = quad;
+                                true
+                            }
+                        })
                         .map(|quad| {
                             let mut quad = quad?;
                             quad.graph_name = None;
@@ -338,9 +384,33 @@ impl<T: Clone> InternalTuple<T> {
         }
         self.inner[index] = Some(value);
     }
+
+    fn overwrite_from(&mut self, other: &Self) {
+        for (index, value) in other.iter().enumerate() {
+            if let Some(value) = value {
+                self.set(index, value);
+            }
+        }
+    }
 }
 
 impl<T: Clone + Eq> InternalTuple<T> {
+    fn combine_with_rdflib(&self, other: &Self, globals: &Self) -> Option<Self> {
+        // FrozenBindings.compatible iterates only the left explicit domain;
+        // lookup on the right may read initBindings without extending its domain.
+        for (index, value) in self.inner.iter().enumerate() {
+            if let Some(value) = value
+                && let Some(other_value) = other.get(index).or_else(|| globals.get(index))
+                && value != other_value
+            {
+                return None;
+            }
+        }
+        let mut result = self.clone();
+        result.overwrite_from(other);
+        Some(result)
+    }
+
     pub fn combine_with(&self, other: &Self) -> Option<Self> {
         if self.inner.len() < other.inner.len() {
             let mut result = other.inner.clone();
@@ -419,6 +489,7 @@ pub struct SimpleEvaluator<'a, D: QueryableDataset<'a>> {
     custom_functions: Rc<CustomFunctionRegistry>,
     custom_aggregate_functions: Rc<CustomAggregateFunctionRegistry>,
     run_stats: bool,
+    initial_bindings: Option<Arc<HashMap<Variable, Term>>>,
 }
 
 impl<'a, D: QueryableDataset<'a>> SimpleEvaluator<'a, D> {
@@ -440,7 +511,34 @@ impl<'a, D: QueryableDataset<'a>> SimpleEvaluator<'a, D> {
             custom_functions,
             custom_aggregate_functions,
             run_stats,
+            initial_bindings: None,
         })
+    }
+
+    pub(crate) fn with_initial_bindings(
+        mut self,
+        bindings: Option<Arc<HashMap<Variable, Term>>>,
+    ) -> Self {
+        self.initial_bindings = bindings;
+        self
+    }
+
+    fn encode_bindings(
+        &self,
+        variables: &[Variable],
+        substitutions: impl IntoIterator<Item = (Variable, Term)>,
+    ) -> Result<InternalTuple<D::InternalTerm>, QueryEvaluationError> {
+        let mut tuple = encode_initial_bindings(&self.dataset, variables, substitutions)?;
+        if let Some(bindings) = &self.initial_bindings {
+            for (variable, value) in bindings.iter() {
+                if let Some(index) = variables.iter().position(|candidate| candidate == variable)
+                    && tuple.get(index).is_none()
+                {
+                    tuple.set(index, self.dataset.internalize_term(value.clone())?);
+                }
+            }
+        }
+        Ok(tuple)
     }
 
     pub fn evaluate_select(
@@ -451,16 +549,54 @@ impl<'a, D: QueryableDataset<'a>> SimpleEvaluator<'a, D> {
         Result<QuerySolutionIter<'a>, QueryEvaluationError>,
         Rc<EvalNodeWithStats>,
     ) {
-        let mut variables = Vec::new();
+        let mut variables = self
+            .initial_bindings
+            .iter()
+            .flat_map(|bindings| bindings.keys().cloned())
+            .collect::<Vec<_>>();
         let (eval, stats) = self.graph_pattern_evaluator(pattern, &mut variables);
         let eval = match eval {
             Ok(e) => e,
             Err(e) => return (Err(e), stats),
         };
-        let from = match encode_initial_bindings(&self.dataset, &variables, substitutions) {
+        // bounded: caller-supplied substitution parameters, never query results.
+        let substitutions = substitutions.into_iter().collect::<Vec<_>>();
+        if self.initial_bindings.is_some()
+            && let Some((variable, _)) = substitutions
+                .iter()
+                .find(|(variable, _)| !select_projection(pattern).contains(variable))
+        {
+            return (
+                Err(QueryEvaluationError::NotExistingSubstitutedVariable(
+                    variable.clone(),
+                )),
+                stats,
+            );
+        }
+        let from = match self.encode_bindings(&variables, substitutions) {
             Ok(from) => from,
             Err(e) => return (Err(e), stats),
         };
+        if self.initial_bindings.is_some() {
+            let output = select_projection(pattern);
+            let positions = output
+                .iter()
+                .map(|variable| {
+                    variables
+                        .iter()
+                        .position(|candidate| candidate == variable)
+                        .expect("projected variable has an encoded position")
+                })
+                .collect::<Vec<_>>();
+            return (
+                Ok(decode_bindings(
+                    self.dataset.clone(),
+                    project_tuples(eval(from), positions),
+                    Arc::from(output),
+                )),
+                stats,
+            );
+        }
         (
             Ok(decode_bindings(
                 self.dataset.clone(),
@@ -476,13 +612,17 @@ impl<'a, D: QueryableDataset<'a>> SimpleEvaluator<'a, D> {
         pattern: &GraphPattern,
         substitutions: impl IntoIterator<Item = (Variable, Term)>,
     ) -> (Result<bool, QueryEvaluationError>, Rc<EvalNodeWithStats>) {
-        let mut variables = Vec::new();
+        let mut variables = self
+            .initial_bindings
+            .iter()
+            .flat_map(|bindings| bindings.keys().cloned())
+            .collect::<Vec<_>>();
         let (eval, stats) = self.graph_pattern_evaluator(pattern, &mut variables);
         let eval = match eval {
             Ok(e) => e,
             Err(e) => return (Err(e), stats),
         };
-        let from = match encode_initial_bindings(&self.dataset, &variables, substitutions) {
+        let from = match self.encode_bindings(&variables, substitutions) {
             Ok(from) => from,
             Err(e) => return (Err(e), stats),
         };
@@ -517,7 +657,11 @@ impl<'a, D: QueryableDataset<'a>> SimpleEvaluator<'a, D> {
         Result<QueryTripleIter<'a>, QueryEvaluationError>,
         Rc<EvalNodeWithStats>,
     ) {
-        let mut variables = Vec::new();
+        let mut variables = self
+            .initial_bindings
+            .iter()
+            .flat_map(|bindings| bindings.keys().cloned())
+            .collect::<Vec<_>>();
         let (eval, stats) = self.graph_pattern_evaluator(pattern, &mut variables);
         let eval = match eval {
             Ok(e) => e,
@@ -544,8 +688,17 @@ impl<'a, D: QueryableDataset<'a>> SimpleEvaluator<'a, D> {
                     )?,
                 })
             })
-            .collect();
-        let from = match encode_initial_bindings(&self.dataset, &variables, substitutions) {
+            .collect::<Vec<_>>();
+        let mut constant_ids = FxHashMap::default();
+        for triple in &template {
+            for value in [&triple.subject, &triple.predicate, &triple.object] {
+                if let TripleTemplateValue::Constant(term) = value {
+                    let next_id = constant_ids.len();
+                    constant_ids.entry(term.clone()).or_insert(next_id);
+                }
+            }
+        }
+        let from = match self.encode_bindings(&variables, substitutions) {
             Ok(from) => from,
             Err(e) => return (Err(e), stats),
         };
@@ -556,6 +709,8 @@ impl<'a, D: QueryableDataset<'a>> SimpleEvaluator<'a, D> {
                 template,
                 buffered_results: Vec::default(),
                 already_emitted_results: FxHashSet::default(),
+                seen_terms: FxHashMap::default(),
+                constant_ids,
                 bnodes: Vec::default(),
             })),
             stats,
@@ -570,20 +725,38 @@ impl<'a, D: QueryableDataset<'a>> SimpleEvaluator<'a, D> {
         Result<QueryTripleIter<'a>, QueryEvaluationError>,
         Rc<EvalNodeWithStats>,
     ) {
-        let mut variables = Vec::new();
+        let mut variables = self
+            .initial_bindings
+            .iter()
+            .flat_map(|bindings| bindings.keys().cloned())
+            .collect::<Vec<_>>();
         let (eval, stats) = self.graph_pattern_evaluator(pattern, &mut variables);
         let eval = match eval {
             Ok(e) => e,
             Err(e) => return (Err(e), stats),
         };
-        let from = match encode_initial_bindings(&self.dataset, &variables, substitutions) {
+        let from = match self.encode_bindings(&variables, substitutions) {
             Ok(from) => from,
             Err(e) => return (Err(e), stats),
+        };
+        let tuples_to_describe = if self.initial_bindings.is_some() {
+            let positions = select_projection(pattern)
+                .iter()
+                .map(|variable| {
+                    variables
+                        .iter()
+                        .position(|candidate| candidate == variable)
+                        .expect("described variable has an encoded position")
+                })
+                .collect();
+            project_tuples(eval(from), positions)
+        } else {
+            eval(from)
         };
         (
             Ok(QueryTripleIter::new(DescribeIterator {
                 eval: self.clone(),
-                tuples_to_describe: eval(from),
+                tuples_to_describe,
                 nodes_described: FxHashSet::default(),
                 nodes_to_describe: Vec::default(),
                 quads: Box::new(empty()),
@@ -1210,7 +1383,59 @@ impl<'a, D: QueryableDataset<'a>> SimpleEvaluator<'a, D> {
                 let left = left?;
                 let right = right?;
 
+                if matches!(algorithm, JoinAlgorithm::RdfLibLazy) {
+                    let globals = self.encode_bindings(encoded_variables, [])?;
+                    return Ok(Rc::new(move |from| {
+                        let right = Rc::clone(&right);
+                        let globals = globals.clone();
+                        Box::new(left(from).flat_map(
+                            move |row| -> InternalTuplesIterator<'a, D::InternalTerm> {
+                                match row {
+                                    Ok(left) => {
+                                        let mut context = left.clone();
+                                        context.overwrite_from(&globals);
+                                        Box::new(right(context).map(move |row| {
+                                            row.map(|mut row| {
+                                                row.overwrite_from(&left);
+                                                row
+                                            })
+                                        }))
+                                    }
+                                    Err(error) => Box::new(once(Err(error))),
+                                }
+                            },
+                        ))
+                    }));
+                }
+
                 match algorithm {
+                    JoinAlgorithm::RdfLibLazy => unreachable!("correlated join handled above"),
+                    JoinAlgorithm::RdfLibIndependent => {
+                        let globals = self.encode_bindings(encoded_variables, [])?;
+                        Rc::new(move |from| {
+                            let mut errors = Vec::new();
+                            let built = right(from.clone())
+                                .filter_map(|row| match row {
+                                    Ok(row) => Some(row),
+                                    Err(error) => {
+                                        errors.push(Err(error));
+                                        None
+                                    }
+                                })
+                                .collect::<FxHashSet<_>>()
+                                .into_iter()
+                                .collect::<Vec<_>>();
+                            if built.is_empty() && errors.is_empty() {
+                                return Box::new(empty());
+                            }
+                            Box::new(CartesianProductJoinIterator {
+                                probe_iter: left(from).peekable(),
+                                built,
+                                buffered_results: errors,
+                                rdflib_globals: Some(globals.clone()),
+                            })
+                        })
+                    }
                     JoinAlgorithm::HashBuildLeftProbeRight { keys } => {
                         let build = left;
                         let probe = right;
@@ -1240,6 +1465,7 @@ impl<'a, D: QueryableDataset<'a>> SimpleEvaluator<'a, D> {
                                     probe_iter,
                                     built: built_values,
                                     buffered_results: errors,
+                                    rdflib_globals: None,
                                 })
                             })
                         } else {
@@ -1402,6 +1628,28 @@ impl<'a, D: QueryableDataset<'a>> SimpleEvaluator<'a, D> {
                 )?;
 
                 match algorithm {
+                    LeftJoinAlgorithm::RdfLib { variables } => {
+                        let variables = variables.as_ref().map(|variables| {
+                            variables
+                                .iter()
+                                .map(|variable| encode_variable(encoded_variables, variable))
+                                .collect::<Rc<[_]>>()
+                        });
+                        let globals = self.encode_bindings(encoded_variables, [])?;
+                        Rc::new(move |from| {
+                            Box::new(RdfLibLeftJoinIterator {
+                                right_evaluator: Rc::clone(&right),
+                                expression: Rc::clone(&expression),
+                                left_iter: left(from.clone()),
+                                current_right: Box::new(empty()),
+                                left: None,
+                                matched: false,
+                                parent: from,
+                                globals: globals.clone(),
+                                variables: variables.clone(),
+                            })
+                        })
+                    }
                     LeftJoinAlgorithm::HashBuildRightProbeLeft { keys } => {
                         // Real hash join
                         let keys = keys
@@ -1432,6 +1680,58 @@ impl<'a, D: QueryableDataset<'a>> SimpleEvaluator<'a, D> {
                         })
                     }
                 }
+            }
+            GraphPattern::RdfLibFilter {
+                inner,
+                expression,
+                variables,
+                no_isolated_scope,
+            } => {
+                let (child, child_stats) = self.graph_pattern_evaluator(inner, encoded_variables);
+                stat_children.push(child_stats);
+                let child = child?;
+                let expression = self.effective_boolean_value_expression_evaluator(
+                    expression,
+                    encoded_variables,
+                    stat_children,
+                )?;
+                let mut retained = variables
+                    .iter()
+                    .flatten()
+                    .map(|variable| encode_variable(encoded_variables, variable))
+                    .collect::<Vec<_>>();
+                retained.sort_unstable();
+                let globals = self.encode_bindings(encoded_variables, [])?;
+                let no_isolated_scope = *no_isolated_scope;
+                Rc::new(move |from| {
+                    let expression = Rc::clone(&expression);
+                    let retained = retained.clone();
+                    let globals = globals.clone();
+                    Box::new(child(from.clone()).filter(move |tuple| match tuple {
+                        Ok(tuple) => {
+                            let mut guard = InternalTuple::with_capacity(tuple.capacity());
+                            for (index, value) in tuple.iter().enumerate() {
+                                if let Some(value) = value
+                                    && (no_isolated_scope
+                                        || retained.binary_search(&index).is_ok()
+                                        || globals.contains(index)
+                                        || !from.contains(index))
+                                {
+                                    guard.set(index, value);
+                                }
+                            }
+                            for (index, value) in globals.iter().enumerate() {
+                                if let Some(value) = value
+                                    && !guard.contains(index)
+                                {
+                                    guard.set(index, value);
+                                }
+                            }
+                            expression(&guard).unwrap_or(false)
+                        }
+                        Err(_) => true,
+                    }))
+                })
             }
             GraphPattern::Filter { inner, expression } => {
                 let (child, child_stats) = self.graph_pattern_evaluator(inner, encoded_variables);
@@ -1611,6 +1911,13 @@ impl<'a, D: QueryableDataset<'a>> SimpleEvaluator<'a, D> {
             }
             GraphPattern::Project { inner, variables } => {
                 let mut inner_encoded_variables = variables.clone();
+                for variable in self
+                    .initial_bindings
+                    .iter()
+                    .flat_map(|bindings| bindings.keys())
+                {
+                    encode_variable(&mut inner_encoded_variables, variable);
+                }
                 let (child, child_stats) =
                     self.graph_pattern_evaluator(inner, &mut inner_encoded_variables);
                 stat_children.push(child_stats);
@@ -1622,10 +1929,22 @@ impl<'a, D: QueryableDataset<'a>> SimpleEvaluator<'a, D> {
                         (new_variable, encode_variable(encoded_variables, variable))
                     })
                     .collect::<Rc<[(usize, usize)]>>();
+                let rdflib = self.initial_bindings.is_some();
+                let input_mapping = if rdflib {
+                    inner_encoded_variables
+                        .iter()
+                        .enumerate()
+                        .map(|(inner, variable)| {
+                            (inner, encode_variable(encoded_variables, variable))
+                        })
+                        .collect::<Rc<[(usize, usize)]>>()
+                } else {
+                    mapping.clone()
+                };
                 Rc::new(move |from| {
                     let mapping = Rc::clone(&mapping);
-                    let mut input_tuple = InternalTuple::with_capacity(mapping.len());
-                    for (input_key, output_key) in &*mapping {
+                    let mut input_tuple = InternalTuple::with_capacity(input_mapping.len());
+                    for (input_key, output_key) in &*input_mapping {
                         if let Some(value) = from.get(*output_key) {
                             input_tuple.set(*input_key, value.clone());
                         }
@@ -1633,17 +1952,20 @@ impl<'a, D: QueryableDataset<'a>> SimpleEvaluator<'a, D> {
                     Box::new(child(input_tuple).filter_map(move |tuple| {
                         match tuple {
                             Ok(tuple) => {
-                                let mut output_tuple = from.clone();
+                                let mut output_tuple = if rdflib {
+                                    InternalTuple::with_capacity(mapping.len())
+                                } else {
+                                    from.clone()
+                                };
                                 for (input_key, output_key) in &*mapping {
                                     if let Some(value) = tuple.get(*input_key) {
                                         if let Some(existing_value) = output_tuple.get(*output_key)
                                         {
-                                            if existing_value != value {
+                                            if !rdflib && existing_value != value {
                                                 return None; // Conflict
                                             }
-                                        } else {
-                                            output_tuple.set(*output_key, value.clone());
                                         }
+                                        output_tuple.set(*output_key, value.clone());
                                     }
                                 }
                                 Some(Ok(output_tuple))
@@ -2108,6 +2430,7 @@ impl<'a, D: QueryableDataset<'a>> Clone for SimpleEvaluator<'a, D> {
             custom_functions: Rc::clone(&self.custom_functions),
             custom_aggregate_functions: Rc::clone(&self.custom_aggregate_functions),
             run_stats: self.run_stats,
+            initial_bindings: self.initial_bindings.clone(),
         }
     }
 }
@@ -2150,7 +2473,12 @@ impl<'a, D: QueryableDataset<'a>> ExpressionEvaluatorContext<'a>
             .graph_pattern_evaluator(plan, self.encoded_variables);
         self.stat_children.push(stats);
         let eval = eval?;
-        Ok(move |tuple: &InternalTuple<D::InternalTerm>| eval(tuple.clone()).next().is_some())
+        let globals = self.evaluator.encode_bindings(self.encoded_variables, [])?;
+        Ok(move |tuple: &InternalTuple<D::InternalTerm>| {
+            let mut context = tuple.clone();
+            context.overwrite_from(&globals);
+            eval(context).next().is_some()
+        })
     }
 
     fn internalize_named_node(
@@ -2202,7 +2530,10 @@ impl<'a, D: QueryableDataset<'a>> ExpressionEvaluatorContext<'a>
         &self.evaluator.custom_functions
     }
 
-    fn custom_function(&mut self, name: &NamedNode) -> Option<crate::dataset::ScopedCustomFunction<'a>> {
+    fn custom_function(
+        &mut self,
+        name: &NamedNode,
+    ) -> Option<crate::dataset::ScopedCustomFunction<'a>> {
         if let Some(function) = self.evaluator.custom_functions.get(name).cloned() {
             return Some(Rc::new(move |args: &[Term]| function(args)));
         }
@@ -2274,6 +2605,33 @@ fn build_plain_literal(
     } else {
         ExpressionTerm::StringLiteral(value)
     }
+}
+
+fn select_projection(pattern: &GraphPattern) -> &[Variable] {
+    match pattern {
+        GraphPattern::Project { variables, .. } => variables,
+        GraphPattern::Distinct { inner }
+        | GraphPattern::Reduced { inner }
+        | GraphPattern::OrderBy { inner, .. }
+        | GraphPattern::Slice { inner, .. } => select_projection(inner),
+        _ => panic!("SELECT and DESCRIBE algebra must retain their output projection"),
+    }
+}
+
+fn project_tuples<'a, T: Clone + 'a>(
+    tuples: InternalTuplesIterator<'a, T>,
+    positions: Vec<usize>,
+) -> InternalTuplesIterator<'a, T> {
+    Box::new(tuples.map(move |tuple| {
+        let tuple = tuple?;
+        let mut output = InternalTuple::with_capacity(positions.len());
+        for (destination, source) in positions.iter().enumerate() {
+            if let Some(value) = tuple.get(*source) {
+                output.set(destination, value.clone());
+            }
+        }
+        Ok(output)
+    }))
 }
 
 fn decode_bindings<'a, D: QueryableDataset<'a>>(
@@ -3763,6 +4121,7 @@ struct CartesianProductJoinIterator<'a, T> {
     probe_iter: Peekable<InternalTuplesIterator<'a, T>>,
     built: Vec<InternalTuple<T>>,
     buffered_results: Vec<Result<InternalTuple<T>, QueryEvaluationError>>,
+    rdflib_globals: Option<InternalTuple<T>>,
 }
 
 impl<T: Clone + Eq> Iterator for CartesianProductJoinIterator<'_, T> {
@@ -3778,7 +4137,12 @@ impl<T: Clone + Eq> Iterator for CartesianProductJoinIterator<'_, T> {
                 Err(error) => return Some(Err(error)),
             };
             for built_tuple in &self.built {
-                if let Some(result_tuple) = probe_tuple.combine_with(built_tuple) {
+                let result = if let Some(globals) = &self.rdflib_globals {
+                    probe_tuple.combine_with_rdflib(built_tuple, globals)
+                } else {
+                    probe_tuple.combine_with(built_tuple)
+                };
+                if let Some(result_tuple) = result {
                     self.buffered_results.push(Ok(result_tuple))
                 }
             }
@@ -3911,6 +4275,84 @@ impl<T: Clone> Iterator for ForLoopLeftJoinIterator<'_, T> {
     }
 }
 
+/// RDFLib OPTIONAL streams correlated right rows and retries a failed match
+/// with the original left-pattern variable scope. No result relation is copied.
+struct RdfLibLeftJoinIterator<'a, T> {
+    right_evaluator: InternalTupleEvaluator<'a, T>,
+    expression: Rc<dyn Fn(&InternalTuple<T>) -> Option<bool> + 'a>,
+    left_iter: InternalTuplesIterator<'a, T>,
+    current_right: InternalTuplesIterator<'a, T>,
+    left: Option<InternalTuple<T>>,
+    matched: bool,
+    parent: InternalTuple<T>,
+    globals: InternalTuple<T>,
+    variables: Option<Rc<[usize]>>,
+}
+
+impl<T: Clone> Iterator for RdfLibLeftJoinIterator<'_, T> {
+    type Item = Result<InternalTuple<T>, QueryEvaluationError>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        loop {
+            for row in self.current_right.by_ref() {
+                match row {
+                    Err(error) => return Some(Err(error)),
+                    Ok(mut row) if (self.expression)(&row).unwrap_or(false) => {
+                        self.matched = true;
+                        row.overwrite_from(self.left.as_ref().expect("active OPTIONAL left row"));
+                        return Some(Ok(row));
+                    }
+                    Ok(_) => {}
+                }
+            }
+            if let Some(left) = self.left.take()
+                && !self.matched
+            {
+                let Some(variables) = &self.variables else {
+                    // RDFLib does not analyse the separately translated EXISTS
+                    // graph. Its absent _vars scope skips the OPTIONAL retry.
+                    return Some(Ok(left));
+                };
+                let mut remembered = InternalTuple::with_capacity(variables.len());
+                for &key in variables.iter() {
+                    if let Some(value) = left.get(key) {
+                        remembered.set(key, value.clone());
+                    }
+                }
+                // QueryContext.clone uses the parent context when remember()
+                // produces an empty mapping; thaw then reinstates global bindings.
+                if remembered.iter().all(|value| value.is_none()) {
+                    remembered = self.parent.clone();
+                }
+                remembered.overwrite_from(&self.globals);
+                let mut retry_matched = false;
+                for row in (self.right_evaluator)(remembered) {
+                    match row {
+                        Err(error) => return Some(Err(error)),
+                        Ok(row) if (self.expression)(&row).unwrap_or(false) => {
+                            retry_matched = true;
+                            break;
+                        }
+                        Ok(_) => {}
+                    }
+                }
+                if !retry_matched {
+                    return Some(Ok(left));
+                }
+            }
+            let left = match self.left_iter.next()? {
+                Ok(left) => left,
+                Err(error) => return Some(Err(error)),
+            };
+            let mut context = left.clone();
+            context.overwrite_from(&self.globals);
+            self.current_right = (self.right_evaluator)(context);
+            self.left = Some(left);
+            self.matched = false;
+        }
+    }
+}
+
 struct UnionIterator<'a, T> {
     plans: Vec<Rc<dyn Fn(InternalTuple<T>) -> InternalTuplesIterator<'a, T> + 'a>>,
     input: InternalTuple<T>,
@@ -3978,7 +4420,11 @@ struct ConstructIterator<'a, D: QueryableDataset<'a>> {
     iter: InternalTuplesIterator<'a, D::InternalTerm>,
     template: Vec<TripleTemplate>,
     buffered_results: Vec<Result<Triple, QueryEvaluationError>>,
-    already_emitted_results: FxHashSet<Triple>,
+    already_emitted_results: FxHashSet<[usize; 3]>,
+    // Bounded by three terms per retained result; cleared with the existing result cache.
+    seen_terms: FxHashMap<D::InternalTerm, usize>,
+    // Bounded by the CONSTRUCT template constants, never by result count.
+    constant_ids: FxHashMap<Term, usize>,
     bnodes: Vec<BlankNode>,
 }
 
@@ -3996,27 +4442,49 @@ impl<'a, D: QueryableDataset<'a>> Iterator for ConstructIterator<'a, D> {
                     Err(error) => return Some(Err(error)),
                 };
                 for template in &self.template {
-                    if let (Some(subject), Some(predicate), Some(object)) = (
-                        get_triple_template_value(
+                    let (Some(internal_subject), Some(internal_predicate), Some(internal_object)) = (
+                        get_internal_triple_template_value(
                             &template.subject,
                             &tuple,
                             &mut self.bnodes,
                             &self.eval.dataset,
-                        )
-                        .and_then(|t| t.try_into().ok()),
-                        get_triple_template_value(
+                        ),
+                        get_internal_triple_template_value(
                             &template.predicate,
                             &tuple,
                             &mut self.bnodes,
                             &self.eval.dataset,
-                        )
-                        .and_then(|t| t.try_into().ok()),
-                        get_triple_template_value(
+                        ),
+                        get_internal_triple_template_value(
                             &template.object,
                             &tuple,
                             &mut self.bnodes,
                             &self.eval.dataset,
                         ),
+                    ) else {
+                        continue;
+                    };
+                    let key = (internal_subject, internal_predicate, internal_object);
+                    if let (Some(&subject), Some(&predicate), Some(&object)) = (
+                        key.0.id(&self.seen_terms, &self.constant_ids),
+                        key.1.id(&self.seen_terms, &self.constant_ids),
+                        key.2.id(&self.seen_terms, &self.constant_ids),
+                    ) {
+                        if self
+                            .already_emitted_results
+                            .contains(&[subject, predicate, object])
+                        {
+                            continue;
+                        }
+                    }
+                    if let (Some(subject), Some(predicate), Some(object)) = (
+                        key.0
+                            .externalize(&self.eval.dataset)
+                            .and_then(|t| t.try_into().ok()),
+                        key.1
+                            .externalize(&self.eval.dataset)
+                            .and_then(|t| t.try_into().ok()),
+                        key.2.externalize(&self.eval.dataset),
                     ) {
                         let triple = Triple {
                             subject,
@@ -4029,16 +4497,52 @@ impl<'a, D: QueryableDataset<'a>> Iterator for ConstructIterator<'a, D> {
                         let new_triple = triple.subject.is_blank_node()
                             || triple.object.is_blank_node()
                             || triple.object.is_triple()
-                            || self.already_emitted_results.insert(triple.clone());
+                            || {
+                                let subject = key.0.assign_id(
+                                    &triple.subject.clone().into(),
+                                    &mut self.seen_terms,
+                                    &self.constant_ids,
+                                );
+                                let predicate = key.1.assign_id(
+                                    &triple.predicate.clone().into(),
+                                    &mut self.seen_terms,
+                                    &self.constant_ids,
+                                );
+                                let object = key.2.assign_id(
+                                    &triple.object,
+                                    &mut self.seen_terms,
+                                    &self.constant_ids,
+                                );
+                                self.already_emitted_results
+                                    .insert([subject, predicate, object])
+                            };
                         #[cfg(not(feature = "sparql-12"))]
-                        let new_triple = triple.subject.is_blank_node()
-                            || triple.object.is_blank_node()
-                            || self.already_emitted_results.insert(triple.clone());
+                        let new_triple =
+                            triple.subject.is_blank_node() || triple.object.is_blank_node() || {
+                                let subject = key.0.assign_id(
+                                    &triple.subject.clone().into(),
+                                    &mut self.seen_terms,
+                                    &self.constant_ids,
+                                );
+                                let predicate = key.1.assign_id(
+                                    &triple.predicate.clone().into(),
+                                    &mut self.seen_terms,
+                                    &self.constant_ids,
+                                );
+                                let object = key.2.assign_id(
+                                    &triple.object,
+                                    &mut self.seen_terms,
+                                    &self.constant_ids,
+                                );
+                                self.already_emitted_results
+                                    .insert([subject, predicate, object])
+                            };
                         if new_triple {
                             self.buffered_results.push(Ok(triple));
                             if self.already_emitted_results.len() > 1024 * 1024 {
                                 // We don't want to have a too big memory impact
                                 self.already_emitted_results.clear();
+                                self.seen_terms.clear();
                             }
                         }
                     }
@@ -4123,6 +4627,79 @@ impl TripleTemplateValue {
                 Self::Variable(encode_variable(variables, variable))
             }
             NamedNodePattern::NamedNode(term) => Self::Constant(term.clone().into()),
+        }
+    }
+}
+
+enum ConstructTerm<'t, T> {
+    Internal(T),
+    Constant(&'t Term),
+    External(Term),
+}
+
+impl<T: Clone + Eq + Hash> ConstructTerm<'_, T> {
+    fn id<'a>(
+        &self,
+        terms: &'a FxHashMap<T, usize>,
+        constants: &'a FxHashMap<Term, usize>,
+    ) -> Option<&'a usize> {
+        match self {
+            Self::Internal(term) => terms.get(term),
+            Self::Constant(term) => constants.get(*term),
+            Self::External(term) => constants.get(term),
+        }
+    }
+
+    fn assign_id(
+        self,
+        external: &Term,
+        terms: &mut FxHashMap<T, usize>,
+        constants: &FxHashMap<Term, usize>,
+    ) -> usize {
+        match self {
+            Self::Internal(term) => {
+                if let Some(&id) = terms.get(&term) {
+                    return id;
+                }
+                let id = constants
+                    .get(external)
+                    .copied()
+                    .unwrap_or(constants.len() + terms.len());
+                terms.insert(term, id);
+                id
+            }
+            Self::Constant(term) => *constants
+                .get(term)
+                .expect("CONSTRUCT constant has an identity"),
+            Self::External(_) => {
+                unreachable!("generated blanks and quoted triples bypass result identity caching")
+            }
+        }
+    }
+
+    fn externalize<'a, D: QueryableDataset<'a, InternalTerm = T>>(
+        &self,
+        dataset: &EvalDataset<'a, D>,
+    ) -> Option<Term> {
+        match self {
+            Self::Internal(term) => dataset.externalize_term(term.clone()).ok(),
+            Self::Constant(term) => Some((*term).clone()),
+            Self::External(term) => Some(term.clone()),
+        }
+    }
+}
+
+fn get_internal_triple_template_value<'a, 't, D: QueryableDataset<'a>>(
+    selector: &'t TripleTemplateValue,
+    tuple: &InternalTuple<D::InternalTerm>,
+    bnodes: &mut Vec<BlankNode>,
+    dataset: &EvalDataset<'a, D>,
+) -> Option<ConstructTerm<'t, D::InternalTerm>> {
+    match selector {
+        TripleTemplateValue::Constant(term) => Some(ConstructTerm::Constant(term)),
+        TripleTemplateValue::Variable(v) => tuple.get(*v).cloned().map(ConstructTerm::Internal),
+        _ => {
+            get_triple_template_value(selector, tuple, bnodes, dataset).map(ConstructTerm::External)
         }
     }
 }
@@ -4520,6 +5097,10 @@ fn eval_node_label(node: &GraphPattern) -> String {
             "Extend({} -> {variable})",
             spargebra::algebra::Expression::from(expression)
         ),
+        GraphPattern::RdfLibFilter { expression, .. } => format!(
+            "Filter(RdfLib, {})",
+            spargebra::algebra::Expression::from(expression)
+        ),
         GraphPattern::Filter { expression, .. } => format!(
             "Filter({})",
             spargebra::algebra::Expression::from(expression)
@@ -4541,6 +5122,8 @@ fn eval_node_label(node: &GraphPattern) -> String {
             )
         }
         GraphPattern::Join { algorithm, .. } => match algorithm {
+            JoinAlgorithm::RdfLibIndependent => "Join(RdfLibIndependent)".to_owned(),
+            JoinAlgorithm::RdfLibLazy => "Join(RdfLibLazy)".to_owned(),
             JoinAlgorithm::HashBuildLeftProbeRight { keys } => format!(
                 "Join(HashBuildLeftProbeRight, keys = {})",
                 format_list(keys)
@@ -4569,6 +5152,14 @@ fn eval_node_label(node: &GraphPattern) -> String {
             expression,
             ..
         } => match algorithm {
+            LeftJoinAlgorithm::RdfLib { variables } => format!(
+                "LeftJoin(RdfLib, retry variables = {}, expression = {})",
+                variables
+                    .as_ref()
+                    .map(|variables| format_list(variables))
+                    .unwrap_or_else(|| "unanalyzed".to_owned()),
+                spargebra::algebra::Expression::from(expression)
+            ),
             LeftJoinAlgorithm::HashBuildRightProbeLeft { keys } => format!(
                 "LeftJoin(HashBuildRightProbeLeft, keys = {}, expression = {})",
                 format_list(keys),

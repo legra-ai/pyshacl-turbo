@@ -177,3 +177,15 @@ fn regex_lowering_reaches_nested_expressions_and_every_query_kind() {
     assert!(functions.required());
     assert!(!lateral.to_string().contains("REGEX("));
 }
+
+#[test]
+fn source_scope_projection_lowers_regex_inside_custom_aggregate() {
+    let mut query = spargebra::SparqlParser::new()
+        .with_rdflib_query_context()
+        .with_custom_aggregate_function(NamedNode::new("urn:aggregate").unwrap())
+        .parse_query("SELECT ?this WHERE {FILTER EXISTS {{SELECT ?this (<urn:aggregate>(REGEX(STR(?this), 's')) AS ?n) WHERE {?this ?p ?o} GROUP BY ?this}}}")
+        .unwrap();
+    assert!(RegexFunctions::lower(&mut query).required());
+    assert!(!query.to_string().contains("REGEX("));
+    assert!(query.to_string().contains(REGEX));
+}

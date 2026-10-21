@@ -239,6 +239,7 @@ impl RegexFunctions {
             }
             G::Graph { inner, .. }
             | G::Project { inner, .. }
+            | G::ProjectWithSourceScope { inner, .. }
             | G::Distinct { inner }
             | G::Reduced { inner }
             | G::Slice { inner, .. }
