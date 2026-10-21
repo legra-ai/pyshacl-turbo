@@ -2,6 +2,7 @@
 
 import importlib
 
+import pyshacl_turbo as turbo
 import pytest
 from pyshacl.graph_abstraction import DataGraph as ReferenceDataGraph
 from rdflib import Dataset, Graph, Literal, Namespace, URIRef
@@ -106,3 +107,133 @@ def test_datagraph_clone_and_factory_cannot_hide_native_backing():
         data.clone()
     with pytest.raises(NotImplementedError, match="native Store"):
         DataGraph.from_rdflib(data)
+
+
+def test_datagraph_factory_invalid_source_and_direct_store_construction():
+    abstraction = importlib.import_module("pyshacl_turbo.graph_abstraction")
+    with pytest.raises(ValueError, match="Invalid rdflib source type"):
+        abstraction.DataGraph.from_rdflib("not a graph")
+    store = Graph().store
+    actual = abstraction.DataGraph(store)
+    assert actual.is_multigraph()
+    dataset = Dataset(default_union=True)
+    data = abstraction.DataGraph.from_rdflib_dataset(dataset)
+    assert data.impl is dataset
+    assert abstraction.DataGraph.from_rdflib(data) is data
+
+
+def test_graph_access_methods_follow_reference_and_query_bindings():
+    from rdflib.namespace import RDFS
+
+    outputs = []
+    for module in ("pyshacl", "pyshacl_turbo"):
+        source, _ = fixture(True)
+        source.graph(EX.named).add((EX.Person, RDFS.subClassOf, EX.Super))
+        data = wrapped(module, source)
+        data.bind("ex", EX)
+        assert list(data.query("SELECT ?o WHERE { ?s ex:p ?o }", initBindings={"s": EX.a})) == [
+            (Literal(1),)
+        ]
+        outputs.append(
+            (
+                set(data.predicate_objects(EX.a)),
+                set(data.subject_objects(EX.p)),
+                set(data.subject_predicates(Literal(1))),
+                set(data.transitive_objects(EX.Person, RDFS.subClassOf)),
+                set(data.transitive_subjects(RDFS.subClassOf, EX.Super)),
+            )
+        )
+        assert set(data.contexts())
+        data.default_union = False
+        assert not source.default_union
+        data.default_union = True
+        assert source.default_union
+        clone = data.clone(destination=Dataset(default_union=True))
+        assert set(clone) == set(data)
+        assert clone.impl is not source
+    assert outputs[0] == outputs[1]
+
+
+def test_non_dataset_wrapped_graph_does_not_leak_other_store_contexts():
+    store = Dataset(default_union=True)
+    graph = store.graph(EX.selected)
+    graph.add((EX.a, EX.p, Literal(1)))
+    store.graph(EX.other).add((EX.secret, EX.p, Literal(2)))
+    data = wrapped("pyshacl_turbo", graph)
+    from pyshacl_turbo.rdf import input_graph, load_from_source
+
+    result = load_from_source(input_graph(data))
+    assert set(result) == set(graph)
+    assert (EX.secret, EX.p, Literal(2)) not in result
+    assert set(data.graphs()) == {graph}
+
+
+def test_clone_retains_bindings_and_locked_context_uses_its_own_store():
+    source = Graph(identifier=EX.graph)
+    source.bind("custom", EX)
+    data = wrapped("pyshacl_turbo", source)
+    clone = data.clone(identifier="custom-identifier")
+    assert dict(clone.namespaces())["custom"] == URIRef(EX)
+    assert clone.identifier == "custom-identifier"
+    assert clone.store is clone.impl.store
+
+
+def test_graph_factories_context_constructor_and_collection_methods():
+    from pyshacl_turbo.graph_abstraction import DataGraph, RdfLibDataGraph
+    from pyshacl_turbo.rdf import merge_graph
+
+    source = Graph(identifier=EX.data)
+    source.add((EX.list, RDF.first, Literal(1)))
+    source.add((EX.list, RDF.rest, RDF.nil))
+    data = DataGraph.from_rdflib_graph(source)
+    assert list(data.items(EX.list)) == [Literal(1)]
+    assert data.default_union is False
+    assert len(list(data.quads((EX.list, None, None, None)))) == 2
+    selected = RdfLibDataGraph(source.store, source, locked_context="urn:other")
+    assert selected.locked_context is source
+    dataset = Dataset(default_union=True)
+    dataset.graph(EX.named).add((EX.a, EX.p, Literal(1)))
+    locked = RdfLibDataGraph(dataset.store, dataset, locked_context=str(EX.named))
+    assert locked.identifier == EX.named
+    assert (EX.a, EX.p, Literal(1)) in locked
+    data.register_custom_function(EX.double, lambda term: Literal(int(term) * 2))
+    try:
+        assert list(data.query("SELECT (<urn:runner:double>(2) AS ?answer) WHERE {}")) == [
+            (Literal(4),)
+        ]
+    finally:
+        data.unregister_custom_function(EX.double, None)
+    target = DataGraph.from_rdflib_graph(Graph())
+    merge_graph(target, data)
+    assert set(target.triples((None, None, None))) == set(source)
+
+
+@pytest.mark.parametrize(
+    "operation", ["data-graph", "validate", "rules", "compile", "input", "merge"]
+)
+def test_native_store_graphs_fail_before_cross_runtime_copy(operation):
+    from pyshacl_turbo.graph_abstraction import DataGraph
+    from pyshacl_turbo.rdf import input_graph, merge_graph
+
+    class NativeStoreView(Graph):
+        _turbo_native_graph = True
+
+        def serialize(self, *args, **kwargs):
+            raise AssertionError("Native Store graph must not be serialized into another runtime")
+
+    native = NativeStoreView()
+    native.add((EX.a, EX.p, Literal(1)))
+    _, shapes = fixture()
+    with pytest.raises(NotImplementedError, match="native Store"):
+        if operation == "data-graph":
+            DataGraph.from_rdflib_graph(native)
+        elif operation == "validate":
+            turbo.validate(native, shacl_graph=shapes)
+        elif operation == "rules":
+            turbo.shacl_rules(native, shacl_graph=shapes)
+        elif operation == "compile":
+            turbo.compile_shapes(native)
+        elif operation == "input":
+            input_graph(native, direct=True)
+        else:
+            merge_graph(Graph(), native)
