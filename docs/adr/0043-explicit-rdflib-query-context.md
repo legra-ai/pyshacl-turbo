@@ -30,3 +30,11 @@ implementation. A runtime-specific Oxigraph convenience wrapper is not another
 engine implementation and stays in that runtime. Updating a consumer pin must
 select these actual shared source bytes and the matching facade; strict engine
 fingerprints remain required. Internal integration protocol remains 1.
+
+DELETE/INSERT WHERE uses the same ordered lowering. Its private update
+projection includes initial globals absent from WHERE; template lookup first
+consults the explicit solution and then the immutable initial context for keys
+hidden by nested projection. This never adds hidden keys to SELECT row domains.
+Each operation starts with the original context, so local BIND replacements do
+not leak into later semicolon-separated operations. Ordinary SPARQL remains
+unchanged and INSERT DATA does not consult initial bindings.
