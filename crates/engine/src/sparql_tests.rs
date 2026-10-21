@@ -172,3 +172,50 @@ fn visitor_preserves_valid_nested_graph_operators_and_aggregates() {
         "PREFIX ex: <urn:a:>\n"
     );
 }
+
+#[test]
+fn source_scope_projection_visits_custom_aggregate_and_preserves_metadata() {
+    let mut query = SparqlParser::new()
+        .with_rdflib_query_context()
+        .with_custom_aggregate_function(NamedNode::new("urn:aggregate").unwrap())
+        .parse_query("SELECT ?this WHERE {FILTER EXISTS {{SELECT ?this (<urn:aggregate>(?shapesGraph) AS ?n) WHERE {?this ?p ?o} GROUP BY ?this}}}")
+        .unwrap();
+    let Query::Select { pattern, .. } = &mut query else {
+        panic!("SELECT")
+    };
+    let prebound = [Variable::new_unchecked("currentShape")];
+    let mut visitor = ConstraintQuery {
+        path: None,
+        shapes_graph: false,
+        prebound: &prebound,
+    };
+    visitor.pattern(pattern).unwrap();
+    assert!(
+        visitor.shapes_graph,
+        "custom aggregate argument was skipped"
+    );
+    let GraphPattern::Project { inner, .. } = pattern else {
+        panic!("outer project")
+    };
+    let GraphPattern::Filter {
+        expr: Expression::Exists(inner),
+        ..
+    } = inner.as_ref()
+    else {
+        panic!("EXISTS")
+    };
+    let GraphPattern::Join { right, .. } = inner.as_ref() else {
+        panic!("source group")
+    };
+    let GraphPattern::ProjectWithSourceScope {
+        variables,
+        source_variables,
+        ..
+    } = right.as_ref()
+    else {
+        panic!("source projection")
+    };
+    assert!(variables.contains(&prebound[0]));
+    assert!(!source_variables.contains(&prebound[0]));
+    assert_eq!(source_variables.len(), 2);
+}

@@ -30,6 +30,7 @@ use sparopt::algebra::{
 };
 use std::cell::Cell;
 use std::cmp::Ordering;
+use std::collections::HashMap;
 use std::hash::{Hash, Hasher};
 use std::iter::{Peekable, empty, once};
 use std::marker::PhantomData;
@@ -338,6 +339,14 @@ impl<T: Clone> InternalTuple<T> {
         }
         self.inner[index] = Some(value);
     }
+
+    fn overwrite_from(&mut self, other: &Self) {
+        for (index, value) in other.iter().enumerate() {
+            if let Some(value) = value {
+                self.set(index, value);
+            }
+        }
+    }
 }
 
 impl<T: Clone + Eq> InternalTuple<T> {
@@ -419,6 +428,7 @@ pub struct SimpleEvaluator<'a, D: QueryableDataset<'a>> {
     custom_functions: Rc<CustomFunctionRegistry>,
     custom_aggregate_functions: Rc<CustomAggregateFunctionRegistry>,
     run_stats: bool,
+    initial_bindings: Option<Arc<HashMap<Variable, Term>>>,
 }
 
 impl<'a, D: QueryableDataset<'a>> SimpleEvaluator<'a, D> {
@@ -440,7 +450,34 @@ impl<'a, D: QueryableDataset<'a>> SimpleEvaluator<'a, D> {
             custom_functions,
             custom_aggregate_functions,
             run_stats,
+            initial_bindings: None,
         })
+    }
+
+    pub(crate) fn with_initial_bindings(
+        mut self,
+        bindings: Option<Arc<HashMap<Variable, Term>>>,
+    ) -> Self {
+        self.initial_bindings = bindings;
+        self
+    }
+
+    fn encode_bindings(
+        &self,
+        variables: &[Variable],
+        substitutions: impl IntoIterator<Item = (Variable, Term)>,
+    ) -> Result<InternalTuple<D::InternalTerm>, QueryEvaluationError> {
+        let mut tuple = encode_initial_bindings(&self.dataset, variables, substitutions)?;
+        if let Some(bindings) = &self.initial_bindings {
+            for (variable, value) in bindings.iter() {
+                if let Some(index) = variables.iter().position(|candidate| candidate == variable)
+                    && tuple.get(index).is_none()
+                {
+                    tuple.set(index, self.dataset.internalize_term(value.clone())?);
+                }
+            }
+        }
+        Ok(tuple)
     }
 
     pub fn evaluate_select(
@@ -451,16 +488,54 @@ impl<'a, D: QueryableDataset<'a>> SimpleEvaluator<'a, D> {
         Result<QuerySolutionIter<'a>, QueryEvaluationError>,
         Rc<EvalNodeWithStats>,
     ) {
-        let mut variables = Vec::new();
+        let mut variables = self
+            .initial_bindings
+            .iter()
+            .flat_map(|bindings| bindings.keys().cloned())
+            .collect::<Vec<_>>();
         let (eval, stats) = self.graph_pattern_evaluator(pattern, &mut variables);
         let eval = match eval {
             Ok(e) => e,
             Err(e) => return (Err(e), stats),
         };
-        let from = match encode_initial_bindings(&self.dataset, &variables, substitutions) {
+        // bounded: caller-supplied substitution parameters, never query results.
+        let substitutions = substitutions.into_iter().collect::<Vec<_>>();
+        if self.initial_bindings.is_some()
+            && let Some((variable, _)) = substitutions
+                .iter()
+                .find(|(variable, _)| !select_projection(pattern).contains(variable))
+        {
+            return (
+                Err(QueryEvaluationError::NotExistingSubstitutedVariable(
+                    variable.clone(),
+                )),
+                stats,
+            );
+        }
+        let from = match self.encode_bindings(&variables, substitutions) {
             Ok(from) => from,
             Err(e) => return (Err(e), stats),
         };
+        if self.initial_bindings.is_some() {
+            let output = select_projection(pattern);
+            let positions = output
+                .iter()
+                .map(|variable| {
+                    variables
+                        .iter()
+                        .position(|candidate| candidate == variable)
+                        .expect("projected variable has an encoded position")
+                })
+                .collect::<Vec<_>>();
+            return (
+                Ok(decode_bindings(
+                    self.dataset.clone(),
+                    project_tuples(eval(from), positions),
+                    Arc::from(output),
+                )),
+                stats,
+            );
+        }
         (
             Ok(decode_bindings(
                 self.dataset.clone(),
@@ -476,13 +551,17 @@ impl<'a, D: QueryableDataset<'a>> SimpleEvaluator<'a, D> {
         pattern: &GraphPattern,
         substitutions: impl IntoIterator<Item = (Variable, Term)>,
     ) -> (Result<bool, QueryEvaluationError>, Rc<EvalNodeWithStats>) {
-        let mut variables = Vec::new();
+        let mut variables = self
+            .initial_bindings
+            .iter()
+            .flat_map(|bindings| bindings.keys().cloned())
+            .collect::<Vec<_>>();
         let (eval, stats) = self.graph_pattern_evaluator(pattern, &mut variables);
         let eval = match eval {
             Ok(e) => e,
             Err(e) => return (Err(e), stats),
         };
-        let from = match encode_initial_bindings(&self.dataset, &variables, substitutions) {
+        let from = match self.encode_bindings(&variables, substitutions) {
             Ok(from) => from,
             Err(e) => return (Err(e), stats),
         };
@@ -517,7 +596,11 @@ impl<'a, D: QueryableDataset<'a>> SimpleEvaluator<'a, D> {
         Result<QueryTripleIter<'a>, QueryEvaluationError>,
         Rc<EvalNodeWithStats>,
     ) {
-        let mut variables = Vec::new();
+        let mut variables = self
+            .initial_bindings
+            .iter()
+            .flat_map(|bindings| bindings.keys().cloned())
+            .collect::<Vec<_>>();
         let (eval, stats) = self.graph_pattern_evaluator(pattern, &mut variables);
         let eval = match eval {
             Ok(e) => e,
@@ -545,7 +628,7 @@ impl<'a, D: QueryableDataset<'a>> SimpleEvaluator<'a, D> {
                 })
             })
             .collect();
-        let from = match encode_initial_bindings(&self.dataset, &variables, substitutions) {
+        let from = match self.encode_bindings(&variables, substitutions) {
             Ok(from) => from,
             Err(e) => return (Err(e), stats),
         };
@@ -570,20 +653,38 @@ impl<'a, D: QueryableDataset<'a>> SimpleEvaluator<'a, D> {
         Result<QueryTripleIter<'a>, QueryEvaluationError>,
         Rc<EvalNodeWithStats>,
     ) {
-        let mut variables = Vec::new();
+        let mut variables = self
+            .initial_bindings
+            .iter()
+            .flat_map(|bindings| bindings.keys().cloned())
+            .collect::<Vec<_>>();
         let (eval, stats) = self.graph_pattern_evaluator(pattern, &mut variables);
         let eval = match eval {
             Ok(e) => e,
             Err(e) => return (Err(e), stats),
         };
-        let from = match encode_initial_bindings(&self.dataset, &variables, substitutions) {
+        let from = match self.encode_bindings(&variables, substitutions) {
             Ok(from) => from,
             Err(e) => return (Err(e), stats),
+        };
+        let tuples_to_describe = if self.initial_bindings.is_some() {
+            let positions = select_projection(pattern)
+                .iter()
+                .map(|variable| {
+                    variables
+                        .iter()
+                        .position(|candidate| candidate == variable)
+                        .expect("described variable has an encoded position")
+                })
+                .collect();
+            project_tuples(eval(from), positions)
+        } else {
+            eval(from)
         };
         (
             Ok(QueryTripleIter::new(DescribeIterator {
                 eval: self.clone(),
-                tuples_to_describe: eval(from),
+                tuples_to_describe,
                 nodes_described: FxHashSet::default(),
                 nodes_to_describe: Vec::default(),
                 quads: Box::new(empty()),
@@ -1210,7 +1311,33 @@ impl<'a, D: QueryableDataset<'a>> SimpleEvaluator<'a, D> {
                 let left = left?;
                 let right = right?;
 
+                if matches!(algorithm, JoinAlgorithm::RdfLibLazy) {
+                    let globals = self.encode_bindings(encoded_variables, [])?;
+                    return Ok(Rc::new(move |from| {
+                        let right = Rc::clone(&right);
+                        let globals = globals.clone();
+                        Box::new(left(from).flat_map(
+                            move |row| -> InternalTuplesIterator<'a, D::InternalTerm> {
+                                match row {
+                                    Ok(left) => {
+                                        let mut context = left.clone();
+                                        context.overwrite_from(&globals);
+                                        Box::new(right(context).map(move |row| {
+                                            row.map(|mut row| {
+                                                row.overwrite_from(&left);
+                                                row
+                                            })
+                                        }))
+                                    }
+                                    Err(error) => Box::new(once(Err(error))),
+                                }
+                            },
+                        ))
+                    }));
+                }
+
                 match algorithm {
+                    JoinAlgorithm::RdfLibLazy => unreachable!("correlated join handled above"),
                     JoinAlgorithm::HashBuildLeftProbeRight { keys } => {
                         let build = left;
                         let probe = right;
@@ -1402,6 +1529,28 @@ impl<'a, D: QueryableDataset<'a>> SimpleEvaluator<'a, D> {
                 )?;
 
                 match algorithm {
+                    LeftJoinAlgorithm::RdfLib { variables } => {
+                        let variables = variables.as_ref().map(|variables| {
+                            variables
+                                .iter()
+                                .map(|variable| encode_variable(encoded_variables, variable))
+                                .collect::<Rc<[_]>>()
+                        });
+                        let globals = self.encode_bindings(encoded_variables, [])?;
+                        Rc::new(move |from| {
+                            Box::new(RdfLibLeftJoinIterator {
+                                right_evaluator: Rc::clone(&right),
+                                expression: Rc::clone(&expression),
+                                left_iter: left(from.clone()),
+                                current_right: Box::new(empty()),
+                                left: None,
+                                matched: false,
+                                parent: from,
+                                globals: globals.clone(),
+                                variables: variables.clone(),
+                            })
+                        })
+                    }
                     LeftJoinAlgorithm::HashBuildRightProbeLeft { keys } => {
                         // Real hash join
                         let keys = keys
@@ -1611,6 +1760,13 @@ impl<'a, D: QueryableDataset<'a>> SimpleEvaluator<'a, D> {
             }
             GraphPattern::Project { inner, variables } => {
                 let mut inner_encoded_variables = variables.clone();
+                for variable in self
+                    .initial_bindings
+                    .iter()
+                    .flat_map(|bindings| bindings.keys())
+                {
+                    encode_variable(&mut inner_encoded_variables, variable);
+                }
                 let (child, child_stats) =
                     self.graph_pattern_evaluator(inner, &mut inner_encoded_variables);
                 stat_children.push(child_stats);
@@ -1622,10 +1778,22 @@ impl<'a, D: QueryableDataset<'a>> SimpleEvaluator<'a, D> {
                         (new_variable, encode_variable(encoded_variables, variable))
                     })
                     .collect::<Rc<[(usize, usize)]>>();
+                let rdflib = self.initial_bindings.is_some();
+                let input_mapping = if rdflib {
+                    inner_encoded_variables
+                        .iter()
+                        .enumerate()
+                        .map(|(inner, variable)| {
+                            (inner, encode_variable(encoded_variables, variable))
+                        })
+                        .collect::<Rc<[(usize, usize)]>>()
+                } else {
+                    mapping.clone()
+                };
                 Rc::new(move |from| {
                     let mapping = Rc::clone(&mapping);
-                    let mut input_tuple = InternalTuple::with_capacity(mapping.len());
-                    for (input_key, output_key) in &*mapping {
+                    let mut input_tuple = InternalTuple::with_capacity(input_mapping.len());
+                    for (input_key, output_key) in &*input_mapping {
                         if let Some(value) = from.get(*output_key) {
                             input_tuple.set(*input_key, value.clone());
                         }
@@ -1633,17 +1801,20 @@ impl<'a, D: QueryableDataset<'a>> SimpleEvaluator<'a, D> {
                     Box::new(child(input_tuple).filter_map(move |tuple| {
                         match tuple {
                             Ok(tuple) => {
-                                let mut output_tuple = from.clone();
+                                let mut output_tuple = if rdflib {
+                                    InternalTuple::with_capacity(mapping.len())
+                                } else {
+                                    from.clone()
+                                };
                                 for (input_key, output_key) in &*mapping {
                                     if let Some(value) = tuple.get(*input_key) {
                                         if let Some(existing_value) = output_tuple.get(*output_key)
                                         {
-                                            if existing_value != value {
+                                            if !rdflib && existing_value != value {
                                                 return None; // Conflict
                                             }
-                                        } else {
-                                            output_tuple.set(*output_key, value.clone());
                                         }
+                                        output_tuple.set(*output_key, value.clone());
                                     }
                                 }
                                 Some(Ok(output_tuple))
@@ -2108,6 +2279,7 @@ impl<'a, D: QueryableDataset<'a>> Clone for SimpleEvaluator<'a, D> {
             custom_functions: Rc::clone(&self.custom_functions),
             custom_aggregate_functions: Rc::clone(&self.custom_aggregate_functions),
             run_stats: self.run_stats,
+            initial_bindings: self.initial_bindings.clone(),
         }
     }
 }
@@ -2150,7 +2322,12 @@ impl<'a, D: QueryableDataset<'a>> ExpressionEvaluatorContext<'a>
             .graph_pattern_evaluator(plan, self.encoded_variables);
         self.stat_children.push(stats);
         let eval = eval?;
-        Ok(move |tuple: &InternalTuple<D::InternalTerm>| eval(tuple.clone()).next().is_some())
+        let globals = self.evaluator.encode_bindings(self.encoded_variables, [])?;
+        Ok(move |tuple: &InternalTuple<D::InternalTerm>| {
+            let mut context = tuple.clone();
+            context.overwrite_from(&globals);
+            eval(context).next().is_some()
+        })
     }
 
     fn internalize_named_node(
@@ -2202,7 +2379,10 @@ impl<'a, D: QueryableDataset<'a>> ExpressionEvaluatorContext<'a>
         &self.evaluator.custom_functions
     }
 
-    fn custom_function(&mut self, name: &NamedNode) -> Option<crate::dataset::ScopedCustomFunction<'a>> {
+    fn custom_function(
+        &mut self,
+        name: &NamedNode,
+    ) -> Option<crate::dataset::ScopedCustomFunction<'a>> {
         if let Some(function) = self.evaluator.custom_functions.get(name).cloned() {
             return Some(Rc::new(move |args: &[Term]| function(args)));
         }
@@ -2274,6 +2454,33 @@ fn build_plain_literal(
     } else {
         ExpressionTerm::StringLiteral(value)
     }
+}
+
+fn select_projection(pattern: &GraphPattern) -> &[Variable] {
+    match pattern {
+        GraphPattern::Project { variables, .. } => variables,
+        GraphPattern::Distinct { inner }
+        | GraphPattern::Reduced { inner }
+        | GraphPattern::OrderBy { inner, .. }
+        | GraphPattern::Slice { inner, .. } => select_projection(inner),
+        _ => panic!("SELECT and DESCRIBE algebra must retain their output projection"),
+    }
+}
+
+fn project_tuples<'a, T: Clone + 'a>(
+    tuples: InternalTuplesIterator<'a, T>,
+    positions: Vec<usize>,
+) -> InternalTuplesIterator<'a, T> {
+    Box::new(tuples.map(move |tuple| {
+        let tuple = tuple?;
+        let mut output = InternalTuple::with_capacity(positions.len());
+        for (destination, source) in positions.iter().enumerate() {
+            if let Some(value) = tuple.get(*source) {
+                output.set(destination, value.clone());
+            }
+        }
+        Ok(output)
+    }))
 }
 
 fn decode_bindings<'a, D: QueryableDataset<'a>>(
@@ -3911,6 +4118,84 @@ impl<T: Clone> Iterator for ForLoopLeftJoinIterator<'_, T> {
     }
 }
 
+/// RDFLib OPTIONAL streams correlated right rows and retries a failed match
+/// with the original left-pattern variable scope. No result relation is copied.
+struct RdfLibLeftJoinIterator<'a, T> {
+    right_evaluator: InternalTupleEvaluator<'a, T>,
+    expression: Rc<dyn Fn(&InternalTuple<T>) -> Option<bool> + 'a>,
+    left_iter: InternalTuplesIterator<'a, T>,
+    current_right: InternalTuplesIterator<'a, T>,
+    left: Option<InternalTuple<T>>,
+    matched: bool,
+    parent: InternalTuple<T>,
+    globals: InternalTuple<T>,
+    variables: Option<Rc<[usize]>>,
+}
+
+impl<T: Clone> Iterator for RdfLibLeftJoinIterator<'_, T> {
+    type Item = Result<InternalTuple<T>, QueryEvaluationError>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        loop {
+            for row in self.current_right.by_ref() {
+                match row {
+                    Err(error) => return Some(Err(error)),
+                    Ok(mut row) if (self.expression)(&row).unwrap_or(false) => {
+                        self.matched = true;
+                        row.overwrite_from(self.left.as_ref().expect("active OPTIONAL left row"));
+                        return Some(Ok(row));
+                    }
+                    Ok(_) => {}
+                }
+            }
+            if let Some(left) = self.left.take()
+                && !self.matched
+            {
+                let Some(variables) = &self.variables else {
+                    // RDFLib does not analyse the separately translated EXISTS
+                    // graph. Its absent _vars scope skips the OPTIONAL retry.
+                    return Some(Ok(left));
+                };
+                let mut remembered = InternalTuple::with_capacity(variables.len());
+                for &key in variables.iter() {
+                    if let Some(value) = left.get(key) {
+                        remembered.set(key, value.clone());
+                    }
+                }
+                // QueryContext.clone uses the parent context when remember()
+                // produces an empty mapping; thaw then reinstates global bindings.
+                if remembered.iter().all(|value| value.is_none()) {
+                    remembered = self.parent.clone();
+                }
+                remembered.overwrite_from(&self.globals);
+                let mut retry_matched = false;
+                for row in (self.right_evaluator)(remembered) {
+                    match row {
+                        Err(error) => return Some(Err(error)),
+                        Ok(row) if (self.expression)(&row).unwrap_or(false) => {
+                            retry_matched = true;
+                            break;
+                        }
+                        Ok(_) => {}
+                    }
+                }
+                if !retry_matched {
+                    return Some(Ok(left));
+                }
+            }
+            let left = match self.left_iter.next()? {
+                Ok(left) => left,
+                Err(error) => return Some(Err(error)),
+            };
+            let mut context = left.clone();
+            context.overwrite_from(&self.globals);
+            self.current_right = (self.right_evaluator)(context);
+            self.left = Some(left);
+            self.matched = false;
+        }
+    }
+}
+
 struct UnionIterator<'a, T> {
     plans: Vec<Rc<dyn Fn(InternalTuple<T>) -> InternalTuplesIterator<'a, T> + 'a>>,
     input: InternalTuple<T>,
@@ -4541,6 +4826,7 @@ fn eval_node_label(node: &GraphPattern) -> String {
             )
         }
         GraphPattern::Join { algorithm, .. } => match algorithm {
+            JoinAlgorithm::RdfLibLazy => "Join(RdfLibLazy)".to_owned(),
             JoinAlgorithm::HashBuildLeftProbeRight { keys } => format!(
                 "Join(HashBuildLeftProbeRight, keys = {})",
                 format_list(keys)
@@ -4569,6 +4855,14 @@ fn eval_node_label(node: &GraphPattern) -> String {
             expression,
             ..
         } => match algorithm {
+            LeftJoinAlgorithm::RdfLib { variables } => format!(
+                "LeftJoin(RdfLib, retry variables = {}, expression = {})",
+                variables
+                    .as_ref()
+                    .map(|variables| format_list(variables))
+                    .unwrap_or_else(|| "unanalyzed".to_owned()),
+                spargebra::algebra::Expression::from(expression)
+            ),
             LeftJoinAlgorithm::HashBuildRightProbeLeft { keys } => format!(
                 "LeftJoin(HashBuildRightProbeLeft, keys = {}, expression = {})",
                 format_list(keys),
