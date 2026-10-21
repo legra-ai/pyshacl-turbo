@@ -60,7 +60,6 @@ include = [
     {path = ".githooks/**/*", format = "sdist"},
     {path = "rust-toolchain.toml", format = "sdist"},
     {path = "rustfmt-toolchain", format = "sdist"},
-    {path = "requirements-test.lock", format = "sdist"},
     {path = "Makefile", format = "sdist"},
 ]
 exclude = ["**/target/**/*", "**/__pycache__/**/*", "**/.pytest_cache/**/*", "**/.ruff_cache/**/*", "**/CHANGELOG*", "crates/engine/build.rs", ".cargo/**/*"]

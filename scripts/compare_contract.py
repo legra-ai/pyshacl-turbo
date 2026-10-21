@@ -442,7 +442,7 @@ def source_fingerprint():
         "Cargo.lock",
         "Cargo.toml",
         "pyproject.toml",
-        "requirements-test.lock",
+        "uv.lock",
         "rust-toolchain.toml",
     ):
         digest.update(name.encode())
