@@ -1681,6 +1681,58 @@ impl<'a, D: QueryableDataset<'a>> SimpleEvaluator<'a, D> {
                     }
                 }
             }
+            GraphPattern::RdfLibFilter {
+                inner,
+                expression,
+                variables,
+                no_isolated_scope,
+            } => {
+                let (child, child_stats) = self.graph_pattern_evaluator(inner, encoded_variables);
+                stat_children.push(child_stats);
+                let child = child?;
+                let expression = self.effective_boolean_value_expression_evaluator(
+                    expression,
+                    encoded_variables,
+                    stat_children,
+                )?;
+                let mut retained = variables
+                    .iter()
+                    .flatten()
+                    .map(|variable| encode_variable(encoded_variables, variable))
+                    .collect::<Vec<_>>();
+                retained.sort_unstable();
+                let globals = self.encode_bindings(encoded_variables, [])?;
+                let no_isolated_scope = *no_isolated_scope;
+                Rc::new(move |from| {
+                    let expression = Rc::clone(&expression);
+                    let retained = retained.clone();
+                    let globals = globals.clone();
+                    Box::new(child(from.clone()).filter(move |tuple| match tuple {
+                        Ok(tuple) => {
+                            let mut guard = InternalTuple::with_capacity(tuple.capacity());
+                            for (index, value) in tuple.iter().enumerate() {
+                                if let Some(value) = value
+                                    && (no_isolated_scope
+                                        || retained.binary_search(&index).is_ok()
+                                        || globals.contains(index)
+                                        || !from.contains(index))
+                                {
+                                    guard.set(index, value);
+                                }
+                            }
+                            for (index, value) in globals.iter().enumerate() {
+                                if let Some(value) = value
+                                    && !guard.contains(index)
+                                {
+                                    guard.set(index, value);
+                                }
+                            }
+                            expression(&guard).unwrap_or(false)
+                        }
+                        Err(_) => true,
+                    }))
+                })
+            }
             GraphPattern::Filter { inner, expression } => {
                 let (child, child_stats) = self.graph_pattern_evaluator(inner, encoded_variables);
                 stat_children.push(child_stats);
@@ -5043,6 +5095,10 @@ fn eval_node_label(node: &GraphPattern) -> String {
             ..
         } => format!(
             "Extend({} -> {variable})",
+            spargebra::algebra::Expression::from(expression)
+        ),
+        GraphPattern::RdfLibFilter { expression, .. } => format!(
+            "Filter(RdfLib, {})",
             spargebra::algebra::Expression::from(expression)
         ),
         GraphPattern::Filter { expression, .. } => format!(

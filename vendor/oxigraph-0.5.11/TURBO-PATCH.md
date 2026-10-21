@@ -84,3 +84,7 @@ the writer lock. Indexed quad and named-graph reads share that version for a
 complete SHACL validation. The view owns storage reader metadata, not a quad
 copy; pending writer changes remain invisible. This prevents reentrant writer
 deadlocks during non-inplace validation. See ADR 0037 and shacl_read tests.
+
+Expose the evaluator's explicit owned RDFLib prepared algebra on
+PreparedSparqlQuery. Query form, dataset, base and template remain typed query
+fields; there is no query-text reconstruction path.

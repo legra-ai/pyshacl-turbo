@@ -17,6 +17,7 @@ mod service;
 mod source_identity;
 mod update;
 
+mod prepared_algebra;
 #[cfg(feature = "sparql-12")]
 pub use crate::dataset::ExpressionTriple;
 pub use crate::dataset::{ExpressionTerm, InternalQuad, QueryableDataset, ScopedCustomFunction};
@@ -35,6 +36,7 @@ use json_event_parser::{JsonEvent, WriterJsonSerializer};
 use oxiri::Iri;
 use oxrdf::{GraphName, Literal, NamedNode, NamedOrBlankNode, Term, Variable};
 use oxsdatatypes::{DateTime, DayTimeDuration, Float};
+pub use prepared_algebra::RdfLibPreparedAlgebra;
 use spargebra::Query;
 use spargebra::algebra::QueryDataset;
 use spargebra::term::{GroundQuadPattern, QuadPattern};
@@ -81,6 +83,7 @@ pub struct QueryEvaluator {
     run_stats: bool,
     cancellation_token: Option<CancellationToken>,
     initial_bindings: Option<Arc<HashMap<Variable, Term>>>,
+    prepared_algebra: Option<Arc<RdfLibPreparedAlgebra>>,
 }
 
 impl QueryEvaluator {
@@ -88,6 +91,16 @@ impl QueryEvaluator {
     #[inline]
     pub fn new() -> Self {
         Self::default()
+    }
+
+    /// Select an owned prepared RDFLib plan with explicit supplied metadata.
+    /// Execution rejects a different source tree instead of reanalysing it.
+    #[must_use]
+    pub fn with_rdflib_prepared_algebra(mut self, algebra: RdfLibPreparedAlgebra) -> Self {
+        self.prepared_algebra = Some(Arc::new(algebra));
+        self.initial_bindings
+            .get_or_insert_with(|| Arc::new(HashMap::new()));
+        self
     }
 
     /// Set RDFLib-compatible initial bindings, including hidden query variables.
@@ -109,6 +122,9 @@ impl QueryEvaluator {
         pattern: &spargebra::algebra::GraphPattern,
         substitutions: &HashMap<Variable, Term>,
     ) -> Arc<GraphPattern> {
+        if let Some(algebra) = &self.prepared_algebra {
+            return Arc::clone(&algebra.pattern);
+        }
         // RDFLib initial bindings make nested projections correlated and BIND
         // replacement order-sensitive. SPARQL join reordering assumes the
         // uncorrelated, conflict-rejecting algebra and is not valid in this mode.
@@ -737,6 +753,24 @@ impl PreparedQuery<'_> {
         QueryExplanation,
     ) {
         let start_planning = Timer::now();
+        if self
+            .evaluator
+            .prepared_algebra
+            .as_ref()
+            .is_some_and(|algebra| !algebra.matches(self.query))
+        {
+            return (
+                Err(QueryEvaluationError::Unexpected(Box::new(io::Error::new(
+                    io::ErrorKind::InvalidInput,
+                    "Prepared RDFLib algebra does not match its query",
+                )))),
+                QueryExplanation {
+                    inner: Rc::new(EvalNodeWithStats::empty()),
+                    with_stats: self.evaluator.run_stats,
+                    planning_duration: start_planning.elapsed(),
+                },
+            );
+        }
         let (results, plan_node_with_stats, planning_duration) = match self.query {
             Query::Select {
                 pattern, base_iri, ..
@@ -909,6 +943,12 @@ impl PreparedDeleteInsertUpdate<'_> {
         self,
         dataset: impl QueryableDataset<'b>,
     ) -> Result<DeleteInsertIter<'b>, QueryEvaluationError> {
+        if self.evaluator.prepared_algebra.is_some() {
+            return Err(QueryEvaluationError::Unexpected(Box::new(io::Error::new(
+                io::ErrorKind::InvalidInput,
+                "Prepared RDFLib query algebra cannot configure an UPDATE",
+            ))));
+        }
         let mut pattern = self
             .evaluator
             .prepare_pattern(self.pattern, &HashMap::new());

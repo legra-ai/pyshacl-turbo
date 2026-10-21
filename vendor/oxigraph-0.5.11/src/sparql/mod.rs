@@ -543,6 +543,16 @@ pub struct PreparedSparqlQuery {
 }
 
 impl PreparedSparqlQuery {
+    /// Use supplied native RDFLib algebra metadata instead of source analysis.
+    #[must_use]
+    pub fn with_rdflib_prepared_algebra(
+        mut self,
+        algebra: spareval::RdfLibPreparedAlgebra,
+    ) -> Self {
+        self.evaluator = self.evaluator.with_rdflib_prepared_algebra(algebra);
+        self
+    }
+
     /// Bind RDFLib query parameters, including variables hidden by projection.
     /// Does not extend public projections or change strict substitutions.
     /// Parse with `SparqlEvaluator::with_rdflib_query_context` to retain EXISTS scopes.

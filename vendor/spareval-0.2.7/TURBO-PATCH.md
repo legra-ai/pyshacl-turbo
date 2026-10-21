@@ -106,3 +106,9 @@ Template variable lookup consults that context for keys absent from a projected
 solution, without changing the projection's explicit row domain.
 Ordinary SPARQL update evaluation retains its original output domain.
 
+
+Prepared RDFLib query objects can supply an owned native plan whose exact source
+algebra is checked before execution. Explicit join/OPTIONAL metadata remains in
+that immutable plan; the evaluator neither reanalyses it nor shares it through
+an object-identity cache. Source-query parsing and ordinary optimizer paths are
+unchanged. Native prepared-query regressions cover the four forms and metadata.
