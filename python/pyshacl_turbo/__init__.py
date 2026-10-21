@@ -33,6 +33,16 @@ __version__ = version("pyshacl-turbo")
 SHARED_DATASET_PROTOCOL = 1
 
 
+def _shared_runtime(data):
+    runtime = sys.modules.get("rdflib_turbo")
+    if runtime is not None and (
+        isinstance(data, runtime.Dataset)
+        or callable(getattr(data, "_validate_shared_shapes", None))
+    ):
+        return runtime
+    return None
+
+
 def _failure_result(function):
     @wraps(function)
     def wrapped(*args, **kwargs):
@@ -130,10 +140,10 @@ class CompiledShapes:
         focus_nodes=None,
         use_shapes=None,
     ):
-        runtime = sys.modules.get("rdflib_turbo")
-        if runtime is not None and isinstance(data_graph, runtime.Dataset):
+        runtime = _shared_runtime(data_graph)
+        if runtime is not None:
             if data_graph_format is not None:
-                raise ValueError("data_graph_format is unavailable for a native Dataset")
+                raise ValueError("data_graph_format is unavailable for a native source")
             from rdflib_turbo import _native as shared
 
             if getattr(shared, "SHARED_SHACL_PROTOCOL", None) != 1:
@@ -147,6 +157,14 @@ class CompiledShapes:
                 self._shared_program = shared.SharedShapes(
                     source, advanced, list(namespaces), numeric_booleans
                 )
+            execute = getattr(data_graph, "_validate_shared_shapes", None)
+            if not callable(execute):
+                raise RuntimeError("Native source does not implement borrowed SHACL validation")
+            data_namespaces = (
+                dict(data_graph.namespaces())
+                if isinstance(data_graph, runtime.Dataset)
+                else dict(self.graph.namespaces())
+            )
             settings = {
                 "iterate_rules": iterate_rules,
                 "max_rule_iterations": max_rule_iterations,
@@ -156,12 +174,12 @@ class CompiledShapes:
                 "allow_infos": allow_infos,
                 "allow_warnings": allow_warnings,
                 "abort_on_first": abort_on_first,
-                "focus_nodes": _expand_names(dict(data_graph.namespaces()), focus_nodes),
+                "focus_nodes": _expand_names(data_namespaces, focus_nodes),
                 "use_shapes": _expand_names(self.graph, use_shapes),
             }
             try:
-                conforms, report, text, recursion_warnings = self._shared_program.validate(
-                    data_graph._native, json.dumps(settings), inplace
+                conforms, report, text, recursion_warnings = execute(
+                    self._shared_program, json.dumps(settings), inplace
                 )
             except shared.SharedValidationFailure as failure:
                 raise ValidationFailure(str(failure)) from failure
@@ -491,10 +509,9 @@ def _expand_names(graph, names):
 def _prepare_data(data, rdf_format, ontology, ontology_format, inference, imports):
     if ontology is None and inference in (None, "none"):
         return data
-    runtime = sys.modules.get("rdflib_turbo")
-    if runtime is not None and isinstance(data, runtime.Dataset):
+    if _shared_runtime(data) is not None:
         raise NotImplementedError(
-            "Prepare native inference with owlrl-turbo before validation; native ontology inoculation is not supported"
+            "Prepare native inference on the Dataset or transaction with owlrl-turbo or .infer() before validation; native ontology inoculation is not supported"
         )
     multigraph = not isinstance(data, Graph) or data.context_aware
     if not isinstance(data, (Graph, Input)) and not is_oxigraph_store(data):

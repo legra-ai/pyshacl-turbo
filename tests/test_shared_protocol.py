@@ -57,6 +57,14 @@ def test_facade_protocol_preserves_options_reports_reuse_and_failure_type(monkey
     monkeypatch.setattr(
         rdflib_turbo.Dataset, "namespaces", lambda self: iter([("ex", "urn:")]), raising=False
     )
+    monkeypatch.setattr(
+        rdflib_turbo.Dataset,
+        "_validate_shared_shapes",
+        lambda source, program, settings, inplace: program.validate(
+            source._native, settings, inplace
+        ),
+        raising=False,
+    )
     program = turbo.compile_shapes(SHAPES)
     actual = program.validate(data, inplace=True, max_validation_depth=None, focus_nodes=["ex:s"])
     assert actual[0] == expected[0] and actual[2] == expected[2]
