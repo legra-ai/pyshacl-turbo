@@ -178,9 +178,7 @@ class CompiledShapes:
                 "use_shapes": _expand_names(self.graph, use_shapes),
             }
             try:
-                with execute(
-                    self._shared_program, json.dumps(settings), inplace
-                ) as result:
+                with execute(self._shared_program, json.dumps(settings), inplace) as result:
                     conforms, report, text, recursion_warnings = result
                     _emit_recursion_warnings(recursion_warnings)
                     report_graph = _graph(report, self._blank_nodes, preserve_ids=True)

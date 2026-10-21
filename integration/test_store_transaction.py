@@ -48,6 +48,12 @@ def test_commit_gate_validates_inference_and_rules_atomically(tmp_path, persiste
         assert "Conforms: False" in failure.value.text
         assert len(failure.value.report) > 0
         assert len(store) == 0
+        with store.transaction(shapes=program, iterate_rules=True) as transaction:
+            transaction.parse(data=source + '<urn:s> <urn:name> "Name".').infer(inference="rdfs")
+        assert store.query("ASK {<urn:s> a <urn:Person>; <urn:derived> true}")
+    if persistent:
+        with Store(path) as reopened:
+            assert reopened.query("ASK {<urn:s> a <urn:Person>; <urn:derived> true}")
 
 
 def test_report_processing_error_aborts_validation_owner(monkeypatch):
@@ -65,12 +71,6 @@ def test_report_processing_error_aborts_validation_owner(monkeypatch):
             with pytest.raises(ValueError, match="report processing failed"):
                 program.validate(transaction, inplace=True)
         assert len(store) == 0
-        with store.transaction(shapes=program, iterate_rules=True) as transaction:
-            transaction.parse(data=source + '<urn:s> <urn:name> "Name".').infer(inference="rdfs")
-        assert store.query("ASK {<urn:s> a <urn:Person>; <urn:derived> true}")
-    if persistent:
-        with Store(path) as reopened:
-            assert reopened.query("ASK {<urn:s> a <urn:Person>; <urn:derived> true}")
 
 
 def test_facade_validation_execution_errors_abort_even_if_caught():
