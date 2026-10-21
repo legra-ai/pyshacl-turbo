@@ -10,6 +10,48 @@ from rdflib.namespace import RDF, SH
 from test_datagraph_contract import EX, fixture, wrapped
 
 
+@pytest.mark.parametrize("runner_name", ["Validator", "RuleExpandRunner"])
+def test_runner_executor_options_match_reference(runner_name):
+    executors = []
+    for engine, module in ((pyshacl, "pyshacl"), (turbo, "pyshacl_turbo")):
+        data, shapes = fixture()
+        runner = getattr(engine, runner_name)(
+            wrapped(module, data),
+            shacl_graph=shapes,
+            options={
+                "advanced": True,
+                "abort_on_first": True,
+                "allow_infos": True,
+                "allow_warnings": True,
+                "iterate_rules": True,
+                "max_validation_depth": 4,
+                "focus_nodes": [EX.a],
+            },
+        )
+        executor = runner.make_executor()
+        assert executor.validator is runner
+        executors.append(
+            {name: value for name, value in vars(executor).items() if name != "validator"}
+        )
+    assert executors[0] == executors[1]
+
+
+def test_direct_validator_raises_validation_failure_instead_of_top_level_result():
+    shapes = Graph().parse(
+        data="""@prefix sh: <http://www.w3.org/ns/shacl#> .
+        <urn:S> sh:targetNode <urn:s>; sh:sparql [sh:select
+          "SELECT $this WHERE { VALUES ?v {1} }"].""",
+        format="turtle",
+    )
+    for engine, module, failure in (
+        (pyshacl, "pyshacl", pyshacl.errors.ValidationFailure),
+        (turbo, "pyshacl_turbo", turbo.ValidationFailure),
+    ):
+        runner = engine.Validator(wrapped(module, Graph()), shacl_graph=shapes)
+        with pytest.raises(failure, match="VALUES"):
+            runner.run()
+
+
 @pytest.mark.parametrize("dataset", [False, True])
 @pytest.mark.parametrize("inplace", [False, True])
 def test_validator_constructor_and_run_match_reference(dataset, inplace):

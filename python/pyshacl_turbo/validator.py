@@ -6,6 +6,7 @@ from typing import Any, ClassVar
 from rdflib import Dataset, Graph
 
 from .graph_abstraction import DataGraph
+from .pytypes import SHACLExecutor
 from .shapes_graph import ShapesGraph
 
 
@@ -60,6 +61,20 @@ class Validator:
     def target_graph(self):
         return self._target_graph
 
+    def make_executor(self):
+        return SHACLExecutor(
+            validator=self,
+            advanced_mode=bool(self.options.get("advanced", False)),
+            abort_on_first=bool(self.options.get("abort_on_first", False)),
+            allow_infos=bool(self.options.get("allow_infos", False)),
+            allow_warnings=bool(self.options.get("allow_warnings", False)),
+            iterate_rules=bool(self.options.get("iterate_rules", False)),
+            sparql_mode=bool(self.options.get("sparql_mode", False)),
+            max_validation_depth=self.options.get("max_validation_depth", 15),
+            focus_nodes=self.options.get("focus_nodes"),
+            debug=self.debug,
+        )
+
     def _prepare_target(self, rules=False):
         from . import _prepare_data
         from .rdf import merge_graph
@@ -97,4 +112,7 @@ class Validator:
             for key, value in self.options.items()
             if key not in {"logger", "use_js", "sparql_mode", "inference", "inplace"}
         }
-        return validate(target.impl, shacl_graph=self.shacl_graph.graph, inplace=True, **options)
+        # Only the top-level entry point converts ValidationFailure into a result.
+        return validate.__wrapped__(
+            target.impl, shacl_graph=self.shacl_graph.graph, inplace=True, **options
+        )

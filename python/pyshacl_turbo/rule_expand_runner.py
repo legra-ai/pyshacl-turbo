@@ -2,6 +2,7 @@
 
 from typing import Any, ClassVar
 
+from .pytypes import SHACLExecutor
 from .validator import Validator
 
 
@@ -15,6 +16,16 @@ class RuleExpandRunner(Validator):
         "focus_nodes": None,
         "use_shapes": None,
     }
+
+    def make_executor(self):
+        return SHACLExecutor(
+            validator=self,
+            advanced_mode=True,
+            iterate_rules=bool(self.options.get("iterate_rules", False)),
+            max_validation_depth=999,
+            focus_nodes=self.options.get("focus_nodes"),
+            debug=self.debug,
+        )
 
     def run(self):
         from . import shacl_rules
