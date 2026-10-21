@@ -5,6 +5,7 @@ class. Cross-wheel tests in integration/ exercise the actual new Rust provider.
 """
 
 import json
+from contextlib import nullcontext
 
 import pyshacl_turbo as turbo
 import pytest
@@ -60,8 +61,8 @@ def test_facade_protocol_preserves_options_reports_reuse_and_failure_type(monkey
     monkeypatch.setattr(
         rdflib_turbo.Dataset,
         "_validate_shared_shapes",
-        lambda source, program, settings, inplace: program.validate(
-            source._native, settings, inplace
+        lambda source, program, settings, inplace: nullcontext(
+            program.validate(source._native, settings, inplace)
         ),
         raising=False,
     )

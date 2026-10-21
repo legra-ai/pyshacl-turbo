@@ -178,15 +178,16 @@ class CompiledShapes:
                 "use_shapes": _expand_names(self.graph, use_shapes),
             }
             try:
-                conforms, report, text, recursion_warnings = execute(
+                with execute(
                     self._shared_program, json.dumps(settings), inplace
-                )
+                ) as result:
+                    conforms, report, text, recursion_warnings = result
+                    _emit_recursion_warnings(recursion_warnings)
+                    report_graph = _graph(report, self._blank_nodes, preserve_ids=True)
+                    for prefix, namespace in self.graph.namespaces():
+                        report_graph.bind(prefix, namespace)
             except shared.SharedValidationFailure as failure:
                 raise ValidationFailure(str(failure)) from failure
-            _emit_recursion_warnings(recursion_warnings)
-            report_graph = _graph(report, self._blank_nodes, preserve_ids=True)
-            for prefix, namespace in self.graph.namespaces():
-                report_graph.bind(prefix, namespace)
             return conforms, report_graph, text
         if inplace and not (
             isinstance(data_graph, (Graph, Input)) or is_oxigraph_store(data_graph)

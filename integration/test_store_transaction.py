@@ -48,6 +48,23 @@ def test_commit_gate_validates_inference_and_rules_atomically(tmp_path, persiste
         assert "Conforms: False" in failure.value.text
         assert len(failure.value.report) > 0
         assert len(store) == 0
+
+
+def test_report_processing_error_aborts_validation_owner(monkeypatch):
+    import pyshacl_turbo
+
+    program = compile_shapes(SHAPES)
+
+    def fail_report(*args, **kwargs):
+        raise ValueError("report processing failed")
+
+    monkeypatch.setattr(pyshacl_turbo, "_graph", fail_report)
+    with Store() as store:
+        with pytest.raises(RuntimeError, match="closed"), store.transaction() as transaction:
+            transaction.parse(data="<urn:s> <urn:p> 1.")
+            with pytest.raises(ValueError, match="report processing failed"):
+                program.validate(transaction, inplace=True)
+        assert len(store) == 0
         with store.transaction(shapes=program, iterate_rules=True) as transaction:
             transaction.parse(data=source + '<urn:s> <urn:name> "Name".').infer(inference="rdfs")
         assert store.query("ASK {<urn:s> a <urn:Person>; <urn:derived> true}")
