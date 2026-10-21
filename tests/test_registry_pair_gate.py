@@ -65,7 +65,8 @@ def test_fresh_registry_environment_cannot_inherit_dev_sources(tmp_path, monkeyp
     gate.verify(artifact)
     add, env = next((command, env) for command, env in commands if "add" in command)
     assert str(artifact.resolve()) in add
-    assert "--no-sync" in add and add[add.index("--extra") + 1] == "test"
+    assert "--no-sync" in add and "--refresh" in add
+    assert add[add.index("--extra") + 1] == "test"
     assert add[add.index("--default-index") + 1] == "https://pypi.org/simple"
     assert "UV_INDEX" not in env and "UV_PROJECT_ENVIRONMENT" not in env
     assert "PYTHONPATH" not in env and "PIP_INDEX_URL" not in env
@@ -165,3 +166,97 @@ def test_installed_probe_requires_the_actual_protocol(tmp_path, monkeypatch):
     probe.write_text(gate.PROBE)
     with pytest.raises(RuntimeError, match="protocol 1"):
         runpy.run_path(str(probe))
+
+
+def test_newly_published_companion_invalidates_cached_empty_index(tmp_path, monkeypatch):
+    import hashlib
+    import threading
+    from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+
+    gate = load_gate()
+    provider_name = "rdflib_turbo-0.1.0a2-py3-none-any.whl"
+    provider = tmp_path / provider_name
+    consumer = tmp_path / "pyshacl_turbo-0.1.0a2-py3-none-any.whl"
+    for archive, name, requirement in [
+        (provider, "rdflib_turbo", ""),
+        (consumer, "pyshacl_turbo", 'Requires-Dist: rdflib-turbo==0.1.0a2; extra == "test"\n'),
+    ]:
+        info = f"{name}-0.1.0a2.dist-info"
+        with zipfile.ZipFile(archive, "w") as output:
+            output.writestr(
+                f"{info}/METADATA",
+                f"Metadata-Version: 2.4\nName: {name}\nVersion: 0.1.0a2\n"
+                f"Provides-Extra: test\n{requirement}\n",
+            )
+            output.writestr(
+                f"{info}/WHEEL",
+                "Wheel-Version: 1.0\nRoot-Is-Purelib: true\nTag: py3-none-any\n",
+            )
+            output.writestr(f"{info}/RECORD", "")
+    state = {"published": False, "reads": 0}
+
+    class Index(BaseHTTPRequestHandler):
+        def do_GET(self):
+            self.serve(body=True)
+
+        def do_HEAD(self):
+            self.serve(body=False)
+
+        def serve(self, *, body):
+            if self.path == "/simple/rdflib-turbo/":
+                state["reads"] += 1
+                link = ""
+                if state["published"]:
+                    digest = hashlib.sha256(provider.read_bytes()).hexdigest()
+                    link = f'<a href="/{provider.name}#sha256={digest}">{provider.name}</a>'
+                payload = f"<!doctype html><html><body>{link}</body></html>".encode()
+                content_type = "text/html"
+            elif self.path == f"/{provider.name}":
+                payload = provider.read_bytes()
+                content_type = "application/octet-stream"
+            else:
+                self.send_error(404)
+                return
+            self.send_response(200)
+            self.send_header("Cache-Control", "max-age=3600")
+            self.send_header("Content-Type", content_type)
+            self.send_header("Content-Length", str(len(payload)))
+            self.end_headers()
+            if body:
+                self.wfile.write(payload)
+
+        def log_message(self, *args):
+            pass
+
+    server = ThreadingHTTPServer(("127.0.0.1", 0), Index)
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    real_run = gate.run
+
+    def run_in_fixture_cache(command, environment):
+        environment = dict(environment, UV_CACHE_DIR=str(tmp_path / "uv-cache"))
+        return real_run(command, environment)
+
+    monkeypatch.setattr(gate, "run", run_in_fixture_cache)
+    monkeypatch.setattr(gate, "INDEX", f"http://127.0.0.1:{server.server_port}/simple/")
+    monkeypatch.setattr(
+        gate,
+        "PROBE",
+        "from importlib.metadata import version; assert version('rdflib-turbo') == '0.1.0a2'",
+    )
+    # The real uv subprocesses need ADR0006's safe launcher. Restore its global
+    # state afterward so independent tooling tests keep their own launch policy.
+    monkeypatch.setattr(subprocess, "Popen", subprocess.Popen)
+    if hasattr(subprocess, "_fork_exec"):
+        monkeypatch.setattr(subprocess, "_fork_exec", subprocess._fork_exec)
+    try:
+        with pytest.raises(RuntimeError, match="no version of rdflib-turbo==0.1.0a2"):
+            gate.verify(consumer)
+        assert state["reads"] == 1
+        state["published"] = True
+        gate.verify(consumer)
+        assert state["reads"] >= 2
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join(timeout=5)
