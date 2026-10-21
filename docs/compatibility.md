@@ -151,6 +151,10 @@ concurrent deletions. Neither path introduces Tokio or asynchronous I/O.
   visible. Ordinary Graph calls continue to read fresh data. Rule results expose
   RDFLib objects rather than the reference's DataGraph wrapper, with observable
   interface differences. Typed shape/constraint/rule load errors still differ.
+- `pyshacl_turbo.graph_abstraction` exposes live `DataGraph` and `RdfLibDataGraph`
+  adapters for RDFLib Graph and Dataset inputs, preserving caller stores and
+  graph scopes. Native Store graphs are rejected before conversion; shared Store
+  adapters and optional PyOxigraph-backed DataGraph construction remain pending.
 - SHACL-JS is planned and has not been implemented or measured. It is part of
   the complete replacement target, separate from the current non-JS suite.
 
