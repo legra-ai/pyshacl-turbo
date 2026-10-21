@@ -244,7 +244,9 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           mkdir source-build || exit 1
-          tar -xzf source-dist/*.tar.gz --strip-components=1 -C source-build || exit 1
+          # Restored Cargo outputs can be newer than archive timestamps. Establish
+          # checkout freshness while preserving the verified archive and source bytes.
+          tar -xzmf source-dist/*.tar.gz --strip-components=1 -C source-build || exit 1
       - name: Build Linux release wheel with the native manylinux toolchain
         if: runner.os == 'Linux'
         run: sh scripts/build_manylinux.sh '${{ matrix.container }}' '${{ matrix.target }}' cp313-cp313

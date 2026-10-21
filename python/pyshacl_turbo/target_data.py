@@ -14,7 +14,7 @@ class TargetData:
     """
 
     def __init__(self, data_graph):
-        data = input_graph(data_graph)
+        data = input_graph(data_graph, direct=True)
         self._native = _native.TargetData(data.source, data.format, data.base)
         self._blank_nodes = data.blank_nodes
         self._results = {}

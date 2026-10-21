@@ -58,41 +58,56 @@ impl Output {
     }
 }
 
-fn decode((records, quads): Batch) -> Result<Dataset> {
-    let terms = records
-        .into_iter()
-        .map(|(kind, value, datatype, language)| {
-            Ok(match (kind, datatype, language) {
-                (0, None, None) => NamedNode::new(value)
-                    .map_err(|e| Error::Invalid(e.to_string()))?
-                    .into(),
-                (1, None, None) => BlankNode::new(value)
-                    .map_err(|e| Error::Invalid(e.to_string()))?
-                    .into(),
-                (2, None, Some(language)) => Literal::new_language_tagged_literal(value, language)
-                    .map_err(|e| Error::Invalid(e.to_string()))?
-                    .into(),
-                (2, datatype, None) => match datatype {
-                    Some(datatype) => Literal::new_typed_literal(
-                        value,
-                        NamedNode::new(datatype).map_err(|e| Error::Invalid(e.to_string()))?,
-                    )
-                    .into(),
-                    None => Literal::new_simple_literal(value).into(),
-                },
-                _ => return Err(Error::Invalid("Invalid RDF term record".into())),
+/// An owned term table and lazy validated quads, without graph indexes.
+pub(crate) struct DecodedTerms {
+    terms: Vec<Term>,
+    quads: std::vec::IntoIter<QuadRecord>,
+}
+
+impl DecodedTerms {
+    pub(crate) fn new((records, quads): Batch) -> Result<Self> {
+        let terms = records
+            .into_iter()
+            .map(|(kind, value, datatype, language)| {
+                Ok(match (kind, datatype, language) {
+                    (0, None, None) => NamedNode::new(value)
+                        .map_err(|e| Error::Invalid(e.to_string()))?
+                        .into(),
+                    (1, None, None) => BlankNode::new(value)
+                        .map_err(|e| Error::Invalid(e.to_string()))?
+                        .into(),
+                    (2, None, Some(language)) => {
+                        Literal::new_language_tagged_literal(value, language)
+                            .map_err(|e| Error::Invalid(e.to_string()))?
+                            .into()
+                    }
+                    (2, datatype, None) => match datatype {
+                        Some(datatype) => Literal::new_typed_literal(
+                            value,
+                            NamedNode::new(datatype).map_err(|e| Error::Invalid(e.to_string()))?,
+                        )
+                        .into(),
+                        None => Literal::new_simple_literal(value).into(),
+                    },
+                    _ => return Err(Error::Invalid("Invalid RDF term record".into())),
+                })
             })
+            .collect::<Result<Vec<Term>>>()?;
+        Ok(Self {
+            terms,
+            quads: quads.into_iter(),
         })
-        .collect::<Result<Vec<Term>>>()?;
-    let term = |index: usize| {
-        terms
+    }
+
+    fn term(&self, index: usize) -> Result<Term> {
+        self.terms
             .get(index)
             .cloned()
             .ok_or_else(|| Error::Invalid("Invalid RDF term index".into()))
-    };
-    let mut result = Dataset::new();
-    for (s, p, o, g) in quads {
-        let subject = match term(s)? {
+    }
+
+    fn quad(&self, (s, p, o, g): QuadRecord) -> Result<Quad> {
+        let subject = match self.term(s)? {
             Term::NamedNode(node) => NamedOrBlankNode::NamedNode(node),
             Term::BlankNode(node) => NamedOrBlankNode::BlankNode(node),
             _ => {
@@ -101,10 +116,10 @@ fn decode((records, quads): Batch) -> Result<Dataset> {
                 ));
             }
         };
-        let Term::NamedNode(predicate) = term(p)? else {
+        let Term::NamedNode(predicate) = self.term(p)? else {
             return Err(Error::Invalid("RDF predicates must be IRIs".into()));
         };
-        let graph = match g.map(term).transpose()? {
+        let graph = match g.map(|index| self.term(index)).transpose()? {
             None => GraphName::DefaultGraph,
             Some(Term::NamedNode(node)) => GraphName::NamedNode(node),
             Some(Term::BlankNode(node)) => GraphName::BlankNode(node),
@@ -114,7 +129,22 @@ fn decode((records, quads): Batch) -> Result<Dataset> {
                 ));
             }
         };
-        result.insert(Quad::new(subject, predicate, term(o)?, graph).as_ref());
+        Ok(Quad::new(subject, predicate, self.term(o)?, graph))
+    }
+}
+
+impl Iterator for DecodedTerms {
+    type Item = Result<Quad>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.quads.next().map(|record| self.quad(record))
+    }
+}
+
+fn decode(batch: Batch) -> Result<Dataset> {
+    let mut result = Dataset::new();
+    for quad in DecodedTerms::new(batch)? {
+        result.insert(quad?.as_ref());
     }
     Ok(result)
 }
@@ -160,6 +190,41 @@ fn encode(data: &Dataset) -> Batch {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn decoded_quads_validate_positions_lazily() {
+        let records = vec![
+            (0, "urn:s".into(), None, None),
+            (0, "urn:p".into(), None, None),
+            (2, "value".into(), None, None),
+        ];
+        let mut quads = DecodedTerms::new((
+            records,
+            vec![(0, 1, 2, None), (0, 1, 2, Some(2)), (99, 1, 2, None)],
+        ))
+        .unwrap();
+        assert_eq!(
+            quads.next().unwrap().unwrap().to_string(),
+            "<urn:s> <urn:p> \"value\""
+        );
+        assert!(
+            quads
+                .next()
+                .unwrap()
+                .unwrap_err()
+                .to_string()
+                .contains("graph names")
+        );
+        assert!(
+            quads
+                .next()
+                .unwrap()
+                .unwrap_err()
+                .to_string()
+                .contains("term index")
+        );
+        assert!(quads.next().is_none());
+    }
 
     #[test]
     fn rejects_malformed_records_and_indices() {

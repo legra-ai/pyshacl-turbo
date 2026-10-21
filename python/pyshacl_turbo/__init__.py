@@ -20,6 +20,7 @@ from .rdf import (
     is_oxigraph_store,
     load_from_source,
     merge_graph,
+    shape_batches,
     union,
 )
 from .rdf import decode as _graph
@@ -82,9 +83,10 @@ __all__ = [
 
 
 @lru_cache(maxsize=128)
-def _compile_native(source, rdf_format, base, advanced, numeric_booleans, namespaces):
-    return _native.CompiledShapes(
-        source, rdf_format, base, advanced, numeric_booleans, list(namespaces)
+def _compile_native(source, advanced, numeric_booleans, namespaces):
+    return (
+        _native.CompiledShapes(source, "nt", None, advanced, numeric_booleans, list(namespaces)),
+        source,
     )
 
 
@@ -93,23 +95,19 @@ class CompiledShapes:
 
     def __init__(self, shacl_graph, *, shacl_graph_format=None, advanced=False):
         self.graph = load_from_source(shacl_graph, rdf_format=shacl_graph_format)
-        shapes = _input(self.graph, flatten=True)
-        self._blank_nodes = shapes.blank_nodes
+        self._blank_nodes = {}
+        source = _native.canonical_shapes(shape_batches(self.graph, self._blank_nodes))
+        namespaces = tuple((p, str(ns)) for p, ns in self.graph.namespaces())
+        self._native, source = _compile_native(
+            source, advanced, isinstance(shacl_graph, Graph), namespaces
+        )
         self._shared_spec = (
-            shapes.source,
+            source,
             advanced,
-            tuple((p, str(ns)) for p, ns in self.graph.namespaces()),
+            namespaces,
             isinstance(shacl_graph, Graph),
         )
         self._shared_program = None
-        self._native = _compile_native(
-            "\n".join(sorted(shapes.source.splitlines())),
-            shapes.format,
-            shapes.base,
-            advanced,
-            isinstance(shacl_graph, Graph),
-            tuple((p, str(ns)) for p, ns in self.graph.namespaces()),
-        )
 
     def targeting(
         self,

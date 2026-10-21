@@ -1,3 +1,4 @@
+mod canonical;
 mod terms;
 
 use pyo3::exceptions::{PyNotImplementedError, PyRuntimeError, PyValueError};
@@ -237,10 +238,15 @@ struct PyTargetData {
 #[pymethods]
 impl PyTargetData {
     #[new]
-    fn new(py: Python<'_>, source: &str, rdf_format: &str, base: Option<&str>) -> PyResult<Self> {
-        let rdf_format = format(rdf_format)?;
+    fn new(
+        py: Python<'_>,
+        source: &Bound<'_, PyAny>,
+        rdf_format: &str,
+        base: Option<&str>,
+    ) -> PyResult<Self> {
+        let input = terms::Input::read(source, rdf_format, base)?;
         py.detach(|| {
-            let mut data = rdf_format.parse(source, base)?;
+            let mut data = input.parse()?;
             let default: Vec<_> = data
                 .iter()
                 .filter(|quad| !quad.graph_name.is_default_graph())
@@ -476,6 +482,7 @@ impl PyCompiledShapes {
 
 #[pymodule]
 fn _native(module: &Bound<'_, PyModule>) -> PyResult<()> {
+    module.add("SHAPES_BATCH_SIZE", canonical::BATCH_SIZE)?;
     module.add(
         "SHACL_ENGINE_FINGERPRINT",
         pyshacl_turbo_engine::engine_fingerprint(),
@@ -483,6 +490,7 @@ fn _native(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_class::<PyCompiledShapes>()?;
     module.add_class::<PyTargetData>()?;
     module.add_function(wrap_pyfunction!(parse_rdf, module)?)?;
+    module.add_function(wrap_pyfunction!(canonical::canonical_shapes, module)?)?;
     module.add_function(wrap_pyfunction!(additions, module)?)?;
     module.add_function(wrap_pyfunction!(infer, module)?)?;
     module.add_function(wrap_pyfunction!(inoculate, module)?)?;
