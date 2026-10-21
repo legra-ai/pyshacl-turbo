@@ -29,10 +29,19 @@ The adapter and views do not copy the base dataset or collect all graph names.
 The evaluator's query-dependent joins, sorting, aggregates and output can still
 consume memory. Transaction ownership and commit/rollback remain with the caller.
 
-**Integration status:** these are public Rust building blocks. Complete
-transaction-backed SHACL validation and snapshot-free SHACL function callbacks
-still require adoption. Existing `validate_store` and `expand_store` APIs continue
-to use consistent dataset snapshots.
+SHACL targets, constraints, reports and scoped function callbacks use these
+borrowed views. `CompiledShapes::validate_transaction` runs rules and validation
+against the caller's pending writes; it never commits. Drop the transaction on
+an execution error or an unwanted report, and commit explicitly on acceptance.
+`validate_staged` and `validate_delta` keep only rule additions over a borrowed
+base. `expand_store` returns those additions, rather than the full dataset.
+
+The Python Store commit gate validates after the transaction body, constructs
+the report, then commits only on conformance. Nonconformance and exceptions abort
+all pending writes, including inference and SHACL rule additions. Scoped function
+callbacks borrow the same phase view; they do not clone the base dataset.
+Target sets, per-rule results, reports and query intermediates can still grow
+with the validation workload; avoiding base snapshots does not bound those costs.
 
 ### Query pending changes through the composed views
 
@@ -69,5 +78,23 @@ transaction.insert(&Quad::new(
 // Dropping the transaction aborts its pending changes.
 drop(transaction);
 assert!(store.is_empty()?);
+# Ok::<(), Box<dyn std::error::Error>>(())
+```
+
+### Validate before committing
+
+```rust
+use pyshacl_turbo_engine::{CompiledShapes, Options};
+use pyshacl_turbo_engine::oxigraph::{model::Dataset, store::Store};
+
+let program = CompiledShapes::compile(Dataset::new(), false)?;
+let store = Store::new()?;
+let mut transaction = store.start_transaction()?;
+let report = program.validate_transaction(&mut transaction, Options::default())?;
+if report.conforms {
+    transaction.commit()?;
+} else {
+    drop(transaction);
+}
 # Ok::<(), Box<dyn std::error::Error>>(())
 ```
