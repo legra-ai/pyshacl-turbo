@@ -138,3 +138,27 @@ def test_installed_probe_rejects_missing_or_different_fingerprints(
         probe = tmp_path / "probe.py"
         probe.write_text(gate.PROBE)
         runpy.run_path(str(probe))
+
+
+def test_installed_probe_requires_the_actual_protocol(tmp_path, monkeypatch):
+    import runpy
+    import sys
+    from types import SimpleNamespace
+
+    gate = load_gate()
+    monkeypatch.setitem(
+        sys.modules,
+        "pyshacl_turbo",
+        SimpleNamespace(_native=SimpleNamespace(SHACL_ENGINE_FINGERPRINT="same")),
+    )
+    monkeypatch.setitem(
+        sys.modules,
+        "rdflib_turbo",
+        SimpleNamespace(
+            _native=SimpleNamespace(SHACL_ENGINE_FINGERPRINT="same", SHARED_SHACL_PROTOCOL=2)
+        ),
+    )
+    probe = tmp_path / "probe.py"
+    probe.write_text(gate.PROBE)
+    with pytest.raises(RuntimeError, match="protocol 1"):
+        runpy.run_path(str(probe))
