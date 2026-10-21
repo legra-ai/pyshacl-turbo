@@ -38,7 +38,7 @@ mod value;
 mod structural_tests;
 
 pub use compile::CompiledShapes;
-pub use execute::{Options, RuleExpansion, ValidationReport};
+pub use execute::{Options, RuleExpansion, ValidationOutcome, ValidationReport};
 pub use functions::evaluate_query;
 pub use graph::{
     parse as parse_graph, parse_dataset, parse_store_snapshot, serialize as serialize_graph,

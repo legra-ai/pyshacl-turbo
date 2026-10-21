@@ -109,6 +109,12 @@ fn staged_validation_retains_only_rule_additions_and_does_not_change_pending_inp
             .unwrap()
             .conforms
     );
+    let outcome = program
+        .validate_delta(&transaction, Options::default())
+        .unwrap();
+    assert!(outcome.report.conforms);
+    assert_eq!(outcome.additions.len(), 1);
+
     assert!(transaction.contains(source.as_ref()).unwrap());
     assert!(!transaction.contains(derived.as_ref()).unwrap());
     assert_eq!(store.len().unwrap(), 0);

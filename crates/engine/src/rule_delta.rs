@@ -9,6 +9,10 @@ pub(crate) struct RuleDelta<'a, G: GraphRead + ?Sized> {
 }
 
 impl<'a, G: GraphRead + ?Sized> RuleDelta<'a, G> {
+    pub fn into_additions(self) -> Dataset {
+        self.additions
+    }
+
     pub fn new(source: &'a G) -> Self {
         Self {
             source,

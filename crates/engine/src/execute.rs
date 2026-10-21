@@ -51,6 +51,12 @@ pub struct ValidationReport {
     pub recursion_warnings: Vec<String>,
 }
 
+/// A validation report and only the rules that would be newly inserted.
+pub struct ValidationOutcome {
+    pub report: ValidationReport,
+    pub additions: Dataset,
+}
+
 pub struct RuleExpansion {
     pub graph: Dataset,
     pub recursion_warnings: Vec<String>,

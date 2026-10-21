@@ -8,9 +8,22 @@ impl CompiledShapes {
         source: &(impl GraphRead + ?Sized),
         options: Options,
     ) -> Result<ValidationReport> {
+        Ok(self.validate_delta(source, options)?.report)
+    }
+
+    /// Validate privately and return the rule delta for an atomic caller-owned commit.
+    pub fn validate_delta(
+        &self,
+        source: &(impl GraphRead + ?Sized),
+        options: Options,
+    ) -> Result<ValidationOutcome> {
         let mut data = crate::rule_delta::RuleDelta::new(source);
         let warnings = self.expand_rules_inner(&mut data, options.clone(), None)?;
-        self.validate_expanded(&data, options, warnings)
+        let report = self.validate_expanded(&data, options, warnings)?;
+        Ok(ValidationOutcome {
+            report,
+            additions: data.into_additions(),
+        })
     }
 
     /// Validate and expand directly on a caller-owned transaction.
