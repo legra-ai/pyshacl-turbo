@@ -72,3 +72,10 @@ contract. No additional feature is excluded by default. Capability identity does
 not claim to attest the external RocksDB implementation. Memory/persistent owner
 controls must verify the same borrowed semantics; canonical validation does not
 link an otherwise unused persistence backend to match capability flags.
+
+The RDF 1.1 convenience view searches both native string encodings for bound
+patterns and projects one logical statement per physical graph. Exact membership
+probes select the representative without a retained set or input copy. Logical
+insertion is a no-op when either encoding already exists. Unbound reads, bound
+lookups and union representative probes must observe the same logical relation;
+the generic borrowed Transaction view continues to preserve both exact forms.
