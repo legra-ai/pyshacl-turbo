@@ -47,6 +47,9 @@ def fake_uv(monkeypatch, gate, source, *, fail=False):
             )
         return subprocess.CompletedProcess(command, 0, "pair compatible", "")
 
+    # Process launching itself is mocked; do not install its process-wide
+    # macOS guard into unrelated tests in this pytest interpreter.
+    monkeypatch.setattr(gate, "install", lambda: None)
     monkeypatch.setattr(gate.subprocess, "run", run)
     return commands
 
