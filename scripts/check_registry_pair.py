@@ -99,35 +99,35 @@ def verify(wheel):
         if not key.startswith(("UV_", "PIP_", "PYTHON")) and key != "VIRTUAL_ENV"
     }
     environment.update(UV_NO_CONFIG="1", UV_NO_BUILD="1", UV_PYTHON=sys.executable)
-    with tempfile.TemporaryDirectory(prefix="pyshacl-registry-pair-") as temporary:
-        # ADR0006: change the parent directory instead of requesting fork-only cwd=.
-        with contextlib.chdir(temporary):
-            project = Path(temporary) / "project"
+    # ADR0006: change the parent directory instead of requesting fork-only cwd=.
+    with (
+        tempfile.TemporaryDirectory(prefix="pyshacl-registry-pair-") as temporary,
+        contextlib.chdir(temporary),
+    ):
+        project = Path(temporary) / "project"
+        run(
+            ["uv", "--no-config", "init", "--bare", "--no-workspace", "--vcs", "none", project],
+            environment,
+        )
+        run(
+            ["uv", "--no-config", "python", "pin", "--project", project, sys.executable],
+            environment,
+        )
+        uv = ["uv", "--no-config", "--directory", project]
+        run(
+            [*uv, "add", "--no-sync", "--extra", "test", "--default-index", INDEX, wheel],
+            environment,
+        )
+        lock = tomllib.loads((project / "uv.lock").read_text())
+        providers = [package for package in lock["package"] if package["name"] == "rdflib-turbo"]
+        if len(providers) != 1 or providers[0].get("source") != {"registry": INDEX}:
+            raise ValueError("The companion must resolve exclusively from the PyPI registry")
+        run([*uv, "sync", "--locked", "--default-index", INDEX], environment)
+        print(
             run(
-                ["uv", "--no-config", "init", "--bare", "--no-workspace", "--vcs", "none", project],
-                environment,
-            )
-            run(
-                ["uv", "--no-config", "python", "pin", "--project", project, sys.executable],
-                environment,
-            )
-            uv = ["uv", "--no-config", "--directory", project]
-            run(
-                [*uv, "add", "--no-sync", "--extra", "test", "--default-index", INDEX, wheel],
-                environment,
-            )
-            lock = tomllib.loads((project / "uv.lock").read_text())
-            providers = [
-                package for package in lock["package"] if package["name"] == "rdflib-turbo"
-            ]
-            if len(providers) != 1 or providers[0].get("source") != {"registry": INDEX}:
-                raise ValueError("The companion must resolve exclusively from the PyPI registry")
-            run([*uv, "sync", "--locked", "--default-index", INDEX], environment)
-            print(
-                run(
-                    [*uv, "run", "--locked", "--no-sync", "python", "-I", "-c", PROBE], environment
-                ).strip()
-            )
+                [*uv, "run", "--locked", "--no-sync", "python", "-I", "-c", PROBE], environment
+            ).strip()
+        )
 
 
 if __name__ == "__main__":
