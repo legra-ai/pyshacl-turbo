@@ -10,6 +10,13 @@ from rdflib.namespace import RDF, SH
 from test_datagraph_contract import EX, fixture, wrapped
 
 
+def test_public_runner_classes_are_independent_reference_types():
+    for engine, module in ((pyshacl, "pyshacl"), (turbo, "pyshacl_turbo")):
+        data, shapes = fixture()
+        runner = engine.RuleExpandRunner(wrapped(module, data), shacl_graph=shapes)
+        assert not isinstance(runner, engine.Validator)
+
+
 @pytest.mark.parametrize("runner_name", ["Validator", "RuleExpandRunner"])
 def test_runner_executor_options_match_reference(runner_name):
     executors = []

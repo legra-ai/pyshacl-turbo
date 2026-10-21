@@ -2,11 +2,11 @@
 
 from typing import Any, ClassVar
 
+from ._runner import Runner
 from .pytypes import SHACLExecutor
-from .validator import Validator
 
 
-class RuleExpandRunner(Validator):
+class RuleExpandRunner(Runner):
     _defaults: ClassVar[dict[str, Any]] = {
         "debug": False,
         "inference": "none",
