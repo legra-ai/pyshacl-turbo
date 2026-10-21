@@ -11,6 +11,21 @@ from rdflib.namespace import RDF
 EX = Namespace("urn:runner:")
 
 
+def test_nested_factory_views_reject_native_backing_before_wrapping():
+    from pyshacl_turbo.graph_abstraction import DataGraph
+
+    class NativeStoreView(Graph):
+        _turbo_native_graph = True
+
+    inner = DataGraph.from_rdflib(Graph())
+    outer = inner
+    for _ in range(4):
+        outer = DataGraph.from_rdflib(outer)
+    inner.impl = NativeStoreView()
+    with pytest.raises(NotImplementedError, match="native Store"):
+        DataGraph.from_rdflib(outer)
+
+
 @pytest.mark.parametrize("default_union", [False, True])
 def test_dataset_clone_preserves_reference_union_policy(default_union):
     source = Dataset(default_union=default_union)

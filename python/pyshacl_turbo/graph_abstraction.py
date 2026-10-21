@@ -9,7 +9,7 @@ from rdflib.plugins.sparql.operators import register_custom_function, unregister
 
 
 def _reject_native_store_graph(graph):
-    if isinstance(graph, DataGraph):
+    while isinstance(graph, DataGraph):
         graph = graph.impl
     if getattr(graph, "_turbo_native_graph", False):
         raise NotImplementedError(
