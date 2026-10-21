@@ -292,6 +292,11 @@ def commit_serialized(target, source, nodes=None, *, before=None):
 
 
 def input_graph(source, rdf_format=None, *, flatten=False, direct=False):
+    from .graph_abstraction import DataGraph, _reject_native_store_graph
+
+    if isinstance(source, DataGraph):
+        source = source.impl
+    _reject_native_store_graph(source)
     if isinstance(source, Input):
         if flatten:
             return input_graph(load_from_source(source), flatten=True)
@@ -331,6 +336,9 @@ def input_graph(source, rdf_format=None, *, flatten=False, direct=False):
 
 
 def copy_graph(source):
+    from .graph_abstraction import _reject_native_store_graph
+
+    _reject_native_store_graph(source)
     if not source.context_aware:
         return union(source)
     result = Dataset(default_union=True)
@@ -347,6 +355,14 @@ def copy_graph(source):
 
 
 def merge_graph(target, source):
+    from .graph_abstraction import DataGraph, _reject_native_store_graph
+
+    if isinstance(target, DataGraph):
+        target = target.impl
+    if isinstance(source, DataGraph):
+        source = source.impl
+    _reject_native_store_graph(target)
+    _reject_native_store_graph(source)
     if source.context_aware and target.context_aware:
         for context in source.graphs():
             destination = (

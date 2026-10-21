@@ -141,16 +141,21 @@ concurrent deletions. Neither path introduces Tokio or asynchronous I/O.
 ## Known limits
 
 - Existing applications still need to use `pyshacl_turbo` imports and
-  `pyshacl-turbo` commands. The reference's public `Validator` and `RuleExpandRunner`
-  classes are not yet available. `Shape` and `ShapesGraph` inspection and native
+  `pyshacl-turbo` commands. Public `Validator` and `RuleExpandRunner` classes are
+  available at the package root and their corresponding modules, using the
+  RDFLib-backed `DataGraph` adapter. `Shape` and `ShapesGraph` inspection and native
   focus-node discovery are available under the corresponding `pyshacl_turbo.shape`
   and `pyshacl_turbo.shapes_graph` modules; their full validation/plugin interfaces
   are not implemented. `prepare_target_data(graph)` creates an immutable native
   snapshot for repeated `Shape.focus_nodes(snapshot)` calls, sharing parsing and
   cached target sets. Prepare a new snapshot when source mutations should be
-  visible. Ordinary Graph calls continue to read fresh data. Rule results expose
-  RDFLib objects rather than the reference's DataGraph wrapper, with observable
+  visible. Ordinary Graph calls continue to read fresh data. Top-level
+  `shacl_rules()` results expose RDFLib objects rather than the reference's DataGraph wrapper, with observable
   interface differences. Typed shape/constraint/rule load errors still differ.
+- `pyshacl_turbo.graph_abstraction` exposes live `DataGraph` and `RdfLibDataGraph`
+  adapters for RDFLib Graph and Dataset inputs, preserving caller stores and
+  graph scopes. Native Store graphs are rejected before conversion; shared Store
+  adapters and optional PyOxigraph-backed DataGraph construction remain pending.
 - SHACL-JS is planned and has not been implemented or measured. It is part of
   the complete replacement target, separate from the current non-JS suite.
 
