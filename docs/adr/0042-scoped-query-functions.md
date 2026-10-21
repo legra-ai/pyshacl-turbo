@@ -48,3 +48,27 @@ Store convenience methods, through an explicit Rdf11Transaction view that maps
 both indexed filters and returned terms. It must never coerce an exact-term
 owner's plain strings into explicit datatype terms: union representative lookups
 must address the same term that was returned by the original read.
+
+## Attest all compiled query and RDF dependencies
+
+The engine identity incorporates the actual compiled source and semantic feature
+digests of Oxigraph, oxrdf, oxsdatatypes, spargebra, sparopt and spareval. An
+optimizer patch or RDF storage profile cannot remain invisible behind an
+unchanged evaluator digest. Each crate runs the same tracked build helper over
+its own sorted recursive Rust source inventory, manifest and build script. The
+helper itself is an input. Stable relative names and normalized CRLF transport
+make identities independent of checkout paths. New source modules are discovered
+without maintaining a second list. Both source distributions and Cargo Git
+checkouts must retain the helper and every crate's identity implementation.
+
+Canonical and owning-runtime builds use the same reviewed dependency source and
+exact-term-storage semantic profile. The canonical Store convenience methods
+retain their explicit RDF 1.1 view; exact borrowed owners retain original terms.
+Every enabled feature contributes to semantic identity except Oxigraph's three
+audited persistence capabilities: rocksdb, rocksdb-debug and rocksdb-pkg-config.
+These contribute to a separately exported backend capability digest. They select
+the persistence implementation without changing the borrowed GraphRead query/RDF
+contract. No additional feature is excluded by default. Capability identity does
+not claim to attest the external RocksDB implementation. Memory/persistent owner
+controls must verify the same borrowed semantics; canonical validation does not
+link an otherwise unused persistence backend to match capability flags.

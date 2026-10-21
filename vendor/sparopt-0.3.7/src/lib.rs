@@ -13,3 +13,6 @@ mod type_inference;
 
 #[cfg(test)]
 mod rdflib_lowering_tests;
+
+mod source_identity;
+pub use source_identity::implementation_fingerprint;

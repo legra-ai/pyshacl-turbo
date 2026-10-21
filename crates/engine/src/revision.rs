@@ -78,8 +78,19 @@ pub fn fingerprint() -> String {
         update_source(&mut digest, source);
         digest.update([0]);
     }
-    digest.update(b"compiled-spareval\0");
-    digest.update(spareval::implementation_fingerprint().as_bytes());
+    for (name, identity) in [
+        ("oxigraph", oxigraph::implementation_fingerprint()),
+        ("oxrdf", oxrdf::implementation_fingerprint()),
+        ("oxsdatatypes", oxsdatatypes::implementation_fingerprint()),
+        ("spargebra", spargebra::implementation_fingerprint()),
+        ("sparopt", sparopt::implementation_fingerprint()),
+        ("spareval", spareval::implementation_fingerprint()),
+    ] {
+        digest.update(name.as_bytes());
+        digest.update([0]);
+        digest.update(identity.as_bytes());
+        digest.update([0]);
+    }
     digest
         .finalize()
         .iter()

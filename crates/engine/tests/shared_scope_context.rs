@@ -10,7 +10,10 @@ fn initial_context_queries_borrow_the_selected_pending_graph() {
     let selected = NamedNode::new("urn:selected").unwrap();
     let subject = NamedNode::new("urn:subject").unwrap();
     let predicate = NamedNode::new("urn:value").unwrap();
-    let lexical = Literal::new_simple_literal("pending");
+    let lexical = Literal::new_typed_literal(
+        "01",
+        NamedNode::new("http://www.w3.org/2001/XMLSchema#integer").unwrap(),
+    );
     transaction.insert(&Quad::new(
         subject.clone(),
         predicate.clone(),
