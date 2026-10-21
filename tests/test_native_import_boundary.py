@@ -17,5 +17,7 @@ shapes = """@prefix sh: <http://www.w3.org/ns/shacl#> .
 assert not turbo.validate(data, shacl_graph=shapes)[0]
 assert "rdflib.plugins.sparql.operators" not in sys.modules
 '''
-    result = subprocess.run([sys.executable, "-I", "-c", code], capture_output=True, text=True)
+    result = subprocess.run(
+        [sys.executable, "-I", "-c", code], capture_output=True, text=True, check=False
+    )
     assert result.returncode == 0, result.stderr
