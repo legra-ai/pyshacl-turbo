@@ -85,7 +85,7 @@ show_contexts = true
 line-length = 100
 
 [tool.uv.sources]
-rdflib-turbo = { git = "https://github.com/legra-ai/rdflib-turbo", rev = "84f4637436f4fe47d21dc0a8ca8e106dd1875fbd" }
+rdflib-turbo = { git = "https://github.com/legra-ai/rdflib-turbo", rev = "35754e0855dde72e13305602f4f976701656a1f4" }
 
 [dependency-groups]
 dev = ["mypy>=1.15,<3"]
