@@ -1,6 +1,7 @@
 """Native rule expansion keeps dataset ownership inside its shared runtime."""
 
 import json
+from contextlib import nullcontext
 
 import pyshacl_turbo as turbo
 import pytest
@@ -44,6 +45,14 @@ def provider(monkeypatch):
     )
     monkeypatch.setattr(
         rdflib_turbo.Dataset, "namespaces", lambda self: iter([("ex", "urn:")]), raising=False
+    )
+    monkeypatch.setattr(
+        rdflib_turbo.Dataset,
+        "_validate_shared_shapes",
+        lambda source, program, settings, inplace: nullcontext(
+            program.validate(source._native, settings, inplace)
+        ),
+        raising=False,
     )
     return calls
 
