@@ -60,11 +60,17 @@ print(json.dumps({"canonical": version("pyshacl-turbo"),
 
 def run(command, environment):
     result = subprocess.run(
-        list(map(str, command)), env=environment, text=True, capture_output=True,
-        check=False, timeout=180,
+        list(map(str, command)),
+        env=environment,
+        text=True,
+        capture_output=True,
+        check=False,
+        timeout=180,
     )
     if result.returncode:
-        raise RuntimeError(f"Registry pair command failed: {command!r}\n{result.stdout}\n{result.stderr}")
+        raise RuntimeError(
+            f"Registry pair command failed: {command!r}\n{result.stdout}\n{result.stderr}"
+        )
     return result.stdout
 
 
@@ -74,8 +80,11 @@ def requirement(wheel):
         if len(metadata) != 1:
             raise ValueError("Expected exactly one wheel metadata entry")
         message = email.message_from_bytes(archive.read(metadata[0]))
-    companions = [value for value in message.get_all("Requires-Dist", [])
-                  if re.match(r"rdflib[-_]turbo\b", value, re.IGNORECASE)]
+    companions = [
+        value
+        for value in message.get_all("Requires-Dist", [])
+        if re.match(r"rdflib[-_]turbo\b", value, re.IGNORECASE)
+    ]
     if not companions or any("@" in value for value in companions):
         raise ValueError("The wheel must declare a registry requirement for rdflib-turbo")
 
@@ -85,7 +94,8 @@ def verify(wheel):
     requirement(wheel)
     install()
     environment = {
-        key: value for key, value in os.environ.items()
+        key: value
+        for key, value in os.environ.items()
         if not key.startswith(("UV_", "PIP_", "PYTHON")) and key != "VIRTUAL_ENV"
     }
     environment.update(UV_NO_CONFIG="1", UV_NO_BUILD="1", UV_PYTHON=sys.executable)
@@ -93,16 +103,31 @@ def verify(wheel):
         # ADR0006: change the parent directory instead of requesting fork-only cwd=.
         with contextlib.chdir(temporary):
             project = Path(temporary) / "project"
-            run(["uv", "--no-config", "init", "--bare", "--no-workspace", "--vcs", "none", project], environment)
-            run(["uv", "--no-config", "python", "pin", "--project", project, sys.executable], environment)
+            run(
+                ["uv", "--no-config", "init", "--bare", "--no-workspace", "--vcs", "none", project],
+                environment,
+            )
+            run(
+                ["uv", "--no-config", "python", "pin", "--project", project, sys.executable],
+                environment,
+            )
             uv = ["uv", "--no-config", "--directory", project]
-            run([*uv, "add", "--no-sync", "--extra", "test", "--default-index", INDEX, wheel], environment)
+            run(
+                [*uv, "add", "--no-sync", "--extra", "test", "--default-index", INDEX, wheel],
+                environment,
+            )
             lock = tomllib.loads((project / "uv.lock").read_text())
-            providers = [package for package in lock["package"] if package["name"] == "rdflib-turbo"]
+            providers = [
+                package for package in lock["package"] if package["name"] == "rdflib-turbo"
+            ]
             if len(providers) != 1 or providers[0].get("source") != {"registry": INDEX}:
                 raise ValueError("The companion must resolve exclusively from the PyPI registry")
             run([*uv, "sync", "--locked", "--default-index", INDEX], environment)
-            print(run([*uv, "run", "--locked", "--no-sync", "python", "-I", "-c", PROBE], environment).strip())
+            print(
+                run(
+                    [*uv, "run", "--locked", "--no-sync", "python", "-I", "-c", PROBE], environment
+                ).strip()
+            )
 
 
 if __name__ == "__main__":

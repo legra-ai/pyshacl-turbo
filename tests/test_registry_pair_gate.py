@@ -43,8 +43,7 @@ def fake_uv(monkeypatch, gate, source, *, fail=False):
             project = Path(command[command.index("--directory") + 1])
             project.mkdir(exist_ok=True)
             (project / "uv.lock").write_text(
-                'version = 1\n[[package]]\nname = "rdflib-turbo"\n'
-                f"source = {source}\n"
+                f'version = 1\n[[package]]\nname = "rdflib-turbo"\nsource = {source}\n'
             )
         return subprocess.CompletedProcess(command, 0, "pair compatible", "")
 
@@ -91,7 +90,7 @@ def test_non_registry_provider_fails_before_import(tmp_path, monkeypatch, source
 
 def test_unavailable_declared_version_aborts_before_probe(tmp_path, monkeypatch):
     gate = load_gate()
-    commands = fake_uv(monkeypatch, gate, '{}', fail=True)
+    commands = fake_uv(monkeypatch, gate, "{}", fail=True)
     with pytest.raises(RuntimeError, match="No matching distribution"):
         gate.verify(wheel(tmp_path))
     assert not any("sync" in command or "-c" in command for command, _ in commands)
@@ -100,7 +99,7 @@ def test_unavailable_declared_version_aborts_before_probe(tmp_path, monkeypatch)
 def test_direct_url_runtime_requirement_is_rejected(tmp_path):
     gate = load_gate()
     with pytest.raises(ValueError, match="registry requirement"):
-        gate.verify(wheel(tmp_path, 'rdflib-turbo @ https://example.invalid/candidate.whl'))
+        gate.verify(wheel(tmp_path, "rdflib-turbo @ https://example.invalid/candidate.whl"))
 
 
 def test_publication_depends_on_registry_pair_before_any_tagging():
@@ -117,18 +116,25 @@ def test_publication_depends_on_registry_pair_before_any_tagging():
 
 
 @pytest.mark.parametrize("canonical,provider", [(None, None), ("candidate", "older")])
-def test_installed_probe_rejects_missing_or_different_fingerprints(monkeypatch, canonical, provider):
+def test_installed_probe_rejects_missing_or_different_fingerprints(
+    tmp_path, monkeypatch, canonical, provider
+):
+    import runpy
     import sys
     from types import SimpleNamespace
 
     gate = load_gate()
     monkeypatch.setitem(
-        sys.modules, "pyshacl_turbo",
+        sys.modules,
+        "pyshacl_turbo",
         SimpleNamespace(_native=SimpleNamespace(SHACL_ENGINE_FINGERPRINT=canonical)),
     )
     monkeypatch.setitem(
-        sys.modules, "rdflib_turbo",
+        sys.modules,
+        "rdflib_turbo",
         SimpleNamespace(_native=SimpleNamespace(SHACL_ENGINE_FINGERPRINT=provider)),
     )
     with pytest.raises(RuntimeError, match="different SHACL engine"):
-        exec(gate.PROBE, {})
+        probe = tmp_path / "probe.py"
+        probe.write_text(gate.PROBE)
+        runpy.run_path(str(probe))
