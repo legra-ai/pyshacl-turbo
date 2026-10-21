@@ -169,16 +169,17 @@ class RdfLibDataGraph(DataGraph):
 
     def clone(self, destination=None, identifier=None):
         _reject_native_store_graph(self)
-        from .rdf import copy_graph, merge_graph
+        from .rdf import merge_graph
 
-        result = copy_graph(self.impl)
-        if not isinstance(result, Dataset):
-            selected = self.impl.identifier if identifier is None else identifier
-            graph = Graph(identifier=selected)
-            merge_graph(graph, result)
-            result = graph
         if destination is not None:
-            result = merge_graph(destination, result)
+            result = destination
+        elif self.is_multi_graph:
+            result = Dataset(default_union=self.impl.default_union)
+            result.default_graph = result.graph(self.impl.default_graph.identifier)
+        else:
+            selected = self.impl.identifier if identifier is None else identifier
+            result = Graph(identifier=selected)
+        result = merge_graph(result, self.impl)
         for prefix, namespace in self.impl.namespaces():
             result.bind(prefix, namespace)
         return DataGraph.from_rdflib(result)

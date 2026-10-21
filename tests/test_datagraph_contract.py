@@ -11,6 +11,27 @@ from rdflib.namespace import RDF
 EX = Namespace("urn:runner:")
 
 
+@pytest.mark.parametrize("default_union", [False, True])
+def test_dataset_clone_preserves_reference_union_policy(default_union):
+    source = Dataset(default_union=default_union)
+    source.graph(EX.named).add((EX.a, EX.p, Literal(1)))
+    for module in ("pyshacl", "pyshacl_turbo"):
+        clone = wrapped(module, source).clone()
+        assert clone.default_union is default_union
+        assert clone.impl.default_union is default_union
+        assert set(clone.quads()) == set(source.quads())
+
+
+def test_dataset_clone_keeps_nonstandard_default_graph_identifier():
+    source = Dataset()
+    source.default_graph = source.graph(EX.default)
+    source.default_graph.add((EX.a, EX.p, Literal("default")))
+    for module in ("pyshacl", "pyshacl_turbo"):
+        clone = wrapped(module, source).clone()
+        assert clone.default_graph.identifier == source.default_graph.identifier
+        assert set(clone.quads()) == set(source.quads())
+
+
 def wrapped(module, graph):
     return importlib.import_module(module + ".graph_abstraction").DataGraph.from_rdflib(graph)
 
