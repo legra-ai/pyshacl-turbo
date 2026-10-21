@@ -5,7 +5,6 @@ Native I/O explicitly uses the underlying graph to preserve its real scope.
 """
 
 from rdflib import Dataset, Graph, URIRef
-from rdflib.plugins.sparql.operators import register_custom_function, unregister_custom_function
 
 
 def _reject_native_store_graph(graph):
@@ -193,7 +192,11 @@ class RdfLibDataGraph(DataGraph):
         raw=False,
         is_aggregate=False,
     ):
+        from rdflib.plugins.sparql.operators import register_custom_function
+
         register_custom_function(function_name, rdflib_fn, override, raw)
 
     def unregister_custom_function(self, function_name, rdflib_fn, oxigraph_fn=None):
+        from rdflib.plugins.sparql.operators import unregister_custom_function
+
         unregister_custom_function(function_name, rdflib_fn)
