@@ -36,7 +36,7 @@ class RuleExpandRunner(Runner):
             for key, value in self.options.items()
             if key not in {"logger", "use_js", "inference", "inplace", "advanced"}
         }
-        options.setdefault("max_validation_depth", 999)
+        options["max_validation_depth"] = self.make_executor().max_validation_depth
         shacl_rules(
             target.impl, shacl_graph=self.shacl_graph.graph, inplace=True, advanced=True, **options
         )

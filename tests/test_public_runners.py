@@ -17,6 +17,30 @@ def test_public_runner_classes_are_independent_reference_types():
         assert not isinstance(runner, engine.Validator)
 
 
+def test_rule_runner_uses_its_executor_depth_policy():
+    for engine, module in ((pyshacl, "pyshacl"), (turbo, "pyshacl_turbo")):
+        data, shapes = fixture()
+        shapes = Graph()
+        shapes.add((EX.S, SH.targetNode, EX.a))
+        shapes.add((EX.S, SH.rule, EX.rule))
+        for predicate, value in (
+            (RDF.type, SH.TripleRule),
+            (SH.subject, SH.this),
+            (SH.predicate, EX.flag),
+            (SH.object, Literal(True)),
+            (SH.condition, EX.Condition0),
+        ):
+            shapes.add((EX.rule, predicate, value))
+        for index in range(8):
+            shapes.add((EX[f"Condition{index}"], SH.node, EX[f"Condition{index + 1}"]))
+        shapes.add((EX.Condition8, SH["class"], EX.Person))
+        runner = engine.RuleExpandRunner(
+            wrapped(module, data), shacl_graph=shapes, options={"max_validation_depth": 1}
+        )
+        assert runner.make_executor().max_validation_depth == 999
+        assert (EX.a, EX.flag, Literal(True)) in runner.run()
+
+
 @pytest.mark.parametrize("conforms", [False, True])
 def test_public_report_builder_preserves_result_terms_closure_and_sorted_text(conforms):
     source = Graph()
