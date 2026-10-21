@@ -16,3 +16,6 @@ pub use update::*;
 
 #[cfg(test)]
 mod rdflib_context_tests;
+
+mod source_identity;
+pub use source_identity::implementation_fingerprint;

@@ -49,6 +49,7 @@ pub const SOURCES: &[(&str, &[u8])] = &[
     ("path.rs", include_bytes!("path.rs")),
     ("pattern.rs", include_bytes!("pattern.rs")),
     ("query_graph.rs", include_bytes!("query_graph.rs")),
+    ("rdf11_store.rs", include_bytes!("rdf11_store.rs")),
     ("revision.rs", include_bytes!("revision.rs")),
     ("rule_delta.rs", include_bytes!("rule_delta.rs")),
     ("sparql.rs", include_bytes!("sparql.rs")),
@@ -75,6 +76,19 @@ pub fn fingerprint() -> String {
         digest.update(name.as_bytes());
         digest.update([0]);
         update_source(&mut digest, source);
+        digest.update([0]);
+    }
+    for (name, identity) in [
+        ("oxigraph", oxigraph::implementation_fingerprint()),
+        ("oxrdf", oxrdf::implementation_fingerprint()),
+        ("oxsdatatypes", oxsdatatypes::implementation_fingerprint()),
+        ("spargebra", spargebra::implementation_fingerprint()),
+        ("sparopt", sparopt::implementation_fingerprint()),
+        ("spareval", spareval::implementation_fingerprint()),
+    ] {
+        digest.update(name.as_bytes());
+        digest.update([0]);
+        digest.update(identity.as_bytes());
         digest.update([0]);
     }
     digest

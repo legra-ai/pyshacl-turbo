@@ -180,3 +180,51 @@ impl<'source, G: GraphRead + ?Sized, S: GraphRead + ?Sized> GraphRead
             || self.source.contains_named_graph(graph)?)
     }
 }
+
+/// Present one physical graph as the sole logical default graph.
+/// Source graph names and unrelated contexts are never exposed to the evaluator.
+pub struct ScopedGraph<'a, G: GraphRead + ?Sized> {
+    source: &'a G,
+    graph: GraphName,
+}
+
+impl<'a, G: GraphRead + ?Sized> ScopedGraph<'a, G> {
+    /// Borrow an exact typed source context, including the default or a blank graph.
+    pub fn new(source: &'a G, graph: GraphName) -> Self {
+        Self { source, graph }
+    }
+}
+
+impl<'source, G: GraphRead + ?Sized> GraphRead for ScopedGraph<'source, G> {
+    fn matching_quads<'a>(
+        &'a self,
+        subject: Option<NamedOrBlankNodeRef<'_>>,
+        predicate: Option<NamedNodeRef<'_>>,
+        object: Option<TermRef<'_>>,
+        graph: Option<GraphNameRef<'_>>,
+    ) -> impl Iterator<Item = Result<Quad>> + use<'a, 'source, G> {
+        let matches: Matches<'a> = if graph.is_some_and(|name| !name.is_default_graph()) {
+            Box::new(std::iter::empty())
+        } else {
+            Box::new(
+                self.source
+                    .matching_quads(subject, predicate, object, Some(self.graph.as_ref()))
+                    .map(|quad| {
+                        quad.map(|mut quad| {
+                            quad.graph_name = GraphName::DefaultGraph;
+                            quad
+                        })
+                    }),
+            )
+        };
+        matches
+    }
+
+    fn named_graphs(&self) -> impl Iterator<Item = Result<NamedOrBlankNode>> + '_ {
+        std::iter::empty()
+    }
+
+    fn contains_named_graph(&self, _: &NamedOrBlankNode) -> Result<bool> {
+        Ok(false)
+    }
+}

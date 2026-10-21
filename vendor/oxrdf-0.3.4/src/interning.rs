@@ -5,22 +5,86 @@ use crate::*;
 use std::collections::hash_map::{Entry, HashMap, RandomState};
 use std::hash::{BuildHasher, Hasher};
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default)]
 pub struct Interner {
     hasher: RandomState,
     string_for_hash: HashMap<u64, String, IdentityHasherBuilder>,
     string_for_blank_node_id: HashMap<u128, String>,
     #[cfg(feature = "rdf-12")]
     triples: HashMap<InternedTriple, Triple>,
+    insertions: Option<InsertionJournal>,
+}
+
+#[derive(Debug, Default)]
+struct InsertionJournal {
+    strings: Vec<u64>,
+    blank_nodes: Vec<u128>,
+    #[cfg(feature = "rdf-12")]
+    triples: Vec<InternedTriple>,
+    string_capacity: usize,
+    blank_node_capacity: usize,
+    #[cfg(feature = "rdf-12")]
+    triple_capacity: usize,
+}
+
+impl Clone for Interner {
+    fn clone(&self) -> Self {
+        Self {
+            hasher: self.hasher.clone(),
+            string_for_hash: self.string_for_hash.clone(),
+            string_for_blank_node_id: self.string_for_blank_node_id.clone(),
+            #[cfg(feature = "rdf-12")]
+            triples: self.triples.clone(),
+            // A clone is an independent snapshot, never part of the source's transaction.
+            insertions: None,
+        }
+    }
 }
 
 impl Interner {
+    pub(super) fn begin_insertions(&mut self) {
+        assert!(self.insertions.is_none(), "Nested insertion transaction");
+        self.insertions = Some(InsertionJournal {
+            string_capacity: self.string_for_hash.capacity(),
+            blank_node_capacity: self.string_for_blank_node_id.capacity(),
+            #[cfg(feature = "rdf-12")]
+            triple_capacity: self.triples.capacity(),
+            ..InsertionJournal::default()
+        });
+    }
+
+    pub(super) fn finish_insertions(&mut self, commit: bool) {
+        let journal = self.insertions.take().expect("No insertion transaction");
+        if commit {
+            return;
+        }
+        #[cfg(feature = "rdf-12")]
+        {
+            for key in journal.triples {
+                self.triples.remove(&key);
+            }
+            self.triples.shrink_to(journal.triple_capacity);
+        }
+        for key in journal.strings {
+            self.string_for_hash.remove(&key);
+        }
+        for key in journal.blank_nodes {
+            self.string_for_blank_node_id.remove(&key);
+        }
+        self.string_for_hash.shrink_to(journal.string_capacity);
+        self.string_for_blank_node_id
+            .shrink_to(journal.blank_node_capacity);
+    }
+
     #[expect(clippy::never_loop)]
     fn get_or_intern(&mut self, value: &str) -> Key {
         let mut hash = self.hash(value);
         loop {
             match self.string_for_hash.entry(hash) {
                 Entry::Vacant(e) => {
+                    if let Some(journal) = &mut self.insertions {
+                        journal.strings.push(hash);
+                    }
                     e.insert(value.into());
                     return Key(hash);
                 }
@@ -124,10 +188,12 @@ pub enum InternedBlankNode {
 impl InternedBlankNode {
     pub fn encoded_into(blank_node: BlankNodeRef<'_>, interner: &mut Interner) -> Self {
         if let Some(id) = blank_node.unique_id() {
-            interner
-                .string_for_blank_node_id
-                .entry(id)
-                .or_insert_with(|| blank_node.as_str().into());
+            if let Entry::Vacant(entry) = interner.string_for_blank_node_id.entry(id) {
+                if let Some(journal) = &mut interner.insertions {
+                    journal.blank_nodes.push(id);
+                }
+                entry.insert(blank_node.as_str().into());
+            }
             Self::Number { id }
         } else {
             Self::Other {
@@ -150,14 +216,17 @@ impl InternedBlankNode {
     }
 
     pub fn decode_from(self, interner: &Interner) -> BlankNodeRef<'_> {
-        BlankNodeRef::new_unchecked(match self {
-            Self::Number { id } => &interner.string_for_blank_node_id[&id],
-            Self::Other { id } => interner.resolve(id),
-        })
+        match self {
+            Self::Number { id } => {
+                BlankNodeRef::from_numeric_id(id, &interner.string_for_blank_node_id[&id])
+            }
+            Self::Other { id } => BlankNodeRef::new_unchecked(interner.resolve(id)),
+        }
     }
 
     pub fn next(self) -> Self {
         match self {
+            Self::Number { id: u128::MAX } => Self::Other { id: Key::first() },
             Self::Number { id } => Self::Number {
                 id: id.saturating_add(1),
             },
@@ -510,9 +579,12 @@ impl InternedTriple {
             predicate: InternedNamedNode::encoded_into(triple.predicate, interner),
             object: InternedTerm::encoded_into(triple.object, interner),
         };
-        interner
-            .triples
-            .insert(interned_triple.clone(), triple.into_owned());
+        if let Entry::Vacant(entry) = interner.triples.entry(interned_triple.clone()) {
+            if let Some(journal) = &mut interner.insertions {
+                journal.triples.push(interned_triple.clone());
+            }
+            entry.insert(triple.into_owned());
+        }
         interned_triple
     }
 

@@ -7,6 +7,7 @@ pub(crate) struct Lowering {
     pub rdflib: bool,
     pub analyse_joins: bool,
     pub optimize_bgp: bool,
+    pub exists_root: bool,
 }
 
 impl Lowering {
@@ -14,6 +15,7 @@ impl Lowering {
         rdflib: false,
         analyse_joins: false,
         optimize_bgp: false,
+        exists_root: false,
     };
 
     pub const fn rdf_lib(optimize_bgp: bool) -> Self {
@@ -21,12 +23,21 @@ impl Lowering {
             rdflib: true,
             analyse_joins: true,
             optimize_bgp,
+            exists_root: false,
+        }
+    }
+
+    pub const fn child(self) -> Self {
+        Self {
+            exists_root: false,
+            ..self
         }
     }
 
     pub const fn exists(self) -> Self {
         Self {
             analyse_joins: false,
+            exists_root: true,
             ..self
         }
     }

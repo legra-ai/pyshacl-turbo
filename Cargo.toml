@@ -14,11 +14,12 @@ authors = ["DataRoad Inc, Delaware, USA, trading as Legra"]
 repository = "https://github.com/legra-ai/pyshacl-turbo"
 
 [workspace.dependencies]
-oxigraph = { version = "=0.5.11", default-features = false }
+oxigraph = { version = "=0.5.11", default-features = false, features = ["exact-term-storage"] }
 thiserror = "2"
 pyo3 = { version = "0.30.1", features = ["abi3-py311"] }
 
 [patch.crates-io]
+oxigraph = { path = "vendor/oxigraph-0.5.11" }
 fancy-regex = { path = "vendor/fancy-regex-0.19.2" }
 oxrdf = { path = "vendor/oxrdf-0.3.4" }
 sparopt = { path = "vendor/sparopt-0.3.7" }

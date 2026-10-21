@@ -1,7 +1,7 @@
 """The facade supports a versioned optional runtime, with no conversion fallback.
 
-Unit tests exercise protocol/error handling against the last published dataset
-class. Cross-wheel tests in integration/ exercise the actual new Rust provider.
+Unit tests explicitly control provider capabilities on the current dataset class.
+Cross-wheel tests in integration/ exercise the actual Rust provider.
 """
 
 import json
@@ -17,7 +17,8 @@ SHAPES = """@prefix sh: <http://www.w3.org/ns/shacl#> .
 <urn:S> sh:targetNode <urn:s>; sh:class <urn:C>."""
 
 
-def test_old_runtime_and_text_format_are_rejected_before_conversion():
+def test_old_runtime_and_text_format_are_rejected_before_conversion(monkeypatch):
+    monkeypatch.delattr(runtime, "SHARED_SHACL_PROTOCOL", raising=False)
     data = rdflib_turbo.Dataset()
     program = turbo.compile_shapes(SHAPES)
     with pytest.raises(RuntimeError, match="protocol 1"):
@@ -33,6 +34,7 @@ def test_protocol_one_source_requires_a_borrowed_validation_adapter(monkeypatch)
     program = turbo.compile_shapes(SHAPES)
     program._shared_program = object()
     monkeypatch.setattr(runtime, "SHARED_SHACL_PROTOCOL", 1, raising=False)
+    monkeypatch.delattr(rdflib_turbo.Dataset, "_validate_shared_shapes", raising=False)
     monkeypatch.setattr(
         runtime, "SHACL_ENGINE_FINGERPRINT", turbo._native.SHACL_ENGINE_FINGERPRINT, raising=False
     )
