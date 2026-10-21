@@ -38,3 +38,20 @@ hidden by nested projection. This never adds hidden keys to SELECT row domains.
 Each operation starts with the original context, so local BIND replacements do
 not leak into later semicolon-separated operations. Ordinary SPARQL remains
 unchanged and INSERT DATA does not consult initial bindings.
+
+The combined Store execution profile also retains ADR 0042's exact term builtins,
+RDF set union and compiled evaluator identity. Integrating query context must
+preserve exact CONSTRUCT identities and borrowed callbacks; integrating Store
+scope must preserve query and update context. The selected-graph query regression
+exercises both capabilities against the same pending transaction. Compiled source
+and enabled-feature identities must agree between the consumer and owning runtime.
+
+Prepared RDFLib algebra owns its optimized plan and structurally matching source
+tree together. Execution checks the supplied query against that tree before using
+the plan, without source serialization, reparsing or an identity cache. Original
+FILTER scope metadata survives optimization: expression evaluation can restrict
+inherited row bindings while retaining immutable initial globals and leaving the
+output row unchanged. Context-sensitive ancestors remain optimizer boundaries;
+independent branches still receive ordinary optimization. Configuring a prepared
+query plan for an UPDATE fails before producing mutations. The compiled dependency
+inventory includes the new scope and prepared-algebra implementation modules.

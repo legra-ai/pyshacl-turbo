@@ -50,7 +50,10 @@ fn plain_subquery_is_lazy_but_distinct_and_slice_are_independent_barriers() {
             if lazy {
                 assert!(matches!(top_join(&lowered), JoinAlgorithm::RdfLibLazy));
             } else {
-                assert!(matches!(top_join(&lowered), JoinAlgorithm::RdfLibIndependent));
+                assert!(matches!(
+                    top_join(&lowered),
+                    JoinAlgorithm::RdfLibIndependent
+                ));
             }
         }
         assert!(matches!(
@@ -149,7 +152,7 @@ fn optional_retry_retains_hidden_source_variables_but_excludes_bind_expression_o
     let GraphPattern::Project { inner, .. } = GraphPattern::from_rdflib_algebra(&original) else {
         panic!("projection")
     };
-    let GraphPattern::Filter { inner, .. } = *inner else {
+    let GraphPattern::RdfLibFilter { inner, .. } = *inner else {
         panic!("filter")
     };
     let GraphPattern::LeftJoin {
@@ -183,7 +186,7 @@ fn exists_context_preserves_independent_wrapper_joins_without_analyzed_optional_
     let GraphPattern::Project { inner, .. } = GraphPattern::from_rdflib_algebra(&pattern) else {
         panic!("projection")
     };
-    let GraphPattern::Filter {
+    let GraphPattern::RdfLibFilter {
         expression: crate::algebra::Expression::Exists(inner),
         ..
     } = *inner

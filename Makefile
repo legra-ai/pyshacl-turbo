@@ -25,7 +25,7 @@ test-regex:
 
 test-sparql-evaluator:
 	cargo test --manifest-path $(SPARQL_MANIFEST) --locked --lib
-	cargo test --manifest-path $(SPARQL_MANIFEST) --locked --lib --features exact-custom-function-terms,undefined-functions-as-expression-errors,cached-query-plans
+	cargo test --manifest-path $(SPARQL_MANIFEST) --locked --lib --features exact-custom-function-terms,undefined-functions-as-expression-errors,exact-term-builtins,rdf-set-union,cached-query-plans
 
 test-coverage:
 	uv run --locked --extra test pytest -q --cov --cov-context=test --cov-report=term-missing --cov-report=xml:python-coverage.xml --cov-report=json:python-coverage.json --cov-report=html:htmlcov

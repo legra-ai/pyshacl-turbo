@@ -215,3 +215,15 @@ def test_source_archive_extraction_invalidates_stale_native_builds(tmp_path):
     subprocess.run(["sh", "-c", extraction], cwd=tmp_path, check=True, capture_output=True)
     assert build_and_read() == "new"
     assert archive.read_bytes() == original_bytes
+
+
+def test_standalone_evaluator_ci_uses_the_actual_shared_engine_feature_profile():
+    engine = tomllib.loads((ROOT / "crates/engine/Cargo.toml").read_text())
+    expected = set(engine["dependencies"]["spareval"]["features"])
+    makefile = (ROOT / "Makefile").read_text()
+    recipes = [line for line in makefile.splitlines() if "$(SPARQL_MANIFEST)" in line]
+    assert any("--features" not in recipe for recipe in recipes)
+    shared = [recipe for recipe in recipes if "--features" in recipe]
+    assert len(shared) == 1
+    features = shared[0].split("--features ", 1)[1].strip().split(",")
+    assert set(features) == expected

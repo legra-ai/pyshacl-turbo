@@ -29,7 +29,13 @@
 //!
 //! See also [`Graph`] if you only care about plain triples.
 
+use self::indexes::*;
 use crate::interning::*;
+use std::sync::Arc;
+#[path = "dataset_indexes.rs"]
+mod indexes;
+#[path = "dataset_pattern.rs"]
+mod pattern;
 use crate::*;
 #[cfg(feature = "rdfc-10")]
 use sha2::{Digest, Sha256, Sha384};
@@ -38,6 +44,18 @@ use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 use std::fmt;
 use std::hash::{DefaultHasher, Hash, Hasher};
 use std::mem::take;
+
+#[cfg(test)]
+#[path = "dataset_transaction_tests.rs"]
+mod transaction_tests;
+
+#[cfg(test)]
+#[path = "dataset_endpoint_tests.rs"]
+mod endpoint_tests;
+
+#[cfg(test)]
+#[path = "dataset_scoped_pattern_tests.rs"]
+mod scoped_pattern_tests;
 
 /// An in-memory [RDF dataset](https://www.w3.org/TR/rdf11-concepts/#dfn-rdf-dataset).
 ///
@@ -69,45 +87,29 @@ use std::mem::take;
 #[derive(Debug, Default, Clone)]
 pub struct Dataset {
     interner: Interner,
-    gspo: BTreeSet<(
-        InternedGraphName,
-        InternedNamedOrBlankNode,
-        InternedNamedNode,
-        InternedTerm,
-    )>,
-    gpos: BTreeSet<(
-        InternedGraphName,
-        InternedNamedNode,
-        InternedTerm,
-        InternedNamedOrBlankNode,
-    )>,
-    gosp: BTreeSet<(
-        InternedGraphName,
-        InternedTerm,
-        InternedNamedOrBlankNode,
-        InternedNamedNode,
-    )>,
-    spog: BTreeSet<(
-        InternedNamedOrBlankNode,
-        InternedNamedNode,
-        InternedTerm,
-        InternedGraphName,
-    )>,
-    posg: BTreeSet<(
-        InternedNamedNode,
-        InternedTerm,
-        InternedNamedOrBlankNode,
-        InternedGraphName,
-    )>,
-    ospg: BTreeSet<(
-        InternedTerm,
-        InternedNamedOrBlankNode,
-        InternedNamedNode,
-        InternedGraphName,
-    )>,
+    gspo: BTreeSet<GspoKey>,
+    gpos: BTreeSet<GposKey>,
+    gosp: BTreeSet<GospKey>,
+    spog: BTreeSet<SpogKey>,
+    posg: BTreeSet<PosgKey>,
+    ospg: BTreeSet<OspgKey>,
 }
 
 impl Dataset {
+    /// Begins an additive transaction without cloning the dataset or its indexes.
+    ///
+    /// The guard permits reads and insertions only. Dropping it before `commit`
+    /// removes inserted quads from every index and releases newly interned terms,
+    /// including during unwinding. The journal contains compact interned keys.
+    pub fn insert_transaction(&mut self) -> InsertTransaction<'_> {
+        self.interner.begin_insertions();
+        InsertTransaction {
+            dataset: self,
+            inserted: Vec::new(),
+            committed: false,
+        }
+    }
+
     /// Creates a new dataset
     pub fn new() -> Self {
         Self::default()
@@ -201,20 +203,20 @@ impl Dataset {
     > + use<'a> {
         self.spog
             .range(
-                &(
+                &SpogKey::from_tuple((
                     *subject,
                     InternedNamedNode::first(),
                     InternedTerm::first(),
                     InternedGraphName::first(),
-                )
-                    ..&(
+                ))
+                    ..&SpogKey::from_tuple((
                         subject.next(),
                         InternedNamedNode::first(),
                         InternedTerm::first(),
                         InternedGraphName::first(),
-                    ),
+                    )),
             )
-            .map(|(s, p, o, g)| (s, p, o, g))
+            .map(|q| q.parts())
     }
 
     pub fn quads_for_predicate<'a, 'b>(
@@ -241,20 +243,20 @@ impl Dataset {
     > + '_ {
         self.posg
             .range(
-                &(
+                &PosgKey::from_tuple((
                     predicate,
                     InternedTerm::first(),
                     InternedNamedOrBlankNode::first(),
                     InternedGraphName::first(),
-                )
-                    ..&(
+                ))
+                    ..&PosgKey::from_tuple((
                         predicate.next(),
                         InternedTerm::first(),
                         InternedNamedOrBlankNode::first(),
                         InternedGraphName::first(),
-                    ),
+                    )),
             )
-            .map(|(p, o, s, g)| (s, p, o, g))
+            .map(|q| q.parts())
     }
 
     pub fn quads_for_object<'a, 'b>(
@@ -282,20 +284,20 @@ impl Dataset {
     > + use<'a> {
         self.ospg
             .range(
-                &(
+                &OspgKey::from_tuple((
                     object.clone(),
                     InternedNamedOrBlankNode::first(),
                     InternedNamedNode::first(),
                     InternedGraphName::first(),
-                )
-                    ..&(
+                ))
+                    ..&OspgKey::from_tuple((
                         object.next(),
                         InternedNamedOrBlankNode::first(),
                         InternedNamedNode::first(),
                         InternedGraphName::first(),
-                    ),
+                    )),
             )
-            .map(|(o, s, p, g)| (s, p, o, g))
+            .map(|q| q.parts())
     }
 
     pub fn quads_for_graph_name<'a, 'b>(
@@ -322,59 +324,27 @@ impl Dataset {
         ),
     > + use<'a> {
         self.gspo
-            .range(
-                &(
+            .range::<QuadRecord, _>(
+                &QuadRecord::from_gspo((
                     *graph_name,
                     InternedNamedOrBlankNode::first(),
                     InternedNamedNode::first(),
                     InternedTerm::first(),
-                )
-                    ..&(
+                ))
+                    ..&QuadRecord::from_gspo((
                         graph_name.next(),
                         InternedNamedOrBlankNode::first(),
                         InternedNamedNode::first(),
                         InternedTerm::first(),
-                    ),
+                    )),
             )
-            .map(|(g, s, p, o)| (s, p, o, g))
-    }
-
-    /// Retrieves quads with a filter on each quad component
-    pub fn quads_for_pattern<'a>(
-        &'a self,
-        subject: Option<NamedOrBlankNodeRef<'a>>,
-        predicate: Option<NamedNodeRef<'a>>,
-        object: Option<TermRef<'a>>,
-        graph_name: Option<GraphNameRef<'a>>,
-    ) -> impl Iterator<Item = QuadRef<'a>> + 'a {
-        let iter: Box<dyn Iterator<Item = _>> = if let Some(subject) = subject {
-            Box::new(self.quads_for_subject(subject).filter(move |q| {
-                predicate.as_ref().is_none_or(|p| *p == q.predicate)
-                    && object.as_ref().is_none_or(|o| *o == q.object)
-                    && graph_name.as_ref().is_none_or(|g| *g == q.graph_name)
-            }))
-        } else if let Some(object) = object {
-            Box::new(self.quads_for_object(object).filter(move |q| {
-                predicate.as_ref().is_none_or(|p| *p == q.predicate)
-                    && graph_name.as_ref().is_none_or(|g| *g == q.graph_name)
-            }))
-        } else if let Some(predicate) = predicate {
-            Box::new(
-                self.quads_for_predicate(predicate)
-                    .filter(move |q| graph_name.as_ref().is_none_or(|g| *g == q.graph_name)),
-            )
-        } else if let Some(graph_name) = graph_name {
-            Box::new(self.quads_for_graph_name(graph_name))
-        } else {
-            Box::new(self.iter())
-        };
-        iter
+            .map(|q| q.parts())
     }
 
     /// Checks if the dataset contains the given quad
     pub fn contains<'a>(&self, quad: impl Into<QuadRef<'a>>) -> bool {
         if let Some(q) = self.encoded_quad(quad.into()) {
-            self.spog.contains(&q)
+            self.gspo.contains(&QuadRecord::from_spog(q))
         } else {
             false
         }
@@ -405,13 +375,21 @@ impl Dataset {
             InternedGraphName,
         ),
     ) -> bool {
-        let (s, p, o, g) = quad;
-        self.gspo.insert((g, s, p, o.clone()));
-        self.gpos.insert((g, p, o.clone(), s));
-        self.gosp.insert((g, o.clone(), s, p));
-        self.spog.insert((s, p, o.clone(), g));
-        self.posg.insert((p, o.clone(), s, g));
-        self.ospg.insert((o, s, p, g))
+        let record = QuadRecord::from_spog(quad);
+        if self.gspo.contains(&record) {
+            return false;
+        }
+        self.insert_record(Arc::new(record));
+        true
+    }
+
+    fn insert_record(&mut self, record: Arc<QuadRecord>) {
+        assert!(self.gspo.insert(GspoKey::new(record.clone())));
+        assert!(self.gpos.insert(GposKey::new(record.clone())));
+        assert!(self.gosp.insert(GospKey::new(record.clone())));
+        assert!(self.spog.insert(SpogKey::new(record.clone())));
+        assert!(self.posg.insert(PosgKey::new(record.clone())));
+        assert!(self.ospg.insert(OspgKey::new(record)));
     }
 
     /// Removes a concrete quad from the dataset.
@@ -432,13 +410,20 @@ impl Dataset {
             InternedGraphName,
         ),
     ) -> bool {
-        let (s, p, o, g) = quad;
-        self.gspo.remove(&(g, s, p, o.clone()));
-        self.gpos.remove(&(g, p, o.clone(), s));
-        self.gosp.remove(&(g, o.clone(), s, p));
-        self.spog.remove(&(s, p, o.clone(), g));
-        self.posg.remove(&(p, o.clone(), s, g));
-        self.ospg.remove(&(o, s, p, g))
+        self.remove_record(&QuadRecord::from_spog(quad))
+    }
+
+    fn remove_record(&mut self, record: &QuadRecord) -> bool {
+        let Some(key) = self.gspo.take(record) else {
+            return false;
+        };
+        let record = key.record;
+        assert!(self.gpos.remove(&GposKey::new(record.clone())));
+        assert!(self.gosp.remove(&GospKey::new(record.clone())));
+        assert!(self.spog.remove(&SpogKey::new(record.clone())));
+        assert!(self.posg.remove(&PosgKey::new(record.clone())));
+        assert!(self.ospg.remove(&OspgKey::new(record)));
+        true
     }
 
     /// Clears the dataset.
@@ -489,6 +474,8 @@ impl Dataset {
         &self,
         node: impl Into<NamedNodeRef<'a>>,
     ) -> Option<InternedNamedNode> {
+        #[cfg(test)]
+        scoped_pattern_tests::term_encoded(1);
         InternedNamedNode::encoded_from(node.into(), &self.interner)
     }
 
@@ -496,10 +483,14 @@ impl Dataset {
         &self,
         node: impl Into<NamedOrBlankNodeRef<'a>>,
     ) -> Option<InternedNamedOrBlankNode> {
+        #[cfg(test)]
+        scoped_pattern_tests::term_encoded(0);
         InternedNamedOrBlankNode::encoded_from(node.into(), &self.interner)
     }
 
     pub(super) fn encoded_term<'a>(&self, term: impl Into<TermRef<'a>>) -> Option<InternedTerm> {
+        #[cfg(test)]
+        scoped_pattern_tests::term_encoded(2);
         InternedTerm::encoded_from(term.into(), &self.interner)
     }
 
@@ -507,6 +498,8 @@ impl Dataset {
         &self,
         graph_name: impl Into<GraphNameRef<'a>>,
     ) -> Option<InternedGraphName> {
+        #[cfg(test)]
+        scoped_pattern_tests::term_encoded(3);
         InternedGraphName::encoded_from(graph_name.into(), &self.interner)
     }
 
@@ -519,6 +512,8 @@ impl Dataset {
             &InternedGraphName,
         ),
     ) -> QuadRef<'_> {
+        #[cfg(test)]
+        scoped_pattern_tests::candidate_row_visited();
         QuadRef {
             subject: quad.0.decode_from(&self.interner),
             predicate: quad.1.decode_from(&self.interner),
@@ -531,6 +526,8 @@ impl Dataset {
         &self,
         triple: (&InternedNamedOrBlankNode, &InternedNamedNode, &InternedTerm),
     ) -> TripleRef<'_> {
+        #[cfg(test)]
+        scoped_pattern_tests::candidate_row_visited();
         TripleRef {
             subject: triple.0.decode_from(&self.interner),
             predicate: triple.1.decode_from(&self.interner),
@@ -616,7 +613,8 @@ impl Dataset {
             canonical_issuer: IdentifierIssuer::new("c14n"),
         };
         // 2)
-        for quad in &self.spog {
+        for key in &self.spog {
+            let quad = key.as_tuple();
             if let InternedNamedOrBlankNode::BlankNode(bnode) = quad.0 {
                 Self::add_quad_to_blank_node_to_quads_map_for_blank_node(
                     bnode,
@@ -1203,7 +1201,8 @@ impl Dataset {
         let old_quads: Vec<_> = self.spog.iter().cloned().collect();
         old_quads
             .into_iter()
-            .map(|(s, p, o, g)| {
+            .map(|q| {
+                let (s, p, o, g) = q.as_tuple().clone();
                 (
                     match s {
                         InternedNamedOrBlankNode::NamedNode(_) => s,
@@ -1360,19 +1359,19 @@ pub struct GraphView<'a> {
 impl<'a> GraphView<'a> {
     /// Returns all the triples contained by the graph.
     pub fn iter(&self) -> GraphViewIter<'a> {
-        let iter = self.dataset.gspo.range(
-            &(
+        let iter = self.dataset.gspo.range::<QuadRecord, _>(
+            &QuadRecord::from_gspo((
                 self.graph_name,
                 InternedNamedOrBlankNode::first(),
                 InternedNamedNode::first(),
                 InternedTerm::first(),
-            )
-                ..&(
+            ))
+                ..&QuadRecord::from_gspo((
                     self.graph_name.next(),
                     InternedNamedOrBlankNode::first(),
                     InternedNamedNode::first(),
                     InternedTerm::first(),
-                ),
+                )),
         );
         GraphViewIter {
             dataset: self.dataset,
@@ -1395,22 +1394,22 @@ impl<'a> GraphView<'a> {
         let ds = self.dataset;
         self.dataset
             .gspo
-            .range(
-                &(
+            .range::<QuadRecord, _>(
+                &QuadRecord::from_gspo((
                     self.graph_name,
                     subject,
                     InternedNamedNode::first(),
                     InternedTerm::first(),
-                )
-                    ..&(
+                ))
+                    ..&QuadRecord::from_gspo((
                         self.graph_name,
                         subject.next(),
                         InternedNamedNode::first(),
                         InternedTerm::first(),
-                    ),
+                    )),
             )
             .map(move |q| {
-                let (_, s, p, o) = q;
+                let (s, p, o, _) = q.parts();
                 ds.decode_spo((s, p, o))
             })
     }
@@ -1436,16 +1435,16 @@ impl<'a> GraphView<'a> {
         let ds = self.dataset;
         self.dataset
             .gspo
-            .range(
-                &(self.graph_name, subject, predicate, InternedTerm::first())
-                    ..&(
+            .range::<QuadRecord, _>(
+                &QuadRecord::from_gspo((self.graph_name, subject, predicate, InternedTerm::first()))
+                    ..&QuadRecord::from_gspo((
                         self.graph_name,
                         subject,
                         predicate.next(),
                         InternedTerm::first(),
-                    ),
+                    )),
             )
-            .map(move |q| q.3.decode_from(&ds.interner))
+            .map(move |q| q.parts().2.decode_from(&ds.interner))
     }
 
     pub fn object_for_subject_predicate<'b>(
@@ -1479,20 +1478,20 @@ impl<'a> GraphView<'a> {
         self.dataset
             .gosp
             .range(
-                &(
+                &GospKey::from_tuple((
                     self.graph_name,
                     object.clone(),
                     subject,
                     InternedNamedNode::first(),
-                )
-                    ..&(
+                ))
+                    ..&GospKey::from_tuple((
                         self.graph_name,
                         object,
                         subject.next(),
                         InternedNamedNode::first(),
-                    ),
+                    )),
             )
-            .map(move |q| q.3.decode_from(&ds.interner))
+            .map(move |q| q.parts().1.decode_from(&ds.interner))
     }
 
     pub fn triples_for_predicate<'b>(
@@ -1511,20 +1510,23 @@ impl<'a> GraphView<'a> {
         self.dataset
             .gpos
             .range(
-                &(
+                &GposKey::from_tuple((
                     self.graph_name,
                     predicate,
                     InternedTerm::first(),
                     InternedNamedOrBlankNode::first(),
-                )
-                    ..&(
+                ))
+                    ..&GposKey::from_tuple((
                         self.graph_name,
                         predicate.next(),
                         InternedTerm::first(),
                         InternedNamedOrBlankNode::first(),
-                    ),
+                    )),
             )
-            .map(move |(_, p, o, s)| ds.decode_spo((s, p, o)))
+            .map(move |q| {
+                let (s, p, o, _) = q.parts();
+                ds.decode_spo((s, p, o))
+            })
     }
 
     pub fn subjects_for_predicate_object<'b>(
@@ -1549,20 +1551,20 @@ impl<'a> GraphView<'a> {
         self.dataset
             .gpos
             .range(
-                &(
+                &GposKey::from_tuple((
                     self.graph_name,
                     predicate,
                     object.clone(),
                     InternedNamedOrBlankNode::first(),
-                )
-                    ..&(
+                ))
+                    ..&GposKey::from_tuple((
                         self.graph_name,
                         predicate,
                         object.next(),
                         InternedNamedOrBlankNode::first(),
-                    ),
+                    )),
             )
-            .map(move |q| q.3.decode_from(&ds.interner))
+            .map(move |q| q.parts().0.decode_from(&ds.interner))
     }
 
     pub fn subject_for_predicate_object<'b>(
@@ -1589,20 +1591,23 @@ impl<'a> GraphView<'a> {
         self.dataset
             .gosp
             .range(
-                &(
+                &GospKey::from_tuple((
                     self.graph_name,
                     object.clone(),
                     InternedNamedOrBlankNode::first(),
                     InternedNamedNode::first(),
-                )
-                    ..&(
+                ))
+                    ..&GospKey::from_tuple((
                         self.graph_name,
                         object.next(),
                         InternedNamedOrBlankNode::first(),
                         InternedNamedNode::first(),
-                    ),
+                    )),
             )
-            .map(move |(_, o, s, p)| ds.decode_spo((s, p, o)))
+            .map(move |q| {
+                let (s, p, o, _) = q.parts();
+                ds.decode_spo((s, p, o))
+            })
     }
 
     /// Retrieves triples with a filter on each triple component
@@ -1640,12 +1645,17 @@ impl<'a> GraphView<'a> {
     /// Checks if the graph contains the given triple.
     pub fn contains<'b>(&self, triple: impl Into<TripleRef<'b>>) -> bool {
         if let Some(triple) = self.encoded_triple(triple.into()) {
-            self.dataset.gspo.contains(&(
+            let found = self.dataset.gspo.contains(&QuadRecord::from_gspo((
                 self.graph_name,
                 triple.subject,
                 triple.predicate,
                 triple.object,
-            ))
+            )));
+            #[cfg(test)]
+            if found {
+                scoped_pattern_tests::candidate_row_visited();
+            }
+            found
         } else {
             false
         }
@@ -1905,15 +1915,7 @@ impl fmt::Display for GraphViewMut<'_> {
 /// Iterator returned by [`Dataset::iter`].
 pub struct Iter<'a> {
     dataset: &'a Dataset,
-    inner: std::collections::btree_set::Iter<
-        'a,
-        (
-            InternedNamedOrBlankNode,
-            InternedNamedNode,
-            InternedTerm,
-            InternedGraphName,
-        ),
-    >,
+    inner: std::collections::btree_set::Iter<'a, SpogKey>,
 }
 
 impl<'a> Iterator for Iter<'a> {
@@ -1922,31 +1924,24 @@ impl<'a> Iterator for Iter<'a> {
     fn next(&mut self) -> Option<Self::Item> {
         self.inner
             .next()
-            .map(|(s, p, o, g)| self.dataset.decode_spog((s, p, o, g)))
+            .map(|q| self.dataset.decode_spog(q.parts()))
     }
 }
 
 /// Iterator returned by [`GraphView::iter`].
 pub struct GraphViewIter<'a> {
     dataset: &'a Dataset,
-    inner: std::collections::btree_set::Range<
-        'a,
-        (
-            InternedGraphName,
-            InternedNamedOrBlankNode,
-            InternedNamedNode,
-            InternedTerm,
-        ),
-    >,
+    inner: std::collections::btree_set::Range<'a, GspoKey>,
 }
 
 impl<'a> Iterator for GraphViewIter<'a> {
     type Item = TripleRef<'a>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        self.inner
-            .next()
-            .map(|(_, s, p, o)| self.dataset.decode_spo((s, p, o)))
+        self.inner.next().map(|q| {
+            let (s, p, o, _) = q.parts();
+            self.dataset.decode_spo((s, p, o))
+        })
     }
 }
 
@@ -2036,6 +2031,68 @@ fn generate_permutations<T: Copy>(items: impl IntoIterator<Item = T>) -> Vec<Vec
     current_output
 }
 
+/// An additive transaction. There is deliberately no mutable dataset dereference:
+/// removals, clears and nested transactions cannot bypass the insertion journal.
+pub struct InsertTransaction<'a> {
+    dataset: &'a mut Dataset,
+    inserted: Vec<Arc<QuadRecord>>,
+    committed: bool,
+}
+
+impl InsertTransaction<'_> {
+    /// Inserts only a previously absent quad, recording its compact interned key.
+    pub fn insert<'a>(&mut self, quad: impl Into<QuadRef<'a>>) -> bool {
+        let encoded = self.dataset.encode_quad(quad.into());
+        let record = QuadRecord::from_spog(encoded);
+        if self.dataset.gspo.contains(&record) {
+            return false;
+        }
+        let record = Arc::new(record);
+        self.inserted.push(record.clone());
+        self.dataset.insert_record(record);
+        true
+    }
+
+    /// Quads inserted by this transaction, excluding preexisting or duplicate quads.
+    pub fn inserted(&self) -> impl Iterator<Item = QuadRef<'_>> {
+        self.inserted
+            .iter()
+            .map(|q| self.dataset.decode_spog(q.parts()))
+    }
+
+    /// Retains all insertions. Dropping the journal does not copy the dataset.
+    pub fn commit(mut self) {
+        self.committed = true;
+    }
+}
+
+impl std::ops::Deref for InsertTransaction<'_> {
+    type Target = Dataset;
+
+    fn deref(&self) -> &Dataset {
+        self.dataset
+    }
+}
+
+impl Extend<Quad> for InsertTransaction<'_> {
+    fn extend<T: IntoIterator<Item = Quad>>(&mut self, iter: T) {
+        for quad in iter {
+            self.insert(&quad);
+        }
+    }
+}
+
+impl Drop for InsertTransaction<'_> {
+    fn drop(&mut self) {
+        if !self.committed {
+            for quad in self.inserted.drain(..).rev() {
+                self.dataset.remove_record(&quad);
+            }
+        }
+        self.dataset.interner.finish_insertions(self.committed);
+    }
+}
+
 #[cfg(feature = "rdfc-10")]
 #[cfg(test)]
 mod tests {
@@ -2074,3 +2131,40 @@ mod tests {
         assert_eq!(dataset, expected);
     }
 }
+
+#[cfg(test)]
+mod shared_record_layout_tests {
+    use super::*;
+    #[test]
+    fn stored_index_entries_are_one_pointer() {
+        let mut data = Dataset::new();
+        data.insert(QuadRef::new(
+            NamedNodeRef::new_unchecked("urn:s"),
+            NamedNodeRef::new_unchecked("urn:p"),
+            NamedNodeRef::new_unchecked("urn:o"),
+            GraphNameRef::DefaultGraph,
+        ));
+        let sizes = [
+            size_of_val(data.gspo.first().unwrap()),
+            size_of_val(data.gpos.first().unwrap()),
+            size_of_val(data.gosp.first().unwrap()),
+            size_of_val(data.spog.first().unwrap()),
+            size_of_val(data.posg.first().unwrap()),
+            size_of_val(data.ospg.first().unwrap()),
+        ];
+        println!(
+            "SHARED_LAYOUT key_bytes={sizes:?} record_bytes={} record_alignment={}",
+            size_of::<QuadRecord>(),
+            align_of::<QuadRecord>()
+        );
+        assert_eq!(sizes, [size_of::<usize>(); 6]);
+    }
+}
+
+#[cfg(test)]
+#[path = "dataset_shared_tests.rs"]
+mod shared_tests;
+
+#[cfg(test)]
+#[path = "dataset_shared_edge_tests.rs"]
+mod shared_edge_tests;

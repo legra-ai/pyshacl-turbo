@@ -672,6 +672,14 @@ pub enum GraphPattern {
         expression: Expression,
         inner: Box<Self>,
     },
+    /// RDFLib FILTER evaluates its expression in a narrowed entry context,
+    /// while preserving the complete output row. This is an optimizer boundary.
+    RdfLibFilter {
+        inner: Box<Self>,
+        expression: Expression,
+        variables: Option<Vec<Variable>>,
+        no_isolated_scope: bool,
+    },
     /// [Union](https://www.w3.org/TR/sparql11-query/#defn_algUnion).
     Union { inner: Vec<Self> },
     /// [Extend](https://www.w3.org/TR/sparql11-query/#defn_extend).
@@ -1066,7 +1074,10 @@ impl GraphPattern {
                     callback(v);
                 }
             }
-            Self::Filter { inner, expression } => {
+            Self::Filter { inner, expression }
+            | Self::RdfLibFilter {
+                inner, expression, ..
+            } => {
                 expression.lookup_used_variables(callback);
                 inner.lookup_used_variables(callback);
             }
@@ -1134,6 +1145,8 @@ impl GraphPattern {
         graph_name: Option<&NamedNodePattern>,
         blank_nodes: &mut HashMap<BlankNode, Variable>,
     ) -> Self {
+        let exists_root = mode.exists_root;
+        let mode = mode.child();
         match pattern {
             AlGraphPattern::Bgp { patterns } => {
                 let pattern = patterns
@@ -1246,15 +1259,27 @@ impl GraphPattern {
                     blank_nodes,
                 )),
             },
-            AlGraphPattern::Filter { inner, expr } => Self::Filter {
-                inner: Box::new(Self::from_sparql_algebra(
+            AlGraphPattern::Filter { inner, expr } => {
+                let inner = Box::new(Self::from_sparql_algebra(
                     mode,
                     inner,
                     graph_name,
                     blank_nodes,
-                )),
-                expression: Expression::from_sparql_algebra(mode, expr, graph_name),
-            },
+                ));
+                let expression = Expression::from_sparql_algebra(mode, expr, graph_name);
+                if mode.rdflib {
+                    Self::RdfLibFilter {
+                        inner,
+                        expression,
+                        variables: mode
+                            .analyse_joins
+                            .then(|| crate::rdflib::variables(pattern)),
+                        no_isolated_scope: exists_root,
+                    }
+                } else {
+                    Self::Filter { inner, expression }
+                }
+            }
             AlGraphPattern::Union { left, right } => Self::Union {
                 inner: vec![
                     Self::from_sparql_algebra(mode, left, graph_name, blank_nodes),
@@ -1584,7 +1609,10 @@ impl From<&GraphPattern> for AlGraphPattern {
                     },
                 }
             }
-            GraphPattern::Filter { inner, expression } => Self::Filter {
+            GraphPattern::Filter { inner, expression }
+            | GraphPattern::RdfLibFilter {
+                inner, expression, ..
+            } => Self::Filter {
                 inner: Box::new(inner.as_ref().into()),
                 expr: expression.into(),
             },

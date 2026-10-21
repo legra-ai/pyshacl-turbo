@@ -148,3 +148,53 @@ fn views_yield_before_reading_the_tail_and_propagate_storage_errors() {
     assert!(source.0.get());
     assert!(OverlayGraph::new(&source, &Dataset::new(), node("shapes").into()).is_err());
 }
+
+#[test]
+fn selected_graph_is_a_logical_default_and_cannot_observe_other_contexts() {
+    for physical in [
+        GraphName::DefaultGraph,
+        node("selected").into(),
+        BlankNode::new("selected").unwrap().into(),
+    ] {
+        let store = Store::new().unwrap();
+        let mut transaction = store.start_transaction().unwrap();
+        transaction.insert(&Quad::new(
+            node("s"),
+            node("p"),
+            node("wanted"),
+            physical.clone(),
+        ));
+        transaction.insert(&Quad::new(
+            node("s"),
+            node("p"),
+            node("hidden"),
+            node("other"),
+        ));
+        let view = crate::ScopedGraph::new(&transaction, physical);
+        let quads = view
+            .matching_quads(None, None, None, None)
+            .collect::<crate::Result<Vec<_>>>()
+            .unwrap();
+        assert_eq!(
+            quads,
+            vec![Quad::new(
+                node("s"),
+                node("p"),
+                node("wanted"),
+                GraphName::DefaultGraph
+            )]
+        );
+        assert_eq!(
+            view.matching_quads(None, None, None, Some(GraphNameRef::DefaultGraph))
+                .count(),
+            1
+        );
+        assert_eq!(
+            view.matching_quads(None, None, None, Some(node("other").as_ref().into()))
+                .count(),
+            0
+        );
+        assert_eq!(view.named_graphs().count(), 0);
+        assert!(!view.contains_named_graph(&node("other").into()).unwrap());
+    }
+}
