@@ -82,6 +82,41 @@ def test_public_report_builder_requires_results_for_nonconformance():
         assert len(graph) == 2 and text == "Validation Report\nConforms: True\n"
 
 
+def test_public_report_builder_copies_lists_and_raw_result_triples():
+    from rdflib.collection import Collection
+
+    source = Graph()
+    head = BNode("list-shape")
+    Collection(source, head, [Literal("value"), EX.a, BNode("leaf")])
+    node = BNode("result")
+    results = [
+        (
+            "List result\n",
+            node,
+            [(node, RDF.type, SH.ValidationResult), (node, SH.sourceShape, (source, head))],
+        )
+    ]
+    reports = [
+        engine.Validator.create_validation_report(engine.ShapesGraph(Graph()), False, results)
+        for engine in (pyshacl, turbo)
+    ]
+    assert reports[0][1] == reports[1][1]
+    assert isomorphic(reports[0][0], reports[1][0])
+
+
+def test_public_report_builder_rejects_non_rdf_clone_nodes():
+    from rdflib import Variable
+
+    source = Graph()
+    root = BNode("invalid-shape")
+    source.add((root, EX.invalid, Variable("variable")))
+    result = BNode("result")
+    results = [("Invalid\n", result, [(result, SH.sourceShape, (source, root))])]
+    for engine in (pyshacl, turbo):
+        with pytest.raises(ValueError, match="Cannot clone node of type"):
+            engine.Validator.create_validation_report(engine.ShapesGraph(Graph()), False, results)
+
+
 @pytest.mark.parametrize("runner_name", ["Validator", "RuleExpandRunner"])
 @pytest.mark.parametrize("dataset", [False, True])
 @pytest.mark.parametrize("inplace", [False, True])
