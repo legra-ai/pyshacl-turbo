@@ -43,3 +43,11 @@ disabled and exact terms with Turbo's features enabled. The standalone manifest
 uses the same local oxrdf/spargebra/sparopt patches, with its own pinned lockfile.
 It is excluded from the main workspace to prevent feature unification from
 silently enabling the compatibility features during the default-mode test.
+# Borrowed scoped custom functions
+
+`QueryableDataset::scoped_custom_function` supplies a lifetime-bound Rc callback
+for functions that query the same borrowed source. Explicit evaluator-registered
+functions take precedence. The expression evaluator resolves both ordinary and
+exact-term calls through this capability. No callback or source is retained
+beyond the query lifetime, and the source need not be cloned into an Arc Dataset.
+

@@ -5,15 +5,16 @@ use std::collections::{BTreeMap, HashSet};
 use oxigraph::model::*;
 
 use crate::graph::*;
+use crate::{GraphRead, Result};
 
-pub(crate) struct Display<'a> {
+pub(crate) struct Display<'a, G: GraphRead + ?Sized> {
     pub shape_namespaces: Vec<(String, String)>,
     pub data_namespaces: Vec<(String, String)>,
-    pub data: &'a Dataset,
+    pub data: &'a G,
     pub shapes: &'a Dataset,
 }
 
-impl Display<'_> {
+impl<G: GraphRead + ?Sized> Display<'_, G> {
     pub fn iri(&self, node: &NamedNode) -> String {
         Self::iri_in(node, &self.shape_namespaces)
     }
@@ -41,50 +42,64 @@ impl Display<'_> {
             .unwrap_or_else(|| node.to_string())
     }
 
-    pub fn term(&self, term: &Term, shapes: bool) -> String {
-        let graph = if shapes { self.shapes } else { self.data };
-        let namespaces = if shapes {
-            &self.shape_namespaces
+    pub fn term(&self, term: &Term, shapes: bool) -> Result<String> {
+        if shapes {
+            Self::describe(term, self.shapes, &self.shape_namespaces)
         } else {
-            &self.data_namespaces
-        };
-        let context = if let Term::BlankNode(node) = term {
-            let mut contexts: Vec<_> = graph
-                .quads_for_subject(node.as_ref())
-                .map(|q| q.graph_name.into_owned())
-                .collect();
-            if contexts.is_empty() {
-                contexts.extend(
-                    graph
-                        .quads_for_object(term.as_ref())
-                        .map(|q| q.graph_name.into_owned()),
-                );
+            Self::describe(term, self.data, &self.data_namespaces)
+        }
+    }
+
+    fn describe(
+        term: &Term,
+        graph: &(impl GraphRead + ?Sized),
+        namespaces: &[(String, String)],
+    ) -> Result<String> {
+        let mut context = None;
+        if let Term::BlankNode(node) = term {
+            // bounded: retain only the best context for this reported blank node.
+            for quad in graph.matching_quads(Some(node.as_ref().into()), None, None, None) {
+                Self::select_context(&mut context, quad?.graph_name);
             }
-            // Prefer source statements to the dedicated inference destination.
-            // The evaluator's synthetic union is never used for descriptions.
-            contexts.sort_by_key(|name| (
+            if context.is_none() {
+                for quad in graph.matching_quads(None, None, Some(term.as_ref()), None) {
+                    Self::select_context(&mut context, quad?.graph_name);
+                }
+            }
+        }
+        Self::inner(
+            term,
+            graph,
+            &context.unwrap_or(GraphName::DefaultGraph),
+            namespaces,
+            &mut HashSet::new(),
+        )
+    }
+
+    fn select_context(current: &mut Option<GraphName>, candidate: GraphName) {
+        let key = |name: &GraphName| {
+            (
                 matches!(name, GraphName::NamedNode(n) if n.as_str() == "urn:pyshacl:inference"),
                 !name.is_default_graph(),
                 name.to_string(),
-            ));
-            contexts
-                .into_iter()
-                .next()
-                .unwrap_or(GraphName::DefaultGraph)
-        } else {
-            GraphName::DefaultGraph
+            )
         };
-        Self::inner(term, graph, &context, namespaces, &mut HashSet::new())
+        if current
+            .as_ref()
+            .is_none_or(|selected| key(&candidate) < key(selected))
+        {
+            *current = Some(candidate);
+        }
     }
 
     fn inner(
         term: &Term,
-        graph: &Dataset,
+        graph: &(impl GraphRead + ?Sized),
         context: &GraphName,
         namespaces: &[(String, String)],
         stack: &mut HashSet<Term>,
-    ) -> String {
-        match term {
+    ) -> Result<String> {
+        Ok(match term {
             Term::NamedNode(n) => Self::iri_in(n, namespaces),
             Term::Literal(l) => {
                 let text = Literal::new_simple_literal(l.value()).to_string();
@@ -101,23 +116,20 @@ impl Display<'_> {
             }
             Term::BlankNode(_) => {
                 if stack.len() >= 20 || !stack.insert(term.clone()) {
-                    return "[ ... ]".into();
+                    return Ok("[ ... ]".into());
                 }
                 let mut properties = BTreeMap::<String, Vec<String>>::new();
-                for q in graph.quads_for_subject(subject(term).expect("blank node").as_ref()) {
-                    if q.graph_name != context.as_ref() {
-                        continue;
-                    }
+                for q in graph.matching_quads(
+                    Some(subject(term).expect("blank node").as_ref()),
+                    None,
+                    None,
+                    Some(context.as_ref()),
+                ) {
+                    let q = q?;
                     properties
-                        .entry(Self::iri_in(&q.predicate.into_owned(), namespaces))
+                        .entry(Self::iri_in(&q.predicate, namespaces))
                         .or_default()
-                        .push(Self::inner(
-                            &q.object.into_owned(),
-                            graph,
-                            context,
-                            namespaces,
-                            stack,
-                        ));
+                        .push(Self::inner(&q.object, graph, context, namespaces, stack)?);
                 }
                 let mut descriptions = Vec::new();
                 for (p, mut values) in properties {
@@ -128,6 +140,6 @@ impl Display<'_> {
                 stack.remove(term);
                 format!("[ {} ]", descriptions.join(" ; "))
             }
-        }
+        })
     }
 }

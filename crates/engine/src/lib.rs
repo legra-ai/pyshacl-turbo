@@ -19,6 +19,7 @@ mod graph_read;
 mod graph_views;
 #[cfg(test)]
 mod graph_views_tests;
+mod graph_write;
 mod inference;
 mod ontology;
 mod path;
@@ -27,6 +28,7 @@ mod query_graph;
 #[cfg(test)]
 mod query_graph_tests;
 mod revision;
+mod rule_delta;
 mod sparql;
 mod sparql_regex;
 mod structural;
@@ -36,7 +38,7 @@ mod value;
 mod structural_tests;
 
 pub use compile::CompiledShapes;
-pub use execute::{Options, RuleExpansion, ValidationReport};
+pub use execute::{Options, RuleExpansion, ValidationOutcome, ValidationReport};
 pub use functions::evaluate_query;
 pub use graph::{
     parse as parse_graph, parse_dataset, parse_store_snapshot, serialize as serialize_graph,

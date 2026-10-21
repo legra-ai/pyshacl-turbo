@@ -101,7 +101,7 @@ fn cyclic_blank_descriptions_terminate_and_keep_report_identity() {
         data: &source,
         shapes: &source,
     };
-    assert!(display.term(&a, false).contains("[ ... ]"));
+    assert!(display.term(&a, false).unwrap().contains("[ ... ]"));
 }
 
 #[test]
@@ -139,7 +139,7 @@ fn deeply_nested_blank_descriptions_stop_at_the_display_depth_limit() {
         data: &data,
         shapes: &data,
     };
-    let rendered = display.term(&nodes[0], false);
+    let rendered = display.term(&nodes[0], false).unwrap();
     assert!(rendered.contains("[ ... ]"));
     assert_eq!(rendered.matches("<urn:p>").count(), 20);
 }

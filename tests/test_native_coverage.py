@@ -8,6 +8,13 @@ from pathlib import Path
 import pytest
 
 
+def test_repository_unmapped_source_inventory_matches_current_sources():
+    root = Path(__file__).resolve().parents[1]
+    inventory = json.loads((root / "native-coverage-sources.json").read_text())
+    for name, entry in inventory.items():
+        assert hashlib.sha256((root / name).read_bytes()).hexdigest() == entry["sha256"]
+
+
 def harness():
     path = Path(__file__).resolve().parents[1] / "scripts/native_coverage.py"
     spec = importlib.util.spec_from_file_location("native_coverage", path)

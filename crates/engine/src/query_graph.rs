@@ -1,6 +1,8 @@
 //! SPARQL adapter over a borrowed graph without copying the logical dataset.
+use std::collections::HashMap;
+
 use oxigraph::model::*;
-use spareval::{InternalQuad, QueryableDataset};
+use spareval::{InternalQuad, QueryableDataset, ScopedCustomFunction};
 
 use crate::{Error, GraphRead, Result};
 
@@ -10,6 +12,8 @@ use crate::{Error, GraphRead, Result};
 /// See the [crate architecture and runnable example](crate#borrowed-sparql-graph-architecture).
 pub struct QueryGraph<'a, G: GraphRead + ?Sized> {
     source: &'a G,
+    // bounded: one callback per function declared in the compiled shapes graph.
+    functions: HashMap<NamedNode, ScopedCustomFunction<'a>>,
 }
 
 impl<'a, G: GraphRead + ?Sized> QueryGraph<'a, G> {
@@ -23,13 +27,26 @@ impl<'a, G: GraphRead + ?Sized> QueryGraph<'a, G> {
 
     /// Borrow a consistent graph source for the lifetime of query evaluation.
     pub fn new(source: &'a G) -> Self {
-        Self { source }
+        Self {
+            source,
+            functions: HashMap::new(),
+        }
+    }
+    pub(crate) fn with_functions(
+        source: &'a G,
+        functions: HashMap<NamedNode, ScopedCustomFunction<'a>>,
+    ) -> Self {
+        Self { source, functions }
     }
 }
 
 impl<'a, G: GraphRead + ?Sized + 'a> QueryableDataset<'a> for QueryGraph<'a, G> {
     type InternalTerm = Term;
     type Error = Error;
+
+    fn scoped_custom_function(&self, name: &NamedNode) -> Option<ScopedCustomFunction<'a>> {
+        self.functions.get(name).cloned()
+    }
 
     fn internal_quads_for_pattern(
         &self,

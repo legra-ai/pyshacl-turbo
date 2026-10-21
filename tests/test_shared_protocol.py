@@ -5,6 +5,7 @@ class. Cross-wheel tests in integration/ exercise the actual new Rust provider.
 """
 
 import json
+from contextlib import nullcontext
 
 import pyshacl_turbo as turbo
 import pytest
@@ -25,6 +26,18 @@ def test_old_runtime_and_text_format_are_rejected_before_conversion():
         program.validate(data, data_graph_format="turtle")
     with pytest.raises(NotImplementedError, match="owlrl-turbo"):
         turbo.validate(data, shacl_graph=SHAPES, inference="rdfs")
+
+
+def test_protocol_one_source_requires_a_borrowed_validation_adapter(monkeypatch):
+    data = rdflib_turbo.Dataset()
+    program = turbo.compile_shapes(SHAPES)
+    program._shared_program = object()
+    monkeypatch.setattr(runtime, "SHARED_SHACL_PROTOCOL", 1, raising=False)
+    monkeypatch.setattr(
+        runtime, "SHACL_ENGINE_FINGERPRINT", turbo._native.SHACL_ENGINE_FINGERPRINT, raising=False
+    )
+    with pytest.raises(RuntimeError, match="borrowed SHACL validation"):
+        program.validate(data)
 
 
 def test_facade_protocol_preserves_options_reports_reuse_and_failure_type(monkeypatch):
@@ -56,6 +69,14 @@ def test_facade_protocol_preserves_options_reports_reuse_and_failure_type(monkey
     monkeypatch.setattr(runtime, "SharedValidationFailure", Failure, raising=False)
     monkeypatch.setattr(
         rdflib_turbo.Dataset, "namespaces", lambda self: iter([("ex", "urn:")]), raising=False
+    )
+    monkeypatch.setattr(
+        rdflib_turbo.Dataset,
+        "_validate_shared_shapes",
+        lambda source, program, settings, inplace: nullcontext(
+            program.validate(source._native, settings, inplace)
+        ),
+        raising=False,
     )
     program = turbo.compile_shapes(SHAPES)
     actual = program.validate(data, inplace=True, max_validation_depth=None, focus_nodes=["ex:s"])

@@ -19,13 +19,13 @@ pub(crate) fn lexical(term: &Term) -> Option<&str> {
 
 pub(crate) fn expression(
     query: &PreparedSparqlQuery,
-    data: &Dataset,
+    data: &(impl crate::GraphRead + ?Sized),
     value: &Term,
     other: Option<&Term>,
 ) -> Result<bool> {
     let mut evaluation = query
         .clone()
-        .on_queryable_dataset(data)
+        .on_queryable_dataset(crate::QueryGraph::new(data))
         .substitute_variable(Variable::new_unchecked("value"), value.clone());
     if let Some(other) = other {
         evaluation =

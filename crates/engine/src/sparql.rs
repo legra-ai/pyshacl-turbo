@@ -11,7 +11,7 @@ use spargebra::{Query, SparqlParser};
 
 use crate::graph::*;
 use crate::path::Path;
-use crate::{Error, Result};
+use crate::{Error, GraphRead, OverlayGraph, Result};
 
 #[cfg(test)]
 #[path = "sparql_tests.rs"]
@@ -470,7 +470,7 @@ impl SparqlConstraint {
     #[allow(clippy::too_many_arguments)]
     pub fn evaluate(
         &self,
-        data: &Dataset,
+        data: &(impl GraphRead + ?Sized),
         shapes: &Dataset,
         shape: &Term,
         focus: &Term,
@@ -478,35 +478,34 @@ impl SparqlConstraint {
         value: Option<&Term>,
         functions: &Functions,
     ) -> Result<Vec<SparqlRow>> {
-        use oxigraph::sparql::QueryResults;
         if self.deactivated {
             return Ok(Vec::new());
         }
         let graph_name = BlankNode::default();
-        let mut with_shapes;
-        let dataset = if self.shapes_graph {
-            with_shapes = data.clone();
-            for quad in shapes.iter() {
-                with_shapes.insert(QuadRef::new(
-                    quad.subject,
-                    quad.predicate,
-                    quad.object,
-                    &graph_name,
-                ));
-            }
-            &with_shapes
+        if self.shapes_graph {
+            let view = OverlayGraph::new(data, shapes, graph_name.clone().into())?;
+            self.evaluate_on(&view, shape, focus, messages, value, functions, graph_name)
         } else {
-            data
-        };
-        let functions = if self.shapes_graph {
-            functions.for_dataset(dataset)
-        } else {
-            functions.clone()
-        };
+            self.evaluate_on(data, shape, focus, messages, value, functions, graph_name)
+        }
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    fn evaluate_on(
+        &self,
+        data: &(impl GraphRead + ?Sized),
+        shape: &Term,
+        focus: &Term,
+        messages: &[Term],
+        value: Option<&Term>,
+        functions: &Functions,
+        graph_name: BlankNode,
+    ) -> Result<Vec<SparqlRow>> {
+        use oxigraph::sparql::QueryResults;
         let mut evaluation = self
             .query
-            .prepare(&functions, dataset)
-            .on_queryable_dataset(dataset)
+            .prepare(functions)
+            .on_queryable_dataset(data)
             .substitute_variable(Variable::new_unchecked("this"), focus.clone())
             .substitute_variable(Variable::new_unchecked("currentShape"), shape.clone())
             .substitute_variable(Variable::new_unchecked("shapesGraph"), graph_name);

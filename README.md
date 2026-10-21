@@ -224,9 +224,10 @@ arbitrary-precision values. See the compatibility details for
 ## Rust
 
 The standalone `pyshacl-turbo-engine` crate accepts exact-term oxrdf Dataset
-values and `oxigraph::Store` inputs. `CompiledShapes::validate_store` and
-`expand_store` copy a consistent quad snapshot without RDF text conversion.
-Their `inplace` flag controls atomic addition of derived quads to the Store.
+values and `oxigraph::Store` inputs. `CompiledShapes::validate_transaction`
+borrows an open transaction, including pending writes, and leaves commit or
+abort to its caller. `validate_store` owns a transaction; `expand_store` returns
+only rule additions. Neither copies the base dataset.
 Compiled programs are shareable across threads; parallelism is caller-controlled.
 
 ### Borrowed SPARQL graph architecture
@@ -246,9 +247,32 @@ Transaction reads see pending writes and deletions; the caller owns commit and
 rollback. No whole-base snapshot or graph-name collection is introduced by the
 adapter. Query execution and result construction retain their own memory costs.
 
-These are Rust foundation APIs: complete transaction-backed SHACL validation and
-snapshot-free function callbacks still need adoption. The existing Store
-validation APIs described above continue to copy a consistent snapshot.
+Targets, constraints, reports, rules and scoped function callbacks now use the
+borrowed source. Read-only rule execution stores only additions. Target sets,
+per-rule results, reports and query intermediates retain their own memory costs.
+
+With matching `rdflib-turbo` and `pyshacl-turbo` engine sources, compiled shapes
+also validate a native `Store` or its open `Transaction` directly:
+
+```python
+from pyshacl_turbo import compile_shapes
+from rdflib_turbo import Store
+
+shapes = compile_shapes('''@prefix sh: <http://www.w3.org/ns/shacl#> .
+  <urn:S> sh:targetNode <urn:s>;
+    sh:property [sh:path <urn:name>; sh:minCount 1].''')
+with Store() as store:
+    with store.transaction(shapes=shapes, iterate_rules=True) as tx:
+        tx.parse(data='<urn:s> <urn:name> "Alice".')
+        tx.infer(inference="rdfs")
+```
+
+The gate validates after the body, finishes report construction, and commits on
+conformance. `rdflib_turbo.ValidationError` carries the nonconforming report;
+failure aborts original writes, inference and rule additions together. Direct
+`shapes.validate(tx)` returns a report and leaves the acceptance decision to the
+caller. Native execution failures and report-processing errors abort the owner
+even when caught inside the scope. No base serialization is used.
 See the [published Rust API documentation and runnable example](https://legra-ai.github.io/pyshacl-turbo/rustdoc/pyshacl_turbo_engine/#borrowed-sparql-graph-architecture).
 Rustdoc is built from the tested revision and published with the main-branch
 reports; the diagram is embedded directly and requires no JavaScript renderer.
