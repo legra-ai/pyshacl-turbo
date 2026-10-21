@@ -43,6 +43,14 @@ class Runner:
     def target_graph(self):
         return self._target_graph
 
+    def _prepare_focus_nodes(self, target):
+        if self.options.get("focus_nodes"):
+            from . import _expand_names
+
+            self.options["focus_nodes"] = [
+                URIRef(node) for node in _expand_names(target.impl, self.options["focus_nodes"])
+            ]
+
     def mix_in_ontology(self):
         from . import _prepare_data
         from .rdf import merge_graph

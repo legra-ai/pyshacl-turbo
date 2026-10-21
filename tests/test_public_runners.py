@@ -17,6 +17,36 @@ def test_public_runner_classes_are_independent_reference_types():
         assert not isinstance(runner, engine.Validator)
 
 
+@pytest.mark.parametrize("runner_name", ["Validator", "RuleExpandRunner"])
+def test_runner_retains_expanded_focus_nodes_for_later_executor_calls(runner_name):
+    for engine, module in ((pyshacl, "pyshacl"), (turbo, "pyshacl_turbo")):
+        data, shapes = fixture()
+        data.bind("ex", EX)
+        options = {"focus_nodes": ["ex:a"], "use_shapes": ["ex:S"]}
+        runner = getattr(engine, runner_name)(
+            wrapped(module, data), shacl_graph=shapes, options=options
+        )
+        runner.run()
+        assert options["focus_nodes"] == [EX.a]
+        assert runner.make_executor().focus_nodes == [EX.a]
+        target = runner.target_graph
+        options["focus_nodes"] = ["ex:a"]
+        runner.run()
+        assert runner.target_graph is target
+        assert options["focus_nodes"] == [EX.a]
+
+
+def test_absolute_focus_iri_is_not_reinterpreted_as_a_namespace_prefix():
+    reports = []
+    for engine in (pyshacl, turbo):
+        data, shapes = fixture()
+        data.bind("urn", "urn:unrelated:")
+        report = engine.validate(data, shacl_graph=shapes, focus_nodes=[EX.a], use_shapes=[EX.S])[1]
+        assert list(report.objects(None, SH.focusNode)) == [EX.a]
+        reports.append(report)
+    assert isomorphic(reports[0], reports[1])
+
+
 def test_rule_runner_uses_its_executor_depth_policy():
     for engine, module in ((pyshacl, "pyshacl"), (turbo, "pyshacl_turbo")):
         data, shapes = fixture()

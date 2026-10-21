@@ -46,6 +46,7 @@ class Validator(Runner):
         from . import validate
 
         target = self._prepare_target()
+        self._prepare_focus_nodes(target)
         options = {
             key: value
             for key, value in self.options.items()

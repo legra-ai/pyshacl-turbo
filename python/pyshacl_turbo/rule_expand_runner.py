@@ -31,6 +31,7 @@ class RuleExpandRunner(Runner):
         from . import shacl_rules
 
         target = self._prepare_target(rules=True)
+        self._prepare_focus_nodes(target)
         options = {
             key: value
             for key, value in self.options.items()

@@ -485,6 +485,9 @@ def _expand_names(graph, names):
     result = []
     namespaces = graph if isinstance(graph, dict) else dict(graph.namespaces())
     for name in names or []:
+        if str(name).lower().startswith(("http:", "https:", "urn:", "file:")):
+            result.append(str(name))
+            continue
         prefix, sep, local = str(name).partition(":")
         result.append(
             str(namespaces[prefix]) + local if sep and prefix in namespaces else str(name)
