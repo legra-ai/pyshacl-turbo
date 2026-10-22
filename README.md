@@ -1,21 +1,58 @@
 # pyshacl-turbo
 
-[![PyPI version](https://img.shields.io/pypi/v/pyshacl-turbo)](https://pypi.org/project/pyshacl-turbo/)
-[![PyPI downloads](https://img.shields.io/pypi/dm/pyshacl-turbo)](https://pypi.org/project/pyshacl-turbo/)
-[![Python 3.11+](https://img.shields.io/badge/Python-3.11%2B-3776AB?logo=python&logoColor=white)](https://github.com/legra-ai/pyshacl-turbo/blob/main/pyproject.toml)
-[![Rust](https://img.shields.io/badge/Rust-1.99.1%2B-DEA584?logo=rust&logoColor=black)](https://github.com/legra-ai/pyshacl-turbo/blob/main/rust-toolchain.toml)
-[![License: MIT OR Apache-2.0](https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-blue)](https://github.com/legra-ai/pyshacl-turbo/blob/main/LICENSE-MIT)
-[![pySHACL non-JS suite: 100% (403/403)](https://img.shields.io/badge/pySHACL%20non--JS%20suite-100%25-brightgreen)](https://github.com/legra-ai/pyshacl-turbo/blob/main/docs/compatibility.md#measurements)
+[![PyPI version](https://img.shields.io/pypi/v/pyshacl-turbo?style=flat)](https://pypi.org/project/pyshacl-turbo/)
+[![PyPI downloads](https://img.shields.io/pypi/dm/pyshacl-turbo?style=flat)](https://pypi.org/project/pyshacl-turbo/)
+[![Python 3.11+](https://img.shields.io/badge/Python-3.11%2B-3776AB?logo=python&logoColor=white&style=flat)](https://github.com/legra-ai/pyshacl-turbo/blob/main/pyproject.toml)
+[![Rust](https://img.shields.io/badge/Rust-1.99.1%2B-DEA584?logo=rust&logoColor=black&style=flat)](https://github.com/legra-ai/pyshacl-turbo/blob/main/rust-toolchain.toml)
+[![License: MIT OR Apache-2.0](https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-blue?style=flat)](https://github.com/legra-ai/pyshacl-turbo/blob/main/LICENSE-MIT)
+[![pySHACL non-JS suite: 100% (403/403)](https://img.shields.io/badge/pySHACL%20non--JS%20suite-100%25-brightgreen?style=flat)](https://github.com/legra-ai/pyshacl-turbo/blob/main/docs/compatibility.md#measurements)
+[![Tests and wheels](https://img.shields.io/github/actions/workflow/status/legra-ai/pyshacl-turbo/ci.yml?branch=main&label=Tests%20and%20wheels&logo=github&style=flat)](https://github.com/legra-ai/pyshacl-turbo/actions/workflows/ci.yml)
+[![Compatibility](https://img.shields.io/github/actions/workflow/status/legra-ai/pyshacl-turbo/compatibility.yml?branch=main&label=Compatibility&logo=github&style=flat)](https://github.com/legra-ai/pyshacl-turbo/actions/workflows/compatibility.yml)
+[![Regex](https://img.shields.io/github/actions/workflow/status/legra-ai/pyshacl-turbo/regex.yml?branch=main&label=Regex&logo=github&style=flat)](https://github.com/legra-ai/pyshacl-turbo/actions/workflows/regex.yml)
+[![Python line coverage](https://img.shields.io/endpoint?url=https%3A%2F%2Flegra-ai.github.io%2Fpyshacl-turbo%2Fpython-lines.json&style=flat)](https://legra-ai.github.io/pyshacl-turbo/)
+[![Python branch coverage](https://img.shields.io/endpoint?url=https%3A%2F%2Flegra-ai.github.io%2Fpyshacl-turbo%2Fpython-branches.json&style=flat)](https://legra-ai.github.io/pyshacl-turbo/)
+[![Rust line coverage](https://img.shields.io/endpoint?url=https%3A%2F%2Flegra-ai.github.io%2Fpyshacl-turbo%2Frust-lines.json&style=flat)](https://legra-ai.github.io/pyshacl-turbo/)
+[![Rust region coverage](https://img.shields.io/endpoint?url=https%3A%2F%2Flegra-ai.github.io%2Fpyshacl-turbo%2Frust-regions.json&style=flat)](https://legra-ai.github.io/pyshacl-turbo/)
+[![Rust function coverage](https://img.shields.io/endpoint?url=https%3A%2F%2Flegra-ai.github.io%2Fpyshacl-turbo%2Frust-functions.json&style=flat)](https://legra-ai.github.io/pyshacl-turbo/)
 
-[![Tests and wheels](https://github.com/legra-ai/pyshacl-turbo/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/legra-ai/pyshacl-turbo/actions/workflows/ci.yml)
-[![Compatibility](https://github.com/legra-ai/pyshacl-turbo/actions/workflows/compatibility.yml/badge.svg?branch=main)](https://github.com/legra-ai/pyshacl-turbo/actions/workflows/compatibility.yml)
-[![Regex](https://github.com/legra-ai/pyshacl-turbo/actions/workflows/regex.yml/badge.svg?branch=main)](https://github.com/legra-ai/pyshacl-turbo/actions/workflows/regex.yml)
+## Performance
 
-[![Python line coverage](https://legra-ai.github.io/pyshacl-turbo/python-lines.svg)](https://legra-ai.github.io/pyshacl-turbo/)
-[![Python branch coverage](https://legra-ai.github.io/pyshacl-turbo/python-branches.svg)](https://legra-ai.github.io/pyshacl-turbo/)
-[![Rust line coverage](https://legra-ai.github.io/pyshacl-turbo/rust-lines.svg)](https://legra-ai.github.io/pyshacl-turbo/)
-[![Rust region coverage](https://legra-ai.github.io/pyshacl-turbo/rust-regions.svg)](https://legra-ai.github.io/pyshacl-turbo/)
-[![Rust function coverage](https://legra-ai.github.io/pyshacl-turbo/rust-functions.svg)](https://legra-ai.github.io/pyshacl-turbo/)
+Compare **RDFLib + OWL-RL + pySHACL** with
+[rdflib-turbo](https://github.com/legra-ai/rdflib-turbo),
+[owlrl-turbo](https://github.com/legra-ai/owlrl-turbo) and
+[pyshacl-turbo](https://github.com/legra-ai/pyshacl-turbo) used together.
+The Turbo pipeline keeps **one native dataset** through parsing, in-place
+inference and SHACL validation.
+
+**End-to-end measurements for 1,000 synthetic nodes:**
+
+| Platform | Inference | Python trio (ms) | Turbo trio (ms) | Python peak (MiB) | Turbo peak (MiB) |
+| --- | --- | ---: | ---: | ---: | ---: |
+| Linux x86-64 | RDFS | 522.5 | **47.6** | 47.15 | 68.66 |
+| Linux x86-64 | OWL-RL | 801.3 | **56.4** | 48.69 | 69.29 |
+| macOS ARM64 | RDFS | 702.8 | **80.7** | 55.38 | 59.94 |
+| macOS ARM64 | OWL-RL | 1,028.5 | **72.5** | 55.91 | 60.42 |
+
+**Turbo uses more memory in these runs: 8–46% higher whole-process peak RSS.**
+Ordinary RDF inference closures and complete SHACL report graphs match.
+Generalized RDF statements and report text differ, so these timings are
+**not a full-output speedup claim** or a claim of complete drop-in parity.
+
+Measured in CI on **21 October 2026**, using source-built wheels and Python 3.13:
+`rdflib-turbo 0.2.0a7`, `owlrl-turbo 0.1.0a3`, `pyshacl-turbo 0.6.0` versus
+`rdflib 7.6.0`, `owlrl 7.6.2`, `pyshacl 0.40.1`.
+Times are medians of seven samples after warmup and include data parsing,
+shape compilation, inference, validation and full report construction. Shapes
+are parsed before timing. Memory is the median peak RSS of three fresh processes,
+including the interpreter, imports and retained output. Shared CI hosts and small
+synthetic cases do not establish universal speedups or large-dataset capacity.
+
+See the complete [Linux measurements](https://github.com/legra-ai/pyshacl-turbo/blob/bc3082b44e680d8c8193407c2d1c826d80bc51d5/runs/39687798434-1/ubuntu-latest/releases.md),
+[macOS measurements](https://github.com/legra-ai/pyshacl-turbo/blob/bc3082b44e680d8c8193407c2d1c826d80bc51d5/runs/39687798434-1/macos-latest/releases.md) and
+[continuously recorded benchmark history](https://github.com/legra-ai/pyshacl-turbo/tree/benchmark-results)
+for all samples, source identities, dependency locks and other dataset sizes.
+
+## Overview
 
 SHACL validation for Python, powered by Rust. The goal is a **complete drop-in
 replacement for pySHACL**, with additional features and better performance.
@@ -282,7 +319,7 @@ with Turbo's exact RDF terms, then prepares native queries, regexes and indexes
 for execution. The original graph remains available for reports and source
 identity. See [ADR 0017](https://github.com/legra-ai/pyshacl-turbo/blob/main/docs/adr/0017-shared-structural-compiler.md).
 
-## Performance
+## More performance benchmarks
 
 The [companion-project benchmark suite](https://github.com/legra-ai/pyshacl-turbo/blob/main/benchmarks/companions.md) measures
 rdflib-turbo, owlrl-turbo and pyshacl-turbo together against their reference
