@@ -101,7 +101,14 @@ fn cyclic_blank_descriptions_keep_root_and_copy_to_reference_depth() {
         data: &source,
         shapes: &source,
     };
-    assert!(display.term(&a, false).unwrap().contains("[ ... ]"));
+    assert_eq!(
+        display.term(&a, false).unwrap(),
+        format!(
+            "{}<http://recursion.too.deep>{}",
+            "[ <urn:p> ".repeat(6),
+            " ]".repeat(6)
+        )
+    );
 }
 
 #[test]
