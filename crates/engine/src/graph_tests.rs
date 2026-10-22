@@ -80,7 +80,7 @@ fn scalar_graph_helpers_reject_ambiguous_and_ill_typed_declarations() {
 }
 
 #[test]
-fn cyclic_blank_descriptions_terminate_and_keep_report_identity() {
+fn cyclic_blank_descriptions_keep_root_and_copy_to_reference_depth() {
     let a: Term = BlankNode::new("a").unwrap().into();
     let b: Term = BlankNode::new("b").unwrap().into();
     let mut source = Dataset::new();
@@ -93,7 +93,7 @@ fn cyclic_blank_descriptions_terminate_and_keep_report_identity() {
     clones
         .copy(&source, &mut report, &iri("urn:", "named").into())
         .unwrap();
-    assert_eq!(report.len(), 2);
+    assert_eq!(report.len(), 5);
     assert_eq!(objects(&report, &a, &iri("urn:", "p")).unwrap().len(), 1);
     let display = crate::display::Display {
         shape_namespaces: vec![],
@@ -169,4 +169,59 @@ fn malformed_lists_and_deep_paths_fail_before_evaluation() {
             .to_string()
             .contains("nesting limit")
     );
+}
+
+#[test]
+fn report_descendants_are_fresh_per_occurrence_but_roots_are_cached() {
+    let root: Term = BlankNode::new("root").unwrap().into();
+    let child: Term = BlankNode::new("child").unwrap().into();
+    let mut source = Dataset::new();
+    add(&mut source, &root, iri("urn:", "p"), child.clone()).unwrap();
+    add(&mut source, &root, iri("urn:", "q"), child.clone()).unwrap();
+    add(
+        &mut source,
+        &child,
+        iri("urn:", "leaf"),
+        Literal::from("value").into(),
+    )
+    .unwrap();
+    let mut report = Dataset::new();
+    let mut clones = ReportClones::default();
+    clones.copy(&source, &mut report, &root).unwrap();
+    let p = objects(&report, &root, &iri("urn:", "p")).unwrap()[0].clone();
+    let q = objects(&report, &root, &iri("urn:", "q")).unwrap()[0].clone();
+    assert_ne!(p, q);
+    assert_ne!(p, child);
+    assert_ne!(q, child);
+    assert_eq!(report.len(), 4);
+    clones.copy(&source, &mut report, &root).unwrap();
+    assert_eq!(report.len(), 4);
+}
+
+#[test]
+fn repeated_scoped_description_triples_do_not_duplicate_descendant_occurrences() {
+    let root: Term = BlankNode::new("root").unwrap().into();
+    let child: Term = BlankNode::new("child").unwrap().into();
+    let mut source = Dataset::new();
+    for graph in ["a", "b"] {
+        source.insert(&Quad::new(
+            subject(&root).unwrap(),
+            iri("urn:", "p"),
+            child.clone(),
+            iri("urn:", graph),
+        ));
+    }
+    add(
+        &mut source,
+        &child,
+        iri("urn:", "leaf"),
+        Literal::from("value").into(),
+    )
+    .unwrap();
+    let mut report = Dataset::new();
+    ReportClones::default()
+        .copy(&source, &mut report, &root)
+        .unwrap();
+    assert_eq!(objects(&report, &root, &iri("urn:", "p")).unwrap().len(), 1);
+    assert_eq!(report.len(), 2);
 }

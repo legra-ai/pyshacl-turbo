@@ -1,4 +1,4 @@
-use std::collections::{HashMap, HashSet, VecDeque};
+use std::collections::HashSet;
 
 use oxigraph::io::{RdfFormat, RdfParser};
 use oxigraph::model::*;
@@ -189,9 +189,8 @@ pub fn add(store: &mut Dataset, s: &Term, p: NamedNode, o: Term) -> Result<()> {
     Ok(())
 }
 
-/// Preserve each directly referenced blank node, and clone its descendants into
-/// a separate report description. Cache roots, matching pySHACL report assembly;
-/// unlike its depth cutoff, use a visited map to handle cycles without truncation.
+/// Cache directly referenced roots by source, preserving their identity. Each
+/// descendant occurrence is fresh; reference report cloning stops at depth 10.
 #[derive(Default)]
 pub(crate) struct ReportClones(HashSet<(usize, Term)>);
 
@@ -210,28 +209,105 @@ impl ReportClones {
         {
             return Ok(());
         }
-        let mut mapping = HashMap::from([(node.clone(), node.clone())]);
-        let mut queue = VecDeque::from([node.clone()]);
+        Self::blank(source, target, node, 0, true)?;
+        Ok(())
+    }
+
+    fn blank(
+        source: &(impl GraphRead + ?Sized),
+        target: &mut Dataset,
+        node: &Term,
+        depth: usize,
+        keep_id: bool,
+    ) -> Result<Term> {
+        let cloned = if keep_id {
+            node.clone()
+        } else {
+            BlankNode::default().into()
+        };
+        // bounded: reference child calls add two; at most six blank frames.
+        if depth >= 10 {
+            return Ok(cloned);
+        }
+        if Self::value(source, node, &iri(RDF, "first"))?.is_some() {
+            Self::list(source, target, node, &cloned, depth)?;
+            return Ok(cloned);
+        }
+        // bounded: deduplicate outgoing report-description edges across contexts.
         let mut seen = HashSet::new();
-        while let Some(node) = queue.pop_front() {
-            if !seen.insert(node.clone()) {
+        for quad in source.matching_quads(Some(subject(node)?.as_ref()), None, None, None) {
+            let quad = quad?;
+            if !seen.insert((quad.predicate.clone(), quad.object.clone())) {
                 continue;
             }
-            let cloned = mapping[&node].clone();
-            for quad in source.matching_quads(Some(subject(&node)?.as_ref()), None, None, None) {
-                let quad = quad?;
-                let object = quad.object;
-                let copied = if matches!(object, Term::BlankNode(_)) {
-                    queue.push_back(object.clone());
-                    mapping
-                        .entry(object)
-                        .or_insert_with(|| BlankNode::default().into())
-                        .clone()
-                } else {
-                    object
-                };
-                add(target, &cloned, quad.predicate, copied)?;
+            let object = Self::object(source, target, &quad.object, depth + 2)?;
+            add(target, &cloned, quad.predicate, object)?;
+        }
+        Ok(cloned)
+    }
+
+    fn object(
+        source: &(impl GraphRead + ?Sized),
+        target: &mut Dataset,
+        node: &Term,
+        depth: usize,
+    ) -> Result<Term> {
+        if matches!(node, Term::BlankNode(_)) {
+            Self::blank(source, target, node, depth, false)
+        } else {
+            Ok(node.clone())
+        }
+    }
+
+    fn value(
+        source: &(impl GraphRead + ?Sized),
+        node: &Term,
+        predicate: &NamedNode,
+    ) -> Result<Option<Term>> {
+        Ok(source
+            .matching_quads(
+                Some(subject(node)?.as_ref()),
+                Some(predicate.as_ref()),
+                None,
+                None,
+            )
+            .next()
+            .transpose()?
+            .map(|quad| quad.object))
+    }
+
+    fn list(
+        source: &(impl GraphRead + ?Sized),
+        target: &mut Dataset,
+        head: &Term,
+        cloned: &Term,
+        depth: usize,
+    ) -> Result<()> {
+        let mut node = Some(head.clone());
+        let mut previous = None;
+        // bounded: one visited cell per emitted list item, no source-wide clone.
+        let mut seen = HashSet::new();
+        while let Some(current) = node {
+            if !seen.insert(current.clone()) {
+                return Err(Error::Invalid(format!("Cyclic RDF list at {current}")));
             }
+            if let Some(item) = Self::value(source, &current, &iri(RDF, "first"))? {
+                let cell = if previous.is_none() {
+                    cloned.clone()
+                } else {
+                    BlankNode::default().into()
+                };
+                if let Some(previous) = previous {
+                    add(target, &previous, iri(RDF, "rest"), cell.clone())?;
+                }
+                let item = Self::object(source, target, &item, depth + 2)?;
+                add(target, &cell, iri(RDF, "first"), item)?;
+                previous = Some(cell);
+            }
+            node = Self::value(source, &current, &iri(RDF, "rest"))?;
+        }
+        if let Some(previous) = previous {
+            add(target, &previous, iri(RDF, "rest"), iri(RDF, "nil").into())?;
         }
         Ok(())
     }
