@@ -12,7 +12,7 @@ EX = Namespace("urn:example:")
 
 
 @pytest.mark.parametrize("kind", ["dataset", "graph"])
-def test_shared_report_clone_warning_rejects_staged_rules(kind):
+def test_shared_report_clone_rejection_discards_staged_rules(monkeypatch, kind):
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", UserWarning)
         note = Literal("invalid", datatype=XSD.boolean, normalize=False)
@@ -30,9 +30,14 @@ def test_shared_report_clone_warning_rejects_staged_rules(kind):
     else:
         owner = data.store.backend._native
         before = set(data)
+
+    def reject_copy(self):
+        raise ValueError("caller rejected report clone")
+
+    monkeypatch.setattr(Literal, "normalize", reject_copy)
     with warnings.catch_warnings():
-        warnings.simplefilter("error", UserWarning)
-        with pytest.raises(UserWarning, match="Parsing weird boolean"):
+        warnings.simplefilter("ignore", UserWarning)
+        with pytest.raises(ValueError, match="caller rejected report clone"):
             turbo.validate(data, shacl_graph=shapes, advanced=True, inplace=True)
     if kind == "dataset":
         assert data._native is owner

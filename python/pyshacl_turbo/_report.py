@@ -1,5 +1,6 @@
 """Format caller-supplied report results without executing SHACL constraints."""
 
+import rdflib
 from rdflib import BNode, Graph, Literal, URIRef
 from rdflib.collection import Collection
 from rdflib.namespace import RDF, SH
@@ -95,10 +96,11 @@ def normalize_native_report_clones(report, *, normalize=None):
             if isinstance(value, BNode):
                 pending.append(value)
             elif isinstance(value, Literal):
-                # Direct runner/report construction honors the caller's setting.
-                # The public entrypoint passes True, matching the reference's
-                # post-load state without changing any process-wide setting.
-                copied = Literal(str(value), value.language, value.datatype, normalize=normalize)
+                # Decoding already constructed the literal under the caller's
+                # conversion/signal policy. Reuse that value instead of parsing
+                # it twice (and emitting duplicate conversion warnings).
+                enabled = rdflib.NORMALIZE_LITERALS if normalize is None else normalize
+                copied = value.normalize() if enabled else value
                 if copied != value:
                     report.remove((node, predicate, value))
                     report.add((node, predicate, copied))

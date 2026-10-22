@@ -119,7 +119,7 @@ def test_direct_report_value_keeps_its_original_lexical_term(monkeypatch, normal
     assert (EX.s, EX.p, value) in data
 
 
-def test_report_clone_warning_as_error_precedes_inplace_rule_commit(monkeypatch):
+def test_report_clone_rejection_precedes_inplace_rule_commit(monkeypatch):
     import warnings
 
     with warnings.catch_warnings():
@@ -136,9 +136,14 @@ def test_report_clone_warning_as_error_precedes_inplace_rule_commit(monkeypatch)
     property_shape = shapes.value(EX.S, SH.property)
     shapes.add((property_shape, EX.note, metadata))
     before = set(shapes)
+
+    def reject_copy(self):
+        raise ValueError("caller rejected report clone")
+
+    monkeypatch.setattr(Literal, "normalize", reject_copy)
     with warnings.catch_warnings():
-        warnings.simplefilter("error", UserWarning)
-        with pytest.raises(UserWarning, match="Parsing weird boolean"):
+        warnings.simplefilter("ignore", UserWarning)
+        with pytest.raises(ValueError, match="caller rejected report clone"):
             turbo.validate(data, shacl_graph=shapes, advanced=True, inplace=True)
     assert not data
     assert set(shapes) == before
@@ -212,3 +217,32 @@ def test_report_copy_policy_preserves_reused_cycles_and_list_paths(monkeypatch, 
     assert list(report.objects(head, RDF.rest)) == [tail]
     assert list(report.objects(tail, RDF.rest)) == [RDF.nil]
     assert rdflib.NORMALIZE_LITERALS is normalize
+
+
+@pytest.mark.parametrize("policy", ["always", "error"])
+def test_report_clone_literal_warning_policy_matches_reference(policy):
+    import warnings
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", UserWarning)
+        metadata = Literal("invalid", datatype=XSD.boolean, normalize=False)
+    data = Graph()
+    data.bind("ex", EX)
+    shapes = Graph().parse(
+        data="""@prefix ex:<urn:example:>. @prefix sh:<http://www.w3.org/ns/shacl#>.
+        ex:S sh:targetNode ex:s;sh:property [sh:path ex:required;sh:minCount 1].""",
+        format="turtle",
+    )
+    shapes.add((shapes.value(EX.S, SH.property), EX.note, metadata))
+    observed = []
+    for validate in (pyshacl.validate, turbo.validate):
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.simplefilter(policy, UserWarning)
+            result = validate(data, shacl_graph=shapes)
+        observed.append((result, [str(warning.message) for warning in caught]))
+    expected, actual = observed
+    assert expected[0][0] == actual[0][0] == False
+    assert isomorphic(actual[0][1], expected[0][1])
+    assert actual[1] == expected[1]
+    # RDFLib catches a warning promoted to an exception during conversion.
+    assert len(actual[1]) == (1 if policy == "always" else 0)
