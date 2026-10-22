@@ -84,3 +84,25 @@ def test_invalid_path_lists_raise_instead_of_returning_a_partial_report(path):
         with pytest.raises((ValueError, pyshacl.errors.ReportableRuntimeError)) as failure:
             validate(data, shacl_graph=shapes)
         assert any(word in str(failure.value).lower() for word in ("list", "path", "collection"))
+
+
+def test_recursive_annotation_list_fails_before_emitting_a_partial_report():
+    source = (
+        PREFIXES
+        + """ex:S sh:targetNode ex:s; sh:property [sh:path ex:required;
+    sh:minCount 1;ex:note _:cycle]. _:cycle rdf:first ex:p; rdf:rest _:cycle."""
+    )
+    for validate in (pyshacl.validate, turbo.validate):
+        with pytest.raises(ValueError, match="(?i)(list|recursive)"):
+            validate(Graph(), shacl_graph=Graph().parse(data=source, format="turtle"))
+
+
+def test_collection_paths_keep_separate_data_and_shape_namespace_bindings():
+    data = Graph().parse(data="@prefix ex:<urn:data:>. ex:s ex:marker ex:value.", format="turtle")
+    shapes = Graph().parse(
+        data="""@prefix ex:<urn:shapes:>. @prefix sh:<http://www.w3.org/ns/shacl#>.
+        <urn:Shape> sh:targetNode <urn:data:s>;
+        sh:property [sh:path (ex:p ex:q);sh:minCount 1].""",
+        format="turtle",
+    )
+    compare_complete(data, shapes)

@@ -119,3 +119,25 @@ fn malformed_and_cyclic_collection_descriptions_fail_before_partial_output() {
         assert!(display.term(&head, false).is_err(), "{source}");
     }
 }
+
+#[test]
+fn collection_descriptions_reject_deep_blank_items_instead_of_truncating() {
+    let mut graph = Dataset::new();
+    let head: Term = BlankNode::new("head").unwrap().into();
+    // bounded: fixed 23-node regression fixture exceeds the display depth limit.
+    let nodes: Vec<Term> = (0..23)
+        .map(|index| BlankNode::new(format!("b{index}")).unwrap().into())
+        .collect();
+    add(&mut graph, &head, iri(RDF, "first"), nodes[0].clone()).unwrap();
+    add(&mut graph, &head, iri(RDF, "rest"), iri(RDF, "nil").into()).unwrap();
+    for pair in nodes.windows(2) {
+        add(&mut graph, &pair[0], iri("urn:", "next"), pair[1].clone()).unwrap();
+    }
+    let display = Display {
+        shape_namespaces: Vec::new(),
+        data_namespaces: Vec::new(),
+        data: &graph,
+        shapes: &graph,
+    };
+    assert!(display.term(&head, false).is_err());
+}

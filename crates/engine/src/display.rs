@@ -75,6 +75,7 @@ impl<G: GraphRead + ?Sized> Display<'_, G> {
             &context.unwrap_or(GraphName::DefaultGraph),
             namespaces,
             &mut HashSet::new(),
+            false,
         )
     }
 
@@ -174,7 +175,9 @@ impl<G: GraphRead + ?Sized> Display<'_, G> {
                 return Err(Error::Invalid(format!("Cyclic RDF list at {node}")));
             }
             let first = Self::collection_value(graph, &node, &iri(RDF, "first"), context)?;
-            text.push_str(&Self::inner(&first, graph, context, namespaces, stack)?);
+            text.push_str(&Self::inner(
+                &first, graph, context, namespaces, stack, true,
+            )?);
             text.push(' ');
             node = Self::collection_value(graph, &node, &iri(RDF, "rest"), context)?;
         }
@@ -189,6 +192,7 @@ impl<G: GraphRead + ?Sized> Display<'_, G> {
         context: &GraphName,
         namespaces: &[(String, String)],
         stack: &mut HashSet<Term>,
+        strict_collection: bool,
     ) -> Result<String> {
         Ok(match term {
             Term::NamedNode(n) => Self::iri_in(n, namespaces),
@@ -207,6 +211,11 @@ impl<G: GraphRead + ?Sized> Display<'_, G> {
                     return Self::collection(term, graph, context, namespaces, stack);
                 }
                 if stack.len() >= 20 || !stack.insert(term.clone()) {
+                    if strict_collection {
+                        return Err(Error::Invalid(
+                            "Cyclic or excessively nested RDF list item description".into(),
+                        ));
+                    }
                     return Ok("[ ... ]".into());
                 }
                 let mut properties = BTreeMap::<String, Vec<String>>::new();
@@ -220,7 +229,14 @@ impl<G: GraphRead + ?Sized> Display<'_, G> {
                     properties
                         .entry(Self::iri_in(&q.predicate, namespaces))
                         .or_default()
-                        .push(Self::inner(&q.object, graph, context, namespaces, stack)?);
+                        .push(Self::inner(
+                            &q.object,
+                            graph,
+                            context,
+                            namespaces,
+                            stack,
+                            strict_collection,
+                        )?);
                 }
                 let mut descriptions = Vec::new();
                 for (p, mut values) in properties {
