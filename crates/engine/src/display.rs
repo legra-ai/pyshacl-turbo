@@ -9,6 +9,13 @@ use oxigraph::model::*;
 use crate::graph::*;
 use crate::{Error, GraphRead, Result};
 
+#[derive(Default)]
+struct DescriptionPath {
+    active: HashSet<Term>,
+    depth: usize,
+    cyclic: bool,
+}
+
 pub(crate) struct Display<'a, G: GraphRead + ?Sized> {
     pub shape_namespaces: Vec<(String, String)>,
     pub data_namespaces: Vec<(String, String)>,
@@ -74,7 +81,7 @@ impl<G: GraphRead + ?Sized> Display<'_, G> {
             graph,
             &context.unwrap_or(GraphName::DefaultGraph),
             namespaces,
-            &mut HashSet::new(),
+            &mut DescriptionPath::default(),
             false,
         )
     }
@@ -159,16 +166,17 @@ impl<G: GraphRead + ?Sized> Display<'_, G> {
         graph: &(impl GraphRead + ?Sized),
         context: &GraphName,
         namespaces: &[(String, String)],
-        stack: &mut HashSet<Term>,
+        stack: &mut DescriptionPath,
     ) -> Result<String> {
         // pySHACL starts blank descriptions at recursion 1 and adds two per
         // nested blank. Its recursion >= 12 boundary is the seventh frame.
-        if stack.len() >= 6 {
+        if stack.active.len() >= 6 {
             return Ok("<http://recursion.too.deep>".into());
         }
-        if !stack.insert(head.clone()) {
+        if !stack.active.insert(head.clone()) {
             return Err(Error::Invalid("Cyclic RDF list description".into()));
         }
+        stack.depth += 1;
         // bounded: one visited cell per emitted collection item, never source-wide.
         let mut cells = HashSet::new();
         let mut node = head.clone();
@@ -185,7 +193,8 @@ impl<G: GraphRead + ?Sized> Display<'_, G> {
             node = Self::collection_value(graph, &node, &iri(RDF, "rest"), context)?;
         }
         text.push(')');
-        stack.remove(head);
+        stack.depth -= 1;
+        stack.active.remove(head);
         Ok(text)
     }
 
@@ -194,7 +203,7 @@ impl<G: GraphRead + ?Sized> Display<'_, G> {
         graph: &(impl GraphRead + ?Sized),
         context: &GraphName,
         namespaces: &[(String, String)],
-        stack: &mut HashSet<Term>,
+        stack: &mut DescriptionPath,
         strict_collection: bool,
     ) -> Result<String> {
         Ok(match term {
@@ -213,15 +222,25 @@ impl<G: GraphRead + ?Sized> Display<'_, G> {
                 if first.is_some() {
                     return Self::collection(term, graph, context, namespaces, stack);
                 }
-                if strict_collection && stack.len() >= 6 {
+                if strict_collection && stack.active.len() >= 6 {
                     return Ok("<http://recursion.too.deep>".into());
                 }
-                if stack.len() >= 20 || !stack.insert(term.clone()) {
-                    if strict_collection {
-                        return Err(Error::Invalid("Cyclic RDF list item description".into()));
-                    }
+                let revisited = stack.active.contains(term);
+                if strict_collection && revisited {
+                    return Err(Error::Invalid("Cyclic RDF list item description".into()));
+                }
+                // Only active cycles enter this reference rendering budget. Acyclic
+                // descriptions retain their existing depth and shared-node behavior.
+                if (stack.cyclic || revisited) && stack.depth >= 6 {
+                    return Ok("<http://recursion.too.deep>".into());
+                }
+                if stack.active.len() >= 20 {
                     return Ok("[ ... ]".into());
                 }
+                let inserted = stack.active.insert(term.clone());
+                let previous_cycle = stack.cyclic;
+                stack.cyclic |= revisited;
+                stack.depth += 1;
                 let mut properties = BTreeMap::<String, Vec<String>>::new();
                 for q in graph.matching_quads(
                     Some(subject(term).expect("blank node").as_ref()),
@@ -248,7 +267,11 @@ impl<G: GraphRead + ?Sized> Display<'_, G> {
                     values.dedup();
                     descriptions.push(format!("{p} {}", values.join(", ")));
                 }
-                stack.remove(term);
+                stack.depth -= 1;
+                stack.cyclic = previous_cycle;
+                if inserted {
+                    stack.active.remove(term);
+                }
                 if descriptions.is_empty() {
                     return Ok("[ ]".into());
                 }

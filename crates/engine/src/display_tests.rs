@@ -157,3 +157,27 @@ fn empty_blank_description_has_one_interior_space() {
     assert_eq!(display.term(&empty, false).unwrap(), "[ ]");
     assert_eq!(display.term(&empty, true).unwrap(), "[ ]");
 }
+
+#[test]
+fn generic_self_cycle_uses_bounded_reference_description_frames() {
+    let graph = parse(
+        "_:head <urn:example:back> _:head.",
+        oxigraph::io::RdfFormat::Turtle,
+        None,
+    )
+    .unwrap();
+    let display = Display {
+        shape_namespaces: Vec::new(),
+        data_namespaces: vec![("ex".into(), "urn:example:".into())],
+        data: &graph,
+        shapes: &graph,
+    };
+    let head: Term = BlankNode::new("head").unwrap().into();
+    let expected = format!(
+        "{}<http://recursion.too.deep>{}",
+        "[ ex:back ".repeat(6),
+        " ]".repeat(6)
+    );
+    assert_eq!(display.term(&head, false).unwrap(), expected);
+    assert_eq!(display.term(&head, false).unwrap(), expected);
+}
