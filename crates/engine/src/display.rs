@@ -249,6 +249,9 @@ impl<G: GraphRead + ?Sized> Display<'_, G> {
                     descriptions.push(format!("{p} {}", values.join(", ")));
                 }
                 stack.remove(term);
+                if descriptions.is_empty() {
+                    return Ok("[ ]".into());
+                }
                 format!("[ {} ]", descriptions.join(" ; "))
             }
         })

@@ -143,3 +143,17 @@ fn collection_descriptions_bound_deep_blank_items_with_reference_sentinel() {
     assert!(text.contains("<http://recursion.too.deep>"));
     assert!(!text.contains("[ ... ]"));
 }
+
+#[test]
+fn empty_blank_description_has_one_interior_space() {
+    let graph = Dataset::new();
+    let display = Display {
+        shape_namespaces: Vec::new(),
+        data_namespaces: Vec::new(),
+        data: &graph,
+        shapes: &graph,
+    };
+    let empty: Term = BlankNode::new("empty").unwrap().into();
+    assert_eq!(display.term(&empty, false).unwrap(), "[ ]");
+    assert_eq!(display.term(&empty, true).unwrap(), "[ ]");
+}
