@@ -105,9 +105,7 @@ def _check_shared_engine(shared):
 def _compile_for_data(shacl_graph, data_graph, shacl_graph_format, advanced, *, rules=False):
     runtime = _shared_runtime(data_graph)
     if runtime is None or (rules and not isinstance(data_graph, runtime.Dataset)):
-        return compile_shapes(
-            shacl_graph, shacl_graph_format=shacl_graph_format, advanced=advanced
-        )
+        return compile_shapes(shacl_graph, shacl_graph_format=shacl_graph_format, advanced=advanced)
     shared = runtime._native
     _check_shared_engine(shared)
     program = CompiledShapes.__new__(CompiledShapes)
