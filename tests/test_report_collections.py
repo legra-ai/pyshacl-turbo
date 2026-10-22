@@ -106,3 +106,39 @@ def test_collection_paths_keep_separate_data_and_shape_namespace_bindings():
         format="turtle",
     )
     compare_complete(data, shapes)
+
+
+def test_valid_deep_collection_uses_reference_display_depth_sentinel():
+    data, shapes = report_inputs(note="(" * 24 + '"deep"' + ")" * 24)
+    reference_shapes = Graph()
+    reference_shapes += shapes
+    for prefix, namespace in shapes.namespaces():
+        reference_shapes.bind(prefix, namespace)
+    expected = pyshacl.validate(data, shacl_graph=reference_shapes)
+    before = set(data), set(shapes)
+    actual = turbo.validate(data, shacl_graph=shapes)
+    assert actual[0] == expected[0] == False
+    assert actual[2] == expected[2]
+    assert "<http://recursion.too.deep>" in actual[2]
+    assert (set(data), set(shapes)) == before
+
+
+def test_reused_collection_item_is_not_an_active_cycle():
+    data = Graph()
+    data.bind("ex", EX)
+    shapes = Graph().parse(
+        data=PREFIXES
+        + """ex:S sh:targetNode ex:s; sh:property [sh:path ex:required;
+        sh:minCount 1;ex:note _:head].
+        _:head rdf:first _:shared; rdf:rest _:tail.
+        _:tail rdf:first _:shared; rdf:rest rdf:nil. _:shared ex:p "same".""",
+        format="turtle",
+    )
+    reference_shapes = Graph()
+    reference_shapes += shapes
+    for prefix, namespace in shapes.namespaces():
+        reference_shapes.bind(prefix, namespace)
+    expected = pyshacl.validate(data, shacl_graph=reference_shapes)
+    actual = turbo.validate(data, shacl_graph=shapes)
+    assert actual[2] == expected[2]
+    assert actual[2].count('[ ex:p Literal("same") ]') == 2

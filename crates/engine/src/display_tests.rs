@@ -121,7 +121,7 @@ fn malformed_and_cyclic_collection_descriptions_fail_before_partial_output() {
 }
 
 #[test]
-fn collection_descriptions_reject_deep_blank_items_instead_of_truncating() {
+fn collection_descriptions_bound_deep_blank_items_with_reference_sentinel() {
     let mut graph = Dataset::new();
     let head: Term = BlankNode::new("head").unwrap().into();
     // bounded: fixed 23-node regression fixture exceeds the display depth limit.
@@ -139,5 +139,7 @@ fn collection_descriptions_reject_deep_blank_items_instead_of_truncating() {
         data: &graph,
         shapes: &graph,
     };
-    assert!(display.term(&head, false).is_err());
+    let text = display.term(&head, false).unwrap();
+    assert!(text.contains("<http://recursion.too.deep>"));
+    assert!(!text.contains("[ ... ]"));
 }

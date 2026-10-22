@@ -161,10 +161,13 @@ impl<G: GraphRead + ?Sized> Display<'_, G> {
         namespaces: &[(String, String)],
         stack: &mut HashSet<Term>,
     ) -> Result<String> {
-        if stack.len() >= 20 || !stack.insert(head.clone()) {
-            return Err(Error::Invalid(
-                "Cyclic or excessively nested RDF list description".into(),
-            ));
+        // pySHACL starts blank descriptions at recursion 1 and adds two per
+        // nested blank. Its recursion >= 12 boundary is the seventh frame.
+        if stack.len() >= 6 {
+            return Ok("<http://recursion.too.deep>".into());
+        }
+        if !stack.insert(head.clone()) {
+            return Err(Error::Invalid("Cyclic RDF list description".into()));
         }
         // bounded: one visited cell per emitted collection item, never source-wide.
         let mut cells = HashSet::new();
@@ -210,11 +213,12 @@ impl<G: GraphRead + ?Sized> Display<'_, G> {
                 if first.is_some() {
                     return Self::collection(term, graph, context, namespaces, stack);
                 }
+                if strict_collection && stack.len() >= 6 {
+                    return Ok("<http://recursion.too.deep>".into());
+                }
                 if stack.len() >= 20 || !stack.insert(term.clone()) {
                     if strict_collection {
-                        return Err(Error::Invalid(
-                            "Cyclic or excessively nested RDF list item description".into(),
-                        ));
+                        return Err(Error::Invalid("Cyclic RDF list item description".into()));
                     }
                     return Ok("[ ... ]".into());
                 }
