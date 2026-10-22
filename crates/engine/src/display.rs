@@ -2,6 +2,8 @@
 
 use std::collections::{BTreeMap, HashSet};
 
+use bigdecimal::BigDecimal;
+use num_bigint::BigInt;
 use oxigraph::model::*;
 
 use crate::graph::*;
@@ -92,6 +94,46 @@ impl<G: GraphRead + ?Sized> Display<'_, G> {
         }
     }
 
+    fn literal(literal: &Literal, namespaces: &[(String, String)]) -> String {
+        // Human-readable pySHACL descriptions contain raw lexical text, rather
+        // than N-Triples escapes. RDF serialization keeps its separate formatter.
+        let mut value = format!("\"{}\"", literal.value());
+        let scalar = match literal.datatype().as_str().strip_prefix(XSD) {
+            Some("boolean") => match literal.value() {
+                "true" | "1" => Some("True".into()),
+                "false" | "0" => Some("False".into()),
+                _ => None,
+            },
+            Some(
+                "integer" | "long" | "int" | "short" | "byte" | "unsignedLong" | "unsignedInt"
+                | "unsignedShort" | "unsignedByte" | "nonNegativeInteger" | "positiveInteger"
+                | "nonPositiveInteger" | "negativeInteger",
+            ) => literal
+                .value()
+                .parse::<BigInt>()
+                .ok()
+                .map(|value| value.to_string()),
+            Some("decimal") => literal
+                .value()
+                .parse::<BigDecimal>()
+                .ok()
+                .map(|value| value.to_string()),
+            _ => None,
+        };
+        if let Some(scalar) = scalar.filter(|scalar| scalar != literal.value()) {
+            value.push_str(&format!(" = {scalar}"));
+        }
+        if let Some(language) = literal.language() {
+            value.push_str(&format!(", lang={language}"));
+        } else if literal.has_explicit_datatype() {
+            value.push_str(&format!(
+                ", datatype={}",
+                Self::iri_in(&literal.datatype().into_owned(), namespaces)
+            ));
+        }
+        format!("Literal({value})")
+    }
+
     fn inner(
         term: &Term,
         graph: &(impl GraphRead + ?Sized),
@@ -101,19 +143,7 @@ impl<G: GraphRead + ?Sized> Display<'_, G> {
     ) -> Result<String> {
         Ok(match term {
             Term::NamedNode(n) => Self::iri_in(n, namespaces),
-            Term::Literal(l) => {
-                let text = Literal::new_simple_literal(l.value()).to_string();
-                if let Some(language) = l.language() {
-                    format!("{text}@{language}")
-                } else if l.datatype() == iri(XSD, "string").as_ref() {
-                    text
-                } else {
-                    format!(
-                        "{text}^^{}",
-                        Self::iri_in(&l.datatype().into_owned(), namespaces)
-                    )
-                }
-            }
+            Term::Literal(literal) => Self::literal(literal, namespaces),
             Term::BlankNode(_) => {
                 if stack.len() >= 20 || !stack.insert(term.clone()) {
                     return Ok("[ ... ]".into());
@@ -143,3 +173,7 @@ impl<G: GraphRead + ?Sized> Display<'_, G> {
         })
     }
 }
+
+#[cfg(test)]
+#[path = "display_tests.rs"]
+mod tests;
