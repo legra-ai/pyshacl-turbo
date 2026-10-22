@@ -62,7 +62,8 @@ include = [
     {path = "rustfmt-toolchain", format = "sdist"},
     {path = "Makefile", format = "sdist"},
 ]
-exclude = ["**/target/**/*", "**/__pycache__/**/*", "**/.pytest_cache/**/*", "**/.ruff_cache/**/*", "**/CHANGELOG*", "crates/engine/build.rs", ".cargo/**/*"]
+# Hook probes need the checkout-only installer, which is excluded with its opt-in.
+exclude = ["**/target/**/*", "**/__pycache__/**/*", "**/.pytest_cache/**/*", "**/.ruff_cache/**/*", "**/CHANGELOG*", "crates/engine/build.rs", "tests/test_rhusky_build_root.py", ".cargo/**/*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
