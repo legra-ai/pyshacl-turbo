@@ -11,7 +11,7 @@ publish = false
 include = ["src/**", "tests/**", "Cargo.toml", "LICENSE-MIT", "LICENSE-APACHE"]
 
 [build-dependencies]
-rhusky = "=0.0.6"
+rhusky = "=2.0.1"
 
 [package.metadata.version-info]
 pre_bump_hooks = ["uv run --no-project python scripts/sync_version.py {{version}}"]
