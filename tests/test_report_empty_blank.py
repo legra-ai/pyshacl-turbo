@@ -24,7 +24,7 @@ CASES = {
     "focus": ("", "ex:S sh:targetNode _:empty;sh:class ex:Required."),
     "value": (
         "ex:s ex:p [].",
-        "ex:S sh:targetNode ex:s;sh:property [sh:path ex:p;sh:nodeKind sh:IRI].",
+        "ex:S sh:targetNode ex:s;sh:property [sh:path ex:p;sh:class ex:Required].",
     ),
     "nonempty-control": (
         "",
