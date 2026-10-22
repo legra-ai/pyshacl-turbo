@@ -163,6 +163,7 @@ class CompiledShapes:
         *,
         data_graph_format=None,
         inplace=False,
+        inference=None,
         iterate_rules=False,
         max_rule_iterations=100,
         max_validation_depth=15,
@@ -205,6 +206,8 @@ class CompiledShapes:
                 "focus_nodes": _expand_names(data_namespaces, focus_nodes),
                 "use_shapes": _expand_names(self.graph, use_shapes),
             }
+            if inference not in (None, "none"):
+                settings["inference"] = inference
             try:
                 with execute(self._shared_program, json.dumps(settings), inplace) as result:
                     conforms, report, text, recursion_warnings = result
@@ -221,6 +224,10 @@ class CompiledShapes:
             except shared.SharedValidationFailure as failure:
                 raise ValidationFailure(str(failure)) from failure
             return conforms, report_graph, text
+        if inference not in (None, "none"):
+            raise NotImplementedError(
+                "CompiledShapes.validate pre-inference requires a native source; use validate for serialized inputs"
+            )
         if inplace and not (
             isinstance(data_graph, (Graph, Input)) or is_oxigraph_store(data_graph)
         ):
@@ -438,14 +445,18 @@ def validate(
         )
     original = data_graph
     original_snapshot = _input(data_graph) if is_oxigraph_store(data_graph) else None
-    data_graph = _prepare_data(
-        replace(original_snapshot) if original_snapshot is not None else data_graph,
-        data_graph_format,
-        ont_graph,
-        ont_graph_format,
-        inference,
-        do_owl_imports,
-    )
+    native_validation = _shared_runtime(data_graph) is not None and ont_graph is None
+    if native_validation and check_dash and inference not in (None, "none"):
+        raise NotImplementedError("Native pre-inference with check_dash_result is not implemented")
+    if not native_validation:
+        data_graph = _prepare_data(
+            replace(original_snapshot) if original_snapshot is not None else data_graph,
+            data_graph_format,
+            ont_graph,
+            ont_graph_format,
+            inference,
+            do_owl_imports,
+        )
     if check_dash:
         snapshot = _input(data_graph, data_graph_format)
         data_graph = Input(
@@ -461,6 +472,7 @@ def validate(
         data_graph,
         data_graph_format=data_graph_format,
         inplace=inplace or check_dash,
+        inference=inference if native_validation else None,
         iterate_rules=iterate_rules,
         max_rule_iterations=max_rule_iterations,
         max_validation_depth=max_validation_depth,
