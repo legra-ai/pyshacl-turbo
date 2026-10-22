@@ -42,6 +42,26 @@ def test_protocol_one_source_requires_a_borrowed_validation_adapter(monkeypatch)
         program.validate(data)
 
 
+def test_native_graph_focus_nodes_use_the_data_namespace_mapping():
+    calls = []
+    shapes = Graph().parse(data=SHAPES)
+    shapes.bind("ex", "urn:shapes:")
+    program = turbo.compile_shapes(shapes)
+    expected = program.validate(Graph())
+    report = expected[1].serialize(format="nt")
+
+    class NativeGraphView(Graph):
+        def _validate_shared_shapes(self, compiled, settings, inplace):
+            calls.append(json.loads(settings))
+            return nullcontext((expected[0], report, expected[2], []))
+
+    data = NativeGraphView()
+    data.bind("ex", "urn:data:")
+    program._shared_program = object()
+    program.validate(data, focus_nodes=["ex:s"])
+    assert calls[0]["focus_nodes"] == ["urn:data:s"]
+
+
 def test_facade_protocol_preserves_options_reports_reuse_and_failure_type(monkeypatch):
     data = rdflib_turbo.Dataset()
     calls = []
