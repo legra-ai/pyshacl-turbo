@@ -137,13 +137,13 @@ def test_report_clone_rejection_precedes_inplace_rule_commit(monkeypatch):
     shapes.add((property_shape, EX.note, metadata))
     before = set(shapes)
 
-    def reject_copy(self):
-        raise ValueError("caller rejected report clone")
+    def reject_copy(*args, **kwargs):
+        raise KeyboardInterrupt("caller rejected report clone")
 
-    monkeypatch.setattr(Literal, "normalize", reject_copy)
+    monkeypatch.setattr(warnings, "showwarning", reject_copy)
     with warnings.catch_warnings():
-        warnings.simplefilter("ignore", UserWarning)
-        with pytest.raises(ValueError, match="caller rejected report clone"):
+        warnings.simplefilter("always", UserWarning)
+        with pytest.raises(KeyboardInterrupt, match="caller rejected report clone"):
             turbo.validate(data, shacl_graph=shapes, advanced=True, inplace=True)
     assert not data
     assert set(shapes) == before
@@ -183,7 +183,8 @@ def test_direct_runner_and_compiled_reports_honor_current_normalization(
 
 @pytest.mark.parametrize("normalize", [False, True])
 def test_report_copy_policy_preserves_reused_cycles_and_list_paths(monkeypatch, normalize):
-    from pyshacl_turbo._report import normalize_native_report_clones
+    from pyshacl_turbo.rdf import decode
+    from pyshacl_turbo.term_input import _TermBatch
 
     monkeypatch.setattr(rdflib, "NORMALIZE_LITERALS", normalize)
     report = Graph()
@@ -206,7 +207,13 @@ def test_report_copy_policy_preserves_reused_cycles_and_list_paths(monkeypatch, 
         (tail, RDF.rest, RDF.nil),
     ):
         report.add(triple)
-    assert normalize_native_report_clones(report) is report
+    before = set(report)
+    batch = _TermBatch({})
+    for triple in report:
+        batch.append(*triple)
+    decoded = decode((batch.records, batch.quads), preserve_ids=True, report=True)
+    assert set(report) == before
+    report = decoded
     assert len(report) == 12
     assert report.value(result, SH.value) == integer
     assert report.value(shape, EX.self) == shape
@@ -246,3 +253,64 @@ def test_report_clone_literal_warning_policy_matches_reference(policy):
     assert actual[1] == expected[1]
     # RDFLib catches a warning promoted to an exception during conversion.
     assert len(actual[1]) == (1 if policy == "always" else 0)
+
+
+@pytest.mark.parametrize(
+    "datatype,lexical",
+    [(XSD.hexBinary, "0a0B"), (XSD.base64Binary, "AQID"), (XSD.base64Binary, "aGVsbG8=")],
+)
+@pytest.mark.parametrize("normalize", [False, True])
+@pytest.mark.parametrize("document", [False, True])
+def test_binary_report_copies_match_reference_without_changing_input(
+    monkeypatch, datatype, lexical, normalize, document
+):
+    monkeypatch.setattr(rdflib, "NORMALIZE_LITERALS", normalize)
+    original = Literal(lexical, datatype=datatype, normalize=False)
+    source = "@prefix ex:<urn:example:>. ex:s ex:p ex:o."
+    data = source if document else Graph().parse(data=source, format="turtle")
+    shapes = Graph().parse(
+        data="""@prefix ex:<urn:example:>. @prefix sh:<http://www.w3.org/ns/shacl#>.
+        ex:S sh:targetNode ex:s;sh:property [sh:path ex:required;sh:minCount 1].""",
+        format="turtle",
+    )
+    node = shapes.value(EX.S, SH.property)
+    shapes.add((node, EX.note, original))
+    expected = pyshacl.validate(data, shacl_graph=shapes)
+    monkeypatch.setattr(rdflib, "NORMALIZE_LITERALS", normalize)
+    before = set(shapes)
+    actual = turbo.validate(data, shacl_graph=shapes)
+    assert actual[0] == expected[0] == False
+    assert isomorphic(actual[1], expected[1])
+    assert set(actual[1].objects(None, EX.note)) == set(expected[1].objects(None, EX.note))
+    assert set(shapes) == before
+    assert (node, EX.note, original) in shapes
+    assert rdflib.NORMALIZE_LITERALS is normalize
+
+
+@pytest.mark.parametrize("document", [False, True])
+def test_report_literal_converter_runs_once_per_copied_occurrence(monkeypatch, document):
+    import rdflib.term
+
+    note = Literal("opaque", datatype=EX.custom, normalize=False)
+    source = "@prefix ex:<urn:example:>. ex:s ex:p ex:o."
+    data = source if document else Graph().parse(data=source, format="turtle")
+    shapes = Graph().parse(
+        data="""@prefix ex:<urn:example:>. @prefix sh:<http://www.w3.org/ns/shacl#>.
+        ex:S sh:targetNode ex:s;sh:property [sh:path ex:required;sh:minCount 1].""",
+        format="turtle",
+    )
+    shapes.add((shapes.value(EX.S, SH.property), EX.note, note))
+    calls = []
+
+    def convert(value):
+        calls.append(value)
+        return value
+
+    monkeypatch.setitem(rdflib.term._toPythonMapping, EX.custom, convert)
+    expected = pyshacl.validate(data, shacl_graph=shapes)
+    assert calls == ["opaque"]
+    calls.clear()
+    actual = turbo.validate(data, shacl_graph=shapes)
+    assert calls == ["opaque"]
+    assert actual[2] == expected[2]
+    assert isomorphic(actual[1], expected[1])

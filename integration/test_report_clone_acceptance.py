@@ -31,13 +31,13 @@ def test_shared_report_clone_rejection_discards_staged_rules(monkeypatch, kind):
         owner = data.store.backend._native
         before = set(data)
 
-    def reject_copy(self):
-        raise ValueError("caller rejected report clone")
+    def reject_copy(*args, **kwargs):
+        raise KeyboardInterrupt("caller rejected report clone")
 
-    monkeypatch.setattr(Literal, "normalize", reject_copy)
+    monkeypatch.setattr(warnings, "showwarning", reject_copy)
     with warnings.catch_warnings():
-        warnings.simplefilter("ignore", UserWarning)
-        with pytest.raises(ValueError, match="caller rejected report clone"):
+        warnings.simplefilter("always", UserWarning)
+        with pytest.raises(KeyboardInterrupt, match="caller rejected report clone"):
             turbo.validate(data, shacl_graph=shapes, advanced=True, inplace=True)
     if kind == "dataset":
         assert data._native is owner

@@ -13,7 +13,6 @@ from pathlib import Path
 from rdflib import BNode, Dataset, Graph, Literal, URIRef
 
 from . import _native
-from ._report import normalize_native_report_clones
 from .errors import ReportableRuntimeError, ShapeRecursionWarning, ValidationWarning
 from .graph_abstraction import _reject_native_store_graph
 from .rdf import (
@@ -210,8 +209,11 @@ class CompiledShapes:
                 with execute(self._shared_program, json.dumps(settings), inplace) as result:
                     conforms, report, text, recursion_warnings = result
                     _emit_recursion_warnings(recursion_warnings)
-                    report_graph = normalize_native_report_clones(
-                        _graph(report, self._blank_nodes, preserve_ids=True),
+                    report_graph = _graph(
+                        report,
+                        self._blank_nodes,
+                        preserve_ids=True,
+                        report=True,
                         normalize=_normalize_report_literals,
                     )
                     for prefix, namespace in self.graph.namespaces():
@@ -241,8 +243,8 @@ class CompiledShapes:
         )
         _emit_recursion_warnings(recursion_warnings)
         nodes = self._blank_nodes | data.blank_nodes
-        report_graph = normalize_native_report_clones(
-            _graph(report, nodes, preserve_ids=True), normalize=_normalize_report_literals
+        report_graph = _graph(
+            report, nodes, preserve_ids=True, report=True, normalize=_normalize_report_literals
         )
         for prefix, namespace in self.graph.namespaces():
             report_graph.bind(prefix, namespace)

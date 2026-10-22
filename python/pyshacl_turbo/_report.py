@@ -1,6 +1,5 @@
 """Format caller-supplied report results without executing SHACL constraints."""
 
-import rdflib
 from rdflib import BNode, Graph, Literal, URIRef
 from rdflib.collection import Collection
 from rdflib.namespace import RDF, SH
@@ -70,38 +69,3 @@ class ReportBuilder:
         if isinstance(node, URIRef):
             return URIRef(str(node))
         raise ValueError(f"Cannot clone node of type {type(node)}")
-
-
-def normalize_native_report_clones(report, *, normalize=None):
-    """Match reference literal construction only inside copied blank descriptions."""
-    pending = []
-    for result in report.subjects(RDF.type, SH.ValidationResult):
-        for predicate in (
-            SH.sourceShape,
-            SH.focusNode,
-            SH.value,
-            SH.resultPath,
-            SH.sourceConstraint,
-        ):
-            pending.extend(
-                node for node in report.objects(result, predicate) if isinstance(node, BNode)
-            )
-    seen = set()
-    while pending:
-        node = pending.pop()
-        if node in seen:
-            continue
-        seen.add(node)
-        for predicate, value in list(report.predicate_objects(node)):
-            if isinstance(value, BNode):
-                pending.append(value)
-            elif isinstance(value, Literal):
-                # Decoding already constructed the literal under the caller's
-                # conversion/signal policy. Reuse that value instead of parsing
-                # it twice (and emitting duplicate conversion warnings).
-                enabled = rdflib.NORMALIZE_LITERALS if normalize is None else normalize
-                copied = value.normalize() if enabled else value
-                if copied != value:
-                    report.remove((node, predicate, value))
-                    report.add((node, predicate, copied))
-    return report
