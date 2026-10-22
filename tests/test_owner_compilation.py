@@ -84,6 +84,24 @@ def test_failed_report_decode_never_accepts_shared_output(provider, monkeypatch)
 
 
 @pytest.mark.parametrize("rules", [False, True])
+def test_shared_compile_failure_retains_public_failure_type(provider, monkeypatch, rules):
+    def invalid(*args):
+        raise shared.SharedValidationFailure("invalid shape declaration")
+
+    monkeypatch.setattr(shared, "SharedShapes", invalid)
+    data = rdflib_turbo.Dataset()
+    if rules:
+        with pytest.raises(turbo.ValidationFailure, match="invalid shape declaration"):
+            turbo.shacl_rules(data, shacl_graph=SHAPES, inplace=True)
+    else:
+        conforms, failure, text = turbo.validate(data, shacl_graph=SHAPES, inplace=True)
+        assert not conforms
+        assert isinstance(failure, turbo.ValidationFailure)
+        assert "invalid shape declaration" in text
+    assert not provider
+
+
+@pytest.mark.parametrize("rules", [False, True])
 def test_real_shared_invalid_shapes_do_not_write(monkeypatch, rules):
     def unexpected(*args, **kwargs):
         raise AssertionError("standalone compiler used for native input")
