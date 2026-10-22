@@ -13,6 +13,7 @@ from pathlib import Path
 from rdflib import BNode, Dataset, Graph, Literal, URIRef
 
 from . import _native
+from ._report import normalize_native_report_clones
 from .errors import ReportableRuntimeError, ShapeRecursionWarning, ValidationWarning
 from .graph_abstraction import _reject_native_store_graph
 from .rdf import (
@@ -171,6 +172,7 @@ class CompiledShapes:
         abort_on_first=False,
         focus_nodes=None,
         use_shapes=None,
+        _normalize_report_literals=None,
     ):
         runtime = _shared_runtime(data_graph)
         if runtime is not None:
@@ -208,7 +210,10 @@ class CompiledShapes:
                 with execute(self._shared_program, json.dumps(settings), inplace) as result:
                     conforms, report, text, recursion_warnings = result
                     _emit_recursion_warnings(recursion_warnings)
-                    report_graph = _graph(report, self._blank_nodes, preserve_ids=True)
+                    report_graph = normalize_native_report_clones(
+                        _graph(report, self._blank_nodes, preserve_ids=True),
+                        normalize=_normalize_report_literals,
+                    )
                     for prefix, namespace in self.graph.namespaces():
                         report_graph.bind(prefix, namespace)
             except shared.SharedValidationFailure as failure:
@@ -236,7 +241,9 @@ class CompiledShapes:
         )
         _emit_recursion_warnings(recursion_warnings)
         nodes = self._blank_nodes | data.blank_nodes
-        report_graph = _graph(report, nodes, preserve_ids=True)
+        report_graph = normalize_native_report_clones(
+            _graph(report, nodes, preserve_ids=True), normalize=_normalize_report_literals
+        )
         for prefix, namespace in self.graph.namespaces():
             report_graph.bind(prefix, namespace)
         if inplace:
@@ -363,6 +370,7 @@ def validate(
     sparql_mode=False,
     **kwargs,
 ):
+    report_normalize = kwargs.pop("_normalize_report_literals", True)
     check_dash = kwargs.pop("check_dash_result", False)
     meta_shacl = kwargs.pop("meta_shacl", kwargs.pop("metashacl", False))
     abort_on_first = kwargs.pop("abort_on_error", abort_on_first)
@@ -459,6 +467,7 @@ def validate(
         abort_on_first=abort_on_first,
         focus_nodes=focus_nodes,
         use_shapes=use_shapes,
+        _normalize_report_literals=report_normalize,
     )
     if inplace and isinstance(original, Graph) and original is not data_graph:
         merge_graph(original, load_from_source(data_graph))

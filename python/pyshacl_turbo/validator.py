@@ -53,5 +53,9 @@ class Validator(Runner):
             if key not in {"logger", "use_js", "sparql_mode", "inference", "inplace"}
         }
         return validate.__wrapped__(
-            target.impl, shacl_graph=self.shacl_graph.graph, inplace=True, **options
+            target.impl,
+            shacl_graph=self.shacl_graph.graph,
+            inplace=True,
+            _normalize_report_literals=None,
+            **options,
         )

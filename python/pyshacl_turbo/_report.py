@@ -69,3 +69,37 @@ class ReportBuilder:
         if isinstance(node, URIRef):
             return URIRef(str(node))
         raise ValueError(f"Cannot clone node of type {type(node)}")
+
+
+def normalize_native_report_clones(report, *, normalize=None):
+    """Match reference literal construction only inside copied blank descriptions."""
+    pending = []
+    for result in report.subjects(RDF.type, SH.ValidationResult):
+        for predicate in (
+            SH.sourceShape,
+            SH.focusNode,
+            SH.value,
+            SH.resultPath,
+            SH.sourceConstraint,
+        ):
+            pending.extend(
+                node for node in report.objects(result, predicate) if isinstance(node, BNode)
+            )
+    seen = set()
+    while pending:
+        node = pending.pop()
+        if node in seen:
+            continue
+        seen.add(node)
+        for predicate, value in list(report.predicate_objects(node)):
+            if isinstance(value, BNode):
+                pending.append(value)
+            elif isinstance(value, Literal):
+                # Direct runner/report construction honors the caller's setting.
+                # The public entrypoint passes True, matching the reference's
+                # post-load state without changing any process-wide setting.
+                copied = Literal(str(value), value.language, value.datatype, normalize=normalize)
+                if copied != value:
+                    report.remove((node, predicate, value))
+                    report.add((node, predicate, copied))
+    return report
