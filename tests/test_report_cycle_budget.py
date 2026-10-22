@@ -40,7 +40,12 @@ def observe(engine, case, leading, prefix):
         conforms, report, text = implementation.validate(data, shacl_graph=shapes)
         result.append({"conforms": conforms, "graph": report.serialize(format="nt"), "text": text})
     if engine == "candidate":
-        assert before == (set(data), set(shapes), tuple(data.namespaces()), tuple(shapes.namespaces()))
+        assert before == (
+            set(data),
+            set(shapes),
+            tuple(data.namespaces()),
+            tuple(shapes.namespaces()),
+        )
     return result
 
 
@@ -52,7 +57,10 @@ def test_generic_cycle_complete_report_matches_fresh_reference(case, leading, pr
     for engine in ("reference", "candidate"):
         process = subprocess.run(
             [sys.executable, str(Path(__file__).resolve()), engine, case, str(leading), prefix],
-            text=True, capture_output=True, check=True, timeout=30,
+            text=True,
+            capture_output=True,
+            check=True,
+            timeout=30,
         )
         observations.append(json.loads(process.stdout))
     for expected, actual in zip(*observations, strict=True):
