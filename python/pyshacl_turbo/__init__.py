@@ -166,7 +166,7 @@ class CompiledShapes:
                 raise RuntimeError("Native source does not implement borrowed SHACL validation")
             data_namespaces = (
                 dict(data_graph.namespaces())
-                if isinstance(data_graph, runtime.Dataset)
+                if isinstance(data_graph, (runtime.Dataset, Graph))
                 else dict(self.graph.namespaces())
             )
             settings = {
