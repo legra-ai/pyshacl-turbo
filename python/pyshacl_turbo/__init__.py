@@ -95,18 +95,46 @@ def _compile_native(source, advanced, numeric_booleans, namespaces):
     )
 
 
+def _check_shared_engine(shared):
+    if getattr(shared, "SHARED_SHACL_PROTOCOL", None) != 1:
+        raise RuntimeError("rdflib-turbo does not implement shared SHACL protocol 1")
+    if shared.SHACL_ENGINE_FINGERPRINT != _native.SHACL_ENGINE_FINGERPRINT:
+        raise RuntimeError("rdflib-turbo and pyshacl-turbo have different SHACL engine sources")
+
+
+def _compile_for_data(shacl_graph, data_graph, shacl_graph_format, advanced, *, rules=False):
+    runtime = _shared_runtime(data_graph)
+    if runtime is None or (rules and not isinstance(data_graph, runtime.Dataset)):
+        return compile_shapes(shacl_graph, shacl_graph_format=shacl_graph_format, advanced=advanced)
+    shared = runtime._native
+    _check_shared_engine(shared)
+    program = CompiledShapes.__new__(CompiledShapes)
+    program._prepare(shacl_graph, shacl_graph_format, advanced)
+    source, advanced, namespaces, numeric_booleans = program._shared_spec
+    try:
+        program._shared_program = shared.SharedShapes(
+            source, advanced, list(namespaces), numeric_booleans
+        )
+    except shared.SharedValidationFailure as failure:
+        raise ValidationFailure(str(failure)) from failure
+    return program
+
+
 class CompiledShapes:
     """Reusable immutable shapes; native Dataset validation borrows its runtime."""
 
     def __init__(self, shacl_graph, *, shacl_graph_format=None, advanced=False):
+        self._prepare(shacl_graph, shacl_graph_format, advanced)
+        source, advanced, namespaces, numeric_booleans = self._shared_spec
+        self._native, _ = _compile_native(source, advanced, numeric_booleans, namespaces)
+
+    def _prepare(self, shacl_graph, shacl_graph_format, advanced):
         _reject_native_store_graph(shacl_graph)
         self.graph = load_from_source(shacl_graph, rdf_format=shacl_graph_format)
         self._blank_nodes = {}
         source = _native.canonical_shapes(shape_batches(self.graph, self._blank_nodes))
         namespaces = tuple((p, str(ns)) for p, ns in self.graph.namespaces())
-        self._native, source = _compile_native(
-            source, advanced, isinstance(shacl_graph, Graph), namespaces
-        )
+        self._native = None
         self._shared_spec = (
             source,
             advanced,
@@ -150,12 +178,7 @@ class CompiledShapes:
                 raise ValueError("data_graph_format is unavailable for a native source")
             from rdflib_turbo import _native as shared
 
-            if getattr(shared, "SHARED_SHACL_PROTOCOL", None) != 1:
-                raise RuntimeError("rdflib-turbo does not implement shared SHACL protocol 1")
-            if shared.SHACL_ENGINE_FINGERPRINT != _native.SHACL_ENGINE_FINGERPRINT:
-                raise RuntimeError(
-                    "rdflib-turbo and pyshacl-turbo have different SHACL engine sources"
-                )
+            _check_shared_engine(shared)
             if self._shared_program is None:
                 source, advanced, namespaces, numeric_booleans = self._shared_spec
                 self._shared_program = shared.SharedShapes(
@@ -227,10 +250,7 @@ class CompiledShapes:
         if data_graph_format is not None:
             raise ValueError("data_graph_format is unavailable for a native Dataset")
         shared = runtime._native
-        if getattr(shared, "SHARED_SHACL_PROTOCOL", None) != 1:
-            raise RuntimeError("rdflib-turbo does not implement shared SHACL protocol 1")
-        if shared.SHACL_ENGINE_FINGERPRINT != _native.SHACL_ENGINE_FINGERPRINT:
-            raise RuntimeError("rdflib-turbo and pyshacl-turbo have different SHACL engine sources")
+        _check_shared_engine(shared)
         if self._shared_program is None:
             source, advanced, namespaces, numeric_booleans = self._shared_spec
             self._shared_program = shared.SharedShapes(
@@ -416,7 +436,6 @@ def validate(
         inference,
         do_owl_imports,
     )
-    program = compile_shapes(shacl_graph, shacl_graph_format=shacl_graph_format, advanced=advanced)
     if check_dash:
         snapshot = _input(data_graph, data_graph_format)
         data_graph = Input(
@@ -427,6 +446,7 @@ def validate(
             snapshot.namespaces,
             snapshot.preserve_ids,
         )
+    program = _compile_for_data(shacl_graph, data_graph, shacl_graph_format, advanced)
     result = program.validate(
         data_graph,
         data_graph_format=data_graph_format,
@@ -497,8 +517,8 @@ def shacl_rules(
         shacl_graph = load_from_source(
             shacl_graph, rdf_format=shacl_graph_format, do_owl_imports=True
         )
-    result = compile_shapes(
-        shacl_graph, shacl_graph_format=shacl_graph_format, advanced=advanced
+    result = _compile_for_data(
+        shacl_graph, data_graph, shacl_graph_format, advanced, rules=True
     ).shacl_rules(
         data_graph,
         data_graph_format=data_graph_format,
