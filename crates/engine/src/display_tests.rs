@@ -68,3 +68,54 @@ fn report_literals_match_pinned_reference_lexical_identity() {
         assert_eq!(render(literal.clone()), expected, "{literal}");
     }
 }
+
+#[test]
+fn collection_descriptions_keep_order_exact_terms_and_selected_context() {
+    let graph = parse_dataset(
+        "@prefix ex:<urn:example:>. @prefix rdf:<http://www.w3.org/1999/02/22-rdf-syntax-ns#>. \
+         @prefix xsd:<http://www.w3.org/2001/XMLSchema#>. \
+         ex:g { _:head rdf:first \"z\"; rdf:rest _:tail. \
+         _:tail rdf:first _:inner; rdf:rest rdf:nil. \
+         _:inner rdf:first \"same\"^^xsd:string; rdf:rest _:last. \
+         _:last rdf:first \"français\"@fr; rdf:rest rdf:nil. } \
+         ex:other { _:head rdf:first \"WRONG\";rdf:rest rdf:nil. } \
+         ex:aaa { _:inner rdf:first \"WRONG\";rdf:rest rdf:nil. }",
+        oxigraph::io::RdfFormat::TriG,
+        None,
+    )
+    .unwrap();
+    let namespaces = vec![
+        ("ex".into(), "urn:example:".into()),
+        ("xsd".into(), XSD.into()),
+        ("rdf".into(), RDF.into()),
+    ];
+    let display = Display {
+        shape_namespaces: namespaces.clone(),
+        data_namespaces: namespaces,
+        data: &graph,
+        shapes: &graph,
+    };
+    let head: Term = BlankNode::new("head").unwrap().into();
+    assert_eq!(
+        display.term(&head, false).unwrap(),
+        "( Literal(\"z\") ( Literal(\"same\", datatype=xsd:string) Literal(\"français\", lang=fr) ) )"
+    );
+}
+
+#[test]
+fn malformed_and_cyclic_collection_descriptions_fail_before_partial_output() {
+    for source in [
+        "_:head <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> <urn:p>.",
+        "_:head <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> <urn:p>; <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> _:head.",
+    ] {
+        let graph = parse(source, oxigraph::io::RdfFormat::Turtle, None).unwrap();
+        let display = Display {
+            shape_namespaces: Vec::new(),
+            data_namespaces: Vec::new(),
+            data: &graph,
+            shapes: &graph,
+        };
+        let head: Term = BlankNode::new("head").unwrap().into();
+        assert!(display.term(&head, false).is_err(), "{source}");
+    }
+}

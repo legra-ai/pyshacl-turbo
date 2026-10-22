@@ -7,7 +7,7 @@ use num_bigint::BigInt;
 use oxigraph::model::*;
 
 use crate::graph::*;
-use crate::{GraphRead, Result};
+use crate::{Error, GraphRead, Result};
 
 pub(crate) struct Display<'a, G: GraphRead + ?Sized> {
     pub shape_namespaces: Vec<(String, String)>,
@@ -134,6 +134,55 @@ impl<G: GraphRead + ?Sized> Display<'_, G> {
         format!("Literal({value})")
     }
 
+    fn collection_value(
+        graph: &(impl GraphRead + ?Sized),
+        node: &Term,
+        predicate: &NamedNode,
+        context: &GraphName,
+    ) -> Result<Term> {
+        let mut values = graph.matching_quads(
+            Some(subject(node)?.as_ref()),
+            Some(predicate.as_ref()),
+            None,
+            Some(context.as_ref()),
+        );
+        let first = values.next().transpose()?;
+        if first.is_none() || values.next().transpose()?.is_some() {
+            return Err(Error::Invalid(format!("Malformed RDF list at {node}")));
+        }
+        Ok(first.expect("one list value checked above").object)
+    }
+
+    fn collection(
+        head: &Term,
+        graph: &(impl GraphRead + ?Sized),
+        context: &GraphName,
+        namespaces: &[(String, String)],
+        stack: &mut HashSet<Term>,
+    ) -> Result<String> {
+        if stack.len() >= 20 || !stack.insert(head.clone()) {
+            return Err(Error::Invalid(
+                "Cyclic or excessively nested RDF list description".into(),
+            ));
+        }
+        // bounded: one visited cell per emitted collection item, never source-wide.
+        let mut cells = HashSet::new();
+        let mut node = head.clone();
+        let mut text = String::from("( ");
+        while node != Term::from(iri(RDF, "nil")) {
+            if !cells.insert(node.clone()) {
+                return Err(Error::Invalid(format!("Cyclic RDF list at {node}")));
+            }
+            let first = Self::collection_value(graph, &node, &iri(RDF, "first"), context)?;
+            text.push_str(&Self::inner(&first, graph, context, namespaces, stack)?);
+            text.push(' ');
+            node = Self::collection_value(graph, &node, &iri(RDF, "rest"), context)?;
+        }
+        text.push(')');
+        stack.remove(head);
+        Ok(text)
+    }
+
     fn inner(
         term: &Term,
         graph: &(impl GraphRead + ?Sized),
@@ -145,6 +194,18 @@ impl<G: GraphRead + ?Sized> Display<'_, G> {
             Term::NamedNode(n) => Self::iri_in(n, namespaces),
             Term::Literal(literal) => Self::literal(literal, namespaces),
             Term::BlankNode(_) => {
+                let first = graph
+                    .matching_quads(
+                        Some(subject(term)?.as_ref()),
+                        Some(iri(RDF, "first").as_ref()),
+                        None,
+                        Some(context.as_ref()),
+                    )
+                    .next()
+                    .transpose()?;
+                if first.is_some() {
+                    return Self::collection(term, graph, context, namespaces, stack);
+                }
                 if stack.len() >= 20 || !stack.insert(term.clone()) {
                     return Ok("[ ... ]".into());
                 }
