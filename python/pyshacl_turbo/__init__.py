@@ -163,6 +163,7 @@ class CompiledShapes:
         *,
         data_graph_format=None,
         inplace=False,
+        inference=None,
         iterate_rules=False,
         max_rule_iterations=100,
         max_validation_depth=15,
@@ -171,6 +172,7 @@ class CompiledShapes:
         abort_on_first=False,
         focus_nodes=None,
         use_shapes=None,
+        _normalize_report_literals=None,
     ):
         runtime = _shared_runtime(data_graph)
         if runtime is not None:
@@ -204,16 +206,28 @@ class CompiledShapes:
                 "focus_nodes": _expand_names(data_namespaces, focus_nodes),
                 "use_shapes": _expand_names(self.graph, use_shapes),
             }
+            if inference not in (None, "none"):
+                settings["inference"] = inference
             try:
                 with execute(self._shared_program, json.dumps(settings), inplace) as result:
                     conforms, report, text, recursion_warnings = result
                     _emit_recursion_warnings(recursion_warnings)
-                    report_graph = _graph(report, self._blank_nodes, preserve_ids=True)
+                    report_graph = _graph(
+                        report,
+                        self._blank_nodes,
+                        preserve_ids=True,
+                        report=True,
+                        normalize=_normalize_report_literals,
+                    )
                     for prefix, namespace in self.graph.namespaces():
                         report_graph.bind(prefix, namespace)
             except shared.SharedValidationFailure as failure:
                 raise ValidationFailure(str(failure)) from failure
             return conforms, report_graph, text
+        if inference not in (None, "none"):
+            raise NotImplementedError(
+                "CompiledShapes.validate pre-inference requires a native source; use validate for serialized inputs"
+            )
         if inplace and not (
             isinstance(data_graph, (Graph, Input)) or is_oxigraph_store(data_graph)
         ):
@@ -236,7 +250,9 @@ class CompiledShapes:
         )
         _emit_recursion_warnings(recursion_warnings)
         nodes = self._blank_nodes | data.blank_nodes
-        report_graph = _graph(report, nodes, preserve_ids=True)
+        report_graph = _graph(
+            report, nodes, preserve_ids=True, report=True, normalize=_normalize_report_literals
+        )
         for prefix, namespace in self.graph.namespaces():
             report_graph.bind(prefix, namespace)
         if inplace:
@@ -363,6 +379,7 @@ def validate(
     sparql_mode=False,
     **kwargs,
 ):
+    report_normalize = kwargs.pop("_normalize_report_literals", True)
     check_dash = kwargs.pop("check_dash_result", False)
     meta_shacl = kwargs.pop("meta_shacl", kwargs.pop("metashacl", False))
     abort_on_first = kwargs.pop("abort_on_error", abort_on_first)
@@ -428,14 +445,18 @@ def validate(
         )
     original = data_graph
     original_snapshot = _input(data_graph) if is_oxigraph_store(data_graph) else None
-    data_graph = _prepare_data(
-        replace(original_snapshot) if original_snapshot is not None else data_graph,
-        data_graph_format,
-        ont_graph,
-        ont_graph_format,
-        inference,
-        do_owl_imports,
-    )
+    native_validation = _shared_runtime(data_graph) is not None and ont_graph is None
+    if native_validation and check_dash and inference not in (None, "none"):
+        raise NotImplementedError("Native pre-inference with check_dash_result is not implemented")
+    if not native_validation:
+        data_graph = _prepare_data(
+            replace(original_snapshot) if original_snapshot is not None else data_graph,
+            data_graph_format,
+            ont_graph,
+            ont_graph_format,
+            inference,
+            do_owl_imports,
+        )
     if check_dash:
         snapshot = _input(data_graph, data_graph_format)
         data_graph = Input(
@@ -451,6 +472,7 @@ def validate(
         data_graph,
         data_graph_format=data_graph_format,
         inplace=inplace or check_dash,
+        inference=inference if native_validation else None,
         iterate_rules=iterate_rules,
         max_rule_iterations=max_rule_iterations,
         max_validation_depth=max_validation_depth,
@@ -459,6 +481,7 @@ def validate(
         abort_on_first=abort_on_first,
         focus_nodes=focus_nodes,
         use_shapes=use_shapes,
+        _normalize_report_literals=report_normalize,
     )
     if inplace and isinstance(original, Graph) and original is not data_graph:
         merge_graph(original, load_from_source(data_graph))
