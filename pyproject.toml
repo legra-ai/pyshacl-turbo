@@ -33,7 +33,7 @@ test = [
     "pyshacl[oxigraph]==0.40.1",
     "ruff>=0.12",
     "pyyaml>=6,<7",
-    "rdflib-turbo==0.2.0a9",
+    "rdflib-turbo==0.2.0a15",
 ]
 
 [project.scripts]
@@ -86,7 +86,7 @@ show_contexts = true
 line-length = 100
 
 [tool.uv.sources]
-rdflib-turbo = { git = "https://github.com/legra-ai/rdflib-turbo", rev = "2175d353328362f5cad93d729008d8f258852249" }
+rdflib-turbo = { git = "https://github.com/legra-ai/rdflib-turbo", rev = "b00b9433b01917f31f6bf512d47c72db6f31a579" }
 
 [dependency-groups]
 dev = ["mypy>=1.15,<3"]
