@@ -300,7 +300,7 @@ jobs:
         with:
           version: ${{ needs.prepare.outputs.version }}
           revision: ${{ needs.prepare.outputs.revision }}
-      - uses: legra-ai/github-actions/.github/actions/generate-changelog@87feab0f30d03f3d2185de73efc07f1e67175d70
+      - uses: legra-ai/github-actions/.github/actions/generate-changelog@586689276e02ded2be5b9dfffbed070a8a9ba50b
         with:
           revision: ${{ needs.prepare.outputs.revision }}
       - uses: softprops/action-gh-release@v3
