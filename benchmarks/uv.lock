@@ -82,18 +82,18 @@ wheels = [
 
 [[package]]
 name = "pyshacl-turbo"
-version = "0.2.4"
+version = "0.4.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "rdflib" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/b6/a9/28d936d745ff3b4a5374940dff790aa327850a5665a680ab1b8c8c91ebe6/pyshacl_turbo-0.2.4.tar.gz", hash = "sha256:2f668d11dc4b553833a1bed9cc3766372464369ffdff089aa6f22100a410e34f", size = 921886, upload-time = "2026-10-16T12:22:30.79Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/4e/c0/b9312b5fd5cbc0a819ea051fe037bc838fbeebcf11e5b4bd3aa14a72746c/pyshacl_turbo-0.4.1.tar.gz", hash = "sha256:6976e1f161a9db8a83a602953a730f9c007d964641b7349096f95fd489c6a7c2", size = 1678751, upload-time = "2026-10-19T13:51:34.98Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/06/b4/fea6a4206ec1ec0a1fa3f42abaa7ec1ecc63af67d5fffeacc3be809fdeb4/pyshacl_turbo-0.2.4-cp311-abi3-macosx_10_12_x86_64.whl", hash = "sha256:f836a7d74428a99242226b6f80bbb6c37360ca1e4fbdfeb2cfcc7cd222ef0b21", size = 3721519, upload-time = "2026-10-16T12:22:21.576Z" },
-    { url = "https://files.pythonhosted.org/packages/5c/61/44f770526cda59e2b491186f8898ae82d6065fea6148f40bce41b89a1bd7/pyshacl_turbo-0.2.4-cp311-abi3-macosx_11_0_arm64.whl", hash = "sha256:6ce70d047c9573bda36b071d01869a364ee0dcdd9d60f7a947fae7a95860b270", size = 3577822, upload-time = "2026-10-16T12:22:23.927Z" },
-    { url = "https://files.pythonhosted.org/packages/62/65/221076ac5b81bd31233e3c9e4af52df44776a733bd3761c8cd0d2e9c5960/pyshacl_turbo-0.2.4-cp311-abi3-manylinux_2_28_aarch64.whl", hash = "sha256:a09e8143579790ca8f56c9f243406a2bd185ee7025ac84602355d36443cf56b0", size = 3892602, upload-time = "2026-10-16T12:22:25.625Z" },
-    { url = "https://files.pythonhosted.org/packages/62/dd/164dfa231c37667d72e19f91398258d3e3a5e1f3f4363835818f36bcb4e4/pyshacl_turbo-0.2.4-cp311-abi3-manylinux_2_28_x86_64.whl", hash = "sha256:6827e2124a73ae27425c9479f746854e00da7d266926dab710dc2ce6095e05d2", size = 3943248, upload-time = "2026-10-16T12:22:27.447Z" },
-    { url = "https://files.pythonhosted.org/packages/66/ca/9ebfa4e285b8822ddbb02e11e3e178ec3e3c22054a43c6f9bf4697dec2ff/pyshacl_turbo-0.2.4-cp311-abi3-win_amd64.whl", hash = "sha256:185244c7a74e180ad2d43848527b5660cde9996afbe604ea537f0734c8d2375e", size = 3571536, upload-time = "2026-10-16T12:22:29.145Z" },
+    { url = "https://files.pythonhosted.org/packages/96/df/295f032da14e65de4db541c0e72ca1d5e718d8d41859ecaee10de2fc4d98/pyshacl_turbo-0.4.1-cp311-abi3-macosx_10_12_x86_64.whl", hash = "sha256:0d7ded3e8faffa17f73aa4918520040ea2a05e1adbb8cfb400d9e97c876f3091", size = 3885481, upload-time = "2026-10-19T13:51:26.814Z" },
+    { url = "https://files.pythonhosted.org/packages/8e/e4/6f640edb84d750132dfa2b0d7599e6ad51443f311ad6ba1d82ecec917010/pyshacl_turbo-0.4.1-cp311-abi3-macosx_11_0_arm64.whl", hash = "sha256:58ede4d110456d1dedcf7f747018a1118c7b3ef7b93f510b57c519a9810736d2", size = 3734832, upload-time = "2026-10-19T13:51:28.547Z" },
+    { url = "https://files.pythonhosted.org/packages/48/85/74c05a7bbd44d465ecf9d88a903ad4477aee0991d311b30e1d4270032388/pyshacl_turbo-0.4.1-cp311-abi3-manylinux_2_28_aarch64.whl", hash = "sha256:702856d38d3f800c69b87bab1f1125c79bdacb98aebaaaf83a7964a6f3d82fd6", size = 4042051, upload-time = "2026-10-19T13:51:30.163Z" },
+    { url = "https://files.pythonhosted.org/packages/14/71/91aef360b71e3d5d47c55664bd0faad8d05892b1149145be0846d45825ce/pyshacl_turbo-0.4.1-cp311-abi3-manylinux_2_28_x86_64.whl", hash = "sha256:4449d5eda7a2f0770ddebfc630711163b8cbc7ef835e42d0f9175b9f979ff8e4", size = 4104440, upload-time = "2026-10-19T13:51:31.746Z" },
+    { url = "https://files.pythonhosted.org/packages/1d/62/8d51f5ef70c9144647fd522eaa451c08df85eaf6410b35ddf1991926fb98/pyshacl_turbo-0.4.1-cp311-abi3-win_amd64.whl", hash = "sha256:7d08a59d43dd617277b5ff98366fd0931790334c1544d3fd7209d27f0d2dfdd0", size = 3737629, upload-time = "2026-10-19T13:51:33.291Z" },
 ]
 
 [[package]]
@@ -156,7 +156,7 @@ requires-dist = [
     { name = "prettytable", specifier = "==3.18.0" },
     { name = "pyparsing", specifier = "==3.3.3" },
     { name = "pyshacl", specifier = "==0.40.1" },
-    { name = "pyshacl-turbo", specifier = "==0.2.4" },
+    { name = "pyshacl-turbo", specifier = "==0.4.1" },
     { name = "rdflib", specifier = "==7.6.0" },
     { name = "rdflib-turbo", specifier = "==0.1.0a2" },
     { name = "wcwidth", specifier = "==0.9.2" },
