@@ -48,6 +48,15 @@ updates:
     directory: /benchmarks
     schedule:
       interval: weekly
+    # These product versions define the recorded historical comparison.
+    # Change them deliberately with its baseline and version matrices.
+    ignore:
+      - dependency-name: rdflib
+      - dependency-name: owlrl
+      - dependency-name: pyshacl
+      - dependency-name: rdflib-turbo
+      - dependency-name: owlrl-turbo
+      - dependency-name: pyshacl-turbo
     commit-message:
       prefix: build
       include: scope

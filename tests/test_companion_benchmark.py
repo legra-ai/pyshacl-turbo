@@ -2,7 +2,9 @@
 
 import importlib.util
 import sys
+import tomllib
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 from rdflib import BNode, Dataset, Graph, Literal, URIRef, Variable
@@ -14,6 +16,55 @@ def suite():
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module
+
+
+@pytest.fixture
+def locked_environment(tmp_path, monkeypatch):
+    module = suite()
+    for relative in (
+        "benchmarks/companions.py",
+        "benchmarks/pyproject.toml",
+        "benchmarks/uv.lock",
+        "tests/upstream_support/process_launch.py",
+    ):
+        target = tmp_path / relative
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_bytes((module.ROOT / relative).read_bytes())
+    monkeypatch.setattr(module, "ROOT", tmp_path)
+    monkeypatch.setattr(module, "__file__", str(tmp_path / "benchmarks/companions.py"))
+    lock = tomllib.loads((tmp_path / "benchmarks/uv.lock").read_text())
+    versions = {
+        package["name"]: package["version"]
+        for package in lock["package"]
+        if "registry" in package["source"]
+    }
+    monkeypatch.setattr(
+        module,
+        "distribution",
+        lambda name: SimpleNamespace(version=versions[name], read_text=lambda _: None, files=[]),
+    )
+    return module, versions
+
+
+@pytest.mark.parametrize("stale_export", [False, True])
+def test_environment_reads_uv_lock_without_an_exported_lock(locked_environment, stale_export):
+    module, versions = locked_environment
+    if stale_export:
+        (module.ROOT / "benchmarks/companions-requirements.lock").write_text("wcwidth==0.0.0\n")
+    environment = module.environment()
+    assert environment["packages"].keys() == versions.keys()
+    assert environment["packages"]["wcwidth"]["version"] == versions["wcwidth"]
+    assert "benchmarks/companions-requirements.lock" not in environment["source_sha256"]
+
+
+@pytest.mark.parametrize("source", ['git = "https://example.com/source"', 'path = "../source"'])
+def test_environment_rejects_nonregistry_uv_sources(locked_environment, source):
+    module, _ = locked_environment
+    (module.ROOT / "benchmarks/uv.lock").write_text(
+        '[[package]]\nname = "wcwidth"\nversion = "0.9.3"\nsource = {' + source + "}\n"
+    )
+    with pytest.raises(RuntimeError, match="PyPI"):
+        module.environment()
 
 
 def test_comparison_never_turns_generalized_differences_into_full_parity():

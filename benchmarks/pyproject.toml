@@ -13,5 +13,5 @@ dependencies = [
     "pyshacl-turbo==0.2.4",
     "rdflib==7.6.0",
     "rdflib-turbo==0.1.0a2",
-    "wcwidth==0.9.2",
+    "wcwidth==0.9.3",
 ]

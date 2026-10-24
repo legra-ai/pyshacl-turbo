@@ -3,6 +3,7 @@
 import gzip
 import importlib.util
 import json
+import tomllib
 from copy import deepcopy
 from pathlib import Path
 
@@ -87,3 +88,27 @@ def test_companion_workflow_parses_and_executes_every_command_as_text():
         for command in commands
     )
     assert any("check_companions.py" in command for command in commands)
+
+
+def test_dependabot_preserves_the_historical_benchmark_product_versions():
+    root = Path(__file__).resolve().parents[1]
+    matrix = json.loads((root / "benchmarks/candidate-releases.json").read_text())
+    pinned = {}
+    for environment in matrix["environments"]:
+        if environment["id"] not in {"python-reference", "turbo-historical"}:
+            continue
+        for name, version in environment["requirements"].items():
+            assert name not in pinned or pinned[name] == version
+            pinned[name] = version
+    manifest = tomllib.loads((root / "benchmarks/pyproject.toml").read_text())
+    assert {name + version for name, version in pinned.items()} <= set(
+        manifest["project"]["dependencies"]
+    )
+    config = yaml.safe_load((root / ".github/dependabot.yml").read_text())
+    updates = next(
+        entry
+        for entry in config["updates"]
+        if entry["package-ecosystem"] == "uv" and entry["directory"] == "/benchmarks"
+    )
+    ignored = {entry["dependency-name"] for entry in updates.get("ignore", [])}
+    assert ignored == set(pinned), "Only historical benchmark products must stay pinned"
