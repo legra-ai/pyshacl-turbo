@@ -9,11 +9,11 @@ import hashlib
 import json
 import platform
 import random
-import re
 import statistics
 import subprocess
 import sys
 import time
+import tomllib
 from contextvars import ContextVar
 from datetime import UTC, datetime
 from importlib.metadata import distribution
@@ -503,14 +503,14 @@ def measure(job, repeats, memory_repeats, timeout):
 
 def environment():
     packages = {}
-    pins = dict(
-        re.findall(
-            r"^([a-z0-9-]+)==([^\s]+)",
-            (ROOT / "benchmarks/companions-requirements.lock").read_text(),
-            re.MULTILINE,
-        )
-    )
-    for name, pin in pins.items():
+    project = tomllib.loads((ROOT / "benchmarks/pyproject.toml").read_text())["project"]["name"]
+    lock = tomllib.loads((ROOT / "benchmarks/uv.lock").read_text())
+    for package in lock["package"]:
+        name, pin = package["name"], package["version"]
+        if name == project and package["source"] == {"virtual": "."}:
+            continue
+        if package["source"] != {"registry": "https://pypi.org/simple"}:
+            raise RuntimeError(f"{name} must use pinned PyPI artifacts in the benchmark lock")
         dist = distribution(name)
         if dist.version != pin or dist.read_text("direct_url.json"):
             raise RuntimeError(
@@ -524,7 +524,6 @@ def environment():
         }
     files = [
         Path(__file__),
-        ROOT / "benchmarks/companions-requirements.lock",
         ROOT / "benchmarks/uv.lock",
         ROOT / "benchmarks/pyproject.toml",
         ROOT / "tests/upstream_support/process_launch.py",

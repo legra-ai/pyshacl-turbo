@@ -3,7 +3,6 @@
 import gzip
 import importlib.util
 import json
-import subprocess
 import tomllib
 from copy import deepcopy
 from pathlib import Path
@@ -89,29 +88,6 @@ def test_companion_workflow_parses_and_executes_every_command_as_text():
         for command in commands
     )
     assert any("check_companions.py" in command for command in commands)
-
-
-def test_benchmark_export_matches_the_locked_dependency_environment():
-    root = Path(__file__).resolve().parents[1]
-    exported = subprocess.run(
-        ["uv", "export", "--project", str(root / "benchmarks"), "--locked", "--no-emit-project"],
-        capture_output=True,
-        text=True,
-        check=True,
-        timeout=60,
-    ).stdout
-    recorded = (root / "benchmarks/companions-requirements.lock").read_text()
-    actual = [
-        line.strip()
-        for line in exported.splitlines()
-        if line.strip() and not line.lstrip().startswith("#")
-    ]
-    expected = [
-        line.strip()
-        for line in recorded.splitlines()
-        if line.strip() and not line.lstrip().startswith("#")
-    ]
-    assert actual == expected, "Regenerate companions-requirements.lock after benchmark updates"
 
 
 def test_dependabot_preserves_the_historical_benchmark_product_versions():

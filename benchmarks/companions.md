@@ -11,21 +11,23 @@ Run serially on Linux or macOS, with Python 3.13 and uv available:
 make benchmark-companions
 ```
 
-This creates `.venv-companions`, installs only published binary wheels from the
-hash-pinned [lockfile](companions-requirements.lock), and writes
+This creates `benchmarks/.venv`, installs only published binary wheels from the
+hash-pinned [uv lockfile](uv.lock), and writes
 local `benchmarks/companions-current.json` and `.md` outputs. The checked-in
 [first baseline report](companions-baseline-run.md) and its
 [compressed raw JSON](companions-baseline-run.json.gz) retain the original evidence.
 It does not use editable sibling checkouts. The first baseline pins
 rdflib-turbo/owlrl-turbo 0.1.0a2 and pyshacl-turbo 0.2.4, alongside RDFLib 7.6.0,
-OWL-RL 7.6.2 and pySHACL 0.40.1. Update the input requirements and regenerate the
-lockfile explicitly when comparing a later release. Do not mix local build
+OWL-RL 7.6.2 and pySHACL 0.40.1. These product versions remain historical fixtures;
+Dependabot may update supporting utilities. Update the product requirements,
+version matrices and recorded comparison deliberately when selecting a new baseline.
+Do not mix local build
 measurements into this published-artifact baseline.
 
 For a smaller run after setup:
 
 ```sh
-.venv-companions/bin/python -I benchmarks/companions.py \
+uv run --project benchmarks --locked --no-sync python -I benchmarks/companions.py \
     --nodes 100 --repeats 2 --memory-repeats 1 --output /tmp/companions.json
 ```
 
