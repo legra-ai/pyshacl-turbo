@@ -2,6 +2,7 @@
 
 import hashlib
 import importlib.util
+import json
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -79,3 +80,60 @@ def test_foreign_facade_class_is_a_hard_error(tmp_path, monkeypatch):
     pure.CompiledShapes = object()
     with pytest.raises(RuntimeError, match="shared native"):
         module.runtime_provenance()
+
+
+def receipted_pair(tmp_path, monkeypatch):
+    module, provider, pure, native = installed_pair(tmp_path, monkeypatch)
+    actual = {
+        "rdflib_turbo": {
+            "rdflib_turbo/" + native.name: hashlib.sha256(native.read_bytes()).hexdigest()
+        },
+        "pyshacl_turbo": {
+            "pyshacl_turbo/_native.py": hashlib.sha256(Path(pure.__file__).read_bytes()).hexdigest()
+        },
+    }
+    receipt = {
+        "installed_provider": {
+            "provider": "fixture",
+            "fingerprint": "a" * 64,
+            "native_member": "rdflib_turbo/" + native.name,
+            "payload": dict(actual["rdflib_turbo"]),
+        },
+        "installed_facade": {
+            "payload": dict(actual["pyshacl_turbo"]),
+            "package": str(Path(pure.__file__).parent),
+        },
+    }
+    path = tmp_path / "installed-pair.json"
+    path.write_text(json.dumps(receipt))
+    monkeypatch.setattr(module, "package_payload", lambda name: actual[name])
+    monkeypatch.setattr(module.sys, "prefix", str(tmp_path))
+    return module, path, actual, receipt, provider
+
+
+def test_original_pair_receipt_binds_complete_installed_payloads_and_true_dso(
+    tmp_path, monkeypatch
+):
+    module, path, _, _, _ = receipted_pair(tmp_path, monkeypatch)
+    actual = module.runtime_provenance(path)
+    assert actual["artifact_verified"] is True
+    assert actual["installed_pair_sha256"] == hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+@pytest.mark.parametrize(
+    "damage", ("provider", "facade", "version", "fingerprint", "member", "origin")
+)
+def test_pair_receipt_rejects_payload_metadata_or_origin_drift(tmp_path, monkeypatch, damage):
+    module, path, actual, receipt, _ = receipted_pair(tmp_path, monkeypatch)
+    if damage in ("provider", "facade"):
+        actual["rdflib_turbo" if damage == "provider" else "pyshacl_turbo"]["extra.py"] = "changed"
+    elif damage == "origin":
+        monkeypatch.setattr(module.sys, "prefix", str(tmp_path / "other-venv"))
+    else:
+        field = {"version": "provider", "fingerprint": "fingerprint", "member": "native_member"}[
+            damage
+        ]
+        receipt["installed_provider"][field] = "changed"
+        path.write_text(json.dumps(receipt))
+    with pytest.raises(RuntimeError, match="original installed pair"):
+        module.runtime_provenance(path)

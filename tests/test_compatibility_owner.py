@@ -3,6 +3,7 @@
 import importlib.util
 import json
 import subprocess
+import sys
 from pathlib import Path
 
 import pytest
@@ -130,3 +131,53 @@ def test_workflow_uses_original_pure_archives_and_registry_pair_instead_of_sourc
     ]
     assert len(artifacts) == 1
     assert "${{ runner.temp }}/compatibility-validation/" in artifacts[0]
+
+
+def test_cli_selects_compatibility_without_running_the_full_test_command(tmp_path, monkeypatch):
+    module, state = helper(), context(tmp_path)
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "provider_validation.py",
+            "--facade-source",
+            "source",
+            "--facade-wheel",
+            "pure.whl",
+            "--output",
+            str(state["output"]),
+            "--suite",
+            "compatibility",
+        ],
+    )
+    prepared, executed = [], []
+    monkeypatch.setattr(module, "prepare", lambda *args: prepared.append(args) or state)
+    monkeypatch.setattr(module, "compatibility", lambda value: executed.append(value))
+    monkeypatch.setattr(module, "run", lambda *args, **kwargs: pytest.fail("ran the full suite"))
+    module.main()
+    assert prepared == [(Path("source"), Path("pure.whl"), state["output"])]
+    assert executed == [state]
+
+
+def test_coverage_is_not_silently_ignored_in_compatibility_mode(tmp_path, monkeypatch):
+    module = helper()
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "provider_validation.py",
+            "--facade-source",
+            "source",
+            "--facade-wheel",
+            "pure.whl",
+            "--output",
+            str(tmp_path),
+            "--suite",
+            "compatibility",
+            "--coverage",
+        ],
+    )
+    monkeypatch.setattr(module, "prepare", lambda *args: pytest.fail("prepared an invalid suite"))
+    with pytest.raises(SystemExit) as failure:
+        module.main()
+    assert failure.value.code == 2
