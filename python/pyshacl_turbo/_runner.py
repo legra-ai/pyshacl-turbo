@@ -66,7 +66,7 @@ class Runner:
         return target
 
     def _prepare_target(self, rules=False):
-        from . import _prepare_data
+        from . import _prepare_data, _shared_runtime
         from .rdf import merge_graph
 
         if self.options.get("use_js"):
@@ -76,6 +76,13 @@ class Runner:
         if self._target_graph is not None:
             return self._target_graph
         inference = None if self.pre_inferenced else self.options.get("inference")
+        if (
+            not rules
+            and self.ont_graph is None
+            and _shared_runtime(self.data_graph.impl) is not None
+        ):
+            self._target_graph = self.data_graph
+            return self._target_graph
         modifies = (
             rules
             or self.options.get("advanced")

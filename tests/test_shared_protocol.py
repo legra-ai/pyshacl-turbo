@@ -25,7 +25,7 @@ def test_old_runtime_and_text_format_are_rejected_before_conversion(monkeypatch)
         program.validate(data)
     with pytest.raises(ValueError, match="data_graph_format"):
         program.validate(data, data_graph_format="turtle")
-    with pytest.raises(NotImplementedError, match="owlrl-turbo"):
+    with pytest.raises(RuntimeError, match="protocol 1"):
         turbo.validate(data, shacl_graph=SHAPES, inference="rdfs")
 
 

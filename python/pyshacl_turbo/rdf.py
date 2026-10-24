@@ -57,7 +57,20 @@ class _NativeBlankNodes(dict):
         return self.setdefault(key, BNode(key))
 
 
-def decode(source, blank_nodes=None, multigraph=False, preserve_ids=False, identifier=None):
+def decode(
+    source,
+    blank_nodes=None,
+    multigraph=False,
+    preserve_ids=False,
+    identifier=None,
+    *,
+    report=False,
+    normalize=None,
+):
+    if report:
+        from .report_decode import decode_report
+
+        return decode_report(source, blank_nodes, multigraph, preserve_ids, identifier, normalize)
     if not isinstance(source, str):
         return _decode_terms(source, blank_nodes, multigraph, preserve_ids, identifier)
     dataset = Dataset(default_union=True)
@@ -75,7 +88,16 @@ def decode(source, blank_nodes=None, multigraph=False, preserve_ids=False, ident
     return graph
 
 
-def _decode_terms(source, blank_nodes, multigraph, preserve_ids, identifier):
+def _decode_terms(
+    source,
+    blank_nodes,
+    multigraph,
+    preserve_ids,
+    identifier,
+    *,
+    copied_subjects=None,
+    normalize=None,
+):
     records, quads = source
     nodes = blank_nodes if blank_nodes is not None else {}
     if preserve_ids:
@@ -89,7 +111,11 @@ def _decode_terms(source, blank_nodes, multigraph, preserve_ids, identifier):
             if term is None:
                 term = nodes.setdefault(value, BNode())
         elif kind == 2:
-            term = Literal(value, language, URIRef(datatype) if datatype else None, normalize=False)
+            term = (
+                Literal(value, language, URIRef(datatype) if datatype else None, normalize=False)
+                if copied_subjects is None
+                else None
+            )
         else:
             raise ValueError("Invalid native RDF term record")
         terms.append(term)
@@ -99,7 +125,20 @@ def _decode_terms(source, blank_nodes, multigraph, preserve_ids, identifier):
         destination = (
             (result.default_graph if g is None else result.graph(terms[g])) if named else result
         )
-        destination.add((terms[s], terms[p], terms[o]))
+        value = terms[o]
+        if copied_subjects is not None and records[o][0] == 2:
+            copied = s in copied_subjects
+            if copied or value is None:
+                _, lexical, datatype, language = records[o]
+                value = Literal(
+                    lexical,
+                    language,
+                    URIRef(datatype) if datatype else None,
+                    normalize=normalize if copied else False,
+                )
+                if not copied:
+                    terms[o] = value
+        destination.add((terms[s], terms[p], value))
     return result
 
 

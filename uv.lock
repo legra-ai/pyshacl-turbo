@@ -578,7 +578,7 @@ requires-dist = [
     { name = "pytest-cov", marker = "extra == 'test'", specifier = ">=7.1,<8" },
     { name = "pyyaml", marker = "extra == 'test'", specifier = ">=6,<7" },
     { name = "rdflib", specifier = ">=7.3,<8" },
-    { name = "rdflib-turbo", marker = "extra == 'test'", git = "https://github.com/legra-ai/rdflib-turbo?rev=2175d353328362f5cad93d729008d8f258852249" },
+    { name = "rdflib-turbo", marker = "extra == 'test'", git = "https://github.com/legra-ai/rdflib-turbo?rev=9cc8b1f5bd270a9c61fe76bc9de7d49185855949" },
     { name = "ruff", marker = "extra == 'test'", specifier = ">=0.12" },
 ]
 provides-extras = ["oxigraph", "test"]
@@ -690,8 +690,8 @@ html = [
 
 [[package]]
 name = "rdflib-turbo"
-version = "0.2.0a9"
-source = { git = "https://github.com/legra-ai/rdflib-turbo?rev=2175d353328362f5cad93d729008d8f258852249#2175d353328362f5cad93d729008d8f258852249" }
+version = "0.2.0a15"
+source = { git = "https://github.com/legra-ai/rdflib-turbo?rev=9cc8b1f5bd270a9c61fe76bc9de7d49185855949#9cc8b1f5bd270a9c61fe76bc9de7d49185855949" }
 dependencies = [
     { name = "rdflib" },
 ]
