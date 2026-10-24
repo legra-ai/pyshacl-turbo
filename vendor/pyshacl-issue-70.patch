@@ -1,0 +1,68 @@
+diff --git a/vendor/pyshacl/test/issues/bad_test_070.py b/vendor/pyshacl/test/issues/bad_test_070.py
+index ad46b58..09db2ec 100644
+--- a/vendor/pyshacl/test/issues/bad_test_070.py
++++ b/vendor/pyshacl/test/issues/bad_test_070.py
+@@ -1,4 +1,5 @@
+-from rdflib import Graph
++from rdflib import Graph, Namespace, URIRef
++from rdflib.namespace import RDFS, SH
+ 
+ from pyshacl import validate
+ 
+@@ -41,25 +42,42 @@ data_text = """\
+   sosa:observedProperty <http://www.w3id.org/afarcloud/soil_temperature> ;
+   sosa:resultTime "2018-01-01T12:36:12Z"^^xsd:dateTime .
+ """
+-shacl_url = """https://raw.githubusercontent.com/rapw3k/DEMETER/master/models/SHACL/demeterAgriProfile-SHACL.ttl"""
++shacl_url = (
++    "https://raw.githubusercontent.com/rapw3k/DEMETER/"
++    "94762b9b0645f3b97dee675b15ee6278145a818b/models/SHACL/demeterAgriProfile-SHACL.ttl"
++)
+ 
+ 
+ def test_070():
+     g = Graph().parse(data=data_text, format="turtle")
+-    try:
+-        conforms, g, s = validate(
+-            g,
+-            shacl_graph=shacl_url,
+-            shacl_graph_format="turtle",
+-            abort_on_error=False,
+-            meta_shacl=False,
+-            debug=True,
+-            advanced=True,
+-        )
+-    except Exception as e:
+-        print(e)
+-        raise
++    options = dict(
++        shacl_graph=shacl_url,
++        shacl_graph_format="turtle",
++        abort_on_error=False,
++        meta_shacl=False,
++        debug=True,
++        advanced=True,
++    )
++    geo = Namespace("http://www.opengis.net/ont/geosparql#")
++    sf = Namespace("http://www.opengis.net/ont/sf#")
++    conforms, report, _ = validate(g, **options)
++    # The input supplies sf:Point, but no Geometry type or subclass relationship.
++    assert not conforms
++    (result,) = report.objects(None, SH.result)
++    assert report.value(result, SH.sourceConstraintComponent) == SH.ClassConstraintComponent
++    assert report.value(result, SH.resultPath) == geo.hasGeometry
++    assert report.value(result, SH.focusNode) == URIRef(
++        "http://www.w3id.org/afarcloud/poi?lat=45.75&amp;long=4.85"
++    )
++    assert report.value(result, SH.value) == URIRef(
++        "http://www.w3id.org/afarcloud/pCoord?lat=45.75&amp;long=4.85"
++    )
++
++    # Supplying the missing relationship must resolve the violation.
++    g.add((sf.Point, RDFS.subClassOf, geo.Geometry))
++    conforms, report, _ = validate(g, **options)
+     assert conforms
++    assert not list(report.objects(None, SH.result))
+ 
+ 
+ if __name__ == "__main__":

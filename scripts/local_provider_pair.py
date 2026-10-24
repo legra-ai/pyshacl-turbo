@@ -26,10 +26,13 @@ def declaration(facade):
     ]
     if len(requirements) != 1 or requirements[0] is None:
         raise ValueError("Expected exactly one pinned provider runtime requirement")
-    version = requirements[0].group(1)
-    if packages[0]["version"] != version:
-        raise ValueError("Provider lock version differs from the runtime requirement")
-    return {"relative_path": relative, "version": version}
+    # A native uv source override resolves the explicit editable project's
+    # actual version independently of the published registry requirement.
+    return {
+        "relative_path": relative,
+        "version": packages[0]["version"],
+        "registry_version": requirements[0].group(1),
+    }
 
 
 def verify(facade, provider):

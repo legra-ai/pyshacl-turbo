@@ -50,6 +50,7 @@ packages = ["python/pyshacl_turbo"]
 include = [
     "/python",
     "/vendor/pyshacl",
+    "/vendor/pyshacl-issue-70.patch",
     "/tests",
     "/scripts",
     "/docs",

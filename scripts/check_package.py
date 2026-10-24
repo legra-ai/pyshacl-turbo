@@ -47,6 +47,7 @@ def check(path):
             "scripts/owner_driver.py",
             "scripts/provider_registry.py",
             "vendor/pyshacl/LICENSE.txt",
+            "vendor/pyshacl-issue-70.patch",
         ]:
             assert name in files, f"Source distribution cannot be verified/rebuilt: missing {name}"
         assert not any(name.startswith("crates/") for name in files), (
@@ -63,8 +64,15 @@ def check(path):
             )
         ), "Facade must not contain dormant native build authority"
         assert not any(
-            name.startswith("vendor/") and not name.startswith("vendor/pyshacl/") for name in files
+            name.startswith("vendor/")
+            and not name.startswith("vendor/pyshacl/")
+            and name != "vendor/pyshacl-issue-70.patch"
+            for name in files
         ), "Native dependencies belong to the provider source distribution"
+        patch = "vendor/pyshacl-issue-70.patch"
+        assert files[patch] == (Path(__file__).parents[1] / patch).read_bytes(), (
+            "Reviewed upstream fixture correction changed"
+        )
         assert ".cargo/config.toml" not in files, "Repository hook opt-in must not ship"
     assert metadata["Name"] == "pyshacl-turbo"
     assert metadata["License-Expression"] == "MIT OR Apache-2.0"

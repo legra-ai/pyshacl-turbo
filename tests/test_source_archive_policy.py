@@ -44,6 +44,7 @@ def test_source_archive_preserves_verification_inputs_without_repository_hooks(
         "scripts/owner_driver.py",
         "scripts/provider_coverage.py",
         "vendor/pyshacl/LICENSE.txt",
+        "vendor/pyshacl-issue-70.patch",
         "tests/test_source_archive_policy.py",
         "docs/native-coverage.md",
         ".github/workflows/ci.yml",

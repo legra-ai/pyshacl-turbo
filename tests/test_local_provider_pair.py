@@ -44,6 +44,17 @@ def test_explicit_arranged_provider_owns_the_declared_engine(tmp_path):
     assert helper().verify(facade, provider)["version"] == "1.2.3"
 
 
+def test_editable_override_uses_locked_source_version_without_changing_registry_pin(tmp_path):
+    facade, provider = paired_fixture(tmp_path)
+    path = facade / "uv.lock"
+    path.write_text(path.read_text().replace('version="1.2.3"', 'version="1.2.4"'))
+    path = provider / "pyproject.toml"
+    path.write_text(path.read_text().replace('version="1.2.3"', 'version="1.2.4"'))
+    actual = helper().verify(facade, provider)
+    assert actual["version"] == "1.2.4"
+    assert actual["registry_version"] == "1.2.3"
+
+
 @pytest.mark.parametrize(
     "defect",
     [
