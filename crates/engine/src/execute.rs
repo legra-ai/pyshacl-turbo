@@ -87,6 +87,11 @@ struct EvaluationBatch {
     has_values: bool,
 }
 
+enum DataDescription {
+    Expanded,
+    Identity,
+}
+
 struct Violation {
     shape: usize,
     focus: Term,
@@ -95,6 +100,7 @@ struct Violation {
     value: Option<Term>,
     path: Option<Term>,
     details: Vec<Violation>,
+    data_description: DataDescription,
     source_constraint: Option<Term>,
     messages: Option<Vec<Term>>,
 }
@@ -115,6 +121,7 @@ impl Violation {
             value: value.cloned(),
             path: definition.path_node.clone(),
             details: Vec::new(),
+            data_description: DataDescription::Expanded,
             source_constraint: None,
             messages: None,
         }
@@ -123,9 +130,11 @@ impl Violation {
 
 mod backend;
 mod constraint_advanced;
+mod constraint_list;
 mod constraint_relational;
 mod constraint_scalar;
 mod constraints;
+mod data_list;
 mod evaluation;
 mod report;
 mod rules;

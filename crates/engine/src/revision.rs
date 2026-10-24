@@ -13,6 +13,10 @@ pub const SOURCES: &[(&str, &[u8])] = &[
         include_bytes!("execute/constraint_advanced.rs"),
     ),
     (
+        "execute/constraint_list.rs",
+        include_bytes!("execute/constraint_list.rs"),
+    ),
+    (
         "execute/constraint_relational.rs",
         include_bytes!("execute/constraint_relational.rs"),
     ),
@@ -23,6 +27,10 @@ pub const SOURCES: &[(&str, &[u8])] = &[
     (
         "execute/constraints.rs",
         include_bytes!("execute/constraints.rs"),
+    ),
+    (
+        "execute/data_list.rs",
+        include_bytes!("execute/data_list.rs"),
     ),
     (
         "execute/evaluation.rs",
