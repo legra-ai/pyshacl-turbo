@@ -30,7 +30,10 @@ def test_authority_requires_exact_collector_hash_before_reading_source(tmp_path)
 
 def test_collector_invocation_never_substitutes_facade_native_measurement(tmp_path):
     owner, facade, wheel, owlrl, output = [tmp_path / name for name in "pfwor"]
-    command = module().collector_command(owner, facade, wheel, owlrl, output, "3.13")
+    owl_wheel = tmp_path / "owl.whl"
+    command = module().collector_command(
+        owner, facade, wheel, owlrl, output, "3.13", owlrl_wheel=owl_wheel
+    )
     assert command == [
         "uv",
         "run",
@@ -47,6 +50,8 @@ def test_collector_invocation_never_substitutes_facade_native_measurement(tmp_pa
         str(wheel),
         "--owlrl-source",
         str(owlrl),
+        "--owlrl-wheel",
+        str(owl_wheel),
         "--output",
         str(output),
     ]
@@ -56,7 +61,15 @@ def test_archive_collector_command_preserves_original_archive_identity(tmp_path)
     owner, facade, wheel, owlrl, output = [tmp_path / name for name in "pfwor"]
     archive = tmp_path / "original.tar.gz"
     command = module().collector_command(
-        owner, facade, wheel, owlrl, output, "3.13", archive=archive, archive_sha256="a" * 64
+        owner,
+        facade,
+        wheel,
+        owlrl,
+        output,
+        "3.13",
+        archive=archive,
+        archive_sha256="a" * 64,
+        owlrl_wheel=tmp_path / "owl.whl",
     )
     assert command[-4:] == ["--source-archive", str(archive), "--source-sha256", "a" * 64]
 
@@ -72,6 +85,7 @@ def test_candidate_collector_command_preserves_explicit_receipt_and_base(tmp_pat
         output,
         "3.13",
         candidate={"receipt": receipt, "facade_revision": "a" * 40},
+        owlrl_wheel=tmp_path / "owl.whl",
     )
     assert command[-4:] == [
         "--shacl-candidate-receipt",
@@ -90,6 +104,7 @@ def test_candidate_collector_command_preserves_explicit_receipt_and_base(tmp_pat
             archive=tmp_path / "archive.tar.gz",
             archive_sha256="b" * 64,
             candidate={"receipt": receipt, "facade_revision": "a" * 40},
+            owlrl_wheel=tmp_path / "owl.whl",
         )
 
 
@@ -105,6 +120,7 @@ def test_published_owl_command_retains_both_original_archive_fields(tmp_path):
         "3.13",
         owlrl_archive=archive,
         owlrl_sha256="d" * 64,
+        owlrl_wheel=tmp_path / "owl.whl",
     )
     assert command[-4:] == ["--owlrl-archive", str(archive), "--owlrl-sha256", "d" * 64]
     with pytest.raises(ValueError, match="Both OWL source archive and SHA"):

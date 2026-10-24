@@ -702,6 +702,7 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "owlrl", marker = "extra == 'test'", specifier = "==7.6.2" },
+    { name = "owlrl-turbo", marker = "extra == 'test'", specifier = "==0.1.0a3" },
     { name = "packaging", marker = "extra == 'test'", specifier = ">=26.3" },
     { name = "pyshacl-turbo", marker = "extra == 'test'", editable = "." },
     { name = "pytest", marker = "extra == 'test'", specifier = ">=8,<10" },
@@ -714,6 +715,7 @@ provides-extras = ["test"]
 [package.metadata.requires-dev]
 coverage = [
     { name = "owlrl", specifier = "==7.6.2" },
+    { name = "owlrl-turbo", specifier = "==0.1.0a3" },
     { name = "pyshacl", specifier = "==0.40.1" },
     { name = "pyshacl-turbo", extras = ["test"], editable = "." },
     { name = "pytest", specifier = "==9.1.1" },

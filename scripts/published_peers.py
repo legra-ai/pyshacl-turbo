@@ -14,6 +14,15 @@ def load(name):
     return module
 
 
+def load_companion(owner):
+    """Use the verifier shipped by the already verified original native owner."""
+    path = owner / "scripts/pure_companion.py"
+    spec = importlib.util.spec_from_file_location("verified_owner_companion", path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
 def locked_version(owner, project):
     registry = load("provider_registry")
     if project not in registry.PROJECTS:
@@ -44,7 +53,7 @@ def adjacent_peer(owner, project):
     return path.parts[1]
 
 
-def original_peer(project, version, output):
+def original_peer(project, version, output, *, owner=None):
     """Retain an exact locked companion's original registry source and byte proof."""
     registry = load("provider_registry")
     document = registry.metadata(version, project=project)
@@ -60,7 +69,7 @@ def original_peer(project, version, output):
     manifest = tomllib.loads((source / "pyproject.toml").read_text())
     if manifest["project"]["name"] != project or manifest["project"]["version"] != version:
         raise ValueError("Original peer archive differs from its locked registry identity")
-    return {
+    result = {
         "kind": "published-sdist",
         "project": project,
         "version": version,
@@ -70,6 +79,18 @@ def original_peer(project, version, output):
         "files": files,
         "registry_document": str(output / "registry.json"),
     }
+    if project == "owlrl-turbo":
+        if owner is None:
+            raise ValueError("Original OWL wheel verification requires its explicit native owner")
+        entry = registry.select_universal(document, project, version)
+        wheel = registry.download(entry, originals)
+        payload = load_companion(owner).verify_payload(source, wheel)
+        result.update(
+            wheel=str(wheel),
+            wheel_sha256=entry["digests"]["sha256"],
+            package_payload=payload,
+        )
+    return result
 
 
 def restore(owner, facade, output):
@@ -87,7 +108,7 @@ def restore(owner, facade, output):
         raise ValueError("Published declaration peer names a different native source peer")
     if not declared_source.is_relative_to(output):
         raise ValueError("Downloaded declaration peer is outside its output cohort")
-    owl = original_peer("owlrl-turbo", owl_version, output / "peers/owlrl-turbo")
+    owl = original_peer("owlrl-turbo", owl_version, output / "peers/owlrl-turbo", owner=owner)
     cohort = output / "cohort"
     cohort.mkdir()
     native = cohort / native_name

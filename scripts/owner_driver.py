@@ -30,6 +30,7 @@ def coverage_arguments(context):
         owlrl_source=Path(owl["source"]),
         owlrl_archive=Path(owl["archive"]),
         owlrl_sha256=owl["sha256"],
+        owlrl_wheel=Path(owl["wheel"]),
         output=context["output"] / "native-coverage",
         python=sys.executable,
     )

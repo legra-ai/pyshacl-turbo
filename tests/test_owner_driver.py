@@ -31,6 +31,7 @@ def test_coverage_arguments_bind_original_provider_facade_and_owl_archives(tmp_p
                 "source": str(tmp_path / "owl"),
                 "archive": str(tmp_path / "owl.tar.gz"),
                 "sha256": "c" * 64,
+                "wheel": str(tmp_path / "owl.whl"),
             }
         },
     }
@@ -52,6 +53,7 @@ def test_coverage_arguments_bind_original_provider_facade_and_owl_archives(tmp_p
     assert args.owlrl_source == tmp_path / "owl"
     assert args.owlrl_archive == tmp_path / "owl.tar.gz"
     assert args.owlrl_sha256 == "c" * 64
+    assert args.owlrl_wheel == tmp_path / "owl.whl"
     assert args.shacl_candidate_receipt is None and args.shacl_base_revision is None
 
 

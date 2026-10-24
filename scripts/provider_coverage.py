@@ -78,6 +78,19 @@ def collector_authority(authority):
     )
 
 
+def verify_owl_inputs(owner, source, wheel):
+    """Bind the complete original OWL wheel to its verified source and hash."""
+    spec = importlib.util.spec_from_file_location(
+        "verified_owner_companion", owner / "scripts/pure_companion.py"
+    )
+    companion = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(companion)
+    return {
+        "wheel_sha256": digest(wheel),
+        "package_payload": companion.verify_payload(source, wheel),
+    }
+
+
 def verify_owner(source, revision, collector_sha256):
     if not re.fullmatch(r"[0-9a-f]{40}", revision):
         raise ValueError("An explicit immutable provider revision is required")
@@ -144,6 +157,7 @@ def collector_command(
     candidate=None,
     owlrl_archive=None,
     owlrl_sha256=None,
+    owlrl_wheel,
 ):
     command = [
         "uv",
@@ -161,6 +175,8 @@ def collector_command(
         str(wheel),
         "--owlrl-source",
         str(owlrl),
+        "--owlrl-wheel",
+        str(owlrl_wheel),
         "--output",
         str(output),
     ]
@@ -191,6 +207,7 @@ def measure(args):
     facade = args.facade_source.resolve(strict=True)
     wheel = args.facade_wheel.resolve(strict=True)
     owlrl = args.owlrl_source.resolve(strict=True)
+    owlrl_wheel = args.owlrl_wheel.resolve(strict=True)
     output = args.output.resolve()
     if any(output.is_relative_to(source) for source in (owner, facade, owlrl)):
         raise ValueError("Coverage output must be outside all frozen source checkouts")
@@ -202,6 +219,7 @@ def measure(args):
         args.source_sha256,
     )
     owl = freeze_owl_source(owlrl, args.owlrl_archive, args.owlrl_sha256)
+    owl_inputs = verify_owl_inputs(owner, owlrl, owlrl_wheel)
     spec = importlib.util.spec_from_file_location(
         "verified_provider_collector", owner / "scripts/native_coverage.py"
     )
@@ -226,8 +244,15 @@ def measure(args):
         candidate=candidate,
         owlrl_archive=args.owlrl_archive,
         owlrl_sha256=args.owlrl_sha256,
+        owlrl_wheel=owlrl_wheel,
     )
-    receipt = {"provider": provider, "facade": acceptance, "owlrl": owl, "command": command}
+    receipt = {
+        "provider": provider,
+        "facade": acceptance,
+        "owlrl": owl,
+        "owlrl_inputs": owl_inputs,
+        "command": command,
+    }
     output.mkdir(parents=True, exist_ok=False)
     (output / "provider-authority.json").write_text(json.dumps(receipt, indent=2) + "\n")
     subprocess.run(command, check=True)
@@ -245,6 +270,8 @@ def measure(args):
         raise ValueError("Provider source changed during native measurement")
     if freeze_owl_source(owlrl, args.owlrl_archive, args.owlrl_sha256, initial=False) != owl:
         raise ValueError("OWL-RL source changed during native measurement")
+    if verify_owl_inputs(owner, owlrl, owlrl_wheel) != owl_inputs:
+        raise ValueError("Original OWL wheel changed during native measurement")
     collector.verify_facade_inputs(facade, wheel, acceptance, candidate=candidate)
     summary = json.loads((output / "summary.json").read_text())
     if (
@@ -253,6 +280,8 @@ def measure(args):
         or summary["source_authority"] != collector_authority(provider)
         or summary["owlrl_revision"] != source_id(owl)
         or summary["owlrl_source_authority"] != collector_authority(owl)
+        or summary["owlrl_inputs"] != owl_inputs
+        or summary["owlrl_wheel_sha256"] != owl_inputs["wheel_sha256"]
         or summary["harness_sha256"] != args.collector_sha256
         or summary["shacl_inputs"] != acceptance
         or summary["shacl_revision"]
@@ -279,6 +308,7 @@ def main():
     parser.add_argument("--owlrl-source", type=Path, required=True)
     parser.add_argument("--owlrl-archive", type=Path)
     parser.add_argument("--owlrl-sha256")
+    parser.add_argument("--owlrl-wheel", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--python", default="3.13")
     measure(parser.parse_args())

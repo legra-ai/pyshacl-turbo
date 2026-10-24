@@ -6,6 +6,7 @@ import io
 import shutil
 import tarfile
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
@@ -123,8 +124,10 @@ def test_restore_keeps_original_declaration_peer_distinct_from_current_acceptanc
     owl.mkdir()
     calls = []
 
-    def original(project, version, output):
+    def original(project, version, output, **kwargs):
         calls.append((project, version))
+        if project == "owlrl-turbo":
+            assert kwargs == {"owner": native}
         return {"source": str(declared if project == "pyshacl-turbo" else owl), "version": version}
 
     monkeypatch.setattr(module, "original_peer", original)
@@ -141,3 +144,66 @@ def test_restore_keeps_original_declaration_peer_distinct_from_current_acceptanc
         assert peer != current
         assert (current / "pyproject.toml").read_text().count('version="0.6.2"') == 1
         assert calls == [("pyshacl-turbo", "0.6.1"), ("owlrl-turbo", "0.1.0a3")]
+
+
+def test_original_owl_wheel_and_archive_come_from_the_same_retained_registry_record(
+    tmp_path, monkeypatch
+):
+    module = helper()
+    registry = module.load("provider_registry")
+    archive = tmp_path / "owlrl_turbo-0.1.0a3.tar.gz"
+    data = b'[project]\nname="owlrl-turbo"\nversion="0.1.0a3"\n'
+    with tarfile.open(archive, "w:gz") as output:
+        member = tarfile.TarInfo("package/pyproject.toml")
+        member.size = len(data)
+        output.addfile(member, io.BytesIO(data))
+    wheel = tmp_path / "owlrl_turbo-0.1.0a3-py3-none-any.whl"
+    wheel.write_bytes(b"exact original wheel passed to the verified owner")
+    entries = [
+        {
+            "filename": path.name,
+            "packagetype": kind,
+            "digests": {"sha256": hashlib.sha256(path.read_bytes()).hexdigest()},
+        }
+        for path, kind in ((archive, "sdist"), (wheel, "bdist_wheel"))
+    ]
+    document = {"info": {"name": "owlrl-turbo", "version": "0.1.0a3"}, "urls": entries}
+    events = []
+
+    def metadata(version, *, project):
+        events.append(("registry", project, version))
+        return document
+
+    def download(entry, directory):
+        events.append(("download", entry["filename"]))
+        source = archive if entry["packagetype"] == "sdist" else wheel
+        target = directory / entry["filename"]
+        shutil.copyfile(source, target)
+        registry.verify_original(target, entry["digests"]["sha256"])
+        return target
+
+    def verify_payload(source, original_wheel):
+        events.append(("owner-payload", source, original_wheel))
+        assert original_wheel.read_bytes() == wheel.read_bytes()
+        return {"owlrl_turbo/__init__.py": "d" * 64}
+
+    monkeypatch.setattr(registry, "metadata", metadata)
+    monkeypatch.setattr(registry, "download", download)
+    monkeypatch.setattr(module, "load", lambda name: registry)
+    owner = tmp_path / "verified-provider"
+    monkeypatch.setattr(
+        module,
+        "load_companion",
+        lambda actual: SimpleNamespace(verify_payload=verify_payload) if actual == owner else None,
+    )
+    record = module.original_peer("owlrl-turbo", "0.1.0a3", tmp_path / "inputs", owner=owner)
+    assert record["sha256"] == entries[0]["digests"]["sha256"]
+    assert record["wheel_sha256"] == entries[1]["digests"]["sha256"]
+    assert record["package_payload"] == {"owlrl_turbo/__init__.py": "d" * 64}
+    assert Path(record["wheel"]).read_bytes() == wheel.read_bytes()
+    assert events[:3] == [
+        ("registry", "owlrl-turbo", "0.1.0a3"),
+        ("download", archive.name),
+        ("download", wheel.name),
+    ]
+    assert len([event for event in events if event[0] == "registry"]) == 1
