@@ -33,6 +33,7 @@ pub(crate) const PARAMETERS: &[&str] = &[
     "flags",
     "languageIn",
     "uniqueLang",
+    "singleLine",
     "equals",
     "disjoint",
     "lessThan",
@@ -77,6 +78,7 @@ pub(crate) enum Constraint {
     },
     LanguageIn(Vec<String>),
     UniqueLang,
+    SingleLine,
     In(HashSet<Term>),
     Pair {
         kind: &'static str,
@@ -360,7 +362,7 @@ pub(crate) fn read(
             return Err(Error::Invalid("sh:pattern requires a literal".into()));
         };
         result.push(C::Pattern {
-            pattern: pattern.value().to_owned(),
+            pattern: Term::Literal(pattern),
             flags: flags.clone(),
         });
     }
@@ -379,6 +381,9 @@ pub(crate) fn read(
             ));
         }
         result.push(C::UniqueLang(true));
+    }
+    if one(store, node, "singleLine")?.is_some() {
+        result.push(C::SingleLine(boolean(store, node, "singleLine")?));
     }
     if let Some(head) = one(store, node, "in")? {
         result.push(C::In(rdf_list(store, &head)?));
@@ -535,7 +540,7 @@ pub(crate) fn lower_one(
         C::MaxExclusive(value) => range(value, "MaxExclusiveConstraintComponent", "<")?,
         C::MaxInclusive(value) => range(value, "MaxInclusiveConstraintComponent", "<=")?,
         C::Pattern { pattern, flags } => Constraint::Pattern(crate::pattern::Pattern::compile(
-            &pattern,
+            &string(pattern, "pattern")?,
             &flags
                 .map(|value| string(value, "flags"))
                 .transpose()?
@@ -546,6 +551,8 @@ pub(crate) fn lower_one(
         }
         C::UniqueLang(true) => Constraint::UniqueLang,
         C::UniqueLang(false) => return Ok(None),
+        C::SingleLine(true) => Constraint::SingleLine,
+        C::SingleLine(false) => return Ok(None),
         C::In(values) => Constraint::In(values.into_iter().collect()),
         C::Equals(path) => pair(path, "EqualsConstraintComponent", None)?,
         C::Disjoint(path) => pair(path, "DisjointConstraintComponent", None)?,

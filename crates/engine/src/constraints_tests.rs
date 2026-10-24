@@ -74,7 +74,7 @@ fn lowerer_rejects_unresolved_shape_references_and_non_predicate_pairs() {
             true,
             &HashMap::new(),
             C::Pattern {
-                pattern: "a".into(),
+                pattern: Literal::new_simple_literal("a").into(),
                 flags: Some(node.clone())
             }
         )

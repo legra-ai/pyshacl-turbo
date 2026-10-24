@@ -258,6 +258,13 @@ arbitrary-precision values. See the compatibility details for
 [regexes](https://github.com/legra-ai/pyshacl-turbo/blob/main/docs/adr/0015-native-sparql-patterns.md) and
 [integer parameters](https://github.com/legra-ai/pyshacl-turbo/blob/main/docs/adr/0016-exact-integer-parameters.md).
 
+The engine also supports `sh:singleLine` from the
+[SHACL 1.2 Core Working Draft of 14 October 2026](https://www.w3.org/TR/2026/WD-shacl12-core-20261014/#SingleLineConstraintComponent).
+When true, it reports literal values containing U+000A through U+000D; false
+disables this constraint. The draft marks this declaration at risk. This is
+selected draft coverage, separate from pySHACL parity and complete SHACL 1.2
+conformance.
+
 ## Rust
 
 The standalone `pyshacl-turbo-engine` crate accepts exact-term oxrdf Dataset

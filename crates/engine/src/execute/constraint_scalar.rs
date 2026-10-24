@@ -63,6 +63,18 @@ impl CompiledShapes {
                     }
                 }
             }
+            Constraint::SingleLine => {
+                for value in values {
+                    if let Term::Literal(literal) = value
+                        && literal
+                            .value()
+                            .bytes()
+                            .any(|byte| (b'\n'..=b'\r').contains(&byte))
+                    {
+                        results.push(violation("SingleLineConstraintComponent", Some(value)));
+                    }
+                }
+            }
             Constraint::Pattern(regex) => {
                 for value in values {
                     let valid = crate::value::lexical(value)
