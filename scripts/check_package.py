@@ -65,6 +65,9 @@ def check(path):
                 )
         assert ".cargo/config.toml" not in files, "Repository hook opt-in must not ship"
         assert "crates/engine/build.rs" not in files, "Repository hook installer must not ship"
+        assert "tests/test_rhusky_build_root.py" not in files, (
+            "Checkout-only hook probes require the excluded installer and must not ship"
+        )
     assert metadata["Name"] == "pyshacl-turbo"
     assert metadata["License-Expression"] == "MIT OR Apache-2.0"
     for name in ["LICENSE-MIT", "LICENSE-APACHE"]:
