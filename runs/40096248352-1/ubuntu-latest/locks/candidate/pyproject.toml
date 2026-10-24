@@ -1,0 +1,21 @@
+[project]
+name = "candidate"
+version = "0.1.0"
+requires-python = ">=3.13"
+dependencies = [
+    "owlrl==7.6.2",
+    "owlrl-turbo",
+    "pyshacl==0.40.1",
+    "pyshacl-turbo",
+    "pytest==9.1.1",
+    "rdflib==7.6.0",
+    "rdflib-turbo",
+]
+
+[tool.uv]
+prerelease = "allow"
+
+[tool.uv.sources]
+owlrl-turbo = { path = "/home/runner/work/pyshacl-turbo/pyshacl-turbo/pipeline-wheels/owlrl_turbo-0.1.0a3-py3-none-any.whl" }
+pyshacl-turbo = { path = "/home/runner/work/pyshacl-turbo/pyshacl-turbo/pipeline-wheels/pyshacl_turbo-0.6.4-cp311-abi3-linux_x86_64.whl" }
+rdflib-turbo = { path = "/home/runner/work/pyshacl-turbo/pyshacl-turbo/pipeline-wheels/rdflib_turbo-0.2.0a15-cp313-cp313-linux_x86_64.whl" }
