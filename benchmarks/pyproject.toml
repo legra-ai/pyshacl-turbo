@@ -5,7 +5,7 @@ requires-python = ">=3.13"
 dependencies = [
     "html5rdf==1.2.1",
     "owlrl==7.6.2",
-    "owlrl-turbo==0.1.0a2",
+    "owlrl-turbo==0.1.0a3",
     "packaging==26.3",
     "prettytable==3.18.0",
     "pyparsing==3.3.3",

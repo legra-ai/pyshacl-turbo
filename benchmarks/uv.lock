@@ -25,14 +25,14 @@ wheels = [
 
 [[package]]
 name = "owlrl-turbo"
-version = "0.1.0a2"
+version = "0.1.0a3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "rdflib-turbo" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/47/ce/3290ec87a64131a774cf74839924fb0225a0871233109217cd25af76e5ef/owlrl_turbo-0.1.0a2.tar.gz", hash = "sha256:e3c4146162d006c26bd0cc5d396823b870b589e8f6611e245be6ab14c1890d71", size = 19684, upload-time = "2026-10-16T22:01:33.006Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/b4/5b/63e998bd7dc1ad21839ba61590271c9f10f45d5b66b47aed053d15b74bea/owlrl_turbo-0.1.0a3.tar.gz", hash = "sha256:d1876bfd3a8a59d0604e29d52e10b0f6ede4b8e300692dfb28e137d8f4ef314c", size = 72608, upload-time = "2026-10-17T20:24:50.313Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/c0/78/0983bd16293f5ce19bedcf36bd3c9c8967f09ce746759cb1621af6e73c48/owlrl_turbo-0.1.0a2-py3-none-any.whl", hash = "sha256:ae088a6cf950a725e1544714813b732f00b51f0643c0d531d97e6d5df3471ab4", size = 8890, upload-time = "2026-10-16T22:01:31.895Z" },
+    { url = "https://files.pythonhosted.org/packages/c4/5b/cb1e710b1a6b9adc390914f32ec8e26ac554f726f40753817a2c5fa87d22/owlrl_turbo-0.1.0a3-py3-none-any.whl", hash = "sha256:0a93ac9d7bedce17d9d453a49e906dfee8c3d4a4bc16975f7723c183644fe0d9", size = 9728, upload-time = "2026-10-17T20:24:48.99Z" },
 ]
 
 [[package]]
@@ -151,7 +151,7 @@ dependencies = [
 requires-dist = [
     { name = "html5rdf", specifier = "==1.2.1" },
     { name = "owlrl", specifier = "==7.6.2" },
-    { name = "owlrl-turbo", specifier = "==0.1.0a2" },
+    { name = "owlrl-turbo", specifier = "==0.1.0a3" },
     { name = "packaging", specifier = "==26.3" },
     { name = "prettytable", specifier = "==3.18.0" },
     { name = "pyparsing", specifier = "==3.3.3" },
