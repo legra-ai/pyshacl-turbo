@@ -33,18 +33,20 @@ def observe(engine, case, leading, prefix):
             else f"_:{head} ex:back _:other. _:other ex:back _:{head}."
         )
     shapes = Graph().parse(data=source.replace("ex:", f"{prefix}:"), format="turtle")
-    before = set(data), set(shapes), tuple(data.namespaces()), tuple(shapes.namespaces())
     implementation = import_module("pyshacl" if engine == "reference" else "pyshacl_turbo")
     result = []
     for _ in range(2):
         conforms, report, text = implementation.validate(data, shacl_graph=shapes)
-        result.append({"conforms": conforms, "graph": report.serialize(format="nt"), "text": text})
-    if engine == "candidate":
-        assert before == (
-            set(data),
-            set(shapes),
-            tuple(data.namespaces()),
-            tuple(shapes.namespaces()),
+        result.append(
+            {
+                "conforms": conforms,
+                "graph": report.serialize(format="nt"),
+                "text": text,
+                "data": data.serialize(format="nt"),
+                "shapes": shapes.serialize(format="nt"),
+                "data_namespaces": list(data.namespaces()),
+                "shape_namespaces": list(shapes.namespaces()),
+            }
         )
     return result
 
@@ -70,6 +72,16 @@ def test_generic_cycle_complete_report_matches_fresh_reference(case, leading, pr
             Graph().parse(data=expected["graph"], format="nt"),
         )
         assert actual["text"] == expected["text"]
+        # Original validation bootstraps two subclass facts into caller shapes.
+        # Compare that complete mutation contract, rather than requiring the
+        # candidate to omit reference-visible writes.
+        for name in ("data", "shapes"):
+            assert isomorphic(
+                Graph().parse(data=actual[name], format="nt"),
+                Graph().parse(data=expected[name], format="nt"),
+            )
+        for name in ("data_namespaces", "shape_namespaces"):
+            assert actual[name] == expected[name]
 
 
 if __name__ == "__main__":

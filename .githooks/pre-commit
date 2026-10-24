@@ -1,9 +1,13 @@
 #!/bin/sh
-if ! ./scripts/fmt.sh --check; then
-    printf 'Pinned Rust formatting check failed\n' >&2
+if uv run --locked --only-group dev ruff check python tests benchmarks scripts; then
+    :
+else
+    printf 'Python lint check failed; run make dev before committing\n' >&2
     exit 1
 fi
-if ! cargo clippy --workspace --all-targets --locked -- -D warnings; then
-    printf 'Rust lint check failed\n' >&2
+if uv run --locked --only-group dev ruff format --check python tests benchmarks scripts; then
+    :
+else
+    printf 'Python formatting check failed; run make dev before committing\n' >&2
     exit 1
 fi

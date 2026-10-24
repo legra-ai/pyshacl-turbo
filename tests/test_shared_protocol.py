@@ -34,7 +34,7 @@ def test_protocol_one_source_requires_a_borrowed_validation_adapter(monkeypatch)
     program = turbo.compile_shapes(SHAPES)
     program._shared_program = object()
     monkeypatch.setattr(runtime, "SHARED_SHACL_PROTOCOL", 1, raising=False)
-    monkeypatch.delattr(rdflib_turbo.Dataset, "_validate_shared_shapes", raising=False)
+    monkeypatch.setattr(rdflib_turbo.Dataset, "_validate_shared_shapes", None)
     monkeypatch.setattr(
         runtime, "SHACL_ENGINE_FINGERPRINT", turbo._native.SHACL_ENGINE_FINGERPRINT, raising=False
     )
@@ -72,12 +72,17 @@ def test_facade_protocol_preserves_options_reports_reuse_and_failure_type(monkey
         pass
 
     class Program:
-        def __init__(self, source, advanced, namespaces, numeric_booleans):
-            calls.append((source, advanced, namespaces))
+        def __init__(self, source):
+            calls.append(source)
+            self.source = source
             self.failure = False
 
+        @classmethod
+        def from_compiled(cls, source):
+            return cls(source)
+
         def validate(self, native, settings, inplace):
-            assert native is data._native
+            assert native is data.store.backend._native
             if self.failure:
                 raise Failure("test validation failure")
             calls.append((json.loads(settings), inplace))
@@ -96,7 +101,7 @@ def test_facade_protocol_preserves_options_reports_reuse_and_failure_type(monkey
         rdflib_turbo.Dataset,
         "_validate_shared_shapes",
         lambda source, program, settings, inplace: nullcontext(
-            program.validate(source._native, settings, inplace)
+            program.validate(source.store.backend._native, settings, inplace)
         ),
         raising=False,
     )
@@ -104,7 +109,8 @@ def test_facade_protocol_preserves_options_reports_reuse_and_failure_type(monkey
     actual = program.validate(data, inplace=True, max_validation_depth=None, focus_nodes=["ex:s"])
     assert actual[0] == expected[0] and actual[2] == expected[2]
     program.validate(data)
-    assert len(calls) == 3  # One compilation, two executions.
+    assert len(calls) == 3  # One shared program, two executions.
+    assert calls[0] is program._native
     assert calls[1][0]["focus_nodes"] == ["urn:s"]
     assert calls[1][0]["max_validation_depth"] == 15
     assert calls[1][1]

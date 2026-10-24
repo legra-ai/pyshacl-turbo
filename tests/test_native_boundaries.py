@@ -116,7 +116,9 @@ def test_native_parser_rejects_invalid_formats_and_bases():
 
 
 def test_legacy_native_validation_and_expansion_keep_text_outputs_and_validate_options():
-    compiled = _native.CompiledShapes("", "turtle", None, False, True, [])
+    compiled = _native.CompiledShapes(
+        "", "turtle", None, False, True, [], _policy=_native._REGEX_POLICY
+    )
     assert compiled.shape_nodes() == []
     arguments = {
         "source": "",
@@ -167,7 +169,9 @@ def test_legacy_native_validation_and_expansion_keep_text_outputs_and_validate_o
         lambda: _native.inoculate("", "unknown", ""),
         lambda: _native.query("", "unknown", "ASK {}"),
         lambda: _native.TargetData("", "unknown", None),
-        lambda: _native.CompiledShapes("", "unknown", None, False, True, []),
+        lambda: _native.CompiledShapes(
+            "", "unknown", None, False, True, [], _policy=_native._REGEX_POLICY
+        ),
     ],
 )
 def test_all_native_text_entry_points_reject_unknown_formats(call):

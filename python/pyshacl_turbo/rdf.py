@@ -9,7 +9,7 @@ from urllib.parse import urlparse
 from urllib.request import Request, urlopen
 
 from rdflib import BNode, Dataset, Graph, Literal, URIRef
-from rdflib.namespace import OWL
+from rdflib.namespace import OWL, NamespaceManager
 from rdflib.plugins.parsers.nquads import NQuadsParser
 from rdflib.plugins.parsers.ntriples import (
     ParseError,
@@ -57,6 +57,14 @@ class _NativeBlankNodes(dict):
         return self.setdefault(key, BNode(key))
 
 
+def _decoded_dataset(bind_namespaces):
+    result = Dataset(default_union=True)
+    if bind_namespaces != "rdflib":
+        result.namespace_manager = NamespaceManager(result, bind_namespaces)
+        result.default_graph.namespace_manager = result.namespace_manager
+    return result
+
+
 def decode(
     source,
     blank_nodes=None,
@@ -66,14 +74,22 @@ def decode(
     *,
     report=False,
     normalize=None,
+    _bind_namespaces="rdflib",
 ):
     if report:
         from .report_decode import decode_report
 
         return decode_report(source, blank_nodes, multigraph, preserve_ids, identifier, normalize)
     if not isinstance(source, str):
-        return _decode_terms(source, blank_nodes, multigraph, preserve_ids, identifier)
-    dataset = Dataset(default_union=True)
+        return _decode_terms(
+            source,
+            blank_nodes,
+            multigraph,
+            preserve_ids,
+            identifier,
+            _bind_namespaces=_bind_namespaces,
+        )
+    dataset = _decoded_dataset(_bind_namespaces)
     parser = _Parser()
     parser.sink = dataset
     nodes = blank_nodes if blank_nodes is not None else {}
@@ -83,7 +99,7 @@ def decode(
     named = any(g.identifier != dataset.default_graph.identifier for g in dataset.graphs())
     if multigraph or named:
         return dataset
-    graph = Graph(identifier=identifier)
+    graph = Graph(identifier=identifier, bind_namespaces=_bind_namespaces)
     graph += dataset.default_graph
     return graph
 
@@ -97,6 +113,7 @@ def _decode_terms(
     *,
     copied_subjects=None,
     normalize=None,
+    _bind_namespaces="rdflib",
 ):
     records, quads = source
     nodes = blank_nodes if blank_nodes is not None else {}
@@ -120,7 +137,11 @@ def _decode_terms(
             raise ValueError("Invalid native RDF term record")
         terms.append(term)
     named = multigraph or any(g is not None for _, _, _, g in quads)
-    result = Dataset(default_union=True) if named else Graph(identifier=identifier)
+    result = (
+        _decoded_dataset(_bind_namespaces)
+        if named
+        else Graph(identifier=identifier, bind_namespaces=_bind_namespaces)
+    )
     for s, p, o, g in quads:
         destination = (
             (result.default_graph if g is None else result.graph(terms[g])) if named else result
@@ -156,21 +177,46 @@ def _term_input(source, *, flatten=False):
 
 
 def shape_batches(source, nodes):
-    """Transfer flattened shape triples with bounded input ownership."""
-    batch = _TermBatch(nodes)
-    triples = (
-        ((s, p, o) for s, p, o, _ in source.quads((None, None, None, None)))
-        if source.context_aware
-        else iter(source)
-    )
+    """Transfer exact shapes quads with bounded input ownership."""
+    batch = _TermBatch(nodes, preserve_empty_datatypes=True)
+    if source.context_aware:
+        default = (
+            source.default_graph.identifier
+            if isinstance(source, Dataset)
+            else source.default_context.identifier
+        )
+        rows = (
+            (s, p, o, getattr(g, "identifier", g))
+            for s, p, o, g in source.quads((None, None, None, None))
+        )
+    else:
+        default = None
+        rows = ((s, p, o, None) for s, p, o in source)
     limit = _native.SHAPES_BATCH_SIZE
-    for s, p, o in triples:
-        batch.append(s, p, o)
+    for s, p, o, graph in rows:
+        batch.append(s, p, o, None if graph == default else graph, retain_graph_owner=False)
         if len(batch.quads) == limit:
             yield batch.records, batch.quads
-            batch = _TermBatch(nodes)
+            batch = _TermBatch(nodes, preserve_empty_datatypes=True)
     if batch.quads:
         yield batch.records, batch.quads
+
+
+def shape_graphs(source, nodes):
+    """Retain declared named contexts, including empty contexts, as typed names."""
+    if not source.context_aware:
+        return
+    if isinstance(source, Dataset):
+        default = source.default_graph.identifier
+        contexts = source.graphs()
+    else:
+        default = source.default_context.identifier
+        contexts = source.contexts()
+    for context in contexts:
+        if context.identifier != default:
+            batch = _TermBatch(nodes)
+            batch.intern(context.identifier, retain_blank_owner=False)
+            yield batch.records[0]
 
 
 def union(source):
@@ -249,6 +295,7 @@ def load_from_source(
     multigraph=False,
     do_owl_imports=False,
     logger=None,
+    _bind_namespaces="rdflib",
     **kwargs,
 ):
     if kwargs:
@@ -264,14 +311,17 @@ def load_from_source(
             source.blank_nodes,
             multigraph=multigraph,
             preserve_ids=source.preserve_ids,
+            _bind_namespaces=_bind_namespaces,
         )
     elif is_oxigraph_store(source):
         snapshot = input_graph(source)
-        result = load_from_source(snapshot, multigraph=multigraph)
+        result = load_from_source(
+            snapshot, multigraph=multigraph, _bind_namespaces=_bind_namespaces
+        )
     else:
         text, rdf_format, base = _document(source, rdf_format)
         nquads, prefixes = _native.parse_rdf(text, rdf_format, base)
-        result = decode(nquads, multigraph=multigraph)
+        result = decode(nquads, multigraph=multigraph, _bind_namespaces=_bind_namespaces)
         for prefix, namespace in prefixes:
             result.bind(prefix, namespace)
     if do_owl_imports:

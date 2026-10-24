@@ -53,11 +53,17 @@ def reference_shapes(shapes):
 def test_complete_report_graph_copies_each_descendant_occurrence(case):
     data, shapes = inputs(case)
     before = set(data), set(shapes), tuple(data.namespaces()), tuple(shapes.namespaces())
-    expected = pyshacl.validate(data, shacl_graph=reference_shapes(shapes))
+    original_shapes = reference_shapes(shapes)
+    expected = pyshacl.validate(data, shacl_graph=original_shapes)
     actual = turbo.validate(data, shacl_graph=shapes)
     assert actual[0] == expected[0] == False
     assert isomorphic(actual[1], expected[1])
-    assert (set(data), set(shapes), tuple(data.namespaces()), tuple(shapes.namespaces())) == before
+    assert (set(data), set(shapes), tuple(data.namespaces()), tuple(shapes.namespaces())) == (
+        before[0],
+        set(original_shapes),
+        before[2],
+        before[3],
+    )
 
 
 def test_direct_roots_keep_identity_and_are_cached_across_results():

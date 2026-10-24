@@ -13,8 +13,15 @@ from pathlib import Path
 from rdflib import BNode, Dataset, Graph, Literal, URIRef
 
 from . import _native
-from .errors import ReportableRuntimeError, ShapeRecursionWarning, ValidationWarning
-from .graph_abstraction import _reject_native_store_graph
+from ._inference import inference_mode
+from .errors import (
+    ConstraintLoadError,
+    ReportableRuntimeError,
+    ShapeLoadError,
+    ShapeRecursionWarning,
+    ValidationWarning,
+)
+from .graph_abstraction import DataGraph, _reject_native_store_graph
 from .rdf import (
     Input,
     commit_serialized,
@@ -22,6 +29,7 @@ from .rdf import (
     load_from_source,
     merge_graph,
     shape_batches,
+    shape_graphs,
     union,
 )
 from .rdf import decode as _graph
@@ -47,6 +55,29 @@ def _shared_runtime(data):
     return None
 
 
+def _check_rule_output(runtime, source, result, inplace):
+    while isinstance(source, DataGraph):
+        source = source._view
+    if inplace:
+        valid = result is source
+    elif isinstance(source, runtime.Dataset):
+        valid = isinstance(result, runtime.Dataset)
+    elif isinstance(source, runtime.Graph):
+        valid = isinstance(result, runtime.Graph) and not isinstance(result, runtime.Dataset)
+        if valid:
+            valid = result.identifier == source.identifier
+    elif isinstance(source, (runtime.Store, runtime.Transaction)):
+        valid = isinstance(result, runtime.Store)
+    else:
+        valid = False
+    if valid and not inplace:
+        source_owner = source.store.backend if isinstance(source, Graph) else source
+        result_owner = result.store.backend if isinstance(result, Graph) else result
+        valid = result_owner._native is not source_owner._native
+    if not valid:
+        raise RuntimeError("Invalid native rule expansion result ownership or graph scope")
+
+
 def _failure_result(function):
     @wraps(function)
     def wrapped(*args, **kwargs):
@@ -55,7 +86,7 @@ def _failure_result(function):
         except ValidationFailure as failure:
             failure.message = str(failure)
             return False, failure, f"Validation Failure - {failure}"
-        except NotImplementedError:
+        except (NotImplementedError, ReportableRuntimeError):
             raise
         except RuntimeError as error:
             raise ReportableRuntimeError(str(error)) from error
@@ -89,10 +120,17 @@ __all__ = [
 
 @lru_cache(maxsize=128)
 def _compile_native(source, advanced, numeric_booleans, namespaces):
-    return (
-        _native.CompiledShapes(source, "nt", None, advanced, numeric_booleans, list(namespaces)),
-        source,
-    )
+    try:
+        return (
+            _native.CompiledShapes.from_input(
+                source, advanced, numeric_booleans, list(namespaces), _policy=_native._REGEX_POLICY
+            ),
+            source,
+        )
+    except _native.ShapeLoadFailure as error:
+        raise ShapeLoadError(*error.args) from error
+    except _native.ConstraintLoadFailure as error:
+        raise ConstraintLoadError(*error.args) from error
 
 
 def _check_shared_engine(shared):
@@ -104,20 +142,39 @@ def _check_shared_engine(shared):
 
 def _compile_for_data(shacl_graph, data_graph, shacl_graph_format, advanced, *, rules=False):
     runtime = _shared_runtime(data_graph)
-    if runtime is None or (rules and not isinstance(data_graph, runtime.Dataset)):
-        return compile_shapes(shacl_graph, shacl_graph_format=shacl_graph_format, advanced=advanced)
-    shared = runtime._native
-    _check_shared_engine(shared)
-    program = CompiledShapes.__new__(CompiledShapes)
-    program._prepare(shacl_graph, shacl_graph_format, advanced)
-    source, advanced, namespaces, numeric_booleans = program._shared_spec
-    try:
-        program._shared_program = shared.SharedShapes(
-            source, advanced, list(namespaces), numeric_booleans
+    if runtime is not None and (not rules or isinstance(data_graph, runtime.Dataset)):
+        _check_shared_engine(runtime._native)
+    return compile_shapes(shacl_graph, shacl_graph_format=shacl_graph_format, advanced=advanced)
+
+
+def _document_source(data):
+    return (
+        not isinstance(data, (Graph, DataGraph, Input))
+        and _shared_runtime(data) is None
+        and not is_oxigraph_store(data)
+    )
+
+
+def _prepare_public_shapes(data, shapes, data_format, shapes_format, ontology, inference, imports):
+    if _document_source(data):
+        data = load_from_source(
+            data,
+            rdf_format=data_format,
+            multigraph=ontology is not None or inference not in (None, "none"),
         )
-    except shared.SharedValidationFailure as failure:
-        raise ValidationFailure(str(failure)) from failure
-    return program
+    if isinstance(shapes, ShapesGraph):
+        return data, shapes
+    graph_input = isinstance(shapes, Graph)
+    if callable(getattr(shapes, "_compile_shared_shapes", None)):
+        if imports:
+            raise NotImplementedError("Native shapes OWL imports are not implemented")
+        graph = shapes
+    else:
+        _reject_native_store_graph(shapes)
+        graph = load_from_source(shapes, rdf_format=shapes_format, do_owl_imports=imports)
+    prepared = ShapesGraph(graph)
+    prepared._numeric_booleans = graph_input
+    return data, prepared
 
 
 class CompiledShapes:
@@ -125,21 +182,45 @@ class CompiledShapes:
 
     def __init__(self, shacl_graph, *, shacl_graph_format=None, advanced=False):
         self._prepare(shacl_graph, shacl_graph_format, advanced)
-        source, advanced, namespaces, numeric_booleans = self._shared_spec
-        self._native, _ = _compile_native(source, advanced, numeric_booleans, namespaces)
+        if self._native is None:
+            source, advanced, namespaces, numeric_booleans = self._shared_spec
+            self._native, source = _compile_native(source, advanced, numeric_booleans, namespaces)
+            self._shared_spec = (source, advanced, namespaces, numeric_booleans)
 
     def _prepare(self, shacl_graph, shacl_graph_format, advanced):
+        numeric_booleans = isinstance(shacl_graph, Graph)
+        if isinstance(shacl_graph, ShapesGraph):
+            numeric_booleans = shacl_graph._numeric_booleans
+            shacl_graph = shacl_graph.graph
+        compile_native = getattr(shacl_graph, "_compile_shared_shapes", None)
+        if callable(compile_native):
+            self.graph = shacl_graph
+            self._blank_nodes = {}
+            try:
+                self._native, self._shape_namespaces = compile_native(advanced)
+            except _native.ShapeLoadFailure as error:
+                raise ShapeLoadError(*error.args) from error
+            except _native.ConstraintLoadFailure as error:
+                raise ConstraintLoadError(*error.args) from error
+            self._shared_spec = None
+            self._shared_program = None
+            return
         _reject_native_store_graph(shacl_graph)
         self.graph = load_from_source(shacl_graph, rdf_format=shacl_graph_format)
         self._blank_nodes = {}
-        source = _native.canonical_shapes(shape_batches(self.graph, self._blank_nodes))
+        source = _native.ShapesInput(
+            shape_batches(self.graph, self._blank_nodes),
+            self.graph.context_aware,
+            shape_graphs(self.graph, self._blank_nodes),
+        )
         namespaces = tuple((p, str(ns)) for p, ns in self.graph.namespaces())
+        self._shape_namespaces = namespaces
         self._native = None
         self._shared_spec = (
             source,
             advanced,
             namespaces,
-            isinstance(shacl_graph, Graph),
+            numeric_booleans,
         )
         self._shared_program = None
 
@@ -182,18 +263,16 @@ class CompiledShapes:
 
             _check_shared_engine(shared)
             if self._shared_program is None:
-                source, advanced, namespaces, numeric_booleans = self._shared_spec
-                self._shared_program = shared.SharedShapes(
-                    source, advanced, list(namespaces), numeric_booleans
-                )
+                self._shared_program = shared.SharedShapes.from_compiled(self._native)
             execute = getattr(data_graph, "_validate_shared_shapes", None)
             if not callable(execute):
                 raise RuntimeError("Native source does not implement borrowed SHACL validation")
             data_namespaces = (
                 dict(data_graph.namespaces())
                 if isinstance(data_graph, (runtime.Dataset, Graph))
-                else dict(self.graph.namespaces())
+                else dict(self._shape_namespaces)
             )
+            inference = inference_mode(inference)
             settings = {
                 "iterate_rules": iterate_rules,
                 "max_rule_iterations": max_rule_iterations,
@@ -204,7 +283,7 @@ class CompiledShapes:
                 "allow_warnings": allow_warnings,
                 "abort_on_first": abort_on_first,
                 "focus_nodes": _expand_names(data_namespaces, focus_nodes),
-                "use_shapes": _expand_names(self.graph, use_shapes),
+                "use_shapes": _expand_names(dict(self._shape_namespaces), use_shapes),
             }
             if inference not in (None, "none"):
                 settings["inference"] = inference
@@ -219,11 +298,12 @@ class CompiledShapes:
                         report=True,
                         normalize=_normalize_report_literals,
                     )
-                    for prefix, namespace in self.graph.namespaces():
+                    for prefix, namespace in self._shape_namespaces:
                         report_graph.bind(prefix, namespace)
             except shared.SharedValidationFailure as failure:
                 raise ValidationFailure(str(failure)) from failure
             return conforms, report_graph, text
+        inference = inference_mode(inference)
         if inference not in (None, "none"):
             raise NotImplementedError(
                 "CompiledShapes.validate pre-inference requires a native source; use validate for serialized inputs"
@@ -244,8 +324,8 @@ class CompiledShapes:
             allow_infos,
             allow_warnings,
             abort_on_first,
-            _expand_names(data.namespaces or dict(self.graph.namespaces()), focus_nodes),
-            _expand_names(self.graph, use_shapes),
+            _expand_names(data.namespaces or dict(self._shape_namespaces), focus_nodes),
+            _expand_names(dict(self._shape_namespaces), use_shapes),
             [(p, str(ns)) for p, ns in data.namespaces.items()],
         )
         _emit_recursion_warnings(recursion_warnings)
@@ -253,26 +333,11 @@ class CompiledShapes:
         report_graph = _graph(
             report, nodes, preserve_ids=True, report=True, normalize=_normalize_report_literals
         )
-        for prefix, namespace in self.graph.namespaces():
+        for prefix, namespace in self._shape_namespaces:
             report_graph.bind(prefix, namespace)
         if inplace:
             commit_serialized(data_graph, expanded, nodes, before=data)
         return conforms, report_graph, text
-
-    def _shared_runtime(self, data_graph, data_graph_format):
-        runtime = sys.modules.get("rdflib_turbo")
-        if runtime is None or not isinstance(data_graph, runtime.Dataset):
-            return None
-        if data_graph_format is not None:
-            raise ValueError("data_graph_format is unavailable for a native Dataset")
-        shared = runtime._native
-        _check_shared_engine(shared)
-        if self._shared_program is None:
-            source, advanced, namespaces, numeric_booleans = self._shared_spec
-            self._shared_program = shared.SharedShapes(
-                source, advanced, list(namespaces), numeric_booleans
-            )
-        return runtime, shared
 
     def shacl_rules(
         self,
@@ -285,35 +350,41 @@ class CompiledShapes:
         max_validation_depth=15,
         focus_nodes=None,
         use_shapes=None,
+        _return_dataset=False,
     ):
-        native_runtime = self._shared_runtime(data_graph, data_graph_format)
-        if native_runtime is not None:
-            runtime, shared = native_runtime
+        runtime = _shared_runtime(data_graph)
+        if runtime is not None:
+            if data_graph_format is not None:
+                raise ValueError("data_graph_format is unavailable for a native source")
+            shared = runtime._native
+            _check_shared_engine(shared)
+            if self._shared_program is None:
+                self._shared_program = shared.SharedShapes.from_compiled(self._native)
+            execute = getattr(data_graph, "_expand_shared_shapes", None)
+            if not callable(execute):
+                raise RuntimeError("Native source does not implement borrowed SHACL rules")
+            namespaces = (
+                dict(data_graph.namespaces())
+                if isinstance(data_graph, Graph)
+                else dict(self._shape_namespaces)
+            )
             settings = {
                 "iterate_rules": iterate_rules,
                 "max_rule_iterations": max_rule_iterations,
                 "max_validation_depth": 15
                 if max_validation_depth is None
                 else max_validation_depth,
-                "focus_nodes": _expand_names(dict(data_graph.namespaces()), focus_nodes),
-                "use_shapes": _expand_names(self.graph, use_shapes),
+                "focus_nodes": _expand_names(namespaces, focus_nodes),
+                "use_shapes": _expand_names(dict(self._shape_namespaces), use_shapes),
             }
             try:
-                expanded, recursion_warnings = self._shared_program.expand(
-                    data_graph._native, json.dumps(settings), inplace
-                )
+                with execute(self._shared_program, json.dumps(settings), inplace) as result:
+                    expanded, recursion_warnings = result
+                    _check_rule_output(runtime, data_graph, expanded, inplace)
+                    _emit_recursion_warnings(recursion_warnings)
             except shared.SharedValidationFailure as failure:
                 raise ValidationFailure(str(failure)) from failure
-            _emit_recursion_warnings(recursion_warnings)
-            if inplace:
-                if expanded is not None:
-                    raise RuntimeError("Invalid inplace native rule expansion result")
-                return data_graph
-            if expanded is None:
-                raise RuntimeError("Missing native rule expansion result")
-            result = runtime.Dataset()
-            result._native = expanded
-            return result
+            return expanded
         if inplace and not (
             isinstance(data_graph, (Graph, Input)) or is_oxigraph_store(data_graph)
         ):
@@ -326,8 +397,8 @@ class CompiledShapes:
             iterate_rules,
             max_rule_iterations,
             15 if max_validation_depth is None else max_validation_depth,
-            _expand_names(data.namespaces or dict(self.graph.namespaces()), focus_nodes),
-            _expand_names(self.graph, use_shapes),
+            _expand_names(data.namespaces or dict(self._shape_namespaces), focus_nodes),
+            _expand_names(dict(self._shape_namespaces), use_shapes),
             inplace and isinstance(data_graph, Graph),
         )
         _emit_recursion_warnings(recursion_warnings)
@@ -337,6 +408,8 @@ class CompiledShapes:
         result = _graph(
             expanded,
             data.blank_nodes,
+            multigraph=_return_dataset,
+            _bind_namespaces="core" if _return_dataset else "rdflib",
             preserve_ids=True,
             identifier=getattr(data_graph, "identifier", None),
         )
@@ -430,6 +503,7 @@ def validate(
             for prefix, namespace in source_graph.namespaces():
                 combined.bind(prefix, namespace)
         data_graph, data_graph_format = combined, None
+    caller_shapes = shacl_graph is not None
     if shacl_graph is None:
         shacl_graph, shacl_graph_format = data_graph, data_graph_format
     if meta_shacl:
@@ -439,15 +513,22 @@ def validate(
                 "SHACL File does not validate against the SHACL Shapes SHACL (MetaSHACL) file.\n"
                 + text
             )
-    if do_owl_imports:
-        shacl_graph = load_from_source(
-            shacl_graph, rdf_format=shacl_graph_format, do_owl_imports=True
-        )
-    original = data_graph
-    original_snapshot = _input(data_graph) if is_oxigraph_store(data_graph) else None
     native_validation = _shared_runtime(data_graph) is not None and ont_graph is None
     if native_validation and check_dash and inference not in (None, "none"):
         raise NotImplementedError("Native pre-inference with check_dash_result is not implemented")
+    original = data_graph
+    if caller_shapes:
+        data_graph, shacl_graph = _prepare_public_shapes(
+            data_graph,
+            shacl_graph,
+            data_graph_format,
+            shacl_graph_format,
+            ont_graph,
+            inference,
+            do_owl_imports,
+        )
+    original_snapshot = _input(data_graph) if is_oxigraph_store(data_graph) else None
+    inference = inference_mode(inference)
     if not native_validation:
         data_graph = _prepare_data(
             replace(original_snapshot) if original_snapshot is not None else data_graph,
@@ -524,9 +605,25 @@ def shacl_rules(
     **kwargs,
 ):
     _options(js, kwargs)
+    caller_shapes = shacl_graph is not None
     if shacl_graph is None:
         shacl_graph, shacl_graph_format = data_graph, data_graph_format
     original = data_graph
+    document = _document_source(original)
+    if document:
+        data_graph = load_from_source(
+            original, rdf_format=data_graph_format, multigraph=True, _bind_namespaces="core"
+        )
+    if caller_shapes:
+        data_graph, shacl_graph = _prepare_public_shapes(
+            data_graph,
+            shacl_graph,
+            data_graph_format,
+            shacl_graph_format,
+            ont_graph,
+            inference,
+            do_owl_imports,
+        )
     original_snapshot = _input(data_graph) if is_oxigraph_store(data_graph) else None
     data_graph = _prepare_data(
         replace(original_snapshot) if original_snapshot is not None else data_graph,
@@ -535,11 +632,8 @@ def shacl_rules(
         ont_graph_format,
         inference,
         do_owl_imports,
+        _bind_namespaces="core" if document else "rdflib",
     )
-    if do_owl_imports:
-        shacl_graph = load_from_source(
-            shacl_graph, rdf_format=shacl_graph_format, do_owl_imports=True
-        )
     result = _compile_for_data(
         shacl_graph, data_graph, shacl_graph_format, advanced, rules=True
     ).shacl_rules(
@@ -551,12 +645,15 @@ def shacl_rules(
         max_validation_depth=max_validation_depth,
         focus_nodes=focus_nodes,
         use_shapes=use_shapes,
+        **({"_return_dataset": True} if document else {}),
     )
     if inplace and isinstance(original, Graph) and original is not data_graph:
         merge_graph(original, result)
         result = original
     elif inplace and is_oxigraph_store(original) and original is not data_graph:
         commit_serialized(original, _input(data_graph).source, before=original_snapshot)
+    if document:
+        result = DataGraph.from_rdflib(result)
     if serialize_expanded_graph:
         rdf_format = serialize_expanded_graph_format or "trig"
         if (
@@ -602,7 +699,10 @@ def _expand_names(graph, names):
     return result
 
 
-def _prepare_data(data, rdf_format, ontology, ontology_format, inference, imports):
+def _prepare_data(
+    data, rdf_format, ontology, ontology_format, inference, imports, *, _bind_namespaces="rdflib"
+):
+    inference = inference_mode(inference)
     if ontology is None and inference in (None, "none"):
         return data
     if _shared_runtime(data) is not None:
@@ -617,7 +717,12 @@ def _prepare_data(data, rdf_format, ontology, ontology_format, inference, import
     namespaces = dict(snapshot.namespaces)
     if ontology is not None:
         ont = _input(
-            load_from_source(ontology, rdf_format=ontology_format, do_owl_imports=imports),
+            load_from_source(
+                ontology,
+                rdf_format=ontology_format,
+                do_owl_imports=imports,
+                _bind_namespaces=_bind_namespaces,
+            ),
             flatten=True,
         )
         source = _native.inoculate(source, source_format, ont.source)
@@ -633,7 +738,9 @@ def _prepare_data(data, rdf_format, ontology, ontology_format, inference, import
         return Input(
             source, source_format, None, snapshot.blank_nodes, namespaces, preserve_ids=True
         )
-    result = _graph(source, snapshot.blank_nodes, preserve_ids=True)
+    result = _graph(
+        source, snapshot.blank_nodes, preserve_ids=True, _bind_namespaces=_bind_namespaces
+    )
     for prefix, namespace in namespaces.items():
         result.bind(prefix, namespace)
     return result

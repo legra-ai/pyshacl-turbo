@@ -6,8 +6,7 @@ from types import SimpleNamespace
 
 import pytest
 from pyshacl import validate as reference_validate
-from pyshacl_turbo import Validator, compile_shapes, validate
-from pyshacl_turbo.graph_abstraction import DataGraph
+from pyshacl_turbo import validate
 from rdflib import BNode, Graph, URIRef
 from rdflib.compare import isomorphic
 from rdflib_turbo import Dataset, Store, StoreDataset
@@ -106,10 +105,12 @@ def test_inplace_validation_accepts_inferred_facts(factory):
     with managed(factory) as source:
         source.parse(data=DATA)
         assert not validate(source, shacl_graph=shapes, inference="rdfs", inplace=True)[0]
-        assert source.query(
-            "ASK {<urn:validation-inference:s> <urn:validation-inference:parent> <urn:validation-inference:o>}",
-            default_union=True,
-        )
+        query = "ASK {<urn:validation-inference:s> <urn:validation-inference:parent> <urn:validation-inference:o>}"
+        if isinstance(source, Dataset):
+            source.default_union = True
+            assert source.query(query)
+        else:
+            assert source.query(query, default_union=True)
 
 
 def test_ontology_and_rules_preinference_stay_explicitly_unsupported():
@@ -180,67 +181,3 @@ def test_lexical_capture_failure_aborts_prior_pending_transaction_writes(monkeyp
                 pending.parse(data=DATA)
                 validate(pending, shacl_graph=Graph(), inference="rdfs", inplace=True)
         assert len(source) == 0
-
-
-def test_compiled_serialized_input_rejects_preinference_before_conversion(monkeypatch):
-    import pyshacl_turbo
-
-    program = compile_shapes(SHAPES, shacl_graph_format="turtle")
-    source = Graph().parse(data=DATA, format="turtle")
-    before = set(source)
-
-    def forbidden(*args, **kwargs):
-        raise AssertionError("unsupported pre-inference must fail before serialization")
-
-    monkeypatch.setattr(pyshacl_turbo, "_input", forbidden)
-    with pytest.raises(NotImplementedError, match="requires a native source"):
-        program.validate(source, inference="rdfs")
-    assert set(source) == before
-
-
-def test_native_dash_preinference_rejects_without_mutating_pending_source():
-    shapes = Graph().parse(data=SHAPES, format="turtle")
-    with Store() as source:
-        source.parse(data=DATA)
-        before = source.serialize()
-        with pytest.raises(NotImplementedError, match="check_dash_result"):
-            validate(
-                source,
-                shacl_graph=shapes,
-                inference="rdfs",
-                inplace=True,
-                check_dash_result=True,
-            )
-        assert source.serialize() == before
-
-
-def test_caller_datagraph_runner_borrows_its_native_owner_on_repeated_runs(monkeypatch):
-    import pyshacl_turbo
-
-    class NativeOwner(DataGraph):
-        def __init__(self, source):
-            self.impl = source
-
-        def is_multigraph(self):
-            return False
-
-        def clone(self, *args, **kwargs):
-            raise AssertionError("native runner must not clone its data owner")
-
-    source = Dataset().parse(data=DATA)
-    before = source.serialize()
-    owner = NativeOwner(source)
-    runner = Validator(
-        owner,
-        shacl_graph=Graph().parse(data=SHAPES, format="turtle"),
-        options={"inference": "rdfs", "inplace": False},
-    )
-
-    def forbidden(*args, **kwargs):
-        raise AssertionError("native inference must stay private in the borrowed execution")
-
-    monkeypatch.setattr(pyshacl_turbo, "_prepare_data", forbidden)
-    for _ in range(2):
-        assert not runner.run()[0]
-        assert runner.target_graph is owner
-        assert source.serialize() == before

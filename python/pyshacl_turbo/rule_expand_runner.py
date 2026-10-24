@@ -39,6 +39,6 @@ class RuleExpandRunner(Runner):
         }
         options["max_validation_depth"] = self.make_executor().max_validation_depth
         shacl_rules(
-            target.impl, shacl_graph=self.shacl_graph.graph, inplace=True, advanced=True, **options
+            target.impl, shacl_graph=self.shacl_graph, inplace=True, advanced=True, **options
         )
         return target

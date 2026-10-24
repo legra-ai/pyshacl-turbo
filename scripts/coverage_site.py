@@ -46,12 +46,16 @@ def render_badge(label, covered, count):
 def build_site(python, rust, output, project, revision):
     if python.get("meta", {}).get("branch_coverage") is not True:
         raise ValueError("Python branch coverage must be measured")
-    shared = project == "owlrl-turbo"
+    revision_keys = {
+        "rdflib-turbo": "revision",
+        "owlrl-turbo": "owlrl_revision",
+        "pyshacl-turbo": "shacl_revision",
+    }
+    if project not in revision_keys:
+        raise ValueError("Unknown coverage project")
+    shared = project != "rdflib-turbo"
     expected_runtime = "rdflib-turbo" if shared else project
-    if (
-        rust.get("project") != expected_runtime
-        or rust.get("owlrl_revision" if shared else "revision") != revision
-    ):
+    if rust.get("project") != expected_runtime or rust.get(revision_keys[project]) != revision:
         raise ValueError("Coverage revision does not match the tested source")
     try:
         totals = python["totals"]

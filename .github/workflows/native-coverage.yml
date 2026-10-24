@@ -33,21 +33,34 @@ jobs:
       - uses: actions-rust-lang/setup-rust-toolchain@v2
         with:
           toolchain: 1.99.1
-          components: llvm-tools-preview
-      - name: Build public Rust API documentation
-        env:
-          RUSTDOCFLAGS: -D warnings
-        run: cargo doc --locked --no-deps --package pyshacl-turbo-engine --target-dir target/rustdoc
+          components: llvm-tools-preview, rustfmt, clippy
+      - uses: actions-rust-lang/setup-rust-toolchain@v2
+        with:
+          toolchain: nightly-2026-10-16
+          components: rustfmt
+      - name: Build the original pure facade archives
+        run: |
+          uv build --sdist --out-dir "$RUNNER_TEMP/facade-dist" || exit "$?"
+          uv build --wheel --out-dir "$RUNNER_TEMP/facade-wheel" "$RUNNER_TEMP"/facade-dist/*.tar.gz || exit "$?"
+      - name: Reject an incapable declared registry provider before compiling LLVM tools
+        run: uv run --no-project python -B scripts/check_registry_pair.py "$RUNNER_TEMP"/facade-wheel/*-py3-none-any.whl
+      - run: cargo install cargo-llvm-cov --version 0.9.1 --locked
+      - name: Verify published native authority and run its sole collector and gates
+        run: uv run --no-project python -B scripts/owner_driver.py --facade-source "$GITHUB_WORKSPACE" --facade-wheel "$RUNNER_TEMP"/facade-wheel/*-py3-none-any.whl --output "$RUNNER_TEMP/native-owner" --gate coverage
       - uses: actions/upload-artifact@v7
         with:
           name: rust-api-documentation
-          path: target/rustdoc/doc/
+          path: ${{ runner.temp }}/native-owner/rustdoc/doc/
           if-no-files-found: error
-      - run: cargo install cargo-llvm-cov --version 0.9.1 --locked
-      - run: uv run --no-project python scripts/native_coverage.py
       - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: native-rust-coverage
-          path: native-coverage/
+          path: ${{ runner.temp }}/native-owner/native-coverage/
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: native-owner-authority
+          path: ${{ runner.temp }}/native-owner/*.json
           if-no-files-found: error

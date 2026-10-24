@@ -70,6 +70,24 @@ def test_stale_or_unmeasured_numbers_cannot_be_published(tmp_path):
         site().build_site(python, rust, tmp_path, "rdflib-turbo", "runtime")
 
 
+def test_shacl_facade_badges_use_its_tested_revision_and_provider_measurement(tmp_path):
+    python, rust = measurements()
+    rust["revision"] = "sdist-sha256:" + "a" * 64
+    rust["shacl_revision"] = "shacl-facade"
+    site().build_site(python, rust, tmp_path, "pyshacl-turbo", "shacl-facade")
+    assert (
+        ET.parse(tmp_path / "rust-lines.svg").getroot().attrib["aria-label"]
+        == "Shared Rust lines: 70.0%"
+    )
+
+
+def test_shacl_revision_cannot_be_replaced_by_another_companion_revision(tmp_path):
+    python, rust = measurements()
+    rust["shacl_revision"] = "stale"
+    with pytest.raises(ValueError, match="revision"):
+        site().build_site(python, rust, tmp_path, "pyshacl-turbo", "facade")
+
+
 def test_badges_never_round_partial_coverage_up_to_100():
     root = ET.fromstring(site().render_badge("Rust lines", 9999, 10000))
     assert root.attrib["aria-label"] == "Rust lines: 99.9%"

@@ -52,12 +52,20 @@ def compare_complete(case):
     data, shapes = inputs(case)
     reference_data, reference_shapes = inputs(case)
     before = set(data), set(shapes), tuple(data.namespaces()), tuple(shapes.namespaces())
+    original_shapes_before = set(reference_shapes)
     expected = pyshacl.validate(reference_data, shacl_graph=reference_shapes)
     actual = turbo.validate(data, shacl_graph=shapes)
     assert actual[0] == expected[0] == False
     assert isomorphic(actual[1], expected[1])
     assert actual[2] == expected[2]
-    assert (set(data), set(shapes), tuple(data.namespaces()), tuple(shapes.namespaces())) == before
+    assert original_shapes_before <= set(reference_shapes)
+    expected_shapes = before[1] | (set(reference_shapes) - original_shapes_before)
+    assert (set(data), set(shapes), tuple(data.namespaces()), tuple(shapes.namespaces())) == (
+        before[0],
+        expected_shapes,
+        before[2],
+        before[3],
+    )
 
 
 @pytest.mark.parametrize("case", CASES)

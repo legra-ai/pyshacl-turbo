@@ -1,5 +1,4 @@
 name: Regex
-
 on:
   push:
     branches: [main]
@@ -12,18 +11,14 @@ on:
         type: string
   schedule:
     - cron: '37 4 * * *'
-
 concurrency:
   group: regex-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: false
-
 permissions:
   contents: read
-
 defaults:
   run:
     shell: bash {0}
-
 jobs:
   regex:
     name: regex
@@ -33,14 +28,29 @@ jobs:
       - uses: actions/checkout@v7
         with:
           ref: ${{ inputs.revision || github.sha }}
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.13'
+      - uses: astral-sh/setup-uv@v10.3.0
+        with:
+          version: "0.13.1"
       - uses: actions-rust-lang/setup-rust-toolchain@v2
         with:
           toolchain: 1.99.1
           components: rustfmt
-      - uses: dtolnay/rust-toolchain@nightly
+      - uses: actions-rust-lang/setup-rust-toolchain@v2
         with:
           toolchain: nightly-2026-10-16
           components: rustfmt
-      - name: Upstream matcher tests and Python-mode VM regressions
-        # The vendored matcher is formatted by the same pinned nightly.
-        run: make test-regex
+      - name: Build the original pure facade archives
+        run: |
+          uv build --sdist --out-dir "$RUNNER_TEMP/facade-dist" || exit "$?"
+          uv build --wheel --out-dir "$RUNNER_TEMP/facade-wheel" "$RUNNER_TEMP"/facade-dist/*.tar.gz || exit "$?"
+      - name: Upstream matcher tests in the exact published native owner
+        run: uv run --no-project python -B scripts/owner_driver.py --facade-source "$GITHUB_WORKSPACE" --facade-wheel "$RUNNER_TEMP"/facade-wheel/*-py3-none-any.whl --output "$RUNNER_TEMP/native-owner" --gate regex
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: regex-owner-authority
+          path: ${{ runner.temp }}/native-owner/*.json
+          if-no-files-found: error
