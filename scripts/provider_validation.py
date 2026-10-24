@@ -129,6 +129,72 @@ def installed_receipts(owner, wheel, project, env):
     return [json.loads(line) for line in evidence.strip().splitlines()[-2:]]
 
 
+def owl_probe(owner, wheel, project):
+    """Exercise the actual three installed products on one canonical owner."""
+    return f"""
+import importlib.util
+import json
+from pathlib import Path
+from rdflib import Graph, Namespace
+from rdflib.namespace import RDF, RDFS, SH
+from rdflib_turbo import Dataset, StoreDataset
+import pyshacl_turbo
+
+spec = importlib.util.spec_from_file_location("verified_owner_companion", {str(owner / "scripts/pure_companion.py")!r})
+companion = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(companion)
+before = companion.verify_loaded(Path({str(wheel)!r}), Path({str(project / ".venv")!r}))
+from owlrl_turbo import DeductiveClosure, RDFS_OWLRL_Semantics
+
+if Dataset is not StoreDataset:
+    raise RuntimeError("Published pipeline requires the canonical Dataset owner")
+ex = Namespace("urn:published-companion-check:")
+data = Dataset()
+native_owner = data.store.backend._native
+data.add((ex.subject, RDF.type, ex.Child))
+data.add((ex.Child, RDFS.subClassOf, ex.Parent))
+DeductiveClosure(RDFS_OWLRL_Semantics).expand(data)
+if data.store.backend._native is not native_owner:
+    raise RuntimeError("Published OWL closure replaced its native dataset owner")
+if (ex.subject, RDF.type, ex.Parent) not in data:
+    raise RuntimeError("Published OWL closure omitted the required inferred type")
+shapes = Graph()
+shapes.add((ex.Shape, SH.targetNode, ex.subject))
+shapes.add((ex.Shape, SH["class"], ex.Parent))
+conforms, _, _ = pyshacl_turbo.validate(data, shacl_graph=shapes)
+if not conforms:
+    raise RuntimeError("Published three-product validation did not conform")
+if data.store.backend._native is not native_owner:
+    raise RuntimeError("Published SHACL validation replaced its native dataset owner")
+after = companion.verify_loaded(Path({str(wheel)!r}), Path({str(project / ".venv")!r}))
+if before != after:
+    raise RuntimeError("Published OWL payload changed during the pipeline probe")
+print(json.dumps({{"installed": after, "pipeline": {{"canonical_dataset": True,
+    "inferred_type": True, "conforms": True, "same_native_owner": True}}}}))
+"""
+
+
+def installed_owl_receipt(owner, wheel, project, env):
+    evidence = run(
+        [
+            "uv",
+            "run",
+            "--project",
+            project,
+            "--locked",
+            "--no-sync",
+            "python",
+            "-I",
+            "-B",
+            "-c",
+            owl_probe(owner, wheel, project),
+        ],
+        env=env,
+        capture=True,
+    )
+    return json.loads(evidence)
+
+
 def verify_runtime(context):
     native, facade = installed_receipts(
         context["owner"], context["wheel"], context["project"], context["environment"]
@@ -138,6 +204,14 @@ def verify_runtime(context):
         or facade != context["receipt"]["installed_facade"]
     ):
         raise ValueError("Installed runtime payload changed during validation")
+    owl = context["receipt"]["provider"]["peers"]["owlrl"]
+    if (
+        installed_owl_receipt(
+            context["owner"], Path(owl["wheel"]), context["project"], context["environment"]
+        )
+        != context["receipt"]["installed_owlrl"]
+    ):
+        raise ValueError("Installed OWL runtime payload changed during validation")
 
 
 def prepare(source, wheel, output):
@@ -189,6 +263,11 @@ def prepare(source, wheel, output):
         ],
         env=env,
     )
+    owl = authority["peers"]["owlrl"]
+    owl_wheel = Path(owl["wheel"]).resolve(strict=True)
+    if digest(owl_wheel) != owl["wheel_sha256"]:
+        raise ValueError("Original OWL wheel differs from its retained registry SHA-256")
+    run(["uv", "add", "--project", project, "--no-sync", owl_wheel], env=env)
     lock = tomllib.loads((project / "uv.lock").read_text())
     providers = [package for package in lock["package"] if package["name"] == "rdflib-turbo"]
     if (
@@ -197,7 +276,7 @@ def prepare(source, wheel, output):
         or providers[0]["version"] != authority["provider_version"]
     ):
         raise ValueError("Validation must install the exact published native provider")
-    run(["uv", "sync", "--project", project, "--locked"], env=env)
+    run(["uv", "sync", "--project", project, "--locked", "--no-build"], env=env)
     native, facade = installed_receipts(owner, wheel, project, env)
     expected = json.loads((output / "provider/registry-capability.json").read_text())
     if (
@@ -205,12 +284,18 @@ def prepare(source, wheel, output):
         or facade["engine_fingerprint"] != authority["identity"]["engine_fingerprint"]
     ):
         raise ValueError("Installed pair differs from independently verified published authority")
+    installed_owl = installed_owl_receipt(owner, owl_wheel, project, env)
+    if installed_owl["installed"]["wheel_sha256"] != owl["wheel_sha256"] or (
+        installed_owl["installed"]["payload"] != owl["package_payload"]
+    ):
+        raise ValueError("Installed OWL companion differs from its original registry payload")
     receipt = {
         "current_facade": frozen,
         "facade_inputs": facade_inputs,
         "provider": authority,
         "installed_provider": native,
         "installed_facade": facade,
+        "installed_owlrl": installed_owl,
         "environment_lock_sha256": digest(project / "uv.lock"),
     }
     (output / "installed-pair.json").write_text(
@@ -253,6 +338,15 @@ def verify_sources(context):
             != peer["files"]
         ):
             raise ValueError("Original published peer changed during validation")
+    owl = provider["peers"]["owlrl"]
+    if (
+        digest(Path(owl["wheel"])) != owl["wheel_sha256"]
+        or load("published_peers")
+        .load_companion(context["owner"])
+        .verify_payload(Path(owl["source"]), Path(owl["wheel"]))
+        != owl["package_payload"]
+    ):
+        raise ValueError("Original published OWL wheel changed during validation")
     if digest(context["project"] / "uv.lock") != receipt["environment_lock_sha256"]:
         raise ValueError("Installed validation lock changed")
     (output / "validation-verified.json").write_text(
