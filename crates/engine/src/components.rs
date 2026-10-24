@@ -59,6 +59,7 @@ impl Component {
                 "NotConstraintComponent",
                 "OrConstraintComponent",
                 "PatternConstraintComponent",
+                "SingleLineConstraintComponent",
                 "PropertyConstraintComponent",
                 "QualifiedMaxCountConstraintComponent",
                 "QualifiedMinCountConstraintComponent",

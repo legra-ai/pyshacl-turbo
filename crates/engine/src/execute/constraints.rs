@@ -110,6 +110,7 @@ impl CompiledShapes {
                 | Constraint::Length { .. }
                 | Constraint::LanguageIn(_)
                 | Constraint::UniqueLang
+                | Constraint::SingleLine
                 | Constraint::In(_) => self.evaluate_scalar_constraint(
                     index, focus, &values, data, constraint, results, evaluation,
                 )?,
