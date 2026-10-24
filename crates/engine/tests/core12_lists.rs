@@ -167,3 +167,29 @@ fn list_parameters_reject_negative_noninteger_duplicate_and_property_shape_value
         .is_err()
     );
 }
+
+#[test]
+fn list_length_parameters_require_xsd_integer_lexicals() {
+    for name in ["minListLength", "maxListLength"] {
+        for lexical in ["1_0", "١", "\u{00a0}1\u{00a0}", "+", ""] {
+            let shapes = graph(&format!(
+                "<urn:S> sh:targetNode <urn:s>; sh:{name} \"{lexical}\"^^xsd:integer."
+            ));
+            assert!(
+                CompiledShapes::compile(shapes, false).is_err(),
+                "{name}: {lexical:?}"
+            );
+        }
+        for lexical in [
+            "+0001",
+            "-0",
+            " 1 ",
+            "340282366920938463463374607431768211456",
+        ] {
+            let shapes = graph(&format!(
+                "<urn:S> sh:targetNode <urn:s>; sh:{name} \"{lexical}\"^^xsd:integer."
+            ));
+            CompiledShapes::compile(shapes, false).unwrap();
+        }
+    }
+}

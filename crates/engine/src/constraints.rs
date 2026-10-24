@@ -125,13 +125,26 @@ pub(crate) struct IntegerParameter {
 
 impl IntegerParameter {
     fn list(term: Term, name: &str) -> Result<Self> {
-        let count = integer(term, name)?;
-        if count.number.sign() == Sign::Minus {
-            return Err(Error::Invalid(format!(
-                "sh:{name} requires a non-negative integer"
-            )));
+        let invalid = || Error::Invalid(format!("sh:{name} requires a non-negative xsd:integer"));
+        let Term::Literal(literal) = term else {
+            return Err(invalid());
+        };
+        if literal.datatype() != iri(XSD, "integer").as_ref() {
+            return Err(invalid());
         }
-        Ok(count)
+        let lexical = literal.value().trim_matches([' ', '\t', '\r', '\n']);
+        let digits = lexical
+            .strip_prefix('+')
+            .or_else(|| lexical.strip_prefix('-'))
+            .unwrap_or(lexical);
+        if digits.is_empty() || !digits.bytes().all(|byte| byte.is_ascii_digit()) {
+            return Err(invalid());
+        }
+        let number: BigInt = lexical.parse().map_err(|_| invalid())?;
+        if number.sign() == Sign::Minus {
+            return Err(invalid());
+        }
+        Ok(Self { literal, number })
     }
 
     pub fn allows(&self, size: usize, minimum: bool) -> bool {
