@@ -2,8 +2,8 @@
 
 import pyshacl_turbo as turbo
 import pytest
-from rdflib import Graph, URIRef
-from rdflib.namespace import RDF, SH
+from rdflib import Graph, Literal, URIRef
+from rdflib.namespace import RDF, SH, XSD
 
 PREFIX = """@prefix sh:<http://www.w3.org/ns/shacl#>.
 @prefix rdf:<http://www.w3.org/1999/02/22-rdf-syntax-ns#>."""
@@ -62,7 +62,20 @@ def test_false_uniqueness_reports_malformed_lists_without_rendering_them():
     )
     conforms, report, text = turbo.validate(data, shacl_graph=shapes)
     assert not conforms
-    assert list(report.objects(None, SH.value)) == [
-        data.value(URIRef("urn:s"), URIRef("urn:p"))
-    ]
+    assert list(report.objects(None, SH.value)) == [data.value(URIRef("urn:s"), URIRef("urn:p"))]
     assert "UniqueMembersConstraintComponent" in text
+
+
+@pytest.mark.parametrize("lexical", ["1_0", "١", "\u00a01\u00a0"])
+def test_list_bounds_do_not_inherit_python_integer_lexicals(lexical):
+    shape = URIRef("urn:S")
+    shapes = Graph().add((shape, SH.targetNode, URIRef("urn:s")))
+    shapes.add(
+        (
+            shape,
+            URIRef("http://www.w3.org/ns/shacl#minListLength"),
+            Literal(lexical, datatype=XSD.integer, normalize=False),
+        )
+    )
+    with pytest.raises(ValueError, match="non-negative xsd:integer"):
+        turbo.validate(Graph(), shacl_graph=shapes)
