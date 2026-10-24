@@ -128,81 +128,12 @@ dependencies = [
 ]
 
 [[package]]
-name = "educe"
-version = "0.5.11"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e4bd92664bf78c4d3dba9b7cdafce6fa15b13ed3ed16175218196942e99168a8"
-dependencies = [
- "enum-ordinalize",
- "proc-macro2",
- "quote",
- "syn 2.0.119",
-]
-
-[[package]]
-name = "enum-ordinalize"
-version = "4.4.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "89dd01549b09589510cf0647475075d12071456586d70f5c75c98ae2a5537677"
-dependencies = [
- "enum-ordinalize-derive",
-]
-
-[[package]]
-name = "enum-ordinalize-derive"
-version = "4.4.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a65863d15a4ce2888bd2f0f543cc963d3879c3a022c8ee43f6141d479a3ac815"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn 3.0.9",
-]
-
-[[package]]
-name = "equivalent"
-version = "1.0.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "00d174d5400e5e8fd687ad1049e2f578285fa914201b1af7e8b112a4546bd826"
-
-[[package]]
 name = "fancy-regex"
 version = "0.19.2"
 dependencies = [
  "bit-set",
  "regex-automata",
  "regex-syntax",
-]
-
-[[package]]
-name = "fastrand"
-version = "2.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "da7c62ceae207dd37ea5b845da6a0696c799f85e97da1ab5b7910be3c1c80223"
-
-[[package]]
-name = "futures-core"
-version = "0.3.34"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "92d699e522242e69e3003b94ecc1f960f3a5e015aa7c5d7486e65ad01dd94f5e"
-
-[[package]]
-name = "futures-io"
-version = "0.3.34"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "53c0fa8157de1303bfffdaa1cc2a673bfffb60102f76b0ef4441659124373fed"
-
-[[package]]
-name = "futures-lite"
-version = "2.6.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f78e10609fe0e0b3f4157ffab1876319b5b0db102a2c60dc4626306dc46b44ad"
-dependencies = [
- "fastrand",
- "futures-core",
- "futures-io",
- "parking",
- "pin-project-lite",
 ]
 
 [[package]]
@@ -256,26 +187,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "into-owned-trait"
-version = "1.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6af8e21836513a074ff8338e53a54f3fb5f76684543b644d550c57a33b90c7c7"
-
-[[package]]
-name = "iref"
-version = "4.3.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "04f39f9c77b04d9c1553df433ee25e2b0ec04df45439745028d90bfc549d4425"
-dependencies = [
- "pct-str",
- "serde",
- "smallvec",
- "static-automata",
- "str-newtype 3.0.1",
- "thiserror 2.0.21",
-]
-
-[[package]]
 name = "iri-rfc3987"
 version = "0.1.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -305,9 +216,8 @@ version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "183070c6fb642bfa4b1c2d3113d0342e69a2f3f583bd3f43ed7772aea411d40c"
 dependencies = [
- "serde",
  "static-automata",
- "str-newtype 2.0.0",
+ "str-newtype",
  "thiserror 2.0.21",
 ]
 
@@ -393,7 +303,6 @@ dependencies = [
  "oxrdf",
  "oxrdfio",
  "oxsdatatypes",
- "rand 0.8.8",
  "rand 0.9.5",
  "rustc-hash",
  "sha2",
@@ -401,7 +310,7 @@ dependencies = [
  "sparesults",
  "spareval",
  "spargebra",
- "thiserror 1.0.69",
+ "thiserror 2.0.21",
 ]
 
 [[package]]
@@ -429,7 +338,7 @@ dependencies = [
  "oxiri",
  "oxrdf",
  "ryu-js",
- "thiserror 1.0.69",
+ "thiserror 2.0.21",
 ]
 
 [[package]]
@@ -442,7 +351,7 @@ dependencies = [
  "oxsdatatypes",
  "rand 0.9.5",
  "sha2",
- "thiserror 1.0.69",
+ "thiserror 2.0.21",
 ]
 
 [[package]]
@@ -455,7 +364,7 @@ dependencies = [
  "oxrdf",
  "oxrdfxml",
  "oxttl",
- "thiserror 1.0.69",
+ "thiserror 2.0.21",
 ]
 
 [[package]]
@@ -468,7 +377,7 @@ dependencies = [
  "oxiri",
  "oxrdf",
  "quick-xml",
- "thiserror 1.0.69",
+ "thiserror 2.0.21",
 ]
 
 [[package]]
@@ -476,7 +385,7 @@ name = "oxsdatatypes"
 version = "0.2.3"
 dependencies = [
  "sha2",
- "thiserror 1.0.69",
+ "thiserror 2.0.21",
 ]
 
 [[package]]
@@ -489,14 +398,8 @@ dependencies = [
  "oxilangtag",
  "oxiri",
  "oxrdf",
- "thiserror 1.0.69",
+ "thiserror 2.0.21",
 ]
-
-[[package]]
-name = "parking"
-version = "2.2.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f38d5652c16fde515bb1ecef450ab0f6a219d619a7274976324d5e377f7dceba"
 
 [[package]]
 name = "parking_lot_core"
@@ -509,15 +412,6 @@ dependencies = [
  "redox_syscall",
  "smallvec",
  "windows-link",
-]
-
-[[package]]
-name = "pct-str"
-version = "3.0.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "756dc82399e1ef9b37bd698266e4b7fed5f3d3cccb09fbc6b602086c9077e4ad"
-dependencies = [
- "utf8-decode",
 ]
 
 [[package]]
@@ -584,12 +478,6 @@ checksum = "67eabc2ef2a60eb7faa00097bd1ffdb5bd28e62bf39990626a582201b7a754e5"
 dependencies = [
  "siphasher",
 ]
-
-[[package]]
-name = "pin-project-lite"
-version = "0.2.17"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a89322df9ebe1c1578d689c92318e070967d1042b512afbe49518723f4e6d5cd"
 
 [[package]]
 name = "portable-atomic"
@@ -812,40 +700,17 @@ dependencies = [
 ]
 
 [[package]]
-name = "raw-btree"
-version = "0.2.0"
+name = "rdf-structural-model"
+version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9a9a77e61cd9f37af08f952c1c072081563e129c0949ac4ede30f9e8b6b4b74f"
-
-[[package]]
-name = "rdf-syntax"
-version = "1.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c03e73cb2c425110a852ebe8d81f173ab34f2ab15c6371e22b40487db130677b"
+checksum = "327a23206458dffc34fa4a529a077903290a6240155f2c53aaad4bd45fe48621"
 dependencies = [
- "equivalent",
- "into-owned-trait",
- "iref",
+ "borrow-or-share",
+ "iri-rfc3987",
  "langtag",
- "rdf-types",
+ "rhusky",
  "serde",
- "str-newtype 2.0.0",
- "utf8-decode",
-]
-
-[[package]]
-name = "rdf-types"
-version = "1.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "edef8b7b6c1bc8d8e76c8e55b698503579e5306de937b4144d3ac7b80cf81ffb"
-dependencies = [
- "educe",
- "futures-lite",
- "into-owned-trait",
- "raw-btree",
- "replace_with",
- "serde",
- "slab",
+ "thiserror 2.0.21",
 ]
 
 [[package]]
@@ -905,12 +770,6 @@ name = "regex-syntax"
 version = "0.8.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d6f6ff9a378485b298a5286656da665ba74413d36db0979633275d2e708145d4"
-
-[[package]]
-name = "replace_with"
-version = "0.1.8"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "51743d3e274e2b18df81c4dc6caf8a5b8e15dbe799e0dca05c7617380094e884"
 
 [[package]]
 name = "rhusky"
@@ -1003,12 +862,12 @@ dependencies = [
 
 [[package]]
 name = "shacl-structural-model"
-version = "4.0.0"
+version = "5.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0716927c987ee3d044c3ca409cf926184a96e5e038a32e72acce89448a003ce7"
+checksum = "70e2e32f4e47db409109512d17715428dad6fa1e5672ac6200b9999bc7a7e806"
 dependencies = [
  "iri-rfc3987",
- "rdf-syntax",
+ "rdf-structural-model",
  "rhusky",
  "serde",
  "thiserror 2.0.21",
@@ -1019,12 +878,6 @@ name = "siphasher"
 version = "1.0.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "33f4fe9184a62d842c9ef383018f3306d8ba224fd9d836f56d7288308847c256"
-
-[[package]]
-name = "slab"
-version = "0.4.12"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0c790de23124f9ab44544d7ac05d60440adc586479ce501c1d6d7da3cd8c9cf5"
 
 [[package]]
 name = "smallvec"
@@ -1042,7 +895,7 @@ dependencies = [
  "memchr",
  "oxrdf",
  "quick-xml",
- "thiserror 1.0.69",
+ "thiserror 2.0.21",
 ]
 
 [[package]]
@@ -1063,7 +916,7 @@ dependencies = [
  "sparesults",
  "spargebra",
  "sparopt",
- "thiserror 1.0.69",
+ "thiserror 2.0.21",
 ]
 
 [[package]]
@@ -1076,7 +929,7 @@ dependencies = [
  "peg",
  "rand 0.9.5",
  "sha2",
- "thiserror 1.0.69",
+ "thiserror 2.0.21",
 ]
 
 [[package]]
@@ -1117,16 +970,7 @@ version = "2.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5ae04885ca2475d7ab569df6dfd14238c2ec736464866ec45da54009a8cd7ec8"
 dependencies = [
- "str-newtype-derive 2.0.0",
-]
-
-[[package]]
-name = "str-newtype"
-version = "3.0.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8e01394665356c31b7ba02896a40deb28b59aa84ed6874a5d4923e96b9330f4a"
-dependencies = [
- "str-newtype-derive 3.0.1",
+ "str-newtype-derive",
 ]
 
 [[package]]
@@ -1134,19 +978,6 @@ name = "str-newtype-derive"
 version = "2.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ee0d70ab7f0bc2dcd347d558a4305d979d407d1941e536e986e05d55c661e751"
-dependencies = [
- "proc-macro-error",
- "proc-macro2",
- "quote",
- "syn 2.0.119",
- "thiserror 1.0.69",
-]
-
-[[package]]
-name = "str-newtype-derive"
-version = "3.0.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c8f0eaf2142be9e15d5b0224ca86d304fe353e08ab7f545e5f9e294ed4530af8"
 dependencies = [
  "proc-macro-error",
  "proc-macro2",
@@ -1264,12 +1095,6 @@ dependencies = [
  "phf_codegen",
  "rand 0.8.8",
 ]
-
-[[package]]
-name = "utf8-decode"
-version = "2.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7932c10aa1600e9ddee027024aa9c0d397a103478253bf3fd6cea6dd03161b8a"
 
 [[package]]
 name = "version_check"
