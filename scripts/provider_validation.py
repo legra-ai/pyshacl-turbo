@@ -260,14 +260,89 @@ def verify_sources(context):
     )
 
 
+def compatibility_commands(context):
+    """Keep the established compatibility gates on the isolated installed pair."""
+    source, project, output = context["acceptance"], context["project"], context["output"]
+    python = ["uv", "run", "--project", project, "--locked", "--no-sync", "python", "-I", "-B"]
+    return [
+        (
+            "w3c",
+            [
+                *python,
+                "-m",
+                "pytest",
+                source / "tests/test_w3c.py",
+                source / "tests/test_w3c_documents.py",
+                str(source / "tests/test_sparql.py") + "::test_w3c_sparql_constraint",
+                "-q",
+                "--import-mode=importlib",
+                f"--junitxml={output / 'w3c-results.xml'}",
+            ],
+        ),
+        (
+            "upstream",
+            [
+                *python,
+                source / "scripts/check_upstream.py",
+                "--output",
+                output / "upstream-results.json",
+            ],
+        ),
+        (
+            "direct",
+            [
+                *python,
+                source / "scripts/compare_contract.py",
+                "--repeats",
+                "1",
+                "--output",
+                output / "direct-contract.json",
+                "--baseline",
+                source / "docs/direct-contract.json",
+                "--installed-pair",
+                output / "installed-pair.json",
+            ],
+        ),
+    ]
+
+
+def compatibility(context):
+    """Record failures without omitting a gate or replacing published authority."""
+    env = {**context["environment"], "COVERAGE_FILE": str(context["output"] / "python.coverage")}
+    record = {"stages": [], "performance_eligible": False}
+    destination = context["output"] / "compatibility-stages.json"
+    verify_sources(context)
+    for name, command in compatibility_commands(context):
+        stage = {"name": name, "command": list(map(str, command)), "status": "running"}
+        record["stages"].append(stage)
+        destination.write_text(json.dumps(record, indent=2) + "\n")
+        try:
+            run(command, directory=context["acceptance"], env=env)
+            verify_sources(context)
+        except Exception as error:
+            stage.update(status="failed", error=type(error).__name__)
+            if isinstance(error, subprocess.CalledProcessError):
+                stage["returncode"] = error.returncode
+            destination.write_text(json.dumps(record, indent=2) + "\n")
+            raise
+        stage["status"] = "success"
+        destination.write_text(json.dumps(record, indent=2) + "\n")
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--facade-source", type=Path, required=True)
     parser.add_argument("--facade-wheel", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--coverage", action="store_true")
+    parser.add_argument("--suite", choices=("full", "compatibility"), default="full")
     args = parser.parse_args()
+    if args.coverage and args.suite != "full":
+        parser.error("Python coverage belongs to the full installed test suite")
     context = prepare(args.facade_source, args.facade_wheel, args.output)
+    if args.suite == "compatibility":
+        compatibility(context)
+        return
     env = {**context["environment"], "COVERAGE_FILE": str(args.output / "python.coverage")}
     run(
         test_command(
