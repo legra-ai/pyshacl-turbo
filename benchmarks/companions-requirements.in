@@ -1,7 +1,0 @@
-# Published artifacts only; no editable installs or implicit sibling imports.
-rdflib==7.6.0
-owlrl==7.6.2
-pyshacl==0.40.1
-rdflib-turbo==0.2.0a3
-owlrl-turbo==0.1.0a3
-pyshacl-turbo==0.4.1

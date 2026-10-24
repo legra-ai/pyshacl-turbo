@@ -112,3 +112,11 @@ def test_dependabot_preserves_the_historical_benchmark_product_versions():
     )
     ignored = {entry["dependency-name"] for entry in updates.get("ignore", [])}
     assert ignored == set(pinned), "Only historical benchmark products must stay pinned"
+
+
+def test_benchmark_dependency_discovery_has_no_legacy_pip_manifests():
+    root = Path(__file__).resolve().parents[1] / "benchmarks"
+    legacy = sorted(
+        path.name for path in root.glob("*requirements*") if path.suffix in {".in", ".txt", ".lock"}
+    )
+    assert not legacy, f"Stale dependency inputs create obsolete update proposals: {legacy}"
