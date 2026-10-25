@@ -327,6 +327,7 @@ class CompiledShapes:
             _expand_names(data.namespaces or dict(self._shape_namespaces), focus_nodes),
             _expand_names(dict(self._shape_namespaces), use_shapes),
             [(p, str(ns)) for p, ns in data.namespaces.items()],
+            _comparison_policy=_native._VALUE_COMPARISON_POLICY,
         )
         _emit_recursion_warnings(recursion_warnings)
         nodes = self._blank_nodes | data.blank_nodes
@@ -400,6 +401,7 @@ class CompiledShapes:
             _expand_names(data.namespaces or dict(self._shape_namespaces), focus_nodes),
             _expand_names(dict(self._shape_namespaces), use_shapes),
             inplace and isinstance(data_graph, Graph),
+            _comparison_policy=_native._VALUE_COMPARISON_POLICY,
         )
         _emit_recursion_warnings(recursion_warnings)
         if inplace and isinstance(data_graph, Graph):

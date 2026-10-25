@@ -5,6 +5,7 @@ from rdflib_turbo._native import shacl as _bindings
 SHAPES_BATCH_SIZE = _bindings.SHAPES_BATCH_SIZE
 SHACL_ENGINE_FINGERPRINT = _bindings.SHACL_ENGINE_FINGERPRINT
 _REGEX_POLICY = _bindings._REGEX_POLICY
+_VALUE_COMPARISON_POLICY = _bindings._VALUE_COMPARISON_POLICY
 CompiledShapes = _bindings.CompiledShapes
 TargetData = _bindings.TargetData
 ValidationFailure = _bindings.ValidationFailure
