@@ -34,6 +34,10 @@ pub(crate) const PARAMETERS: &[&str] = &[
     "languageIn",
     "uniqueLang",
     "singleLine",
+    "memberShape",
+    "minListLength",
+    "maxListLength",
+    "uniqueMembers",
     "equals",
     "disjoint",
     "lessThan",
@@ -79,6 +83,12 @@ pub(crate) enum Constraint {
     LanguageIn(Vec<String>),
     UniqueLang,
     SingleLine,
+    MemberShape(usize),
+    ListLength {
+        minimum: bool,
+        count: IntegerParameter,
+    },
+    UniqueMembers(bool),
     In(HashSet<Term>),
     Pair {
         kind: &'static str,
@@ -114,6 +124,29 @@ pub(crate) struct IntegerParameter {
 }
 
 impl IntegerParameter {
+    fn list(term: Term, name: &str) -> Result<Self> {
+        let invalid = || Error::Invalid(format!("sh:{name} requires a non-negative xsd:integer"));
+        let Term::Literal(literal) = term else {
+            return Err(invalid());
+        };
+        if literal.datatype() != iri(XSD, "integer").as_ref() {
+            return Err(invalid());
+        }
+        let lexical = literal.value().trim_matches([' ', '\t', '\r', '\n']);
+        let digits = lexical
+            .strip_prefix('+')
+            .or_else(|| lexical.strip_prefix('-'))
+            .unwrap_or(lexical);
+        if digits.is_empty() || !digits.bytes().all(|byte| byte.is_ascii_digit()) {
+            return Err(invalid());
+        }
+        let number: BigInt = lexical.parse().map_err(|_| invalid())?;
+        if number.sign() == Sign::Minus {
+            return Err(invalid());
+        }
+        Ok(Self { literal, number })
+    }
+
     pub fn allows(&self, size: usize, minimum: bool) -> bool {
         let size = BigInt::from(size);
         if minimum {
@@ -264,6 +297,7 @@ pub(crate) fn shape_references(store: &Dataset) -> Result<HashSet<Term>> {
         "node",
         "not",
         "qualifiedValueShape",
+        "memberShape",
         "and",
         "or",
         "xone",
@@ -294,6 +328,22 @@ pub(crate) fn read(
     use crate::structural::iri_value;
     use shacl_structural_model::{Component as C, NodeKind, ShaclPath};
     let mut result = Vec::new();
+    for value in values(store, node, "memberShape")? {
+        subject(&value)?;
+        result.push(C::MemberShape(value));
+    }
+    for name in ["minListLength", "maxListLength"] {
+        if let Some(value) = one(store, node, name)? {
+            result.push(if name == "minListLength" {
+                C::MinListLength(value)
+            } else {
+                C::MaxListLength(value)
+            });
+        }
+    }
+    if one(store, node, "uniqueMembers")?.is_some() {
+        result.push(C::UniqueMembers(boolean(store, node, "uniqueMembers")?));
+    }
     for name in ["minCount", "maxCount"] {
         if let Some(value) = one(store, node, name)? {
             if !property {
@@ -510,6 +560,16 @@ pub(crate) fn lower_one(
         })
     };
     Ok(Some(match declaration {
+        C::MemberShape(value) => Constraint::MemberShape(reference(&value)?),
+        C::MinListLength(value) => Constraint::ListLength {
+            minimum: true,
+            count: IntegerParameter::list(value, "minListLength")?,
+        },
+        C::MaxListLength(value) => Constraint::ListLength {
+            minimum: false,
+            count: IntegerParameter::list(value, "maxListLength")?,
+        },
+        C::UniqueMembers(unique) => Constraint::UniqueMembers(unique),
         C::MinCount(value) => Constraint::Count {
             minimum: true,
             count: integer(value, "minCount")?,

@@ -265,6 +265,15 @@ disables this constraint. The draft marks this declaration at risk. This is
 selected draft coverage, separate from pySHACL parity and complete SHACL 1.2
 conformance.
 
+The same draft's four list constraints (`sh:memberShape`, `sh:minListLength`,
+`sh:maxListLength`, `sh:uniqueMembers`) compile through shared model 6.2.0.
+They validate list structure before members, reject cycles and malformed
+`rdf:nil`, and preserve arbitrary-precision length bounds. False uniqueness
+still requires a valid list. Member-shape failures include nested details.
+List reports reference the list head without copying its whole collection.
+Traversal retains cursors and counters; uniqueness uses pairwise exact-term
+checks with quadratic worst-case time instead of a list-sized in-memory set.
+
 ## Rust
 
 The standalone `pyshacl-turbo-engine` crate accepts exact-term oxrdf Dataset
