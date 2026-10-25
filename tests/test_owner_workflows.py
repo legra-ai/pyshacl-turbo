@@ -115,10 +115,15 @@ def test_active_workflows_use_the_current_uv_toolchain():
     assert selected
 
 
-def test_release_metadata_check_uses_current_twine():
+def test_release_metadata_check_uses_project_locked_twine():
     commands = [
         step.get("run", "")
         for job in workflow("ci.yml")["jobs"].values()
         for step in job.get("steps", [])
     ]
-    assert "uv tool run --from twine==7.0.0 twine check --strict dist/*" in commands
+    assert "uv run --locked --only-group packaging twine check --strict dist/*" in commands
+    assert not any("uv tool run" in command for command in commands)
+    import tomllib
+
+    manifest = tomllib.loads((ROOT / "pyproject.toml").read_text())
+    assert manifest["dependency-groups"]["packaging"] == ["twine==7.0.0"]
