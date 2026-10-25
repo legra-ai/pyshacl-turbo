@@ -263,7 +263,9 @@ class CompiledShapes:
 
             _check_shared_engine(shared)
             if self._shared_program is None:
-                self._shared_program = shared.SharedShapes.from_compiled(self._native)
+                self._shared_program = shared.SharedShapes.from_compiled(
+                    self._native, _comparison_policy=_native._VALUE_COMPARISON_POLICY
+                )
             execute = getattr(data_graph, "_validate_shared_shapes", None)
             if not callable(execute):
                 raise RuntimeError("Native source does not implement borrowed SHACL validation")
@@ -360,7 +362,9 @@ class CompiledShapes:
             shared = runtime._native
             _check_shared_engine(shared)
             if self._shared_program is None:
-                self._shared_program = shared.SharedShapes.from_compiled(self._native)
+                self._shared_program = shared.SharedShapes.from_compiled(
+                    self._native, _comparison_policy=_native._VALUE_COMPARISON_POLICY
+                )
             execute = getattr(data_graph, "_expand_shared_shapes", None)
             if not callable(execute):
                 raise RuntimeError("Native source does not implement borrowed SHACL rules")

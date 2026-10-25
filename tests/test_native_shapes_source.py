@@ -61,7 +61,9 @@ def test_captured_namespaces_and_program_survive_rebind_mutation_and_owner_close
     compiled = turbo.CompiledShapes(shapes)
     assert isinstance(compiled._native, provider.shacl.CompiledShapes)
     assert type(compiled._native) is turbo._native.CompiledShapes
-    shared = provider.SharedShapes.from_compiled(compiled._native)
+    shared = provider.SharedShapes.from_compiled(
+        compiled._native, _comparison_policy=turbo._native._VALUE_COMPARISON_POLICY
+    )
     assert shared.shares_program(compiled._native)
     shapes.bind("chosen", Namespace("urn:replacement:"), replace=True)
     shapes.set((EX.shape, SH.targetNode, EX.replacement_focus))
