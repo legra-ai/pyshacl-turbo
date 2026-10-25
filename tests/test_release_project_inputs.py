@@ -1,9 +1,12 @@
 """Release tests consume explicit original metadata, never candidate dependency pins."""
 
+import contextlib
 import hashlib
 import importlib.util
 import io
 import json
+import os
+import socket
 import tarfile
 from pathlib import Path
 
@@ -162,3 +165,19 @@ def test_source_links_cannot_hide_changed_metadata(tmp_path):
     original.symlink_to(external)
     with pytest.raises(ValueError, match="link"):
         helper().read_release_metadata(candidate, environment)
+
+
+@pytest.mark.skipif(os.name != "posix", reason="POSIX FIFO and Unix socket source entries")
+@pytest.mark.parametrize("kind", ["fifo", "socket"])
+def test_complete_original_inventory_rejects_extra_nonregular_entries(tmp_path, kind):
+    candidate, base, _, environment = authority(tmp_path)
+    if kind == "fifo":
+        os.mkfifo(base / "unexpected-entry")
+        with pytest.raises(ValueError, match="nonregular"):
+            helper().read_release_metadata(candidate, environment)
+    else:
+        # Relative bind avoids the platform's short Unix-domain socket path limit.
+        with socket.socket(socket.AF_UNIX) as listener, contextlib.chdir(base):
+            listener.bind("unexpected-entry")
+            with pytest.raises(ValueError, match="nonregular"):
+                helper().read_release_metadata(candidate, environment)

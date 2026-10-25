@@ -63,6 +63,8 @@ def source_inventory(source):
             raise ValueError("Original release source contains a link")
         if path.is_file():
             files[path.relative_to(source).as_posix()] = digest(path.read_bytes())
+        elif not path.is_dir():
+            raise ValueError("Original release source contains a nonregular filesystem entry")
     return files
 
 
