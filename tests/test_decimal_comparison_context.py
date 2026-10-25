@@ -307,3 +307,123 @@ def test_numeric_pair_not_implemented_truth_uses_actual_host_warning_policy(
         pyshacl_turbo, "lessThanOrEquals", case, route, True, True, warning_errors=warning_errors
     )
     assert actual == expected
+
+
+def observe_condition_rule(implementation, route, float_trap, compiled, *, raw_return=None):
+    from pyshacl import shacl_rules as original_rules
+    from pyshacl.shapes_graph import ShapesGraph as OriginalShapesGraph
+
+    data = (
+        (StoreDataset() if implementation is pyshacl_turbo else ReferenceDataset())
+        if route == "dataset"
+        else Graph()
+    )
+    target = data.default_graph if route == "dataset" else data
+    value, bound = numeric_literals("float-above-decimal")
+    target.add((EX.focus, EX.left, value))
+    shapes = Graph()
+    for triple in [
+        (EX.shape, RDF.type, SH.NodeShape),
+        (EX.shape, SH.targetNode, EX.focus),
+        (EX.shape, SH.rule, EX.rule),
+        (EX.rule, RDF.type, SH.TripleRule),
+        (EX.rule, SH.subject, SH.this),
+        (EX.rule, SH.predicate, EX.marker),
+        (EX.rule, SH.object, Literal(True)),
+        (EX.rule, SH.condition, EX.condition),
+        (EX.condition, RDF.type, SH.NodeShape),
+        (EX.condition, SH.property, EX.constraint),
+        (EX.constraint, SH.path, EX.left),
+        (EX.constraint, SH.minInclusive, bound),
+    ]:
+        shapes.add(triple)
+    if compiled:
+        OriginalShapesGraph(shapes)
+    program = (
+        pyshacl_turbo.CompiledShapes(shapes, advanced=True)
+        if implementation is pyshacl_turbo and compiled
+        else None
+    )
+    before_data, before_shapes = facts(data, route == "dataset"), facts(shapes)
+    result = None
+    try:
+        with decimal.localcontext() as context:
+            context.traps[decimal.FloatOperation] = float_trap
+            context.traps[decimal.InvalidOperation] = True
+            context.clear_flags()
+            with warnings.catch_warnings(record=True) as caught:
+                warnings.simplefilter("always")
+                try:
+                    result = (
+                        program.shacl_rules(data)
+                        if program is not None
+                        else (
+                            original_rules
+                            if implementation is pyshacl
+                            else pyshacl_turbo.shacl_rules
+                        )(data, shacl_graph=shapes, inplace=False)
+                    )
+                except Exception as error:  # noqa: BLE001 - compare complete public error semantics.
+                    outcome = {
+                        "kind": "error",
+                        "class": (type(error).__module__, type(error).__qualname__),
+                        "str": str(error),
+                        "args": repr(error.args),
+                        "repr": repr(error),
+                    }
+                else:
+                    outcome = {"kind": "rules"}
+            flags = sorted(signal.__name__ for signal, active in context.flags.items() if active)
+            if result is not None:
+                triples = list(result.triples((None, None, None)))
+                physical = (
+                    list(result.quads((None, None, None, None)))
+                    if isinstance(result, ReferenceDataset)
+                    else [(*triple, result.identifier) for triple in triples]
+                )
+                if route == "graph":
+                    assert set(triples) == {tuple(row[:3]) for row in physical}
+                    outcome["output"] = sorted(
+                        [tuple(map(term_state, triple)) for triple in triples], key=repr
+                    )
+                else:
+                    outcome["output"] = facts(result, True)
+                if raw_return is not None:
+                    raw_return.update(
+                        type=(type(result).__module__, type(result).__qualname__),
+                        row_arities=sorted({len(row) for row in result}),
+                        physical_quads=[tuple(map(term_state, row)) for row in physical],
+                        graph_identifier=term_state(result.identifier),
+                    )
+            return {
+                "before_data": before_data,
+                "after_data": facts(data, route == "dataset"),
+                "before_shapes": before_shapes,
+                "after_shapes": facts(shapes),
+                "flags": flags,
+                "numeric_warnings": [
+                    (
+                        warning.category.__module__,
+                        warning.category.__qualname__,
+                        str(warning.message),
+                    )
+                    for warning in caught
+                    if warning.category is DeprecationWarning
+                    and str(warning.message) == NUMERIC_WARNING
+                ],
+                "outcome": outcome,
+            }
+    finally:
+        if implementation is pyshacl_turbo and route == "dataset":
+            if result is not None and result is not data:
+                result.close()
+            data.close()
+
+
+@pytest.mark.parametrize("route", ["graph", "dataset"])
+@pytest.mark.parametrize("float_trap", [False, True])
+@pytest.mark.parametrize("compiled", [False, True])
+def test_rule_condition_uses_the_invocation_decimal_context(route, float_trap, compiled):
+    expected = observe_condition_rule(pyshacl, route, float_trap, compiled)
+    actual = observe_condition_rule(pyshacl_turbo, route, float_trap, compiled)
+    assert actual == expected
