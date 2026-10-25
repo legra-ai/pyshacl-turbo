@@ -134,6 +134,7 @@ def test_legacy_native_validation_and_expansion_keep_text_outputs_and_validate_o
         "focus_nodes": [],
         "use_shapes": [],
         "namespaces": [],
+        "_comparison_policy": _native._VALUE_COMPARISON_POLICY,
     }
     conforms, report, text, expanded, warnings = compiled.validate(**arguments)
     assert conforms and isinstance(report, str) and expanded == "" and not warnings
@@ -151,6 +152,7 @@ def test_legacy_native_validation_and_expansion_keep_text_outputs_and_validate_o
         "focus_nodes": [],
         "use_shapes": [],
         "additions_only": False,
+        "_comparison_policy": _native._VALUE_COMPARISON_POLICY,
     }
     assert compiled.expand(**expansion) == ("", [])
     assert compiled.expand(**(expansion | {"additions_only": True})) == ("", [])

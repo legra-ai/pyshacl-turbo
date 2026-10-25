@@ -19,6 +19,7 @@ DATA = "<urn:s> <urn:p> <urn:o>."
 def test_standalone_bindings_belong_to_the_dataset_provider():
     assert pyshacl_turbo._native.CompiledShapes is _native.shacl.CompiledShapes
     assert pyshacl_turbo._native._REGEX_POLICY is _native.shacl._REGEX_POLICY
+    assert pyshacl_turbo._native._VALUE_COMPARISON_POLICY is _native.shacl._VALUE_COMPARISON_POLICY
     assert pyshacl_turbo.ValidationFailure is _native.shacl.ValidationFailure
     assert _native.SHACL_ENGINE_FINGERPRINT == _native.shacl.SHACL_ENGINE_FINGERPRINT
 
