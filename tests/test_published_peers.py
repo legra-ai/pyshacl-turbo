@@ -3,6 +3,7 @@
 import hashlib
 import importlib.util
 import io
+import json
 import shutil
 import tarfile
 from pathlib import Path
@@ -41,6 +42,67 @@ def test_declaration_peer_uses_its_locked_version_not_current_facade(tmp_path):
     assert module.locked_version(source, "pyshacl-turbo") == "0.6.1"
     assert module.locked_version(source, "owlrl-turbo") == "0.1.0a3"
     assert module.adjacent_peer(source, "pyshacl-turbo") == "pyshacl-turbo"
+
+
+def test_yaml_test_dependency_uses_only_the_verified_owners_builder_once(tmp_path, monkeypatch):
+    module = helper()
+    native = owner(tmp_path)
+    output = tmp_path / "yaml-test-dependency"
+    events = []
+    record = {
+        "schema": 1,
+        "kind": "test-only-yaml-dependency",
+        "publishable": False,
+        "owner_lock_sha256": "a" * 64,
+        "wheel": "original.whl",
+    }
+
+    def prepare(actual, destination, python):
+        events.append(("prepare", actual, destination, python))
+        destination.mkdir()
+        (destination / "yaml-inputs.json").write_text(json.dumps(record))
+        return record
+
+    def verify(actual, authority):
+        events.append(("verify", actual, authority))
+        assert authority == output / "yaml-inputs.json"
+        return {
+            "record": json.loads(authority.read_text()),
+            "source": output / "source",
+            "wheel": output / "original.whl",
+            "archive": output / "original.tar.gz",
+        }
+
+    monkeypatch.setattr(
+        module,
+        "load_yaml",
+        lambda actual: SimpleNamespace(
+            prepare=prepare, verify=verify, verify_loaded=lambda *args: None
+        ),
+    )
+    result = module.prepare_yaml_test_dependency(native, output)
+    assert result == {"authority": str(output / "yaml-inputs.json"), "record": record}
+    assert [event[0] for event in events] == ["prepare", "verify"]
+    assert events[0][1:3] == (native, output)
+    verified = module.verify_yaml_test_dependency(native, result)
+    assert verified["wheel"] == output / "original.whl"
+    result["record"] = {**record, "wheel": "substitute.whl"}
+    with pytest.raises(ValueError, match="YAML.*authority"):
+        module.verify_yaml_test_dependency(native, result)
+
+
+def test_missing_original_yaml_builder_is_a_hard_capability_failure(tmp_path):
+    with pytest.raises(TypeError, match="YAML"):
+        helper().load_yaml(owner(tmp_path))
+
+
+def test_original_yaml_helper_requires_all_three_capabilities(tmp_path):
+    native = owner(tmp_path)
+    scripts = native / "scripts"
+    scripts.mkdir()
+    (scripts / "yaml_test_inputs.py").write_text("def prepare(*args): return {}\n")
+    with pytest.raises(TypeError, match="YAML"):
+        helper().load_yaml(native)
 
 
 @pytest.mark.parametrize(
@@ -144,6 +206,13 @@ def test_restore_keeps_original_declaration_peer_distinct_from_current_acceptanc
         },
     )
     monkeypatch.setattr(module, "verify_declaration_peer", lambda *args, **kwargs: None)
+    yaml = {"authority": str(tmp_path / "yaml-inputs.json"), "record": {"role": "yaml-test"}}
+    yaml_calls = []
+    monkeypatch.setattr(
+        module,
+        "prepare_yaml_test_dependency",
+        lambda source, output: yaml_calls.append((source, output)) or yaml,
+    )
     if provider_path != "../rdflib-turbo":
         with pytest.raises(ValueError, match="native source peer"):
             module.restore(native, current, tmp_path)
@@ -159,6 +228,8 @@ def test_restore_keeps_original_declaration_peer_distinct_from_current_acceptanc
         assert calls == [("owlrl-turbo", "0.1.0a3")]
         assert result["declaration_peer"]["role"] == "uv-export-declaration"
         assert result["declaration_peer"]["authority"]["kind"] == "git"
+        assert result["yaml_test_dependency"] == yaml
+        assert yaml_calls == [(provider, tmp_path / "peers/yaml-test-dependency")]
 
 
 def test_original_owl_wheel_and_archive_come_from_the_same_retained_registry_record(

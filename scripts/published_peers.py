@@ -33,6 +33,37 @@ def load_declaration(owner):
     return module
 
 
+def load_yaml(owner):
+    """Require the YAML authority helper shipped by this verified original owner."""
+    path = owner / "scripts/yaml_test_inputs.py"
+    if not path.is_file():
+        raise TypeError("Verified native owner lacks its required YAML test-input helper")
+    spec = importlib.util.spec_from_file_location("verified_owner_yaml_inputs", path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    if not all(
+        callable(getattr(module, name, None)) for name in ("prepare", "verify", "verify_loaded")
+    ):
+        raise TypeError("Verified native owner lacks required YAML authority capabilities")
+    return module
+
+
+def verify_yaml_test_dependency(owner, dependency):
+    """Bind the portable dependency record to the owner's explicit original inputs."""
+    verified = load_yaml(owner).verify(owner, Path(dependency["authority"]))
+    if verified["record"] != dependency["record"]:
+        raise ValueError("YAML test dependency differs from its retained original authority")
+    return verified
+
+
+def prepare_yaml_test_dependency(owner, output):
+    """Build one original pure test wheel from the verified owner's frozen lock."""
+    record = load_yaml(owner).prepare(owner, output, sys.executable)
+    dependency = {"authority": str(output / "yaml-inputs.json"), "record": record}
+    verify_yaml_test_dependency(owner, dependency)
+    return dependency
+
+
 def verify_declaration_peer(owner, record, *, initial=True):
     """A Git export peer and an installed registry facade have distinct roles."""
     if (
@@ -146,8 +177,10 @@ def restore(owner, facade, output):
     declared_source.rename(declaration)
     declared = {**declared, "source": str(declaration)}
     verify_declaration_peer(native, declared)
+    yaml = prepare_yaml_test_dependency(native, output / "peers/yaml-test-dependency")
     return {
         "provider_source": str(native),
         "declaration_peer": declared,
         "owlrl": owl,
+        "yaml_test_dependency": yaml,
     }
