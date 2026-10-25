@@ -28,9 +28,9 @@ jobs:
         with:
           ref: ${{ inputs.revision || github.sha }}
           fetch-depth: 0
-      - uses: astral-sh/setup-uv@v10.3.1
+      - uses: astral-sh/setup-uv@v10.3.2
         with:
-          version: "0.13.1"
+          version: "0.13.5"
       - uses: actions-rust-lang/setup-rust-toolchain@v2
         with:
           toolchain: 1.99.1
@@ -98,9 +98,9 @@ jobs:
       - uses: actions/checkout@v7
         with:
           ref: ${{ inputs.revision || github.sha }}
-      - uses: astral-sh/setup-uv@v10.3.1
+      - uses: astral-sh/setup-uv@v10.3.2
         with:
-          version: "0.13.1"
+          version: "0.13.5"
       - uses: actions/download-artifact@v8
         with:
           pattern: pipeline-reports-*

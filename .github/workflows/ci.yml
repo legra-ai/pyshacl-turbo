@@ -29,9 +29,9 @@ jobs:
       version: ${{ steps.release.outputs.version }}
       release: ${{ steps.release.outputs.release }}
     steps:
-      - uses: astral-sh/setup-uv@v10.3.0
+      - uses: astral-sh/setup-uv@v10.3.2
         with:
-          version: "0.13.1"
+          version: "0.13.5"
       - uses: actions/checkout@v7
         with:
           fetch-depth: 0
@@ -107,9 +107,9 @@ jobs:
       - uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.python }}
-      - uses: astral-sh/setup-uv@v10.3.0
+      - uses: astral-sh/setup-uv@v10.3.2
         with:
-          version: "0.13.1"
+          version: "0.13.5"
       - uses: actions-rust-lang/setup-rust-toolchain@v2
         with:
           toolchain: 1.99.1
@@ -140,9 +140,9 @@ jobs:
     if: always()
     runs-on: ubuntu-latest
     steps:
-      - uses: astral-sh/setup-uv@v10.3.0
+      - uses: astral-sh/setup-uv@v10.3.2
         with:
-          version: "0.13.1"
+          version: "0.13.5"
       - name: Require every platform to pass
         env:
           RESULTS: ${{ toJSON(needs) }}
@@ -181,9 +181,9 @@ jobs:
       - uses: actions/setup-python@v7
         with:
           python-version: '3.13'
-      - uses: astral-sh/setup-uv@v10.3.0
+      - uses: astral-sh/setup-uv@v10.3.2
         with:
-          version: "0.13.1"
+          version: "0.13.5"
       - name: Build source distribution
         run: uv build --sdist --out-dir dist
       - name: Check source inventory, patched dependencies and license texts
@@ -207,9 +207,9 @@ jobs:
       - uses: actions/setup-python@v7
         with:
           python-version: '3.13'
-      - uses: astral-sh/setup-uv@v10.3.0
+      - uses: astral-sh/setup-uv@v10.3.2
         with:
-          version: "0.13.1"
+          version: "0.13.5"
       - uses: actions/download-artifact@v8
         with:
           name: release-sdist
@@ -241,9 +241,9 @@ jobs:
       - uses: actions/setup-python@v7
         with:
           python-version: '3.13'
-      - uses: astral-sh/setup-uv@v10.3.0
+      - uses: astral-sh/setup-uv@v10.3.2
         with:
-          version: "0.13.1"
+          version: "0.13.5"
       - uses: actions/download-artifact@v8
         with:
           name: release-wheel
@@ -267,9 +267,9 @@ jobs:
       RELEASE_VERSION: ${{ needs.prepare.outputs.version }}
       RELEASE_REVISION: ${{ needs.prepare.outputs.revision }}
     steps:
-      - uses: astral-sh/setup-uv@v10.3.0
+      - uses: astral-sh/setup-uv@v10.3.2
         with:
-          version: "0.13.1"
+          version: "0.13.5"
       - uses: actions/checkout@v7
         with:
           ref: ${{ needs.prepare.outputs.revision }}
@@ -327,9 +327,9 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - uses: astral-sh/setup-uv@v10.3.0
+      - uses: astral-sh/setup-uv@v10.3.2
         with:
-          version: "0.13.1"
+          version: "0.13.5"
       - uses: actions/checkout@v7
         with:
           ref: ${{ needs.prepare.outputs.revision }}

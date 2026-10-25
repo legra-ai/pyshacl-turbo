@@ -19,7 +19,7 @@ def test_launch_receipt_preserves_wrappers_without_collecting_registry_credentia
     monkeypatch, tmp_path
 ):
     module = helper()
-    monkeypatch.setattr(module, "tools", lambda env: {"uv": {"version": "uv 0.13.1"}})
+    monkeypatch.setattr(module, "tools", lambda env: {"uv": {"version": "uv 0.13.5"}})
     owner = tmp_path / "source"
     (owner / ".cargo").mkdir(parents=True)
     (owner / ".cargo/config.toml").write_text('[build]\nrustc-wrapper="sccache"\n')

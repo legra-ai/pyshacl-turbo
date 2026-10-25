@@ -100,3 +100,16 @@ def test_pure_prepare_and_sdist_jobs_do_not_install_a_facade_rust_toolchain():
         )
     native = workflow("native-coverage.yml")["jobs"]["coverage"]
     assert any(step.get("with", {}).get("toolchain") == "1.99.1" for step in native["steps"])
+
+
+def test_active_workflows_use_the_current_uv_toolchain():
+    selected = []
+    for path in sorted((ROOT / ".github/workflows").glob("*.yml")):
+        document = yaml.safe_load(path.read_text())
+        for job in document["jobs"].values():
+            for step in job.get("steps", []):
+                if step.get("uses", "").startswith("astral-sh/setup-uv@"):
+                    selected.append((path.name, step))
+                    assert step["uses"] == "astral-sh/setup-uv@v10.3.2"
+                    assert step["with"]["version"] == "0.13.5"
+    assert selected
