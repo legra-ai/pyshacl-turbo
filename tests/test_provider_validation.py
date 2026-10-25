@@ -103,3 +103,52 @@ def test_actual_uv_child_preserves_bytecode_disabled_source_inventory(tmp_path):
     )
     assert result.strip() == "True"
     assert {path.name for path in tmp_path.iterdir()} == {"original_source.py"}
+
+
+def test_explicit_original_owl_and_yaml_wheels_precede_one_no_build_sync(tmp_path, monkeypatch):
+    module = helper()
+    project = tmp_path / "project"
+    project.mkdir()
+    (project / "uv.lock").write_text(
+        '[[package]]\nname="rdflib-turbo"\nversion="0.2.0a19"\n'
+        'source={registry="https://pypi.org/simple"}\n'
+    )
+    calls = []
+    monkeypatch.setattr(module, "run", lambda command, **kwargs: calls.append((command, kwargs)))
+    owl, yaml = tmp_path / "original-owl.whl", tmp_path / "original-yaml.whl"
+    module.install_test_peers(project, owl, yaml, {"provider_version": "0.2.0a19"}, {"FROZEN": "1"})
+    assert calls == [
+        (["uv", "add", "--project", project, "--no-sync", owl, yaml], {"env": {"FROZEN": "1"}}),
+        (["uv", "sync", "--project", project, "--locked", "--no-build"], {"env": {"FROZEN": "1"}}),
+    ]
+
+
+def test_yaml_loaded_probe_executes_only_the_verified_owner_helper(tmp_path, monkeypatch):
+    module = helper()
+    calls = []
+
+    def run(command, **kwargs):
+        calls.append(command)
+        return json.dumps({"opaque": "verified-yaml-proof"})
+
+    monkeypatch.setattr(module, "run", run)
+    owner, wheel, project = tmp_path / "owner", tmp_path / "yaml.whl", tmp_path / "project"
+    assert module.installed_yaml_receipt(owner, wheel, project, {}) == {
+        "opaque": "verified-yaml-proof"
+    }
+    assert calls[0] == [
+        "uv",
+        "run",
+        "--project",
+        project,
+        "--locked",
+        "--no-sync",
+        "python",
+        "-I",
+        "-B",
+        owner / "scripts/yaml_test_inputs.py",
+        "--wheel",
+        wheel,
+        "--environment",
+        project / ".venv",
+    ]

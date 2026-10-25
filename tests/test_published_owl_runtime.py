@@ -28,6 +28,19 @@ def runtime(tmp_path, monkeypatch, defect):
         "    return {'payload': {'owlrl_turbo/__init__.py': 'original'}, "
         "'wheel_sha256': 'original'}\n"
     )
+    (owner / "scripts/yaml_test_inputs.py").write_text(
+        "calls = 0\n"
+        "def verify_loaded(wheel, environment):\n"
+        "    global calls\n    calls += 1\n"
+        + (
+            "    raise ValueError('YAML payload rejected before pipeline')\n"
+            if defect == "yaml-missing"
+            else "    return {'wheel_sha256': 'yaml-original', 'origin': str(environment), "
+            "'payload': {'yaml/__init__.py': "
+            + ("'changed' if calls > 1 else 'original'" if defect == "yaml-drift" else "'original'")
+            + "}, 'loaded_modules': {}}\n"
+        )
+    )
     ex = Namespace("urn:published-companion-check:")
 
     class Dataset:
@@ -68,7 +81,12 @@ def runtime(tmp_path, monkeypatch, defect):
     facade.validate = validate
     for module in (native, owl, facade):
         monkeypatch.setitem(sys.modules, module.__name__, module)
-    return owner, tmp_path / "original-owl.whl", tmp_path / "project"
+    return (
+        owner,
+        tmp_path / "original-owl.whl",
+        tmp_path / "project",
+        tmp_path / "original-yaml.whl",
+    )
 
 
 def invoke(args, tmp_path):
@@ -90,6 +108,7 @@ def test_actual_companion_probe_executes_closure_and_validation_on_one_owner(
         "same_native_owner": True,
     }
     assert receipt["installed"]["payload"] == {"owlrl_turbo/__init__.py": "original"}
+    assert receipt["yaml_installed"]["payload"] == {"yaml/__init__.py": "original"}
 
 
 @pytest.mark.parametrize(
@@ -101,6 +120,7 @@ def test_actual_companion_probe_executes_closure_and_validation_on_one_owner(
         "closure-owner",
         "validation-owner",
         "nonconforming",
+        "yaml-drift",
     ],
 )
 def test_imports_alone_or_changed_runtime_semantics_cannot_pass_the_gate(
@@ -108,6 +128,12 @@ def test_imports_alone_or_changed_runtime_semantics_cannot_pass_the_gate(
 ):
     args = runtime(tmp_path, monkeypatch, defect)
     with pytest.raises((ImportError, RuntimeError)):
+        invoke(args, tmp_path)
+
+
+def test_yaml_loaded_payload_is_verified_before_the_early_pipeline(tmp_path, monkeypatch):
+    args = runtime(tmp_path, monkeypatch, "yaml-missing")
+    with pytest.raises(ValueError, match="YAML payload rejected before pipeline"):
         invoke(args, tmp_path)
 
 
@@ -120,15 +146,31 @@ def test_post_gate_owl_payload_drift_is_not_hidden_by_unchanged_native_pair(tmp_
         "project": tmp_path / "project",
         "environment": {},
         "receipt": {
-            "provider": {"peers": {"owlrl": {"wheel": str(tmp_path / "owl.whl")}}},
+            "provider": {
+                "peers": {
+                    "owlrl": {"wheel": str(tmp_path / "owl.whl")},
+                    "yaml_test_dependency": {"authority": "yaml.json", "record": {}},
+                }
+            },
             "installed_provider": native,
             "installed_facade": facade,
             "installed_owlrl": {"installed": {"payload": "original"}},
+            "installed_yaml": {"yaml": "original"},
         },
     }
     monkeypatch.setattr(module, "installed_receipts", lambda *args: (native, facade))
     monkeypatch.setattr(
-        module, "installed_owl_receipt", lambda *args: {"installed": {"payload": "changed"}}
+        module,
+        "load",
+        lambda name: SimpleNamespace(
+            verify_yaml_test_dependency=lambda *args: {"wheel": tmp_path / "yaml.whl"}
+        ),
+    )
+    monkeypatch.setattr(module, "installed_yaml_receipt", lambda *args: {"yaml": "original"})
+    monkeypatch.setattr(
+        module,
+        "installed_owl_receipt",
+        lambda *args, **kwargs: {"installed": {"payload": "changed"}},
     )
     with pytest.raises(ValueError, match="Installed OWL runtime payload changed"):
         module.verify_runtime(context)

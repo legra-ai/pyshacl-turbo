@@ -10,6 +10,7 @@ import subprocess
 import sys
 import tomllib
 from pathlib import Path
+from textwrap import indent
 
 
 def load(name):
@@ -129,9 +130,9 @@ def installed_receipts(owner, wheel, project, env):
     return [json.loads(line) for line in evidence.strip().splitlines()[-2:]]
 
 
-def owl_probe(owner, wheel, project):
+def owl_probe(owner, wheel, project, yaml_wheel):
     """Exercise the actual three installed products on one canonical owner."""
-    return f"""
+    pipeline = f"""
 import importlib.util
 import json
 from pathlib import Path
@@ -169,12 +170,28 @@ if data.store.backend._native is not native_owner:
 after = companion.verify_loaded(Path({str(wheel)!r}), Path({str(project / ".venv")!r}))
 if before != after:
     raise RuntimeError("Published OWL payload changed during the pipeline probe")
-print(json.dumps({{"installed": after, "pipeline": {{"canonical_dataset": True,
-    "inferred_type": True, "conforms": True, "same_native_owner": True}}}}))
+"""
+    return f"""
+import importlib.util
+import json
+from pathlib import Path
+spec = importlib.util.spec_from_file_location("verified_owner_yaml", {str(owner / "scripts/yaml_test_inputs.py")!r})
+yaml_inputs = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(yaml_inputs)
+yaml_before = yaml_inputs.verify_loaded(Path({str(yaml_wheel)!r}), Path({str(project / ".venv")!r}))
+try:
+{indent(pipeline.strip(), "    ")}
+finally:
+    yaml_after = yaml_inputs.verify_loaded(Path({str(yaml_wheel)!r}), Path({str(project / ".venv")!r}))
+    if yaml_before != yaml_after:
+        raise RuntimeError("Published YAML payload changed during the pipeline probe")
+print(json.dumps({{"installed": after, "yaml_installed": yaml_after,
+    "pipeline": {{"canonical_dataset": True, "inferred_type": True,
+    "conforms": True, "same_native_owner": True}}}}))
 """
 
 
-def installed_owl_receipt(owner, wheel, project, env):
+def installed_owl_receipt(owner, wheel, project, env, *, yaml_wheel):
     evidence = run(
         [
             "uv",
@@ -187,12 +204,51 @@ def installed_owl_receipt(owner, wheel, project, env):
             "-I",
             "-B",
             "-c",
-            owl_probe(owner, wheel, project),
+            owl_probe(owner, wheel, project, yaml_wheel),
         ],
         env=env,
         capture=True,
     )
     return json.loads(evidence)
+
+
+def installed_yaml_receipt(owner, wheel, project, env):
+    """Run only the verified original owner's isolated loaded-payload verifier."""
+    evidence = run(
+        [
+            "uv",
+            "run",
+            "--project",
+            project,
+            "--locked",
+            "--no-sync",
+            "python",
+            "-I",
+            "-B",
+            owner / "scripts/yaml_test_inputs.py",
+            "--wheel",
+            wheel,
+            "--environment",
+            project / ".venv",
+        ],
+        env=env,
+        capture=True,
+    )
+    return json.loads(evidence)
+
+
+def install_test_peers(project, owl_wheel, yaml_wheel, authority, env):
+    """Install explicit original test wheels without rebuilding or changing owner selection."""
+    run(["uv", "add", "--project", project, "--no-sync", owl_wheel, yaml_wheel], env=env)
+    lock = tomllib.loads((project / "uv.lock").read_text())
+    providers = [package for package in lock["package"] if package["name"] == "rdflib-turbo"]
+    if (
+        len(providers) != 1
+        or providers[0]["source"] != {"registry": "https://pypi.org/simple"}
+        or providers[0]["version"] != authority["provider_version"]
+    ):
+        raise ValueError("Validation must install the exact published native provider")
+    run(["uv", "sync", "--project", project, "--locked", "--no-build"], env=env)
 
 
 def verify_runtime(context):
@@ -205,9 +261,23 @@ def verify_runtime(context):
     ):
         raise ValueError("Installed runtime payload changed during validation")
     owl = context["receipt"]["provider"]["peers"]["owlrl"]
+    yaml = context["receipt"]["provider"]["peers"]["yaml_test_dependency"]
+    yaml_inputs = load("published_peers").verify_yaml_test_dependency(context["owner"], yaml)
+    yaml_wheel = yaml_inputs["wheel"]
+    if (
+        installed_yaml_receipt(
+            context["owner"], yaml_wheel, context["project"], context["environment"]
+        )
+        != context["receipt"]["installed_yaml"]
+    ):
+        raise ValueError("Installed YAML runtime payload changed during validation")
     if (
         installed_owl_receipt(
-            context["owner"], Path(owl["wheel"]), context["project"], context["environment"]
+            context["owner"],
+            Path(owl["wheel"]),
+            context["project"],
+            context["environment"],
+            yaml_wheel=yaml_wheel,
         )
         != context["receipt"]["installed_owlrl"]
     ):
@@ -244,6 +314,9 @@ def prepare(source, wheel, output):
         "wheel_sha256": digest(wheel),
     }
     verify_acceptance_binding(frozen, facade_inputs)
+    yaml = authority["peers"]["yaml_test_dependency"]
+    yaml_inputs = load("published_peers").verify_yaml_test_dependency(owner, yaml)
+    yaml_wheel = yaml_inputs["wheel"]
     env = environment()
     project = output / "project"
     run(["uv", "init", "--bare", "--no-workspace", "--vcs", "none", project], env=env)
@@ -267,16 +340,7 @@ def prepare(source, wheel, output):
     owl_wheel = Path(owl["wheel"]).resolve(strict=True)
     if digest(owl_wheel) != owl["wheel_sha256"]:
         raise ValueError("Original OWL wheel differs from its retained registry SHA-256")
-    run(["uv", "add", "--project", project, "--no-sync", owl_wheel], env=env)
-    lock = tomllib.loads((project / "uv.lock").read_text())
-    providers = [package for package in lock["package"] if package["name"] == "rdflib-turbo"]
-    if (
-        len(providers) != 1
-        or providers[0]["source"] != {"registry": "https://pypi.org/simple"}
-        or providers[0]["version"] != authority["provider_version"]
-    ):
-        raise ValueError("Validation must install the exact published native provider")
-    run(["uv", "sync", "--project", project, "--locked", "--no-build"], env=env)
+    install_test_peers(project, owl_wheel, yaml_wheel, authority, env)
     native, facade = installed_receipts(owner, wheel, project, env)
     expected = json.loads((output / "provider/registry-capability.json").read_text())
     if (
@@ -284,7 +348,10 @@ def prepare(source, wheel, output):
         or facade["engine_fingerprint"] != authority["identity"]["engine_fingerprint"]
     ):
         raise ValueError("Installed pair differs from independently verified published authority")
-    installed_owl = installed_owl_receipt(owner, owl_wheel, project, env)
+    installed_yaml = installed_yaml_receipt(owner, yaml_wheel, project, env)
+    installed_owl = installed_owl_receipt(owner, owl_wheel, project, env, yaml_wheel=yaml_wheel)
+    if installed_owl["yaml_installed"] != installed_yaml:
+        raise ValueError("Installed YAML proof changed across the early canonical pipeline")
     if installed_owl["installed"]["wheel_sha256"] != owl["wheel_sha256"] or (
         installed_owl["installed"]["payload"] != owl["package_payload"]
     ):
@@ -296,6 +363,8 @@ def prepare(source, wheel, output):
         "installed_provider": native,
         "installed_facade": facade,
         "installed_owlrl": installed_owl,
+        "installed_yaml": installed_yaml,
+        "yaml_authority_sha256": digest(Path(yaml["authority"])),
         "environment_lock_sha256": digest(project / "uv.lock"),
     }
     (output / "installed-pair.json").write_text(
@@ -334,6 +403,10 @@ def verify_sources(context):
         context["owner"], provider["peers"]["declaration_peer"], initial=False
     )
     owl = provider["peers"]["owlrl"]
+    yaml = provider["peers"]["yaml_test_dependency"]
+    load("published_peers").verify_yaml_test_dependency(context["owner"], yaml)
+    if digest(Path(yaml["authority"])) != receipt["yaml_authority_sha256"]:
+        raise ValueError("Original YAML authority changed during validation")
     if (
         registry.verify_extracted(
             Path(owl["archive"]), Path(owl["source"]), owl["sha256"], exact_inventory=False
