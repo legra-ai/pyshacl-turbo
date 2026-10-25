@@ -731,7 +731,7 @@ coverage = [
     { name = "pytest", specifier = "==9.1.1" },
     { name = "pytest-cov", specifier = "==7.1.0" },
     { name = "rdflib", specifier = "==7.6.0" },
-    { name = "ruff", specifier = "==0.17.1" },
+    { name = "ruff", specifier = "==0.17.2" },
 ]
 dev = [
     { name = "mypy", specifier = ">=1.15,<3" },
