@@ -31,6 +31,7 @@ def coverage_arguments(context):
         owlrl_archive=Path(owl["archive"]),
         owlrl_sha256=owl["sha256"],
         owlrl_wheel=Path(owl["wheel"]),
+        yaml_authority=Path(authority["peers"]["yaml_test_dependency"]["authority"]),
         output=context["output"] / "native-coverage",
         python=sys.executable,
     )

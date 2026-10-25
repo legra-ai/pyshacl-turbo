@@ -58,7 +58,7 @@ def verify_yaml_test_dependency(owner, dependency):
 
 def prepare_yaml_test_dependency(owner, output):
     """Build one original pure test wheel from the verified owner's frozen lock."""
-    record = load_yaml(owner).prepare(owner, output, sys.executable)
+    record = load_yaml(owner).prepare(owner, output, "3.13.16")
     dependency = {"authority": str(output / "yaml-inputs.json"), "record": record}
     verify_yaml_test_dependency(owner, dependency)
     return dependency

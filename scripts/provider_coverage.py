@@ -19,6 +19,34 @@ def digest(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def load(name):
+    spec = importlib.util.spec_from_file_location(name, Path(__file__).with_name(name + ".py"))
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def verify_yaml_summary(owner, authority, record, summary, collector, environment):
+    """Recheck the opaque loaded proof in the actual collector-owned environment."""
+    if summary["yaml_inputs"] != record:
+        raise ValueError("YAML summary differs from its exact original input authority")
+    location = summary["yaml_environment"]
+    project = Path(location["project"]).resolve(strict=True)
+    venv = Path(location["venv"]).resolve(strict=True)
+    base = (owner / "target/native-coverage/profiles").resolve(strict=True)
+    if not project.is_relative_to(base):
+        raise ValueError("YAML collector environment is outside its native owner")
+    parts = project.relative_to(base).parts
+    if len(parts) != 2 or not re.fullmatch(r"[0-9a-f]{32}", parts[0]) or parts[1] != "project":
+        raise ValueError("YAML collector environment has the wrong owned profile layout")
+    if venv != project / ".venv":
+        raise ValueError("YAML collector environment has the wrong virtual environment")
+    project_run = ["uv", "run", "--project", project, "--locked", "--no-sync"]
+    actual = collector.verify_installed_yaml(owner, authority, project_run, venv, environment)
+    if actual != summary["yaml_installed"]:
+        raise ValueError("YAML installed summary differs from its complete loaded proof")
+
+
 def git(source, *arguments):
     return subprocess.check_output(["git", "-C", str(source), *arguments], text=True).strip()
 
@@ -158,6 +186,7 @@ def collector_command(
     owlrl_archive=None,
     owlrl_sha256=None,
     owlrl_wheel,
+    yaml_authority,
 ):
     command = [
         "uv",
@@ -177,6 +206,8 @@ def collector_command(
         str(owlrl),
         "--owlrl-wheel",
         str(owlrl_wheel),
+        "--yaml-authority",
+        str(yaml_authority),
         "--output",
         str(output),
     ]
@@ -208,6 +239,7 @@ def measure(args):
     wheel = args.facade_wheel.resolve(strict=True)
     owlrl = args.owlrl_source.resolve(strict=True)
     owlrl_wheel = args.owlrl_wheel.resolve(strict=True)
+    yaml_authority = args.yaml_authority.resolve(strict=True)
     output = args.output.resolve()
     if any(output.is_relative_to(source) for source in (owner, facade, owlrl)):
         raise ValueError("Coverage output must be outside all frozen source checkouts")
@@ -220,11 +252,16 @@ def measure(args):
     )
     owl = freeze_owl_source(owlrl, args.owlrl_archive, args.owlrl_sha256)
     owl_inputs = verify_owl_inputs(owner, owlrl, owlrl_wheel)
+    yaml_helper = load("published_peers").load_yaml(owner)
+    yaml_inputs = yaml_helper.verify(owner, yaml_authority)["record"]
+    yaml_authority_sha256 = digest(yaml_authority)
     spec = importlib.util.spec_from_file_location(
         "verified_provider_collector", owner / "scripts/native_coverage.py"
     )
     collector = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(collector)
+    if not callable(getattr(collector, "verify_installed_yaml", None)):
+        raise TypeError("Verified native collector lacks required YAML loaded-payload verification")
     candidate = collector.candidate_parameters(
         provider,
         args.shacl_candidate_receipt,
@@ -245,17 +282,26 @@ def measure(args):
         owlrl_archive=args.owlrl_archive,
         owlrl_sha256=args.owlrl_sha256,
         owlrl_wheel=owlrl_wheel,
+        yaml_authority=yaml_authority,
     )
     receipt = {
         "provider": provider,
         "facade": acceptance,
         "owlrl": owl,
         "owlrl_inputs": owl_inputs,
+        "yaml_test_dependency": {"authority": str(yaml_authority), "record": yaml_inputs},
+        "yaml_authority_sha256": yaml_authority_sha256,
         "command": command,
     }
     output.mkdir(parents=True, exist_ok=False)
     (output / "provider-authority.json").write_text(json.dumps(receipt, indent=2) + "\n")
-    subprocess.run(command, check=True)
+    try:
+        subprocess.run(command, check=True)
+    finally:
+        if yaml_helper.verify(owner, yaml_authority)["record"] != yaml_inputs or (
+            digest(yaml_authority) != yaml_authority_sha256
+        ):
+            raise ValueError("Original YAML authority changed during native measurement")
     if (
         verify_source(
             owner,
@@ -274,6 +320,14 @@ def measure(args):
         raise ValueError("Original OWL wheel changed during native measurement")
     collector.verify_facade_inputs(facade, wheel, acceptance, candidate=candidate)
     summary = json.loads((output / "summary.json").read_text())
+    verify_yaml_summary(
+        owner,
+        yaml_authority,
+        yaml_inputs,
+        summary,
+        collector,
+        load("provider_validation").environment(),
+    )
     if (
         summary["project"] != "rdflib-turbo"
         or summary["revision"] != source_id(provider)
@@ -309,6 +363,7 @@ def main():
     parser.add_argument("--owlrl-archive", type=Path)
     parser.add_argument("--owlrl-sha256")
     parser.add_argument("--owlrl-wheel", type=Path, required=True)
+    parser.add_argument("--yaml-authority", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--python", default="3.13")
     measure(parser.parse_args())

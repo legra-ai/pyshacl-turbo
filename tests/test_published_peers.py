@@ -84,6 +84,7 @@ def test_yaml_test_dependency_uses_only_the_verified_owners_builder_once(tmp_pat
     assert result == {"authority": str(output / "yaml-inputs.json"), "record": record}
     assert [event[0] for event in events] == ["prepare", "verify"]
     assert events[0][1:3] == (native, output)
+    assert events[0][3] == "3.13.16"
     verified = module.verify_yaml_test_dependency(native, result)
     assert verified["wheel"] == output / "original.whl"
     result["record"] = {**record, "wheel": "substitute.whl"}
