@@ -2,6 +2,7 @@
 
 import sys
 from dataclasses import dataclass, field
+from decimal import localcontext
 from io import StringIO
 from pathlib import Path
 from urllib.parse import unquote as url_unquote
@@ -136,6 +137,19 @@ def _decode_terms(
         else:
             raise ValueError("Invalid native RDF term record")
         terms.append(term)
+    if copied_subjects is not None:
+        # Direct report terms restore existing values; conversion must not signal again.
+        # One report-local context and the existing terms vector avoid per-term contexts.
+        with localcontext():
+            for subject, _, obj, _ in quads:
+                if subject not in copied_subjects and records[obj][0] == 2 and terms[obj] is None:
+                    _, lexical, datatype, language = records[obj]
+                    terms[obj] = Literal(
+                        lexical,
+                        language,
+                        URIRef(datatype) if datatype else None,
+                        normalize=False,
+                    )
     named = multigraph or any(g is not None for _, _, _, g in quads)
     result = (
         _decoded_dataset(_bind_namespaces)
@@ -149,16 +163,14 @@ def _decode_terms(
         value = terms[o]
         if copied_subjects is not None and records[o][0] == 2:
             copied = s in copied_subjects
-            if copied or value is None:
+            if copied:
                 _, lexical, datatype, language = records[o]
                 value = Literal(
                     lexical,
                     language,
                     URIRef(datatype) if datatype else None,
-                    normalize=normalize if copied else False,
+                    normalize=normalize,
                 )
-                if not copied:
-                    terms[o] = value
         destination.add((terms[s], terms[p], value))
     return result
 
