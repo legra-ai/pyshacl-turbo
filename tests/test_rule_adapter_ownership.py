@@ -1,6 +1,6 @@
 """Borrowed rule results must be validated before accepting pending writes."""
 
-from contextlib import contextmanager
+from contextlib import closing, contextmanager
 
 import pyshacl_turbo as turbo
 import pytest
@@ -92,3 +92,44 @@ def test_actual_transaction_adapter_returns_transaction_or_independent_store(inp
             assert isinstance(result, runtime.Store)
             assert result._native is not source._native
             result.close()
+
+
+def test_native_source_missing_rules_capability_fails_before_writes(monkeypatch):
+    with closing(runtime.Graph()) as source:
+        source.add(TRIPLE)
+        program = turbo.CompiledShapes(SHAPES, advanced=True)
+        monkeypatch.setattr(source, "_expand_shared_shapes", None)
+        with pytest.raises(RuntimeError, match="does not implement borrowed SHACL rules"):
+            program.shacl_rules(source, inplace=True)
+        assert set(source) == {TRIPLE}
+
+
+def test_unrecognized_borrowed_source_cannot_accept_actual_native_rule_output():
+    accepted = []
+    shapes = (
+        SHAPES
+        + """
+    <urn:S> sh:rule [ a sh:TripleRule; sh:subject sh:this;
+                     sh:predicate <urn:derived>; sh:object "done" ].
+    """
+    )
+    with closing(runtime.Graph()) as owner:
+        owner.add(TRIPLE)
+
+        class ForeignAdapter:
+            def _validate_shared_shapes(self, *args):
+                return owner._validate_shared_shapes(*args)
+
+            @contextmanager
+            def _expand_shared_shapes(self, program, settings, inplace):
+                with owner._expand_shared_shapes(program, settings, inplace) as output:
+                    assert isinstance(output[0], runtime.Graph)
+                    assert output[0].store.backend._native is not owner.store.backend._native
+                    yield output
+                    accepted.append(True)
+
+        program = turbo.CompiledShapes(shapes, advanced=True)
+        with pytest.raises(RuntimeError, match="expansion result ownership"):
+            program.shacl_rules(ForeignAdapter())
+        assert not accepted
+        assert set(owner) == {TRIPLE}

@@ -1,5 +1,7 @@
 """DataGraph must retain native owners instead of rejecting or serializing them."""
 
+from contextlib import closing
+
 import pytest
 from pyshacl_turbo import CompiledShapes, RuleExpandRunner, Validator, shacl_rules, validate
 from pyshacl_turbo.graph_abstraction import DataGraph
@@ -10,6 +12,34 @@ from rdflib_turbo import Graph, StoreDataset
 
 S = URIRef("urn:native-view:s")
 P = URIRef("urn:native-view:p")
+
+
+@pytest.mark.parametrize(
+    "capability,message",
+    [
+        ("_validate_shared_shapes", "borrowed native validation"),
+        ("_expand_shared_shapes", "borrowed native rules"),
+        ("_compile_shared_shapes", "borrowed native compiler"),
+    ],
+)
+def test_ordinary_datagraph_does_not_advertise_native_borrowing(capability, message):
+    source = ReferenceGraph()
+    source.add((S, P, Literal("ordinary")))
+    wrapped = DataGraph.from_rdflib(source)
+    with pytest.raises(AttributeError, match=message):
+        getattr(wrapped, capability)
+    assert not hasattr(wrapped, capability)
+    assert set(source) == {(S, P, Literal("ordinary"))}
+
+
+def test_native_clone_rename_fails_without_mutating_the_original_owner():
+    with closing(Graph(identifier=URIRef("urn:original"))) as source:
+        source.add((S, P, Literal("original")))
+        wrapped = DataGraph.from_rdflib(source)
+        with pytest.raises(NotImplementedError, match="Renaming a native cloned graph"):
+            wrapped.clone(identifier=URIRef("urn:renamed"))
+        assert source.identifier == URIRef("urn:original")
+        assert set(source) == {(S, P, Literal("original"))}
 
 
 @pytest.mark.parametrize("dataset", [False, True])
