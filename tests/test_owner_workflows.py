@@ -113,3 +113,12 @@ def test_active_workflows_use_the_current_uv_toolchain():
                     assert step["uses"] == "astral-sh/setup-uv@v10.3.2"
                     assert step["with"]["version"] == "0.13.5"
     assert selected
+
+
+def test_release_metadata_check_uses_current_twine():
+    commands = [
+        step.get("run", "")
+        for job in workflow("ci.yml")["jobs"].values()
+        for step in job.get("steps", [])
+    ]
+    assert "uv tool run --from twine==7.0.0 twine check --strict dist/*" in commands

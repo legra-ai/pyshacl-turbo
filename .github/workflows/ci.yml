@@ -189,7 +189,7 @@ jobs:
       - name: Check source inventory, patched dependencies and license texts
         run: uv run --no-project python scripts/check_package.py dist/*.tar.gz
       - name: Check PyPI metadata rendering
-        run: uv tool run --from twine==6.2.0 twine check --strict dist/*
+        run: uv tool run --from twine==7.0.0 twine check --strict dist/*
       - uses: actions/upload-artifact@v7
         with:
           name: release-sdist
@@ -219,7 +219,7 @@ jobs:
       - name: Check pure wheel metadata, payload and licenses
         run: uv run --no-project python scripts/check_package.py dist/*.whl
       - name: Check PyPI metadata rendering
-        run: uv tool run --from twine==6.2.0 twine check --strict dist/*
+        run: uv tool run --from twine==7.0.0 twine check --strict dist/*
       - uses: actions/upload-artifact@v7
         with:
           name: release-wheel
