@@ -26,7 +26,8 @@ def provider(monkeypatch):
             self.invalid = False
 
         @classmethod
-        def from_compiled(cls, source):
+        def from_compiled(cls, source, *, _comparison_policy):
+            assert _comparison_policy is turbo._native._VALUE_COMPARISON_POLICY
             result = cls.__new__(cls)
             calls.append(("share", source))
             result.failure = False

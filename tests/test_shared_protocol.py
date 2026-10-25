@@ -78,7 +78,8 @@ def test_facade_protocol_preserves_options_reports_reuse_and_failure_type(monkey
             self.failure = False
 
         @classmethod
-        def from_compiled(cls, source):
+        def from_compiled(cls, source, *, _comparison_policy):
+            assert _comparison_policy is turbo._native._VALUE_COMPARISON_POLICY
             return cls(source)
 
         def validate(self, native, settings, inplace):

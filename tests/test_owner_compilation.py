@@ -23,8 +23,11 @@ def provider(monkeypatch):
 
     class Program:
         @staticmethod
-        def from_compiled(compiled):
-            assert shared_constructor.from_compiled(compiled).shares_program(compiled)
+        def from_compiled(compiled, *, _comparison_policy):
+            assert _comparison_policy is turbo._native._VALUE_COMPARISON_POLICY
+            assert shared_constructor.from_compiled(
+                compiled, _comparison_policy=_comparison_policy
+            ).shares_program(compiled)
             return Program()
 
         def prepare_rules_transaction(self, native, settings, scope):

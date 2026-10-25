@@ -40,8 +40,9 @@ def compilation(monkeypatch):
             return shared(*args, _policy=_policy)
 
         @staticmethod
-        def from_compiled(program):
-            result = shared.from_compiled(program)
+        def from_compiled(program, *, _comparison_policy):
+            assert _comparison_policy is turbo._native._VALUE_COMPARISON_POLICY
+            result = shared.from_compiled(program, _comparison_policy=_comparison_policy)
             assert result.shares_program(program)
             borrowed.append(program)
             return result
