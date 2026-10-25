@@ -2,11 +2,13 @@
 
 from contextlib import closing
 
+import pyshacl
 import pytest
 from pyshacl_turbo import CompiledShapes, RuleExpandRunner, Validator, shacl_rules, validate
 from pyshacl_turbo.graph_abstraction import DataGraph
 from rdflib import Graph as ReferenceGraph
 from rdflib import Literal, URIRef
+from rdflib.compare import to_canonical_graph
 from rdflib.namespace import RDF, RDFS, SH
 from rdflib_turbo import Graph, StoreDataset
 
@@ -185,3 +187,41 @@ def test_native_datagraph_direct_execution_borrows_instead_of_enumerating(
     else:
         output = program.validate(wrapped) if compiled else validate(wrapped, shacl_graph=shapes)
         assert output[0] is True
+
+
+@pytest.mark.parametrize("dataset", [False, True])
+def test_native_datagraph_compiler_borrows_shapes_and_matches_original_reports(dataset):
+    shape, property_shape = URIRef("urn:shape"), URIRef("urn:property")
+    reference_shapes = ReferenceGraph()
+    for triple in [
+        (shape, RDF.type, SH.NodeShape),
+        (shape, SH.targetNode, S),
+        (shape, SH.property, property_shape),
+        (property_shape, SH.path, P),
+        (property_shape, SH.minCount, Literal(1)),
+    ]:
+        reference_shapes.add(triple)
+    with closing(StoreDataset() if dataset else Graph()) as native_shapes:
+        for triple in reference_shapes:
+            native_shapes.add(triple)
+        shapes_view = native_shapes.default_graph if dataset else native_shapes
+        original_shape_facts = set(reference_shapes)
+        wrapped = DataGraph.from_rdflib(native_shapes)
+        program = CompiledShapes(wrapped)
+        assert program.graph is wrapped
+        assert program._shared_spec is None
+        assert set(shapes_view) == original_shape_facts
+        for populated in [False, True]:
+            original_data = ReferenceGraph()
+            with closing(Graph()) as native_data:
+                if populated:
+                    original_data.add((S, P, Literal("value")))
+                    native_data.add((S, P, Literal("value")))
+                before = set(original_data)
+                expected = pyshacl.validate(original_data, shacl_graph=reference_shapes)
+                actual = program.validate(DataGraph.from_rdflib(native_data))
+                assert actual[0] is expected[0] is populated
+                assert set(to_canonical_graph(actual[1])) == set(to_canonical_graph(expected[1]))
+                assert actual[2] == expected[2]
+                assert set(native_data) == set(original_data) == before
+                assert set(shapes_view) == original_shape_facts
