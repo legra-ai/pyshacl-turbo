@@ -284,6 +284,20 @@ def verify_runtime(context):
         raise ValueError("Installed OWL runtime payload changed during validation")
 
 
+@contextlib.contextmanager
+def frozen_yaml_inputs(owner, dependency):
+    """Retain exact original dependency authority through successful or failed consumers."""
+    verified = load("published_peers").verify_yaml_test_dependency(owner, dependency)
+    authority = Path(dependency["authority"])
+    original_sha = digest(authority)
+    try:
+        yield verified, original_sha
+    finally:
+        load("published_peers").verify_yaml_test_dependency(owner, dependency)
+        if digest(authority) != original_sha:
+            raise ValueError("Original YAML authority changed during validation")
+
+
 def prepare(source, wheel, output):
     source, wheel, output = (
         source.resolve(strict=True),
@@ -315,71 +329,73 @@ def prepare(source, wheel, output):
     }
     verify_acceptance_binding(frozen, facade_inputs)
     yaml = authority["peers"]["yaml_test_dependency"]
-    yaml_inputs = load("published_peers").verify_yaml_test_dependency(owner, yaml)
-    yaml_wheel = yaml_inputs["wheel"]
-    env = environment()
-    project = output / "project"
-    run(["uv", "init", "--bare", "--no-workspace", "--vcs", "none", project], env=env)
-    run(["uv", "python", "pin", "--project", project, sys.executable], env=env)
-    run(
-        [
-            "uv",
-            "add",
-            "--project",
-            project,
-            "--no-sync",
-            "--extra",
-            "test",
-            "--default-index",
-            "https://pypi.org/simple",
-            wheel,
-        ],
-        env=env,
-    )
-    owl = authority["peers"]["owlrl"]
-    owl_wheel = Path(owl["wheel"]).resolve(strict=True)
-    if digest(owl_wheel) != owl["wheel_sha256"]:
-        raise ValueError("Original OWL wheel differs from its retained registry SHA-256")
-    install_test_peers(project, owl_wheel, yaml_wheel, authority, env)
-    native, facade = installed_receipts(owner, wheel, project, env)
-    expected = json.loads((output / "provider/registry-capability.json").read_text())
-    if (
-        native != expected
-        or facade["engine_fingerprint"] != authority["identity"]["engine_fingerprint"]
-    ):
-        raise ValueError("Installed pair differs from independently verified published authority")
-    installed_yaml = installed_yaml_receipt(owner, yaml_wheel, project, env)
-    installed_owl = installed_owl_receipt(owner, owl_wheel, project, env, yaml_wheel=yaml_wheel)
-    if installed_owl["yaml_installed"] != installed_yaml:
-        raise ValueError("Installed YAML proof changed across the early canonical pipeline")
-    if installed_owl["installed"]["wheel_sha256"] != owl["wheel_sha256"] or (
-        installed_owl["installed"]["payload"] != owl["package_payload"]
-    ):
-        raise ValueError("Installed OWL companion differs from its original registry payload")
-    receipt = {
-        "current_facade": frozen,
-        "facade_inputs": facade_inputs,
-        "provider": authority,
-        "installed_provider": native,
-        "installed_facade": facade,
-        "installed_owlrl": installed_owl,
-        "installed_yaml": installed_yaml,
-        "yaml_authority_sha256": digest(Path(yaml["authority"])),
-        "environment_lock_sha256": digest(project / "uv.lock"),
-    }
-    (output / "installed-pair.json").write_text(
-        json.dumps(receipt, indent=2, sort_keys=True) + "\n"
-    )
-    return {
-        "source": source,
-        "wheel": wheel,
-        "acceptance": acceptance,
-        "owner": owner,
-        "project": project,
-        "output": output,
-        "environment": env,
-        "receipt": receipt,
-    }
+    with frozen_yaml_inputs(owner, yaml) as (yaml_inputs, yaml_authority_sha256):
+        yaml_wheel = yaml_inputs["wheel"]
+        env = environment()
+        project = output / "project"
+        run(["uv", "init", "--bare", "--no-workspace", "--vcs", "none", project], env=env)
+        run(["uv", "python", "pin", "--project", project, sys.executable], env=env)
+        run(
+            [
+                "uv",
+                "add",
+                "--project",
+                project,
+                "--no-sync",
+                "--extra",
+                "test",
+                "--default-index",
+                "https://pypi.org/simple",
+                wheel,
+            ],
+            env=env,
+        )
+        owl = authority["peers"]["owlrl"]
+        owl_wheel = Path(owl["wheel"]).resolve(strict=True)
+        if digest(owl_wheel) != owl["wheel_sha256"]:
+            raise ValueError("Original OWL wheel differs from its retained registry SHA-256")
+        install_test_peers(project, owl_wheel, yaml_wheel, authority, env)
+        native, facade = installed_receipts(owner, wheel, project, env)
+        expected = json.loads((output / "provider/registry-capability.json").read_text())
+        if (
+            native != expected
+            or facade["engine_fingerprint"] != authority["identity"]["engine_fingerprint"]
+        ):
+            raise ValueError(
+                "Installed pair differs from independently verified published authority"
+            )
+        installed_yaml = installed_yaml_receipt(owner, yaml_wheel, project, env)
+        installed_owl = installed_owl_receipt(owner, owl_wheel, project, env, yaml_wheel=yaml_wheel)
+        if installed_owl["yaml_installed"] != installed_yaml:
+            raise ValueError("Installed YAML proof changed across the early canonical pipeline")
+        if installed_owl["installed"]["wheel_sha256"] != owl["wheel_sha256"] or (
+            installed_owl["installed"]["payload"] != owl["package_payload"]
+        ):
+            raise ValueError("Installed OWL companion differs from its original registry payload")
+        receipt = {
+            "current_facade": frozen,
+            "facade_inputs": facade_inputs,
+            "provider": authority,
+            "installed_provider": native,
+            "installed_facade": facade,
+            "installed_owlrl": installed_owl,
+            "installed_yaml": installed_yaml,
+            "yaml_authority_sha256": yaml_authority_sha256,
+            "environment_lock_sha256": digest(project / "uv.lock"),
+        }
+        (output / "installed-pair.json").write_text(
+            json.dumps(receipt, indent=2, sort_keys=True) + "\n"
+        )
+        return {
+            "source": source,
+            "wheel": wheel,
+            "acceptance": acceptance,
+            "owner": owner,
+            "project": project,
+            "output": output,
+            "environment": env,
+            "receipt": receipt,
+        }
 
 
 def verify_sources(context):

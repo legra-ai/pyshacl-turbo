@@ -76,7 +76,11 @@ def test_native_identity_is_derived_after_restoring_immutable_lock_peers(tmp_pat
         calls.append("restore")
         destination.parent.mkdir()
         source.rename(destination)
-        return {"provider_source": str(destination), "declaration_peer": {"version": "0.6.1"}}
+        return {
+            "provider_source": str(destination),
+            "declaration_peer": {"version": "0.6.1"},
+            "yaml_test_dependency": {"authority": "yaml.json", "record": {"role": "yaml-test"}},
+        }
 
     def metadata(source):
         assert source == destination
@@ -99,6 +103,7 @@ def test_native_identity_is_derived_after_restoring_immutable_lock_peers(tmp_pat
                 verify_declaration_peer=lambda source, record, **kwargs: calls.append(
                     "verify-declaration"
                 ),
+                verify_yaml_test_dependency=lambda source, record: calls.append("verify-yaml"),
             )
             if name == "published_peers"
             else SimpleNamespace(derive=derive)
@@ -111,7 +116,15 @@ def test_native_identity_is_derived_after_restoring_immutable_lock_peers(tmp_pat
     )
     assert result["source"] == destination
     assert result["peers"]["declaration_peer"]["version"] == "0.6.1"
-    assert calls == ["restore", "verify-declaration", "metadata", "derive", "verify-declaration"]
+    assert calls == [
+        "restore",
+        "verify-declaration",
+        "verify-yaml",
+        "metadata",
+        "derive",
+        "verify-declaration",
+        "verify-yaml",
+    ]
 
 
 def test_source_metadata_selects_the_owners_compiler_without_a_facade_toolchain(

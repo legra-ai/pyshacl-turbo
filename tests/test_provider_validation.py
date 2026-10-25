@@ -152,3 +152,39 @@ def test_yaml_loaded_probe_executes_only_the_verified_owner_helper(tmp_path, mon
         "--environment",
         project / ".venv",
     ]
+
+
+@pytest.mark.parametrize("change", [False, True])
+def test_original_yaml_inputs_are_rechecked_even_after_a_failed_consumer(
+    tmp_path, monkeypatch, change
+):
+    from types import SimpleNamespace
+
+    module = helper()
+    authority = tmp_path / "yaml-inputs.json"
+    authority.write_text('{"original": true}')
+    dependency = {"authority": str(authority), "record": {"original": True}}
+    calls = []
+
+    def verify(owner, selected):
+        calls.append(selected)
+        return {"record": selected["record"], "wheel": tmp_path / "original.whl"}
+
+    monkeypatch.setattr(
+        module, "load", lambda name: SimpleNamespace(verify_yaml_test_dependency=verify)
+    )
+    failure = RuntimeError("original consumer failure")
+    with (
+        pytest.raises(
+            ValueError if change else RuntimeError, match="YAML|consumer failure"
+        ) as actual,
+        module.frozen_yaml_inputs(tmp_path, dependency) as (verified, original_sha),
+    ):
+        assert verified["wheel"] == tmp_path / "original.whl"
+        assert len(original_sha) == 64
+        if change:
+            authority.write_text('{"original": true}\n')
+        raise failure
+    if not change:
+        assert actual.value is failure
+    assert calls == [dependency, dependency]

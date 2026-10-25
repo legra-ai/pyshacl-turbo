@@ -122,12 +122,14 @@ def restore_source_identity(owner, facade, output, archive, sha256, expected_fin
     owner = Path(peers["provider_source"])
     files = load("provider_registry").verify_extracted(archive, owner, sha256)
     load("published_peers").verify_declaration_peer(owner, peers["declaration_peer"])
+    load("published_peers").verify_yaml_test_dependency(owner, peers["yaml_test_dependency"])
     resolved, profile = metadata(owner)
     write(output / "cargo-metadata.json", resolved)
     identity = load("provider_identity").derive(owner, resolved)
     if identity["engine_fingerprint"] != expected_fingerprint:
         raise ValueError("Published source identity differs from the installed native wheel")
     load("published_peers").verify_declaration_peer(owner, peers["declaration_peer"], initial=False)
+    load("published_peers").verify_yaml_test_dependency(owner, peers["yaml_test_dependency"])
     return {
         "source": owner,
         "files": files,
