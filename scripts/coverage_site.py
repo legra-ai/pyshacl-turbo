@@ -87,7 +87,17 @@ def build_site(python, rust, output, project, revision):
     images = "\n".join(
         f'<p><img src="{name}.svg" alt="{name}"></p>' for name in badges if name != "coverage"
     )
-    python_prefix = "owlrl-" if shared else ""
+    python_prefix = {
+        "rdflib-turbo": "",
+        "owlrl-turbo": "owlrl-",
+        "pyshacl-turbo": "shacl-",
+    }[project]
+    suite = "SHACL" if project == "pyshacl-turbo" else "OWL-RL"
+    scope = (
+        f"The Rust result covers the shared rdflib-turbo runtime, including the {suite} integration suite."
+        if shared
+        else ""
+    )
     text = f"""<!doctype html><html lang="en"><meta charset="utf-8">
 <title>{html.escape(project)} measured coverage</title>
 <h1>{html.escape(project)} measured coverage</h1>
@@ -95,7 +105,7 @@ def build_site(python, rust, output, project, revision):
 {images}
 <p>Python lines and branches are separate measurements. Rust percentages cover owned source,
 merging Rust and Python integration execution. Rust branch coverage is not instrumented.
-{("The Rust result covers the shared rdflib-turbo runtime, including the OWL-RL integration suite." if shared else "")}
+{scope}
 Dependencies and vendored patches are outside the owned-source denominator.</p>
 <ul><li><a href="reports/{python_prefix}python-html/index.html">Python report</a></li>
 <li><a href="reports/html/index.html">Rust report</a></li>

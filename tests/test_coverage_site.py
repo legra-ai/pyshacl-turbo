@@ -99,9 +99,11 @@ def test_badges_never_round_partial_coverage_up_to_100():
 @pytest.mark.parametrize("project", ["pyshacl-turbo", "rdflib-turbo", "owlrl-turbo"])
 def test_standard_shields_endpoints_publish_separate_measured_counts(tmp_path, project):
     python, rust = measurements()
-    shared = project == "owlrl-turbo"
+    shared = project != "rdflib-turbo"
     rust["project"] = "rdflib-turbo" if shared else project
     revision = "facade" if shared else "runtime"
+    if project == "pyshacl-turbo":
+        rust["shacl_revision"] = revision
     site().build_site(python, rust, tmp_path, project, revision)
     expected = {
         "python-lines": ("Python lines", "80.0%", "a4a61d"),
@@ -137,3 +139,23 @@ def test_standard_endpoint_never_rounds_partial_coverage_or_invents_branches(tmp
     site().build_site(python, rust, tmp_path, "owlrl-turbo", "facade")
     assert json.loads((tmp_path / "rust-lines.json").read_text())["message"] == "99.9%"
     assert json.loads((tmp_path / "python-branches.json").read_text())["message"] == "n/a"
+
+
+@pytest.mark.parametrize(
+    "project,revision_key,prefix",
+    [
+        ("rdflib-turbo", "revision", ""),
+        ("owlrl-turbo", "owlrl_revision", "owlrl-"),
+        ("pyshacl-turbo", "shacl_revision", "shacl-"),
+    ],
+)
+def test_report_links_follow_the_project_measured_by_the_provider(
+    tmp_path, project, revision_key, prefix
+):
+    python, rust = measurements()
+    rust[revision_key] = "measured"
+    site().build_site(python, rust, tmp_path, project, "measured")
+    report = (tmp_path / "index.html").read_text()
+    assert f'href="reports/{prefix}python-html/index.html"' in report
+    if project == "pyshacl-turbo":
+        assert "SHACL integration suite" in report
