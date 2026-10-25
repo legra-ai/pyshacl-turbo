@@ -53,6 +53,7 @@ include = [
     "/vendor/pyshacl-issue-70.patch",
     "/tests",
     "/scripts",
+    "/tools",
     "/docs",
     "/benchmarks",
     "/.github",

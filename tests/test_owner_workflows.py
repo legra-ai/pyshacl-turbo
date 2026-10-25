@@ -121,7 +121,10 @@ def test_release_metadata_check_uses_project_locked_twine():
         for job in workflow("ci.yml")["jobs"].values()
         for step in job.get("steps", [])
     ]
-    assert "uv run --locked --only-group packaging twine check --strict dist/*" in commands
+    assert (
+        "uv --project tools/packaging run --locked --only-group packaging twine check --strict dist/*"
+        in commands
+    )
     assert not any("uv tool run" in command for command in commands)
     import tomllib
 
