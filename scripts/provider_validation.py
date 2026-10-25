@@ -330,15 +330,17 @@ def verify_sources(context):
         provider["source_sha256"],
         exact_inventory=False,
     )
-    for peer in (provider["peers"]["declaration_peer"], provider["peers"]["owlrl"]):
-        if (
-            registry.verify_extracted(
-                Path(peer["archive"]), Path(peer["source"]), peer["sha256"], exact_inventory=False
-            )
-            != peer["files"]
-        ):
-            raise ValueError("Original published peer changed during validation")
+    load("published_peers").verify_declaration_peer(
+        context["owner"], provider["peers"]["declaration_peer"], initial=False
+    )
     owl = provider["peers"]["owlrl"]
+    if (
+        registry.verify_extracted(
+            Path(owl["archive"]), Path(owl["source"]), owl["sha256"], exact_inventory=False
+        )
+        != owl["files"]
+    ):
+        raise ValueError("Original published OWL source changed during validation")
     if (
         digest(Path(owl["wheel"])) != owl["wheel_sha256"]
         or load("published_peers")

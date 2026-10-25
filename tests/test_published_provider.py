@@ -94,7 +94,12 @@ def test_native_identity_is_derived_after_restoring_immutable_lock_peers(tmp_pat
         helper,
         "load",
         lambda name: (
-            SimpleNamespace(restore=restore)
+            SimpleNamespace(
+                restore=restore,
+                verify_declaration_peer=lambda source, record, **kwargs: calls.append(
+                    "verify-declaration"
+                ),
+            )
             if name == "published_peers"
             else SimpleNamespace(derive=derive)
             if name == "provider_identity"
@@ -106,7 +111,7 @@ def test_native_identity_is_derived_after_restoring_immutable_lock_peers(tmp_pat
     )
     assert result["source"] == destination
     assert result["peers"]["declaration_peer"]["version"] == "0.6.1"
-    assert calls == ["restore", "metadata", "derive"]
+    assert calls == ["restore", "verify-declaration", "metadata", "derive", "verify-declaration"]
 
 
 def test_source_metadata_selects_the_owners_compiler_without_a_facade_toolchain(

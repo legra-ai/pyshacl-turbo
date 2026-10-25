@@ -3,6 +3,7 @@
 import importlib.util
 import json
 import re
+import sys
 import tomllib
 from pathlib import Path, PurePosixPath
 
@@ -21,6 +22,35 @@ def load_companion(owner):
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module
+
+
+def load_declaration(owner):
+    """Load only the declaration builder shipped by the verified native owner."""
+    path = owner / "scripts/declaration_peer.py"
+    spec = importlib.util.spec_from_file_location("verified_owner_declaration", path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def verify_declaration_peer(owner, record, *, initial=True):
+    """A Git export peer and an installed registry facade have distinct roles."""
+    if (
+        not isinstance(record, dict)
+        or record.get("role") != "uv-export-declaration"
+        or record.get("project") != "pyshacl-turbo"
+        or record.get("authority", {}).get("kind") != "git"
+        or record.get("version") != locked_version(owner, "pyshacl-turbo")
+    ):
+        raise ValueError("Expected the exact locked Git declaration authority")
+    load_declaration(owner).verify(owner, record, initial=initial)
+    return record
+
+
+def prepare_declaration_peer(owner, output):
+    """Retain an original UV sdist from the owner's independent declaration Git role."""
+    record = load_declaration(owner).prepare(owner, output, sys.executable)
+    return verify_declaration_peer(owner, record)
 
 
 def locked_version(owner, project):
@@ -98,16 +128,15 @@ def restore(owner, facade, output):
     owner, output = owner.resolve(strict=True), output.resolve(strict=True)
     if owner == output or not owner.is_relative_to(output):
         raise ValueError("Only the downloaded owner source may move inside its output cohort")
-    facade_version = locked_version(owner, "pyshacl-turbo")
     owl_version = locked_version(owner, "owlrl-turbo")
     native_name = adjacent_peer(facade, "rdflib-turbo")
     facade_name = adjacent_peer(owner, "pyshacl-turbo")
-    declared = original_peer("pyshacl-turbo", facade_version, output / "peers/pyshacl-turbo")
+    declared = prepare_declaration_peer(owner, output / "peers/pyshacl-turbo")
     declared_source = Path(declared["source"]).resolve(strict=True)
     if adjacent_peer(declared_source, "rdflib-turbo") != native_name:
-        raise ValueError("Published declaration peer names a different native source peer")
+        raise ValueError("Git declaration peer names a different native source peer")
     if not declared_source.is_relative_to(output):
-        raise ValueError("Downloaded declaration peer is outside its output cohort")
+        raise ValueError("Git declaration peer is outside its output cohort")
     owl = original_peer("owlrl-turbo", owl_version, output / "peers/owlrl-turbo", owner=owner)
     cohort = output / "cohort"
     cohort.mkdir()
@@ -115,8 +144,10 @@ def restore(owner, facade, output):
     declaration = cohort / facade_name
     owner.rename(native)
     declared_source.rename(declaration)
+    declared = {**declared, "source": str(declaration)}
+    verify_declaration_peer(native, declared)
     return {
         "provider_source": str(native),
-        "declaration_peer": {**declared, "source": str(declaration)},
+        "declaration_peer": declared,
         "owlrl": owl,
     }

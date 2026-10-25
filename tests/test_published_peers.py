@@ -125,12 +125,25 @@ def test_restore_keeps_original_declaration_peer_distinct_from_current_acceptanc
     calls = []
 
     def original(project, version, output, **kwargs):
+        assert project == "owlrl-turbo", (
+            "Declaration identity must never come from a version lookup"
+        )
         calls.append((project, version))
-        if project == "owlrl-turbo":
-            assert kwargs == {"owner": native}
-        return {"source": str(declared if project == "pyshacl-turbo" else owl), "version": version}
+        assert kwargs == {"owner": native}
+        return {"source": str(owl), "version": version}
 
     monkeypatch.setattr(module, "original_peer", original)
+    monkeypatch.setattr(
+        module,
+        "prepare_declaration_peer",
+        lambda owner, output: {
+            "role": "uv-export-declaration",
+            "authority": {"kind": "git", "revision": "a" * 40},
+            "source": str(declared),
+            "version": "0.6.1",
+        },
+    )
+    monkeypatch.setattr(module, "verify_declaration_peer", lambda *args, **kwargs: None)
     if provider_path != "../rdflib-turbo":
         with pytest.raises(ValueError, match="native source peer"):
             module.restore(native, current, tmp_path)
@@ -143,7 +156,9 @@ def test_restore_keeps_original_declaration_peer_distinct_from_current_acceptanc
         assert peer == tmp_path / "cohort/pyshacl-turbo"
         assert peer != current
         assert (current / "pyproject.toml").read_text().count('version="0.6.2"') == 1
-        assert calls == [("pyshacl-turbo", "0.6.1"), ("owlrl-turbo", "0.1.0a3")]
+        assert calls == [("owlrl-turbo", "0.1.0a3")]
+        assert result["declaration_peer"]["role"] == "uv-export-declaration"
+        assert result["declaration_peer"]["authority"]["kind"] == "git"
 
 
 def test_original_owl_wheel_and_archive_come_from_the_same_retained_registry_record(
