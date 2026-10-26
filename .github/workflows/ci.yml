@@ -29,7 +29,7 @@ jobs:
       version: ${{ steps.release.outputs.version }}
       release: ${{ steps.release.outputs.release }}
     steps:
-      - uses: astral-sh/setup-uv@v10.3.1
+      - uses: astral-sh/setup-uv@v10.3.2
         with:
           version: "0.13.1"
       - uses: actions/checkout@v7
@@ -98,7 +98,7 @@ jobs:
       - uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.python }}
-      - uses: astral-sh/setup-uv@v10.3.1
+      - uses: astral-sh/setup-uv@v10.3.2
         with:
           version: "0.13.1"
       - uses: actions-rust-lang/setup-rust-toolchain@v2
@@ -141,7 +141,7 @@ jobs:
     if: always()
     runs-on: ubuntu-latest
     steps:
-      - uses: astral-sh/setup-uv@v10.3.1
+      - uses: astral-sh/setup-uv@v10.3.2
         with:
           version: "0.13.1"
       - name: Require every platform to pass
@@ -182,7 +182,7 @@ jobs:
       - uses: actions/setup-python@v7
         with:
           python-version: '3.13'
-      - uses: astral-sh/setup-uv@v10.3.1
+      - uses: astral-sh/setup-uv@v10.3.2
         with:
           version: "0.13.1"
       - uses: actions-rust-lang/setup-rust-toolchain@v2
@@ -232,7 +232,7 @@ jobs:
       - uses: actions/setup-python@v7
         with:
           python-version: '3.13'
-      - uses: astral-sh/setup-uv@v10.3.1
+      - uses: astral-sh/setup-uv@v10.3.2
         with:
           version: "0.13.1"
       - uses: actions-rust-lang/setup-rust-toolchain@v2
@@ -286,7 +286,7 @@ jobs:
       RELEASE_VERSION: ${{ needs.prepare.outputs.version }}
       RELEASE_REVISION: ${{ needs.prepare.outputs.revision }}
     steps:
-      - uses: astral-sh/setup-uv@v10.3.1
+      - uses: astral-sh/setup-uv@v10.3.2
         with:
           version: "0.13.1"
       - uses: actions/checkout@v7
@@ -346,7 +346,7 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - uses: astral-sh/setup-uv@v10.3.1
+      - uses: astral-sh/setup-uv@v10.3.2
         with:
           version: "0.13.1"
       - uses: actions/checkout@v7

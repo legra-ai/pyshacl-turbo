@@ -30,7 +30,7 @@ jobs:
         os: [ubuntu-latest, macos-latest]
     steps:
       - uses: actions/checkout@v7
-      - uses: astral-sh/setup-uv@v10.3.1
+      - uses: astral-sh/setup-uv@v10.3.2
         with:
           version: "0.13.1"
       - run: uv sync --project benchmarks --locked --no-build --python 3.13
