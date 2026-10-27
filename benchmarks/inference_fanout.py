@@ -145,6 +145,7 @@ def prepare(job, graph_observation):
         namespaces = [(prefix, str(name)) for prefix, name in source.namespaces()]
         return {
             "operation": "owlrl_inplace",
+            "timed_boundary": "instrumented public call including warning/stream capture and return-diagnostic collection; RDF/cache/namespace/flag observation outside timer",
             "fixture": job["fixture"],
             "input_sha256": hashlib.sha256(text.encode()).hexdigest(),
             "input_count": len(initial),

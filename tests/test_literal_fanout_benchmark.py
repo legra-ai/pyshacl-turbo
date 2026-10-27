@@ -238,3 +238,121 @@ def test_inference_contract_never_waives_pipeline_report_or_missing_observations
         bench.require_standard_parity(incomplete, measured, contract="inference")
     with pytest.raises(ValueError, match="Unknown"):
         bench.require_standard_parity(measured, measured, contract="unknown")
+
+
+def test_release_worker_argv_is_accepted_by_the_real_companion_parser(monkeypatch):
+    import contextlib
+    import io
+    import sys
+
+    bench = load("releases")
+    calls = []
+
+    def command(argv, *, timeout):
+        calls.append(list(map(str, argv)))
+        assert timeout == 30
+        output = io.StringIO()
+        observation = {"complete": True}
+
+        def worker(job, repeats, measurement):
+            assert job["fixture"] == "literal-reflexivity" and repeats == 1
+            return {
+                "observation": observation,
+                "observations": [observation],
+                "stable": True,
+                "samples_ns": [10] if measurement == "time" else [],
+                "peak_rss_bytes": 20,
+                "setup_peak_rss_bytes": 10,
+            }
+
+        with monkeypatch.context() as context, contextlib.redirect_stdout(output):
+            context.setattr(bench.companions, "worker", worker)
+            context.setattr(sys, "argv", list(map(str, argv[2:])))
+            bench.companions.main()
+        return output.getvalue()
+
+    monkeypatch.setattr(bench, "command", command)
+    result = bench.measure(
+        "python",
+        {
+            "operation": "owlrl",
+            "backend": "reference",
+            "nodes": 32,
+            "fixture": "literal-reflexivity",
+        },
+        1,
+        1,
+        30,
+    )
+    assert result["median_ns"] == 10 and len(calls) == 2
+    assert all(str(bench.ROOT / "benchmarks/inference_fanout.py") not in argv for argv in calls)
+    assert "benchmarks/inference_fanout.py" in bench.harness_hashes()
+
+
+def test_pinned_dataset_quads_exposes_default_identifier_and_named_identifier():
+    from rdflib import Dataset
+
+    dataset = Dataset()
+    triple = (URIRef("urn:s"), URIRef("urn:p"), Literal("word"))
+    dataset.default_graph.add(triple)
+    dataset.graph(URIRef("urn:named")).add(triple)
+    assert {g for _, _, _, g in dataset.quads()} == {
+        dataset.default_graph.identifier,
+        URIRef("urn:named"),
+    }
+
+
+@pytest.mark.parametrize("named_stage", [None, "before", "after"])
+def test_native_export_uses_real_dataset_quad_contract(monkeypatch, named_stage):
+    import sys
+    from types import SimpleNamespace
+
+    from rdflib import Dataset
+
+    suite = load("companions")
+
+    class Owner:
+        def parse(self, *, data, format):
+            self.dataset = Dataset().parse(data=data, format=format)
+            if named_stage == "before":
+                self.named()
+            return self
+
+        def named(self):
+            self.dataset.graph(URIRef("urn:wrong-context")).add(
+                (URIRef("urn:s"), URIRef("urn:p"), Literal("foreign"))
+            )
+
+        def to_rdflib(self):
+            return self.dataset
+
+        def namespaces(self):
+            return self.dataset.namespaces()
+
+    def expand(source, *, inference, inplace):
+        assert inference == "owlrl" and inplace
+        if named_stage == "after":
+            source.named()
+        return source
+
+    monkeypatch.setitem(sys.modules, "rdflib_turbo", SimpleNamespace(Dataset=Owner))
+    monkeypatch.setitem(sys.modules, "owlrl_turbo", SimpleNamespace(expand=expand))
+    job = {
+        "operation": "owlrl",
+        "backend": "turbo_shared",
+        "nodes": 32,
+        "fixture": "literal-reflexivity",
+    }
+    if named_stage == "before":
+        with pytest.raises(RuntimeError, match="non-default physical context"):
+            suite.prepare(job)
+        return
+    run, observe = suite.prepare(job)
+    value = run()
+    if named_stage == "after":
+        with pytest.raises(RuntimeError, match="non-default physical context"):
+            observe(value)
+    else:
+        observation = observe(value)
+        assert observation["input_count"] == 32
+        assert observation["public_effects"]["returned_input"]

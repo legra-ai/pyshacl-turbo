@@ -100,8 +100,9 @@ Version comparisons also submit the closed `literal-reflexivity` and
 `literal-type` profiles through these same workers, at widths32,128,512,1000.
 The latter adds one common range class. Inputs use unique literal words, so the
 width of a shared generalized membership prefix cannot hide behind repeated
-integer scores. These rows time public in-place OWL-RL only; parsing, export and
-complete observation encoding remain outside the timer. Existing employee,
+integer scores. These instrumented rows time public in-place OWL-RL plus warning/stream capture
+and small return-diagnostic construction. Parsing, export and complete RDF,
+cache, namespace and decimal observation encoding remain outside the timer. Existing employee,
 copy-by-default inference and full-pipeline cases retain their own boundaries.
 
 The new bounded observations retain complete RDF/generalized facts, literal

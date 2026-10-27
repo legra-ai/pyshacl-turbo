@@ -213,7 +213,6 @@ def measure(executable, job, repeats, memory_repeats, timeout):
                     executable,
                     "-I",
                     ROOT / "benchmarks/companions.py",
-                    ROOT / "benchmarks/inference_fanout.py",
                     "--worker",
                     json.dumps(job),
                     "--repeats",
@@ -379,7 +378,7 @@ def main():
         "source_revision": command(["git", "-C", ROOT, "rev-parse", "HEAD"]).strip(),
         "uv_version": command(["uv", "--version"]).strip(),
         "harness_sha256": harness_hashes(),
-        "method": "Serial isolated wheel environments; parse → in-place inference → validation, including shape compilation and full public report output. Shapes are parsed before timing. Python uses the original three libraries; shared Turbo retains one native dataset; historical Turbo includes RDFLib conversion. One warmup precedes retained timing samples. Independent cold processes measure whole-process peak RSS before observation encoding. Full-output speedups require stable, completely equal outputs. Generalized RDF differences remain visible. No timing threshold on shared CI runners. Closed literal fanout profiles separately measure public in-place OWL-RL only; parsing/export/audit are outside timers, and return/container/namespace/cache differences remain observed.",
+        "method": "Serial isolated wheel environments; parse → in-place inference → validation, including shape compilation and full public report output. Shapes are parsed before timing. Python uses the original three libraries; shared Turbo retains one native dataset; historical Turbo includes RDFLib conversion. One warmup precedes retained timing samples. Independent cold processes measure whole-process peak RSS before observation encoding. Full-output speedups require stable, completely equal outputs. Generalized RDF differences remain visible. No timing threshold on shared CI runners. Closed literal fanout profiles separately measure instrumented public in-place OWL-RL including warning/stream capture and small return-diagnostic collection; parsing/export/RDF and cache observation are outside timers, and return/container/namespace/cache differences remain observed.",
     }
     executables = {}
     reference = next(env["id"] for env in envs if env["backend"] == "reference")
