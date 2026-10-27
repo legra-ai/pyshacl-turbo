@@ -5,6 +5,7 @@ import hashlib
 import json
 import platform
 import random
+import re
 import statistics
 import time
 from collections import Counter
@@ -21,6 +22,28 @@ from rdflib.namespace import OWL, RDF, RDFS, SH, XSD
 
 EX = Namespace("https://example.com/")
 ROOT = Path(__file__).resolve().parents[1]
+
+
+def native_provenance():
+    """Identify the actual native artifact; do not invent local provider sources."""
+    from rdflib_turbo import _native as provider
+
+    fingerprint = provider.SHACL_ENGINE_FINGERPRINT
+    if (
+        not re.fullmatch(r"[0-9a-f]{64}", fingerprint)
+        or turbo._native.SHACL_ENGINE_FINGERPRINT != fingerprint
+        or turbo._native.CompiledShapes is not provider.shacl.CompiledShapes
+    ):
+        raise RuntimeError("Benchmark facade uses a different native engine")
+    module = Path(provider.__file__).resolve(strict=True)
+    if module.suffix not in (".so", ".pyd", ".dylib", ".dll"):
+        raise RuntimeError("Benchmark provider must be the actual compiled native module")
+    return {
+        "version": version("rdflib-turbo"),
+        "module": str(module),
+        "module_sha256": hashlib.sha256(module.read_bytes()).hexdigest(),
+        "engine_fingerprint": fingerprint,
+    }
 
 
 def make_case(kind, nodes, shape_count=1):
@@ -393,14 +416,12 @@ def main():
         ]
     if args.kinds:
         cases = [c for c in cases if c[0] in args.kinds]
-    sources = (
-        list((ROOT / "crates").rglob("*.rs"))
-        + list((ROOT / "crates").rglob("Cargo.toml"))
-        + list((ROOT / "vendor").rglob("*.rs"))
-        + list((ROOT / "vendor").rglob("Cargo.toml"))
-        + list((ROOT / "python").rglob("*.py"))
-        + [ROOT / "Cargo.toml", ROOT / "Cargo.lock", Path(__file__)]
-    )
+    native = native_provenance()
+    sources = list((ROOT / "python").rglob("*.py")) + [
+        ROOT / "pyproject.toml",
+        ROOT / "uv.lock",
+        Path(__file__),
+    ]
     result = {
         "environment": {
             "date": datetime.now(UTC).isoformat(),
@@ -417,6 +438,8 @@ def main():
             str(p.relative_to(ROOT)): hashlib.sha256(p.read_bytes()).hexdigest()
             for p in sorted(sources)
         },
+        "native_artifact": native,
+        "performance_eligible": False,
         "repeats": args.repeats,
         "runs": [],
     }

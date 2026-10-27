@@ -55,7 +55,7 @@ class Validator(Runner):
         native = _shared_runtime(target.impl) is not None
         return validate.__wrapped__(
             target.impl,
-            shacl_graph=self.shacl_graph.graph,
+            shacl_graph=self.shacl_graph,
             inplace=self.inplace if native else True,
             inference=self.options.get("inference") if native and not self.pre_inferenced else None,
             _normalize_report_literals=None,

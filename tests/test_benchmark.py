@@ -95,7 +95,7 @@ def test_inference_diagnostics_do_not_hide_generalized_triples():
     assert not module.compare_inferred_graphs(reference, native)["ordinary_rdf_graphs_isomorphic"]
 
 
-def test_benchmark_records_native_dependency_patches(tmp_path, monkeypatch):
+def test_benchmark_records_actual_native_module_and_compiled_patch_identity(tmp_path, monkeypatch):
     module = benchmark_module()
     output = tmp_path / "performance.json"
     monkeypatch.setattr(
@@ -103,11 +103,22 @@ def test_benchmark_records_native_dependency_patches(tmp_path, monkeypatch):
         ["matrix.py", "--quick", "--kinds", "core", "--repeats", "1", "--output", str(output)],
     )
     module.main()
-    hashes = json.loads(output.read_text())["source_sha256"]
-    for name in (
-        "Cargo.lock",
-        "Cargo.toml",
-        "crates/engine/Cargo.toml",
-        "vendor/oxrdf-0.3.4/src/literal.rs",
-    ):
+    result = json.loads(output.read_text())
+    hashes = result["source_sha256"]
+    for name in ("uv.lock", "pyproject.toml", "python/pyshacl_turbo/_native.py"):
         assert hashes.get(name) == hashlib.sha256((module.ROOT / name).read_bytes()).hexdigest()
+    from rdflib_turbo import _native
+
+    native = result["native_artifact"]
+    assert (
+        native["module_sha256"] == hashlib.sha256(Path(_native.__file__).read_bytes()).hexdigest()
+    )
+    assert native["engine_fingerprint"] == _native.SHACL_ENGINE_FINGERPRINT
+    assert result["performance_eligible"] is False
+
+
+def test_benchmark_rejects_native_engine_mismatch_before_measurement(monkeypatch):
+    module = benchmark_module()
+    monkeypatch.setattr(module.turbo._native, "SHACL_ENGINE_FINGERPRINT", "different")
+    with pytest.raises(RuntimeError, match="different native engine"):
+        module.native_provenance()

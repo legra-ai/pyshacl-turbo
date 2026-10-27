@@ -106,6 +106,25 @@ def test_direct_url_runtime_requirement_is_rejected(tmp_path):
         gate.verify(wheel(tmp_path, "rdflib-turbo @ https://example.invalid/candidate.whl"))
 
 
+def test_receipt_mode_retains_the_actual_registry_probe_record(tmp_path, monkeypatch):
+    gate = load_gate()
+    fake_uv(monkeypatch, gate, '{ registry = "https://pypi.org/simple" }')
+    original = gate.run
+    record = '{"provider":"0.2.0a9","engine_source":"crates/engine"}'
+
+    def run(command, environment):
+        if "-c" in command:
+            assert command[-1] == gate.PROBE + gate.RECEIPT_PROBE
+            return '{"canonical":"0.6.1"}\n' + record
+        return original(command, environment)
+
+    monkeypatch.setattr(gate, "run", run)
+    assert gate.verify(wheel(tmp_path), receipt=True) == {
+        "provider": "0.2.0a9",
+        "engine_source": "crates/engine",
+    }
+
+
 def test_publication_depends_on_registry_pair_before_any_tagging():
     workflow = yaml.safe_load((ROOT / ".github/workflows/ci.yml").read_text())
     jobs = workflow["jobs"]
@@ -116,7 +135,7 @@ def test_publication_depends_on_registry_pair_before_any_tagging():
     assert steps.index(inventory) < steps.index(guard)
     assert "refs/heads/main" in guard["if"] and "release" in guard["if"]
     assert "continue-on-error" not in guard
-    assert "manylinux" in guard["run"] and "x86_64" in guard["run"]
+    assert "*-py3-none-any.whl" in guard["run"]
 
 
 @pytest.mark.parametrize("canonical,provider", [(None, None), ("candidate", "older")])
@@ -140,7 +159,7 @@ def test_installed_probe_rejects_missing_or_different_fingerprints(
     )
     with pytest.raises(RuntimeError, match="different SHACL engine"):
         probe = tmp_path / "probe.py"
-        probe.write_text(gate.PROBE)
+        probe.write_text(gate.BASE_PROBE)
         runpy.run_path(str(probe))
 
 
@@ -163,7 +182,7 @@ def test_installed_probe_requires_the_actual_protocol(tmp_path, monkeypatch):
         ),
     )
     probe = tmp_path / "probe.py"
-    probe.write_text(gate.PROBE)
+    probe.write_text(gate.BASE_PROBE)
     with pytest.raises(RuntimeError, match="protocol 1"):
         runpy.run_path(str(probe))
 

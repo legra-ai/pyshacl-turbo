@@ -2,6 +2,7 @@
 
 import pyshacl_turbo as turbo
 import pytest
+from pyshacl_turbo.errors import ShapeLoadError
 from rdflib import Literal
 from test_compatibility import EX, SH, compare, graph
 
@@ -79,13 +80,16 @@ def test_paths_include_cycles_and_unique_values(path):
     ],
 )
 def test_invalid_paths_fail_at_compile_time(path):
-    with pytest.raises(ValueError):
-        turbo.compile_shapes(graph(f"ex:P sh:path {path}; sh:minCount 1."))
+    error_type = ShapeLoadError if path == '"literal"' else ValueError
+    with pytest.raises(error_type):
+        turbo.compile_shapes(graph(f"ex:P a sh:PropertyShape; sh:path {path}; sh:minCount 1."))
 
 
 def test_cyclic_path_definition_is_a_hard_error():
     with pytest.raises(ValueError, match="[Cc]ycl"):
-        turbo.compile_shapes(graph("ex:P sh:path _:path. _:path sh:inversePath _:path."))
+        turbo.compile_shapes(
+            graph("ex:P a sh:PropertyShape; sh:path _:path. _:path sh:inversePath _:path.")
+        )
 
 
 def test_closed_report_uses_offending_predicate_and_value():

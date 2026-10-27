@@ -146,7 +146,7 @@ def test_report_clone_rejection_precedes_inplace_rule_commit(monkeypatch):
         with pytest.raises(KeyboardInterrupt, match="caller rejected report clone"):
             turbo.validate(data, shacl_graph=shapes, advanced=True, inplace=True)
     assert not data
-    assert set(shapes) == before
+    assert set(shapes) == before | set(pyshacl.shapes_graph.ShapesGraph.system_triples)
 
 
 @pytest.mark.parametrize("normalize", [False, True])
