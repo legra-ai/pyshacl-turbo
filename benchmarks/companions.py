@@ -479,6 +479,7 @@ def launch(job, repeats, measurement, timeout):
     command = [
         sys.executable,
         "-I",
+        "-B",
         str(Path(__file__).resolve()),
         "--worker",
         json.dumps(job),

@@ -144,7 +144,7 @@ def setup(env, directory, wheels, python):
     )
     command(["uv", "sync", "--project", project, "--locked", "--no-build"])
     executable = project / ".venv/bin/python"
-    identity = json.loads(command([executable, "-I", Path(__file__), "--identity"]))
+    identity = json.loads(command([executable, "-I", "-B", Path(__file__), "--identity"]))
     for name, specifier in env["requirements"].items():
         expected = (
             wheels[name]["version"]
@@ -212,6 +212,7 @@ def measure(executable, job, repeats, memory_repeats, timeout):
                 [
                     executable,
                     "-I",
+                    "-B",
                     ROOT / "benchmarks/companions.py",
                     "--worker",
                     json.dumps(job),
@@ -440,9 +441,11 @@ def main():
                     *[name + pin for name, pin in original["requirements"].items()],
                 ]
             )
-            command([executables["candidate"], "-I", "-m", "pytest", args.integration_tests, "-q"])
+            command(
+                [executables["candidate"], "-I", "-B", "-m", "pytest", args.integration_tests, "-q"]
+            )
             installed = json.loads(
-                command([executables["candidate"], "-I", Path(__file__), "--identity"])
+                command([executables["candidate"], "-I", "-B", Path(__file__), "--identity"])
             )
             installed["uv_lock_sha256"] = hashlib.sha256(
                 (candidate / "uv.lock").read_bytes()

@@ -251,6 +251,7 @@ def test_release_worker_argv_is_accepted_by_the_real_companion_parser(monkeypatc
 
     def command(argv, *, timeout):
         calls.append(list(map(str, argv)))
+        assert list(argv[1:3]) == ["-I", "-B"]
         assert timeout == 30
         output = io.StringIO()
         observation = {"complete": True}
@@ -268,7 +269,7 @@ def test_release_worker_argv_is_accepted_by_the_real_companion_parser(monkeypatc
 
         with monkeypatch.context() as context, contextlib.redirect_stdout(output):
             context.setattr(bench.companions, "worker", worker)
-            context.setattr(sys, "argv", list(map(str, argv[2:])))
+            context.setattr(sys, "argv", list(map(str, argv[3:])))
             bench.companions.main()
         return output.getvalue()
 
