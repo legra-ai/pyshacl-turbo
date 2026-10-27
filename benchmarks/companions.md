@@ -100,9 +100,12 @@ Version comparisons also submit the closed `literal-reflexivity` and
 `literal-type` profiles through these same workers, at widths32,128,512,1000.
 The latter adds one common range class. Inputs use unique literal words, so the
 width of a shared generalized membership prefix cannot hide behind repeated
-integer scores. These instrumented rows time public in-place OWL-RL plus warning/stream capture
-and small return-diagnostic construction. Parsing, export and complete RDF,
-cache, namespace and decimal observation encoding remain outside the timer. Existing employee,
+integer scores. These rows time only the public in-place OWL-RL invocation
+through a call-local owner. Stream/warning capture starts at the end of setup;
+observation first restores it, then encodes the actual return and effects. The
+worker also closes capture in a finally block across RSS reads, clock calls,
+invocation and observation failures. Parsing, export and all RDF, cache, namespace,
+return and decimal observation encoding remain outside the timer. Existing employee,
 copy-by-default inference and full-pipeline cases retain their own boundaries.
 
 The new bounded observations retain complete RDF/generalized facts, literal
@@ -111,6 +114,17 @@ binding maps, input preservation and actual return/container distinctions.
 Different namespace sequence or public return state remains a difference even
 when graph structure agrees. Native Dataset and reference Graph routes are
 labeled separately; their physical containers are not asserted equivalent.
+The raw full-API comparison and pipeline gate remain unchanged. A separately
+named `logical_inplace_owlrl` column validates each route's Graph/None or native
+Dataset/same-source contract, then excludes only `state.container` and the three
+return fields from cross-route comparison. Every other field stays strict,
+including raw namespace sequence and binding map, complete initial/output facts
+and caches, public streams/warnings and decimal flags/traps. Duplicate or malformed
+namespace maps fail. Every warm and cold raw observation must be stable before
+this scoped ratio is allowed. This is logical transition equality, not full API
+or physical container interchangeability; namespace order differences still deny
+both ratios.
+
 Unsupported observations and output bounds fail rather than truncate. Historical
 `rdflib-v1` fingerprints are unchanged. Timings remain informational; the native
 indexed-work regression is the deterministic check against fanout scans.

@@ -221,6 +221,7 @@ def test_inference_contract_never_waives_pipeline_report_or_missing_observations
             key: {}
             for key in [
                 "complete_term_metadata",
+                "initial_term_metadata",
                 "namespaces_raw",
                 "namespace_bindings",
                 "public_effects",

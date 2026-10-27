@@ -401,12 +401,23 @@ def measure_worker(job, repeats, measurement):
     iterations = repeats + 1 if measurement == "time" else 1
     for index in range(iterations):
         run, observe = prepare(job)
-        before = rss_bytes(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss, sys.platform)
-        start = time.perf_counter_ns()
-        value = run()
-        elapsed = time.perf_counter_ns() - start
-        peak = rss_bytes(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss, sys.platform)
-        observation = observe(value)
+        if "fixture" in job:
+            try:
+                before = rss_bytes(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss, sys.platform)
+                start = time.perf_counter_ns()
+                value = run()
+                elapsed = time.perf_counter_ns() - start
+                peak = rss_bytes(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss, sys.platform)
+                observation = observe(value)
+            finally:
+                run.close()
+        else:
+            before = rss_bytes(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss, sys.platform)
+            start = time.perf_counter_ns()
+            value = run()
+            elapsed = time.perf_counter_ns() - start
+            peak = rss_bytes(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss, sys.platform)
+            observation = observe(value)
         if observations and without_report_text(observation) != without_report_text(
             observations[0]
         ):

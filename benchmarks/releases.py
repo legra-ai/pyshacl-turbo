@@ -274,6 +274,34 @@ def release_jobs(sizes):
     ]
 
 
+def add_logical_inplace_comparisons(row, environments, reference):
+    """Add a separate logical transition result without changing raw parity."""
+    if row["contract"] != "inference":
+        return
+    runs = row["environments"]
+    row["logical_inplace_owlrl"] = {
+        env["id"]: companions.FANOUT.logical_inplace_owlrl(
+            runs[reference],
+            runs[env["id"]],
+            left_backend="reference",
+            right_backend=env["backend"],
+        )
+        for env in environments
+        if env["id"] != reference
+    }
+    row["logical_inplace_between_versions"] = {
+        f"{left['id']} → {right['id']}": companions.FANOUT.logical_inplace_owlrl(
+            runs[left["id"]],
+            runs[right["id"]],
+            left_backend=left["backend"],
+            right_backend=right["backend"],
+        )
+        for i, left in enumerate(environments)
+        for right in environments[i + 1 :]
+        if left["backend"] != "reference" and right["backend"] != "reference"
+    }
+
+
 def require_standard_parity(reference, candidate, *, contract="pipeline"):
     left, right = reference["observation"], candidate["observation"]
     if left["closure"]["ordinary"] != right["closure"]["ordinary"]:
@@ -281,6 +309,7 @@ def require_standard_parity(reference, candidate, *, contract="pipeline"):
     if contract == "inference":
         required = {
             "complete_term_metadata",
+            "initial_term_metadata",
             "namespaces_raw",
             "namespace_bindings",
             "public_effects",
@@ -312,15 +341,17 @@ def write_report(report, output):
         f"Measured: {report['date']}; platform: {platform.platform()}.",
         f"Harness revision: `{report['source_revision']}`; dirty source tree: `{report['source_tree_dirty']}`. Candidate wheel source revisions and hashes are retained in the raw evidence.",
         "",
-        "| Operation/profile | Nodes | Environment | Median ms | Min–max ms | Peak MiB | Full-output parity | Speedup vs Python |",
-        "|---|---:|---|---:|---:|---:|---|---:|",
+        "| Operation/profile | Nodes | Environment | Median ms | Min–max ms | Peak MiB | Full-output parity | Speedup vs Python | Logical in-place OWL-RL status | Logical in-place ratio vs Python |",
+        "|---|---:|---|---:|---:|---:|---|---:|---|---:|",
     ]
     for row in report["runs"]:
         for name, value in row["environments"].items():
             comparison = row.get("comparisons", {}).get(name, {})
             ratio = comparison.get("speedup")
+            scoped = row.get("logical_inplace_owlrl", {}).get(name, {})
+            scoped_ratio = scoped.get("speedup")
             lines.append(
-                f"| {row['case']} | {row['nodes']} | {name} | {value['median_ns'] / 1e6:.3f} | {value['min_ns'] / 1e6:.3f}–{value['max_ns'] / 1e6:.3f} | {value['median_peak_rss_bytes'] / 2**20:.2f} | {comparison.get('status', 'reference')} | {f'{ratio:.2f}×' if ratio is not None else '—'} |"
+                f"| {row['case']} | {row['nodes']} | {name} | {value['median_ns'] / 1e6:.3f} | {value['min_ns'] / 1e6:.3f}–{value['max_ns'] / 1e6:.3f} | {value['median_peak_rss_bytes'] / 2**20:.2f} | {comparison.get('status', 'reference')} | {f'{ratio:.2f}×' if ratio is not None else '—'} | {scoped.get('status', '—')} | {f'{scoped_ratio:.2f}×' if scoped_ratio is not None else '—'} |"
             )
     lines += ["", "## Exact product versions", ""]
     for name, env in report["environments"].items():
@@ -378,7 +409,7 @@ def main():
         "source_revision": command(["git", "-C", ROOT, "rev-parse", "HEAD"]).strip(),
         "uv_version": command(["uv", "--version"]).strip(),
         "harness_sha256": harness_hashes(),
-        "method": "Serial isolated wheel environments; parse → in-place inference → validation, including shape compilation and full public report output. Shapes are parsed before timing. Python uses the original three libraries; shared Turbo retains one native dataset; historical Turbo includes RDFLib conversion. One warmup precedes retained timing samples. Independent cold processes measure whole-process peak RSS before observation encoding. Full-output speedups require stable, completely equal outputs. Generalized RDF differences remain visible. No timing threshold on shared CI runners. Closed literal fanout profiles separately measure instrumented public in-place OWL-RL including warning/stream capture and small return-diagnostic collection; parsing/export/RDF and cache observation are outside timers, and return/container/namespace/cache differences remain observed.",
+        "method": "Serial isolated wheel environments; parse → in-place inference → validation, including shape compilation and full public report output. Shapes are parsed before timing. Python uses the original three libraries; shared Turbo retains one native dataset; historical Turbo includes RDFLib conversion. One warmup precedes retained timing samples. Independent cold processes measure whole-process peak RSS before observation encoding. Full-output speedups require stable, completely equal outputs. Generalized RDF differences remain visible. No timing threshold on shared CI runners. Closed literal fanout profiles separately measure only the public in-place OWL-RL invocation through a call-local owner; capture setup/cleanup and all observation encoding are outside timers. Raw full-API comparison remains unchanged. A separate logical_inplace_owlrl result excludes only independently validated container/return route fields; complete raw namespace order, caches, effects and context still must match, with full raw warm/cold stability.",
     }
     executables = {}
     reference = next(env["id"] for env in envs if env["backend"] == "reference")
@@ -465,6 +496,7 @@ def main():
                 for right in envs[i + 1 :]
                 if left["backend"] != "reference" and right["backend"] != "reference"
             }
+            add_logical_inplace_comparisons(row, envs, reference)
             write_report(report, output)
             print(f"Measured {job['case']}/{job['nodes']}", flush=True)
     except Exception as error:
