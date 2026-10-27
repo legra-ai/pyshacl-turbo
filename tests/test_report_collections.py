@@ -46,7 +46,8 @@ def compare_complete(data, shapes):
     assert actual[0] == expected[0] == False
     assert isomorphic(actual[1], expected[1])
     assert actual[2] == expected[2]
-    assert (set(data), set(shapes)) == before
+    assert set(data) == before[0]
+    assert set(shapes) == set(reference_shapes)
 
 
 @pytest.mark.parametrize("path", PATHS)
@@ -120,7 +121,8 @@ def test_valid_deep_collection_uses_reference_display_depth_sentinel():
     assert actual[0] == expected[0] == False
     assert actual[2] == expected[2]
     assert "<http://recursion.too.deep>" in actual[2]
-    assert (set(data), set(shapes)) == before
+    assert set(data) == before[0]
+    assert set(shapes) == set(reference_shapes)
 
 
 def test_reused_collection_item_is_not_an_active_cycle():

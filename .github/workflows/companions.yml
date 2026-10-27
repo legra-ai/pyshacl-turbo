@@ -30,9 +30,9 @@ jobs:
         os: [ubuntu-latest, macos-latest]
     steps:
       - uses: actions/checkout@v7
-      - uses: astral-sh/setup-uv@v10.3.1
+      - uses: astral-sh/setup-uv@v10.3.2
         with:
-          version: "0.13.1"
+          version: "0.13.5"
       - run: uv sync --project benchmarks --locked --no-build --python 3.13
       - run: uv run --project benchmarks --locked --no-sync python -I benchmarks/companions.py --observation-encoder rdflib-v1 --nodes 100 --repeats 2 --memory-repeats 1 --output benchmark-artifacts/companions.json
       - run: uv run --project benchmarks --locked --no-sync python -I benchmarks/check_companions.py --report benchmark-artifacts/companions.json --baseline benchmarks/companions-baseline.json

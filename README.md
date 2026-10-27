@@ -3,7 +3,7 @@
 [![PyPI version](https://img.shields.io/pypi/v/pyshacl-turbo?style=flat)](https://pypi.org/project/pyshacl-turbo/)
 [![PyPI downloads](https://img.shields.io/pypi/dm/pyshacl-turbo?style=flat)](https://pypi.org/project/pyshacl-turbo/)
 [![Python 3.11+](https://img.shields.io/badge/Python-3.11%2B-3776AB?logo=python&logoColor=white&style=flat)](https://github.com/legra-ai/pyshacl-turbo/blob/main/pyproject.toml)
-[![Rust](https://img.shields.io/badge/Rust-1.99.1%2B-DEA584?logo=rust&logoColor=black&style=flat)](https://github.com/legra-ai/pyshacl-turbo/blob/main/rust-toolchain.toml)
+[![Rust](https://img.shields.io/badge/Rust-1.99.1%2B-DEA584?logo=rust&logoColor=black&style=flat)](https://github.com/legra-ai/rdflib-turbo/blob/main/rust-toolchain.toml)
 [![License: MIT OR Apache-2.0](https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-blue?style=flat)](https://github.com/legra-ai/pyshacl-turbo/blob/main/LICENSE-MIT)
 [![pySHACL non-JS suite: 100% (403/403)](https://img.shields.io/badge/pySHACL%20non--JS%20suite-100%25-brightgreen?style=flat)](https://github.com/legra-ai/pyshacl-turbo/blob/main/docs/compatibility.md#measurements)
 [![Tests and wheels](https://img.shields.io/github/actions/workflow/status/legra-ai/pyshacl-turbo/ci.yml?branch=main&label=Tests%20and%20wheels&logo=github&style=flat)](https://github.com/legra-ai/pyshacl-turbo/actions/workflows/ci.yml)
@@ -148,8 +148,10 @@ Validation exits with status 0 for conforming data and 1 for violations.
 
 ## Build
 
-Requires Rust/Cargo, Python 3.11+ and uv. Development uses Python 3.13.
-The repository pins Rust 1.98.0 for compilation and formatting.
+Requires Python 3.11+ and uv. Development uses Python 3.13. This repository
+builds a pure Python wheel; its exact declared rdflib-turbo dependency owns the
+native engine and extension. Native development and its pinned Rust toolchain
+live in [rdflib-turbo](https://github.com/legra-ai/rdflib-turbo).
 
 ```sh
 make dev
@@ -276,7 +278,9 @@ checks with quadratic worst-case time instead of a list-sized in-memory set.
 
 ## Rust
 
-The standalone `pyshacl-turbo-engine` crate accepts exact-term oxrdf Dataset
+The `pyshacl-turbo-engine` crate in
+[rdflib-turbo](https://github.com/legra-ai/rdflib-turbo/tree/main/crates/engine)
+accepts exact-term oxrdf Dataset
 values and `oxigraph::Store` inputs. `CompiledShapes::validate_transaction`
 borrows an open transaction, including pending writes, and leaves commit or
 abort to its caller. `validate_store` owns a transaction; `expand_store` returns
@@ -285,7 +289,7 @@ Compiled programs are shareable across threads; parallelism is caller-controlled
 
 ### Borrowed SPARQL graph architecture
 
-![An in-memory Dataset or open Oxigraph transaction supplies GraphRead; optional union and shapes-overlay views feed QueryGraph and the SPARQL evaluator.](https://raw.githubusercontent.com/legra-ai/pyshacl-turbo/main/crates/engine/src/architecture.svg)
+![An in-memory Dataset or open Oxigraph transaction supplies GraphRead; optional union and shapes-overlay views feed QueryGraph and the SPARQL evaluator.](https://raw.githubusercontent.com/legra-ai/rdflib-turbo/main/crates/engine/src/architecture.svg)
 
 `GraphRead` streams indexed quads and named-graph metadata from a borrowed Dataset
 or an open native transaction. `UnionGraph` exposes the data union in the default
@@ -304,8 +308,8 @@ Targets, constraints, reports, rules and scoped function callbacks now use the
 borrowed source. Read-only rule execution stores only additions. Target sets,
 per-rule results, reports and query intermediates retain their own memory costs.
 
-With matching `rdflib-turbo` and `pyshacl-turbo` engine sources, compiled shapes
-also validate a native `Store` or its open `Transaction` directly:
+Both Python facades share one compiled engine. Compiled shapes also validate a
+native `Store` or its open `Transaction` directly:
 
 ```python
 from pyshacl_turbo import compile_shapes
@@ -326,9 +330,7 @@ failure aborts original writes, inference and rule additions together. Direct
 `shapes.validate(tx)` returns a report and leaves the acceptance decision to the
 caller. Native execution failures and report-processing errors abort the owner
 even when caught inside the scope. No base serialization is used.
-See the [published Rust API documentation and runnable example](https://legra-ai.github.io/pyshacl-turbo/rustdoc/pyshacl_turbo_engine/#borrowed-sparql-graph-architecture).
-Rustdoc is built from the tested revision and published with the main-branch
-reports; the diagram is embedded directly and requires no JavaScript renderer.
+See the [native engine API and examples](https://github.com/legra-ai/rdflib-turbo/tree/main/crates/engine).
 
 Shape compilation uses [shacl-structural-model](https://github.com/legra-ai/shacl-structural-model)
 with Turbo's exact RDF terms, then prepares native queries, regexes and indexes
@@ -411,8 +413,6 @@ assets live under tests/w3c and vendor/pyshacl respectively.
 ```sh
 make coverage
 make test-compatibility
-make test-regex
-make test-sparql-evaluator
 make test-coverage
 uv run --locked --extra test python scripts/run_upstream.py
 uv run --locked --extra test python scripts/run_upstream.py --reference
@@ -424,20 +424,22 @@ pull requests, daily, and on manual dispatch:
 
 | Workflow | What it verifies |
 | --- | --- |
-| Tests and wheels | Python and Rust regressions, formatting and lint on Linux Python 3.11/3.13 and macOS Python 3.13; SPARQL evaluator tests with compatibility features disabled and enabled; source archive rebuilt into all five platform wheels. Every wheel is checked with locked `uv add`/`uv sync`/`uv run` projects, the optional Store extra, `uv tool run` and `uv tool install`, including both CLIs and validation exit codes. The release also requires Compatibility and Regex at the same prepared revision. |
+| Tests and wheels | One original source archive rebuilt into one universal Python wheel. Full installed-wheel suites run on Linux Python 3.11/3.13, macOS Python 3.13 and Windows Python 3.13 against the exact declared published native provider. Isolated uv projects verify source, installed payloads, class identity and independent engine fingerprints. Compatibility, Regex and the native owner collector remain required at the same prepared revision. |
 | Compatibility | Pinned W3C Core/SPARQL cases through document and Graph APIs, the adapted non-JS pySHACL suite, and direct API/CLI comparisons. Suite adaptations are independently checked against both engines. Detailed reports are uploaded as artifacts. |
-| Regex | The patched matcher's full upstream suite, unit tests with Turbo's base features, Python-mode VM regressions, and formatting, using its own pinned test dependencies. |
+| Regex | The attested native provider runs its patched matcher's upstream suite, default and Unicode profiles, Python-mode VM regressions and pinned formatting. |
 
 The [coverage reports](https://legra-ai.github.io/pyshacl-turbo/) update after
 successful main-branch CI, including the daily scheduled run. Python lines and
 branches are measured separately across the complete `pyshacl_turbo` package;
 CI requires **100% line and branch coverage**. Rust lines, regions and functions
-measure owned native source exercised by Rust and Python integration tests.
+measure the native provider's owned source exercised by Rust and Python
+integration tests. The measurement binds the current façade source and original
+wheel to that provider's source archive, native payload and compiler profile.
 Rust branches and dependency/vendored-patch coverage are not measured.
 Each published snapshot records its tested revision and measurement date.
 
-Run `make test-coverage` for Python reports in `htmlcov/`, or
-`make test-rust-coverage` for combined native reports in `native-coverage/`.
+Run `make test-coverage` for Python reports in `htmlcov/`. The native owner
+driver produces combined native reports from the provider's sole collector.
 See [native coverage](https://github.com/legra-ai/pyshacl-turbo/blob/main/docs/native-coverage.md)
 for measurement scope and provenance. Code coverage is separate from SHACL
 compatibility.
@@ -449,9 +451,9 @@ previously matching cases and fields must remain equal, while known differences
 and reference failures stay visible. These badges do not claim complete pySHACL
 compatibility.
 
-Architectural decisions are in [docs/adr](https://github.com/legra-ai/pyshacl-turbo/tree/main/docs/adr). The exact-term dataset avoids
-premature literal canonicalization. Documented local Rust dependency patches
-preserve RDFLib string identity and SHACL SPARQL prebinding.
+Architectural decisions are in [docs/adr](https://github.com/legra-ai/pyshacl-turbo/tree/main/docs/adr). The native provider owns
+the exact-term dataset and Rust dependency patches preserving RDFLib term
+identity and SHACL SPARQL prebinding.
 
 PRs use conventional titles and squash merges; `main` requires signed commits,
 passing `prepare`, `test`, `compatibility`, `regex`, and `Conventional Commit`

@@ -1,7 +1,7 @@
 """Native rule expansion keeps dataset ownership inside its shared runtime."""
 
 import json
-from contextlib import nullcontext
+from contextlib import contextmanager, nullcontext
 
 import pyshacl_turbo as turbo
 import pytest
@@ -25,13 +25,22 @@ def provider(monkeypatch):
             self.failure = False
             self.invalid = False
 
-        def expand(self, native, settings, inplace):
+        @classmethod
+        def from_compiled(cls, source, *, _comparison_policy):
+            assert _comparison_policy is turbo._native._VALUE_COMPARISON_POLICY
+            result = cls.__new__(cls)
+            calls.append(("share", source))
+            result.failure = False
+            result.invalid = False
+            return result
+
+        def expand(self, source, settings, inplace):
             if self.failure:
                 raise Failure("rule expansion failed")
-            calls.append((native, json.loads(settings), inplace))
-            result = None if inplace else runtime.NativeDataset()
+            calls.append((source.store.backend._native, json.loads(settings), inplace))
+            result = source if inplace else source.copy()
             if self.invalid:
-                result = runtime.NativeDataset() if inplace else None
+                result = None if inplace else source
             return result, []
 
         def validate(self, native, settings, inplace):
@@ -50,10 +59,16 @@ def provider(monkeypatch):
         rdflib_turbo.Dataset,
         "_validate_shared_shapes",
         lambda source, program, settings, inplace: nullcontext(
-            program.validate(source._native, settings, inplace)
+            program.validate(source.store.backend._native, settings, inplace)
         ),
         raising=False,
     )
+
+    @contextmanager
+    def expand(source, program, settings, inplace):
+        yield program.expand(source, settings, inplace)
+
+    monkeypatch.setattr(rdflib_turbo.Dataset, "_expand_shared_shapes", expand)
     return calls
 
 
@@ -61,7 +76,7 @@ def provider(monkeypatch):
 def test_native_rules_preserve_wrapper_ownership_options_and_compilation(provider, inplace):
     data = rdflib_turbo.Dataset()
     program = turbo.compile_shapes(SHAPES)
-    original = data._native
+    original = data.store.backend._native
     result = program.shacl_rules(
         data,
         inplace=inplace,
@@ -73,9 +88,9 @@ def test_native_rules_preserve_wrapper_ownership_options_and_compilation(provide
     )
     assert isinstance(result, rdflib_turbo.Dataset)
     assert (result is data) is inplace
-    assert data._native is original
+    assert data.store.backend._native is original
     if not inplace:
-        assert result._native is not original
+        assert result.store.backend._native is not original
     native, settings, actual_inplace = provider[1]
     assert native is original and actual_inplace is inplace
     assert settings == {
@@ -87,7 +102,8 @@ def test_native_rules_preserve_wrapper_ownership_options_and_compilation(provide
     }
     program.validate(data)
     program.shacl_rules(data)
-    assert sum(call[0] == "compile" for call in provider) == 1
+    assert sum(call[0] == "share" for call in provider) == 1
+    assert provider[0][1] is program._native
 
 
 def test_native_rules_guard_protocol_format_and_engine_before_conversion(provider, monkeypatch):
@@ -110,13 +126,13 @@ def test_native_rules_translate_failure_without_replacing_dataset(provider):
     program = turbo.compile_shapes(SHAPES)
     program.shacl_rules(data)
     program._shared_program.failure = True
-    original = data._native
+    original = data.store.backend._native
     with pytest.raises(turbo.ValidationFailure, match="rule expansion failed"):
         program.shacl_rules(data, inplace=True)
-    assert data._native is original
+    assert data.store.backend._native is original
 
 
-def test_compiled_rules_do_not_convert_or_copy_native_input(provider, monkeypatch):
+def test_compiled_rules_do_not_transport_native_input(provider, monkeypatch):
     data = rdflib_turbo.Dataset()
     program = turbo.compile_shapes(SHAPES)
 
@@ -124,7 +140,7 @@ def test_compiled_rules_do_not_convert_or_copy_native_input(provider, monkeypatc
         raise AssertionError("native rules must stay in the dataset-owning runtime")
 
     monkeypatch.setattr(turbo, "_input", forbidden)
-    for name in ("serialize", "to_rdflib", "from_rdflib", "copy"):
+    for name in ("serialize", "to_rdflib", "from_rdflib"):
         monkeypatch.setattr(rdflib_turbo.Dataset, name, forbidden, raising=False)
     assert program.shacl_rules(data, inplace=True) is data
     assert isinstance(program.shacl_rules(data), rdflib_turbo.Dataset)

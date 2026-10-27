@@ -1,6 +1,8 @@
+import pyshacl as original
 import pyshacl_turbo as turbo
 import pytest
 from rdflib import Literal
+from rdflib.compare import isomorphic
 from rdflib.namespace import SH
 from test_compatibility import EX, graph
 
@@ -69,14 +71,22 @@ def test_nested_node_expression_function_and_ask():
 
 
 def test_custom_sparql_target_type_binds_parameters():
-    shapes = graph("""ex:T a sh:SPARQLTargetType; sh:parameter [sh:path ex:class];
+    source = """ex:T a sh:SPARQLTargetType;
+      <http://www.w3.org/2000/01/rdf-schema#subClassOf> sh:Target;
+      sh:parameter [sh:path ex:class];
       sh:select "SELECT ?this WHERE { ?this a $class }".
-      ex:S sh:target [a ex:T; ex:class ex:C]; sh:class ex:D.""")
-    conforms, report, _ = turbo.validate(
-        graph("ex:s a ex:C. ex:t a ex:E."), shacl_graph=shapes, advanced=True
+      ex:S a sh:NodeShape; sh:target [a ex:T; ex:class ex:C]; sh:class ex:D."""
+    conforms, report, text = turbo.validate(
+        graph("ex:s a ex:C. ex:t a ex:E."), shacl_graph=graph(source), advanced=True
+    )
+    expected = original.validate(
+        graph("ex:s a ex:C. ex:t a ex:E."), shacl_graph=graph(source), advanced=True
     )
     assert not conforms
     assert list(report.objects(None, SH.focusNode)) == [EX.s]
+    assert conforms == expected[0]
+    assert isomorphic(report, expected[1])
+    assert text == expected[2]
 
 
 def test_triple_rule_failure_does_not_commit_prior_additions():

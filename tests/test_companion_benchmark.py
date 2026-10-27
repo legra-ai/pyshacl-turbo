@@ -23,6 +23,7 @@ def locked_environment(tmp_path, monkeypatch):
     module = suite()
     for relative in (
         "benchmarks/companions.py",
+        "benchmarks/inference_fanout.py",
         "benchmarks/pyproject.toml",
         "benchmarks/uv.lock",
         "tests/upstream_support/process_launch.py",

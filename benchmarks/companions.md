@@ -94,6 +94,41 @@ its ordering is not used to classify RDF regressions. Any changed RDF baseline,
 including an intentional correction, requires review and an explicit baseline
 update. Merely completing a run does not pass this correctness gate.
 
+## Literal fanout in version comparisons
+
+Version comparisons also submit the closed `literal-reflexivity` and
+`literal-type` profiles through these same workers, at widths32,128,512,1000.
+The latter adds one common range class. Inputs use unique literal words, so the
+width of a shared generalized membership prefix cannot hide behind repeated
+integer scores. These rows time only the public in-place OWL-RL invocation
+through a call-local owner. Stream/warning capture starts at the end of setup;
+observation first restores it, then encodes the actual return and effects. The
+worker also closes capture in a finally block across RSS reads, clock calls,
+invocation and observation failures. Parsing, export and all RDF, cache, namespace,
+return and decimal observation encoding remain outside the timer. Existing employee,
+copy-by-default inference and full-pipeline cases retain their own boundaries.
+
+The new bounded observations retain complete RDF/generalized facts, literal
+cache metadata, public output/warnings, decimal state, raw namespace sequences,
+binding maps, input preservation and actual return/container distinctions.
+Different namespace sequence or public return state remains a difference even
+when graph structure agrees. Native Dataset and reference Graph routes are
+labeled separately; their physical containers are not asserted equivalent.
+The raw full-API comparison and pipeline gate remain unchanged. A separately
+named `logical_inplace_owlrl` column validates each route's Graph/None or native
+Dataset/same-source contract, then excludes only `state.container` and the three
+return fields from cross-route comparison. Every other field stays strict,
+including raw namespace sequence and binding map, complete initial/output facts
+and caches, public streams/warnings and decimal flags/traps. Duplicate or malformed
+namespace maps fail. Every warm and cold raw observation must be stable before
+this scoped ratio is allowed. This is logical transition equality, not full API
+or physical container interchangeability; namespace order differences still deny
+both ratios.
+
+Unsupported observations and output bounds fail rather than truncate. Historical
+`rdflib-v1` fingerprints are unchanged. Timings remain informational; the native
+indexed-work regression is the deterministic check against fanout scans.
+
 ## First baseline findings
 
 The historical correctness catalogue explicitly selects `--observation-encoder
@@ -131,3 +166,15 @@ as equivalent or publishing a ratio based only on conformance.
 The next implementation work should address namespace/report fidelity and
 measure the memory/copy costs at the shared-dataset boundary. The benchmark does
 not yet establish which internal allocation dominates that peak.
+
+Closed fanout jobs also record explicit `literal-inplace-owlrl-v1` observer
+availability against actual resolved versions, lock and installed payload hashes.
+The known a2/a2/0.2.4 stack is marked not measured before invocation only after
+confirming its public Dataset namespace API is actually absent; its historical
+pipeline jobs remain unchanged. No namespace observation is invented. Other
+versions are not excluded by version number: a strict public-route preflight
+must succeed, followed by the real worker's complete schema, return-state and
+raw warm/cold stability checks before any comparison. Unknown contracts and
+API/observation failures are hard errors, not post-error exclusions. Candidate
+artifacts retain their candidate labels. The existing cross-package engine gate
+runs first, and configured version pins are unchanged.

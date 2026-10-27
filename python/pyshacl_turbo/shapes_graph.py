@@ -2,14 +2,21 @@
 
 import logging
 from collections.abc import Iterable
+from typing import ClassVar
 
 from rdflib import BNode, Dataset, Graph, Literal, URIRef
+from rdflib.namespace import OWL, RDF, RDFS
 from rdflib.util import from_n3
 
 from .shape import Shape
 
 
 class ShapesGraph:
+    system_triples: ClassVar[list[tuple[URIRef, URIRef, URIRef]]] = [
+        (OWL.Class, RDFS.subClassOf, RDFS.Class),
+        (OWL.DatatypeProperty, RDFS.subClassOf, RDF.Property),
+    ]
+
     def __init__(self, graph, debug=False, logger=None):
         if not isinstance(graph, Graph):
             raise TypeError("ShapesGraph requires an RDFLib Graph or Dataset")
@@ -20,6 +27,12 @@ class ShapesGraph:
         self.logger = logger or logging.getLogger(__name__)
         self._compiled = None
         self._node_shape_cache = {}
+        self._numeric_booleans = True
+        self._add_system_triples()
+
+    def _add_system_triples(self):
+        for triple in self.system_triples:
+            self.graph.add(triple)
 
     def _compile(self):
         from . import CompiledShapes
