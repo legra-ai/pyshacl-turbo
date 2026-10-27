@@ -28,5 +28,10 @@ missing planner or provider capabilities fail before publication or expensive
 native tooling. This source integration does not authorize replacing immutable
 archives, inventing a registry dependency floor, or bypassing required reviews.
 
+Linting and commit hooks use the standalone locked `tools/dev` project. They
+must not resolve the runtime source peer: a missing or changing provider is a
+runtime verification failure, not a prerequisite for checking Python source.
+The provider and publication gates remain mandatory.
+
 This supersedes facade-local native build and collector ownership in ADRs 0024,
 0032 and 0034, while retaining their original-archive and tested-wheel guarantees.

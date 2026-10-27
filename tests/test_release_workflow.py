@@ -11,6 +11,22 @@ import yaml
 ROOT = Path(__file__).parents[1]
 
 
+def test_pure_facade_preparation_and_tagging_use_the_uv_release_policy():
+    workflow = yaml.safe_load((ROOT / ".github/workflows/ci.yml").read_text())
+    prepare = next(
+        step for step in workflow["jobs"]["prepare"]["steps"] if step.get("id") == "release"
+    )
+    tag = next(
+        step
+        for step in workflow["jobs"]["publish"]["steps"]
+        if "/tag-tested-release@" in step.get("uses", "")
+    )
+    for step in [prepare, tag]:
+        assert step["with"]["manifest-kind"] == "uv"
+        assert step["with"]["tag-format"] == "pep440"
+    assert prepare["uses"].split("@")[1] == tag["uses"].split("@")[1]
+
+
 def test_release_builds_only_the_original_universal_facade_wheel():
     project = tomllib.loads((ROOT / "pyproject.toml").read_text())
     assert project["build-system"]["build-backend"] == "hatchling.build"
