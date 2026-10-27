@@ -73,6 +73,8 @@ def test_harness_identity_is_stable_when_started_through_a_symlink(tmp_path, mon
     assert set(hashes) == {
         "benchmarks/releases.py",
         "benchmarks/companions.py",
+        "benchmarks/inference_fanout.py",
+        "benchmarks/fanout_availability.py",
         "tests/upstream_support/process_launch.py",
     }
 

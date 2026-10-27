@@ -21,7 +21,7 @@ import time
 import warnings
 from collections import Counter, UserList
 from datetime import UTC, datetime
-from importlib.metadata import version
+from importlib.metadata import distribution, version
 from pathlib import Path
 
 from rdflib import BNode, Dataset, Graph, URIRef
@@ -433,21 +433,69 @@ def check_baseline(rows, baseline):
 
 def source_fingerprint():
     digest = hashlib.sha256()
-    for directory in ("python", "crates", "scripts", "vendor"):
+    for directory in ("python", "tests", "scripts", "vendor"):
         for path in sorted((ROOT / directory).rglob("*")):
-            if path.suffix in {".py", ".rs", ".toml"}:
+            if path.is_file() and "__pycache__" not in path.parts and path.suffix != ".pyc":
                 digest.update(str(path.relative_to(ROOT)).encode())
                 digest.update(path.read_bytes())
-    for name in (
-        "Cargo.lock",
-        "Cargo.toml",
-        "pyproject.toml",
-        "uv.lock",
-        "rust-toolchain.toml",
-    ):
+    for name in ("pyproject.toml", "uv.lock"):
         digest.update(name.encode())
         digest.update((ROOT / name).read_bytes())
     return digest.hexdigest()
+
+
+def file_digest(path):
+    with path.open("rb") as source:
+        return hashlib.file_digest(source, "sha256").hexdigest()
+
+
+def package_payload(name):
+    package = distribution(name.replace("_", "-"))
+    return {
+        str(path): file_digest(Path(package.locate_file(path)))
+        for path in package.files
+        if str(path).startswith(name + "/") and not str(path).endswith(".pyc")
+    }
+
+
+def runtime_provenance(installed_pair=None):
+    """Distinguish observed installed runtime from original-wheel verification."""
+    provider = importlib.import_module("rdflib_turbo._native")
+    facade = importlib.import_module("pyshacl_turbo._native")
+    native = Path(provider.__file__).resolve(strict=True)
+    if native.suffix not in (".so", ".pyd"):
+        raise RuntimeError("Direct contracts require the actual provider native extension")
+    if (
+        facade.CompiledShapes is not provider.shacl.CompiledShapes
+        or facade.TargetData is not provider.shacl.TargetData
+        or facade.SHACL_ENGINE_FINGERPRINT != provider.shacl.SHACL_ENGINE_FINGERPRINT
+    ):
+        raise RuntimeError("Facade classes must belong to the shared native provider")
+    result = {
+        "native_binary": str(native),
+        "native_binary_sha256": file_digest(native),
+        "engine_fingerprint": provider.shacl.SHACL_ENGINE_FINGERPRINT,
+        "provider_version": version("rdflib-turbo"),
+        "facade_version": version("pyshacl-turbo"),
+        "artifact_verified": False,
+    }
+    if installed_pair is not None:
+        receipt = json.loads(installed_pair.read_text())
+        expected = receipt["installed_provider"]
+        if (
+            package_payload("rdflib_turbo") != expected["payload"]
+            or package_payload("pyshacl_turbo") != receipt["installed_facade"]["payload"]
+            or expected["provider"] != result["provider_version"]
+            or expected["fingerprint"] != result["engine_fingerprint"]
+            or expected["native_member"] != "rdflib_turbo/" + native.name
+            or expected["payload"][expected["native_member"]] != result["native_binary_sha256"]
+            or not native.is_relative_to(Path(sys.prefix).resolve())
+            or Path(facade.__file__).resolve().parent
+            != Path(receipt["installed_facade"]["package"]).resolve()
+        ):
+            raise RuntimeError("Direct contract runtime differs from its original installed pair")
+        result.update(artifact_verified=True, installed_pair_sha256=file_digest(installed_pair))
+    return result
 
 
 def markdown(report):
@@ -491,6 +539,7 @@ def main():
     parser.add_argument("--timeout", type=float, default=10)
     parser.add_argument("--output", type=Path, default=ROOT / "docs/direct-contract.json")
     parser.add_argument("--baseline", type=Path)
+    parser.add_argument("--installed-pair", type=Path)
     args = parser.parse_args()
     if args.repeats < 1 or args.timeout <= 0:
         parser.error("repeats and timeout must be positive")
@@ -530,18 +579,21 @@ def main():
         }
         rows.append(row)
         print(f"{row['id']}: {row['status']}", flush=True)
+    runtime = runtime_provenance(args.installed_pair)
     report = {
         "schema": 1,
         "reference_version": version("pyshacl"),
         "turbo_version": version("pyshacl-turbo"),
         "measured_at": datetime.now(UTC).isoformat(),
-        "build_kind": "working-tree release build (see source and native binary hashes)",
+        "build_kind": "installed shared native provider and pure Python facade",
+        "performance_eligible": False,
+        "measurement_scope": "finite direct-contract diagnostics; not an optimized pipeline benchmark",
         "platform": platform.platform(),
         "python": platform.python_version(),
         "source_sha256": source_fingerprint(),
-        "native_binary_sha256": hashlib.sha256(
-            Path(importlib.import_module("pyshacl_turbo._native").__file__).read_bytes()
-        ).hexdigest(),
+        "source_scope": "pure Python, tests, scripts, vendor fixtures, pyproject.toml and uv.lock",
+        "native_binary_sha256": runtime["native_binary_sha256"],
+        "runtime_authority": runtime,
         "repeats": args.repeats,
         "timeout_seconds": args.timeout,
         "summary": dict(Counter(row["status"] for row in rows)),

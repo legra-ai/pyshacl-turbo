@@ -36,24 +36,31 @@ jobs:
       - uses: actions/setup-python@v7
         with:
           python-version: '3.13'
-      - uses: astral-sh/setup-uv@v10.3.1
+      - uses: astral-sh/setup-uv@v10.3.2
         with:
-          version: "0.13.1"
-      - uses: actions-rust-lang/setup-rust-toolchain@v2
+          version: "0.13.5"
+      - name: Install the published native owner's source identity tooling
+        uses: actions-rust-lang/setup-rust-toolchain@v2
         with:
           toolchain: 1.99.1
-      - name: Build native extension and install pinned test dependencies
-        run: make dev PYTHON=3.13
-      - name: W3C, corrected suite, fixture audit and direct public contracts
-        run: make test-compatibility
+      - name: Build the original pure facade archives
+        run: |
+          uv build --sdist --out-dir "$RUNNER_TEMP/facade-dist" || exit "$?"
+          uv build --wheel --out-dir "$RUNNER_TEMP/facade-wheel" "$RUNNER_TEMP"/facade-dist/*.tar.gz || exit "$?"
+      - name: Verify the exact published native owner and every existing compatibility gate
+        run: uv run --no-project python -B scripts/provider_validation.py --facade-source "$GITHUB_WORKSPACE" --facade-wheel "$RUNNER_TEMP"/facade-wheel/*-py3-none-any.whl --output "$RUNNER_TEMP/compatibility-validation" --suite compatibility
       - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: compatibility-reports
           path: |
-            w3c-results.xml
-            upstream-results.json
-            reference-fixture-audit.json
-            direct-contract.json
-            direct-contract.md
+            ${{ runner.temp }}/compatibility-validation/w3c-results.xml
+            ${{ runner.temp }}/compatibility-validation/upstream-results.json
+            ${{ runner.temp }}/compatibility-validation/reference-fixture-audit.json
+            ${{ runner.temp }}/compatibility-validation/direct-contract.json
+            ${{ runner.temp }}/compatibility-validation/direct-contract.md
+            ${{ runner.temp }}/compatibility-validation/compatibility-stages.json
+            ${{ runner.temp }}/compatibility-validation/installed-pair.json
+            ${{ runner.temp }}/compatibility-validation/validation-verified.json
+            ${{ runner.temp }}/compatibility-validation/provider/*.json
           if-no-files-found: error

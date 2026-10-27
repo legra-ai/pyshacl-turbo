@@ -23,3 +23,16 @@ validation failures, matching pySHACL. Direct compilation and compiled-program
 execution still raise immediately. This supersedes ADR 0004's public-API
 exception difference. Other programming, unsupported-feature and shape errors
 remain exceptions; no alternate engine runs after an error.
+
+Public validation and rule expansion prepare caller-supplied shapes through
+ShapesGraph before inference or target snapshots. Match the original's ordered
+owl:Class/rdfs:Class and owl:DatatypeProperty/rdf:Property subclass additions,
+including repeated add calls, selected contexts, aliases and Dataset union mode.
+Parse data first: invalid data does not write shapes, while later inference or
+shape errors retain these input-preparation writes. This also applies when an
+explicit caller graph serves both input roles; it does not authorize committing
+failed inference or rule deltas. Existing runner instances reuse their prepared
+ShapesGraph. Explicit CompiledShapes remains an additional immutable API, and
+implicit shapes do not bootstrap caller data. Preserve document-versus-Graph
+boolean compilation policy and the native shapes capability path without copying
+its dataset into RDFLib.

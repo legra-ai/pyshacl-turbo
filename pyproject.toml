@@ -1,6 +1,6 @@
 [build-system]
-requires = ["maturin==1.15.0"]
-build-backend = "maturin"
+requires = ["hatchling>=1.32.3,<2"]
+build-backend = "hatchling.build"
 
 [project]
 name = "pyshacl-turbo"
@@ -9,7 +9,7 @@ description = "A Rust SHACL engine with Python bindings and pySHACL-compatible A
 readme = "README.md"
 requires-python = ">=3.11"
 license = "MIT OR Apache-2.0"
-license-files = ["LICENSE-APACHE", "LICENSE-MIT", "vendor/**/LICENSE*"]
+license-files = ["LICENSE-APACHE", "LICENSE-MIT", "vendor/pyshacl/LICENSE.txt"]
 authors = [{name = "DataRoad Inc, Delaware, USA, trading as Legra"}]
 keywords = ["shacl", "rdf", "validation", "sparql", "rust"]
 classifiers = [
@@ -19,7 +19,10 @@ classifiers = [
     "Programming Language :: Rust",
     "Topic :: Software Development :: Libraries :: Python Modules",
 ]
-dependencies = ["rdflib>=7.3,<8"]
+dependencies = [
+    "rdflib>=7.3,<8",
+    "rdflib-turbo==0.2.0a17",
+]
 
 [project.urls]
 Repository = "https://github.com/legra-ai/pyshacl-turbo"
@@ -33,37 +36,43 @@ test = [
     "pyshacl[oxigraph]==0.40.1",
     "ruff>=0.12",
     "pyyaml>=6,<7",
-    "rdflib-turbo==0.2.0a15",
+    "rdflib-turbo==0.2.0a17",
 ]
 
 [project.scripts]
 pyshacl-turbo = "pyshacl_turbo.cli:entrypoint"
 pyshacl-turbo-rules = "pyshacl_turbo.cli:rules_entrypoint"
 
-[tool.maturin]
-profile = "release"
-locked = true
-editable-profile = "release"
-manifest-path = "crates/python/Cargo.toml"
-python-source = "python"
-module-name = "pyshacl_turbo._native"
-features = ["pyo3/extension-module"]
+[tool.hatch.build.targets.wheel]
+packages = ["python/pyshacl_turbo"]
+
+[tool.hatch.build.targets.sdist]
 include = [
-    {path = "uv.lock", format = "sdist"},
-    {path = "native-coverage-sources.json", format = "sdist"},
-    {path = "vendor/**/*", format = "sdist"},
-    {path = "tests/**/*", format = "sdist"},
-    {path = "scripts/**/*", format = "sdist"},
-    {path = "docs/**/*", format = "sdist"},
-    {path = "benchmarks/**/*", format = "sdist"},
-    {path = ".github/**/*", format = "sdist"},
-    {path = ".githooks/**/*", format = "sdist"},
-    {path = "rust-toolchain.toml", format = "sdist"},
-    {path = "rustfmt-toolchain", format = "sdist"},
-    {path = "Makefile", format = "sdist"},
+    "/python",
+    "/vendor/pyshacl",
+    "/vendor/pyshacl-issue-70.patch",
+    "/tests",
+    "/scripts",
+    "/tools",
+    "/docs",
+    "/benchmarks",
+    "/.github",
+    "/.githooks",
+    "/.gitattributes",
+    "/uv.lock",
+    "/pyproject.toml",
+    "/Makefile",
+    "/LICENSE-*",
+    "/README.md",
 ]
-# Hook probes need the checkout-only installer, which is excluded with its opt-in.
-exclude = ["**/target/**/*", "**/__pycache__/**/*", "**/.pytest_cache/**/*", "**/.ruff_cache/**/*", "**/CHANGELOG*", "crates/engine/build.rs", "tests/test_rhusky_build_root.py", ".cargo/**/*"]
+exclude = [
+    "**/target/**",
+    "**/__pycache__/**",
+    "**/.pytest_cache/**",
+    "**/.ruff_cache/**",
+    "**/CHANGELOG*",
+    "/.cargo/**",
+]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
@@ -86,7 +95,13 @@ show_contexts = true
 line-length = 100
 
 [tool.uv.sources]
-rdflib-turbo = { git = "https://github.com/legra-ai/rdflib-turbo", rev = "9cc8b1f5bd270a9c61fe76bc9de7d49185855949" }
+rdflib-turbo = { path = "../rdflib-turbo", editable = true }
 
 [dependency-groups]
-dev = ["mypy>=1.15,<3"]
+dev = [
+    "mypy>=1.15,<3",
+    "ruff>=0.17.1",
+]
+packaging = [
+    "twine==7.0.0",
+]

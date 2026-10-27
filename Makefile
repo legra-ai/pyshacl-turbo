@@ -1,41 +1,25 @@
 PYTHON ?= python3.13
-VENV_PYTHON := $(CURDIR)/.venv/bin/python
-REGEX_MANIFEST := vendor/fancy-regex-0.19.2/Cargo.toml
-SPARQL_MANIFEST := vendor/spareval-0.2.7/Cargo.toml
 
-.PHONY: dev test test-compatibility test-regex test-sparql-evaluator test-coverage lint check benchmark benchmark-pipeline benchmark-targeting benchmark-preparation coverage
+.PHONY: dev test test-compatibility test-coverage lint check benchmark benchmark-pipeline benchmark-targeting benchmark-preparation coverage
 
 dev:
 	uv sync --locked --extra test --python $(PYTHON) --reinstall-package pyshacl-turbo
 
 test:
 	uv run --locked --extra test pytest -q
-	PYO3_PYTHON=$(VENV_PYTHON) cargo test --workspace --locked
 
 test-compatibility:
 	uv run --locked --extra test pytest -q tests/test_w3c.py tests/test_w3c_documents.py tests/test_sparql.py::test_w3c_sparql_constraint --junitxml=w3c-results.xml
 	uv run --locked --extra test python scripts/check_upstream.py --output upstream-results.json
 	uv run --locked --extra test python scripts/compare_contract.py --repeats 1 --output direct-contract.json --baseline docs/direct-contract.json
 
-test-regex:
-	cargo test --manifest-path $(REGEX_MANIFEST) --locked
-	cargo test --manifest-path $(REGEX_MANIFEST) --locked --lib --no-default-features --features std,perf,unicode
-	cargo test --manifest-path $(REGEX_MANIFEST) --locked --lib --no-default-features --features std,perf,unicode,python-re python_re_tests
-	cargo +nightly-2026-10-16 fmt --manifest-path $(REGEX_MANIFEST) -- --check
-
-test-sparql-evaluator:
-	cargo test --manifest-path $(SPARQL_MANIFEST) --locked --lib
-	cargo test --manifest-path $(SPARQL_MANIFEST) --locked --lib --features exact-custom-function-terms,undefined-functions-as-expression-errors,exact-term-builtins,rdf-set-union,cached-query-plans
-
 test-coverage:
 	uv run --locked --extra test pytest -q --cov --cov-context=test --cov-report=term-missing --cov-report=xml:python-coverage.xml --cov-report=json:python-coverage.json --cov-report=html:htmlcov
 	uv run --locked --extra test python scripts/coverage_badge.py --input python-coverage.json --output htmlcov/coverage.svg
 
 lint:
-	./scripts/fmt.sh --check
-	PYO3_PYTHON=$(VENV_PYTHON) cargo clippy --workspace --all-targets --locked -- -D warnings
-	uv run --locked --extra test ruff check python tests benchmarks scripts
-	uv run --locked --extra test ruff format --check python tests benchmarks scripts
+	uv run --locked --only-group dev ruff check python tests benchmarks scripts
+	uv run --locked --only-group dev ruff format --check python tests benchmarks scripts
 
 check: test lint
 
@@ -46,9 +30,6 @@ benchmark-pipeline:
 	uv run --locked --extra test python benchmarks/compare.py --nodes 100 1000 --repeats 5 --output benchmarks/latest.json
 
 .PHONY: benchmark-companions
-.PHONY: test-rust-coverage
-test-rust-coverage:
-	uv run --no-project --python 3.13 python scripts/native_coverage.py
 
 benchmark-companions:
 	uv sync --project benchmarks --locked --no-build --python $(PYTHON)

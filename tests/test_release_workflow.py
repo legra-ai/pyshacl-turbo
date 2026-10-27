@@ -11,35 +11,25 @@ import yaml
 ROOT = Path(__file__).parents[1]
 
 
-def test_linux_release_builds_use_native_manylinux_linkers_with_fatal_warnings():
+def test_release_builds_only_the_original_universal_facade_wheel():
+    project = tomllib.loads((ROOT / "pyproject.toml").read_text())
+    assert project["build-system"]["build-backend"] == "hatchling.build"
     workflow = yaml.safe_load((ROOT / ".github/workflows/ci.yml").read_text())
     wheels = workflow["jobs"]["wheels"]
-    linux = [row for row in wheels["strategy"]["matrix"]["include"] if "linux" in row["target"]]
-    assert {row["container"] for row in linux} == {
-        "quay.io/pypa/manylinux_2_28_x86_64:latest",
-        "quay.io/pypa/manylinux_2_28_aarch64:latest",
+    assert "strategy" not in wheels
+    builds = [step["run"] for step in wheels["steps"] if "uv build" in step.get("run", "")]
+    assert builds == ["uv build --wheel --out-dir dist source-dist/*.tar.gz"]
+    acceptance = workflow["jobs"]["wheel-acceptance"]
+    assert set(acceptance["strategy"]["matrix"]["os"]) == {
+        "ubuntu-latest",
+        "macos-latest",
+        "windows-latest",
     }
-    build = next(
-        step for step in wheels["steps"] if "sh scripts/build_manylinux.sh" in step.get("run", "")
+    assert any(
+        step.get("uses", "").startswith("actions/download-artifact@")
+        and step["with"]["name"] == "release-wheel"
+        for step in acceptance["steps"]
     )
-    assert build["if"] == "runner.os == 'Linux'"
-    assert "${{ matrix.container }}" in build["run"]
-    assert "${{ matrix.target }}" in build["run"]
-    driver = (ROOT / "scripts/build_manylinux.sh").read_text()
-    inner = (ROOT / "scripts/build_manylinux_inner.sh").read_text()
-    assert "--env CARGO_BUILD_WARNINGS=deny" in driver
-    assert "--workdir /build" in driver
-    assert '--volume "$PWD/source-build:/build"' in driver
-    assert '--volume "$PWD:/io"' not in driver
-    assert "uv build --wheel" in inner
-    assert "--compatibility manylinux_2_28" in inner
-    assert "--locked" in inner
-    assert (
-        tomllib.loads((ROOT / "pyproject.toml").read_text())["tool"]["maturin"]["profile"]
-        == "release"
-    )
-    assert "--zig" not in str(wheels)
-    assert any("--strip-components=1" in step.get("run", "") for step in wheels["steps"])
 
 
 def test_readme_links_work_on_package_index_pages():
@@ -70,6 +60,7 @@ def test_release_checks_and_builds_the_prepared_revision():
         "regex",
         "sdist",
         "wheels",
+        "wheel-acceptance",
         "native-coverage",
         "shared-pipeline",
     }
@@ -106,24 +97,23 @@ def test_release_checks_and_builds_the_prepared_revision():
     assert verify < finalize
 
 
-def test_toolchains_and_hook_dependencies():
-    rust = tomllib.loads((ROOT / "Cargo.toml").read_text())["workspace"]["package"]
-    toolchain = tomllib.loads((ROOT / "rust-toolchain.toml").read_text())["toolchain"]
-    assert toolchain["channel"] == rust["rust-version"] == "1.99.1"
-    assert (ROOT / "rustfmt-toolchain").read_text().strip() == "nightly-2026-10-16"
-    lock = tomllib.loads((ROOT / "Cargo.lock").read_text())
-    names = {package["name"] for package in lock["package"]}
-    assert "rhusky" in names
-    assert "sloughi" not in names
-    assert "./scripts/fmt.sh --check" in (ROOT / ".githooks/pre-commit").read_text()
+def test_pure_facade_hooks_verify_python_without_a_native_toolchain():
+    hook = (ROOT / ".githooks/pre-commit").read_text()
+    assert "ruff check python tests benchmarks scripts" in hook
+    assert "ruff format --check python tests benchmarks scripts" in hook
+    assert "cargo" not in hook
+    assert "fmt.sh" not in hook
 
 
-@pytest.mark.parametrize("workflow,job", [("ci.yml", "verify"), ("regex.yml", "regex")])
-def test_formatting_jobs_install_the_pinned_nightly(workflow, job):
+@pytest.mark.parametrize(
+    "workflow,job", [("native-coverage.yml", "coverage"), ("regex.yml", "regex")]
+)
+def test_owner_formatting_jobs_install_the_pinned_nightly(workflow, job):
     document = yaml.safe_load((ROOT / ".github/workflows" / workflow).read_text())
     assert any(
-        step.get("uses") == "dtolnay/rust-toolchain@nightly"
+        step.get("uses") == "actions-rust-lang/setup-rust-toolchain@v2"
         and step.get("with", {}).get("toolchain") == "nightly-2026-10-16"
+        and "rustfmt" in step["with"]["components"]
         for step in document["jobs"][job]["steps"]
     )
 
@@ -150,80 +140,3 @@ def test_local_commit_policy(header, expected, tmp_path):
         check=False,
     )
     assert (result.returncode != 0) == bool(expected)
-
-
-def test_source_archive_extraction_invalidates_stale_native_builds(tmp_path):
-    import io
-    import os
-    import shutil
-    import sys
-    import tarfile
-
-    if sys.platform == "win32":
-        pytest.skip("The manylinux source-extraction path runs on Unix hosts")
-    assert shutil.which("cargo") and shutil.which("tar")
-    project = tmp_path / "source-build"
-    (project / "src").mkdir(parents=True)
-    manifest = '[package]\nname = "archive-freshness"\nversion = "0.1.0"\nedition = "2024"\n'
-    old_source = 'fn main() { println!("old"); }\n'
-    new_source = 'fn main() { println!("new"); }\n'
-    (project / "Cargo.toml").write_text(manifest)
-    (project / "src/main.rs").write_text(old_source)
-    target = tmp_path / "target"
-    environment = os.environ.copy()
-    environment.update(CARGO_TARGET_DIR=str(target), CARGO_BUILD_BUILD_DIR=str(target / "build"))
-
-    def build_and_read():
-        subprocess.run(
-            ["cargo", "build", "--offline", "--quiet"],
-            cwd=project,
-            env=environment,
-            check=True,
-            capture_output=True,
-        )
-        return subprocess.check_output([target / "debug/archive-freshness"], text=True).strip()
-
-    assert build_and_read() == "old"
-    archives = tmp_path / "source-dist"
-    archives.mkdir()
-    archive = archives / "fixture.tar.gz"
-    with tarfile.open(archive, "w:gz") as output:
-        for name, body in (("Cargo.toml", manifest), ("src/main.rs", new_source)):
-            content = body.encode()
-            entry = tarfile.TarInfo("fixture/" + name)
-            entry.size = len(content)
-            entry.mtime = 1
-            output.addfile(entry, io.BytesIO(content))
-    original_bytes = archive.read_bytes()
-    # Historical archive timestamps reproduce Cargo accepting the cached old binary.
-    subprocess.run(
-        ["tar", "-xzf", archive, "--strip-components=1", "-C", project],
-        cwd=tmp_path,
-        check=True,
-        capture_output=True,
-    )
-    assert (project / "src/main.rs").read_text() == new_source
-    assert build_and_read() == "old"
-
-    workflow = yaml.safe_load((ROOT / ".github/workflows/ci.yml").read_text())
-    extraction = next(
-        line
-        for step in workflow["jobs"]["wheels"]["steps"]
-        for line in step.get("run", "").splitlines()
-        if line.strip().startswith("tar ")
-    )
-    subprocess.run(["sh", "-c", extraction], cwd=tmp_path, check=True, capture_output=True)
-    assert build_and_read() == "new"
-    assert archive.read_bytes() == original_bytes
-
-
-def test_standalone_evaluator_ci_uses_the_actual_shared_engine_feature_profile():
-    engine = tomllib.loads((ROOT / "crates/engine/Cargo.toml").read_text())
-    expected = set(engine["dependencies"]["spareval"]["features"])
-    makefile = (ROOT / "Makefile").read_text()
-    recipes = [line for line in makefile.splitlines() if "$(SPARQL_MANIFEST)" in line]
-    assert any("--features" not in recipe for recipe in recipes)
-    shared = [recipe for recipe in recipes if "--features" in recipe]
-    assert len(shared) == 1
-    features = shared[0].split("--features ", 1)[1].strip().split(",")
-    assert set(features) == expected

@@ -4,13 +4,24 @@ The wrapper retains the caller's graph/store; it neither snapshots nor reasons.
 Native I/O explicitly uses the underlying graph to preserve its real scope.
 """
 
+import sys
+
 from rdflib import Dataset, Graph, URIRef
+
+
+def _native_view(graph):
+    while isinstance(graph, DataGraph):
+        graph = graph.impl
+    runtime = sys.modules.get("rdflib_turbo")
+    if runtime is not None and isinstance(graph, (runtime.Graph, runtime.StoreDataset)):
+        return graph
+    return None
 
 
 def _reject_native_store_graph(graph):
     while isinstance(graph, DataGraph):
         graph = graph.impl
-    if getattr(graph, "_turbo_native_graph", False):
+    if getattr(graph, "_turbo_native_graph", False) and _native_view(graph) is None:
         raise NotImplementedError(
             "SHACL input through the native Store Graph facade is not implemented"
         )
@@ -92,6 +103,24 @@ class RdfLibDataGraph(DataGraph):
     def _view(self):
         return self.locked_context if self.locked_context is not None else self.impl
 
+    @property
+    def _validate_shared_shapes(self):
+        if _native_view(self) is None:
+            raise AttributeError("Ordinary RDFLib DataGraph has no borrowed native validation")
+        return self._view._validate_shared_shapes
+
+    @property
+    def _expand_shared_shapes(self):
+        if _native_view(self) is None:
+            raise AttributeError("Ordinary RDFLib DataGraph has no borrowed native rules")
+        return self._view._expand_shared_shapes
+
+    @property
+    def _compile_shared_shapes(self):
+        if _native_view(self) is None:
+            raise AttributeError("Ordinary RDFLib DataGraph has no borrowed native compiler")
+        return self._view._compile_shared_shapes
+
     def triples(self, triple):
         yield from self._view.triples(triple)
 
@@ -170,6 +199,16 @@ class RdfLibDataGraph(DataGraph):
         _reject_native_store_graph(self)
         from .rdf import merge_graph
 
+        native = _native_view(self)
+        if native is not None and destination is None:
+            if (
+                identifier is not None
+                and not self.is_multi_graph
+                and identifier != native.identifier
+            ):
+                raise NotImplementedError("Renaming a native cloned graph is not implemented")
+            result = native.copy()
+            return DataGraph.from_rdflib(result)
         if destination is not None:
             result = destination
         elif self.is_multi_graph:

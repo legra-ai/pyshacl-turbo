@@ -1,4 +1,4 @@
-"""Check the actual distribution, including vendored sources needed to rebuild it."""
+"""Check the actual distribution, including its pure Python rebuild and owner-verification inputs."""
 
 import argparse
 import tarfile
@@ -15,7 +15,15 @@ def check(path):
         assert len(metadata_names) == 1
         metadata = BytesParser().parsebytes(files[metadata_names[0]])
         prefix = metadata_names[0].removesuffix("METADATA") + "licenses/"
-        assert any(name.endswith((".so", ".pyd")) for name in files), "Native extension missing"
+        assert not any(
+            name.endswith((".so", ".pyd", ".dylib", ".dll")) or ".so." in name for name in files
+        ), "Facade wheel must not contain native libraries"
+        wheel_metadata = BytesParser().parsebytes(
+            files[metadata_names[0].removesuffix("METADATA") + "WHEEL"]
+        )
+        assert wheel_metadata["Root-Is-Purelib"] == "true", "Facade wheel must be pure Python"
+        assert wheel_metadata.get_all("Tag") == ["py3-none-any"], "Facade wheel must be universal"
+        assert "pyshacl_turbo/_native.py" in files, "Shared native provider facade missing"
         assert "pyshacl_turbo/assets/shacl-shacl.ttl" in files
         assert files["pyshacl_turbo/py.typed"] == b"", "Inline typing marker missing"
     else:
@@ -28,59 +36,52 @@ def check(path):
         metadata = BytesParser().parsebytes(files["PKG-INFO"])
         prefix = ""
         for name in [
-            "Cargo.lock",
             "uv.lock",
-            "Cargo.toml",
             "pyproject.toml",
             "python/pyshacl_turbo/py.typed",
-            "rust-toolchain.toml",
-            "crates/engine/src/lib.rs",
-            "crates/engine/src/architecture.svg",
-            "crates/engine/src/architecture.md",
-            "crates/engine/tests/pipeline.rs",
-            "crates/python/src/lib.rs",
+            "python/pyshacl_turbo/_native.py",
             "tests/test_release.py",
             "scripts/smoke_wheel.py",
-            "vendor/fancy-regex-0.19.2/src/lib.rs",
-            "vendor/oxigraph-0.5.11/src/lib.rs",
-            "vendor/oxrdf-0.3.4/src/lib.rs",
-            "vendor/oxsdatatypes-0.2.3/src/lib.rs",
-            "vendor/spargebra-0.4.7/src/lib.rs",
-            "vendor/sparopt-0.3.7/src/lib.rs",
-            "vendor/spareval-0.2.7/src/lib.rs",
-            "vendor/turbo-source-identity.rs",
+            "scripts/provider_validation.py",
+            "scripts/provider_coverage.py",
+            "scripts/owner_driver.py",
+            "scripts/provider_registry.py",
+            "vendor/pyshacl/LICENSE.txt",
+            "vendor/pyshacl-issue-70.patch",
         ]:
             assert name in files, f"Source distribution cannot be verified/rebuilt: missing {name}"
-        for vendor in (
-            "oxigraph-0.5.11",
-            "oxrdf-0.3.4",
-            "oxsdatatypes-0.2.3",
-            "spargebra-0.4.7",
-            "sparopt-0.3.7",
-            "spareval-0.2.7",
-        ):
-            for name in ("build.rs", "src/source_identity.rs"):
-                assert f"vendor/{vendor}/{name}" in files, (
-                    f"Missing compiled identity: {vendor}/{name}"
-                )
-        assert ".cargo/config.toml" not in files, "Repository hook opt-in must not ship"
-        assert "crates/engine/build.rs" not in files, "Repository hook installer must not ship"
-        assert "tests/test_rhusky_build_root.py" not in files, (
-            "Checkout-only hook probes require the excluded installer and must not ship"
+        assert not any(name.startswith("crates/") for name in files), (
+            "Facade must not duplicate native source"
         )
+        assert not any(
+            name in files
+            for name in (
+                "Cargo.toml",
+                "Cargo.lock",
+                "rust-toolchain.toml",
+                "rustfmt-toolchain",
+                "native-coverage-sources.json",
+            )
+        ), "Facade must not contain dormant native build authority"
+        assert not any(
+            name.startswith("vendor/")
+            and not name.startswith("vendor/pyshacl/")
+            and name != "vendor/pyshacl-issue-70.patch"
+            for name in files
+        ), "Native dependencies belong to the provider source distribution"
+        patch = "vendor/pyshacl-issue-70.patch"
+        assert files[patch] == (Path(__file__).parents[1] / patch).read_bytes(), (
+            "Reviewed upstream fixture correction changed"
+        )
+        assert ".cargo/config.toml" not in files, "Repository hook opt-in must not ship"
     assert metadata["Name"] == "pyshacl-turbo"
     assert metadata["License-Expression"] == "MIT OR Apache-2.0"
     for name in ["LICENSE-MIT", "LICENSE-APACHE"]:
         assert files[prefix + name] == (Path(__file__).parents[1] / name).read_bytes()
-        for vendor in [
-            "oxigraph-0.5.11",
-            "oxrdf-0.3.4",
-            "oxsdatatypes-0.2.3",
-            "spargebra-0.4.7",
-            "sparopt-0.3.7",
-            "spareval-0.2.7",
-        ]:
-            assert prefix + f"vendor/{vendor}/{name}" in files, f"Missing {vendor} attribution"
+    assert (
+        files[prefix + "vendor/pyshacl/LICENSE.txt"]
+        == (Path(__file__).parents[1] / "vendor/pyshacl/LICENSE.txt").read_bytes()
+    )
     assert not any("CHANGELOG" in name for name in files), "Generated changelog must not ship"
     assert not any("/target/" in name or "/.venv/" in name for name in files)
     print(f"Verified {path.name}: metadata, licenses and packaged files")

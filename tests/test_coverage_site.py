@@ -70,6 +70,24 @@ def test_stale_or_unmeasured_numbers_cannot_be_published(tmp_path):
         site().build_site(python, rust, tmp_path, "rdflib-turbo", "runtime")
 
 
+def test_shacl_facade_badges_use_its_tested_revision_and_provider_measurement(tmp_path):
+    python, rust = measurements()
+    rust["revision"] = "sdist-sha256:" + "a" * 64
+    rust["shacl_revision"] = "shacl-facade"
+    site().build_site(python, rust, tmp_path, "pyshacl-turbo", "shacl-facade")
+    assert (
+        ET.parse(tmp_path / "rust-lines.svg").getroot().attrib["aria-label"]
+        == "Shared Rust lines: 70.0%"
+    )
+
+
+def test_shacl_revision_cannot_be_replaced_by_another_companion_revision(tmp_path):
+    python, rust = measurements()
+    rust["shacl_revision"] = "stale"
+    with pytest.raises(ValueError, match="revision"):
+        site().build_site(python, rust, tmp_path, "pyshacl-turbo", "facade")
+
+
 def test_badges_never_round_partial_coverage_up_to_100():
     root = ET.fromstring(site().render_badge("Rust lines", 9999, 10000))
     assert root.attrib["aria-label"] == "Rust lines: 99.9%"
@@ -81,9 +99,11 @@ def test_badges_never_round_partial_coverage_up_to_100():
 @pytest.mark.parametrize("project", ["pyshacl-turbo", "rdflib-turbo", "owlrl-turbo"])
 def test_standard_shields_endpoints_publish_separate_measured_counts(tmp_path, project):
     python, rust = measurements()
-    shared = project == "owlrl-turbo"
+    shared = project != "rdflib-turbo"
     rust["project"] = "rdflib-turbo" if shared else project
     revision = "facade" if shared else "runtime"
+    if project == "pyshacl-turbo":
+        rust["shacl_revision"] = revision
     site().build_site(python, rust, tmp_path, project, revision)
     expected = {
         "python-lines": ("Python lines", "80.0%", "a4a61d"),
@@ -119,3 +139,23 @@ def test_standard_endpoint_never_rounds_partial_coverage_or_invents_branches(tmp
     site().build_site(python, rust, tmp_path, "owlrl-turbo", "facade")
     assert json.loads((tmp_path / "rust-lines.json").read_text())["message"] == "99.9%"
     assert json.loads((tmp_path / "python-branches.json").read_text())["message"] == "n/a"
+
+
+@pytest.mark.parametrize(
+    "project,revision_key,prefix",
+    [
+        ("rdflib-turbo", "revision", ""),
+        ("owlrl-turbo", "owlrl_revision", "owlrl-"),
+        ("pyshacl-turbo", "shacl_revision", "shacl-"),
+    ],
+)
+def test_report_links_follow_the_project_measured_by_the_provider(
+    tmp_path, project, revision_key, prefix
+):
+    python, rust = measurements()
+    rust[revision_key] = "measured"
+    site().build_site(python, rust, tmp_path, project, "measured")
+    report = (tmp_path / "index.html").read_text()
+    assert f'href="reports/{prefix}python-html/index.html"' in report
+    if project == "pyshacl-turbo":
+        assert "SHACL integration suite" in report

@@ -4,6 +4,7 @@ import logging
 
 from rdflib import Dataset, Graph, URIRef
 
+from ._inference import inference_mode
 from .graph_abstraction import DataGraph
 from .shapes_graph import ShapesGraph
 
@@ -75,12 +76,14 @@ class Runner:
             raise NotImplementedError("Remote SPARQL validation is not implemented")
         if self._target_graph is not None:
             return self._target_graph
-        inference = None if self.pre_inferenced else self.options.get("inference")
+        inference = None if self.pre_inferenced else inference_mode(self.options.get("inference"))
         if (
             not rules
             and self.ont_graph is None
             and _shared_runtime(self.data_graph.impl) is not None
         ):
+            # Validation owns private inference and acceptance. Keep the caller's
+            # native owner rather than cloning and materializing a closure here.
             self._target_graph = self.data_graph
             return self._target_graph
         modifies = (
@@ -95,7 +98,12 @@ class Runner:
             target = self.data_graph.clone() if modifies and not self.inplace else self.data_graph
         if not modifies and (not self.inplace):
             self.inplace = True
-        prepared = _prepare_data(target.impl, None, None, None, inference, False)
+        if _shared_runtime(target.impl) is not None:
+            if inference not in (None, "none"):
+                target.impl.infer(inference=inference)
+            prepared = target.impl
+        else:
+            prepared = _prepare_data(target.impl, None, None, None, inference, False)
         if prepared is not target.impl:
             merge_graph(target.impl, prepared)
         if inference not in (None, "none"):

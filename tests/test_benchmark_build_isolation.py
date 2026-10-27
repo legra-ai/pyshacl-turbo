@@ -1,5 +1,6 @@
 """uv extracts source archives beside its wheel output; keep Cargo isolated."""
 
+import hashlib
 import importlib.util
 import json
 import subprocess
@@ -14,70 +15,6 @@ def builder_module():
     builder = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(builder)
     return builder
-
-
-def committed_source(builder, source):
-    source.mkdir()
-    (source / "payload.py").write_text("value = 1\n")
-    (source / ".gitignore").write_text("ignored-output/\n")
-    builder.run("git", "init", source)
-    builder.run("git", "-C", source, "add", ".")
-    builder.run(
-        "git",
-        "-C",
-        source,
-        "-c",
-        "commit.gpgsign=false",
-        "-c",
-        "core.hooksPath=no-hooks",
-        "-c",
-        "user.name=Fixture",
-        "-c",
-        "user.email=fixture@example.invalid",
-        "commit",
-        "-m",
-        "test: record fixture",
-    )
-
-
-def test_dirty_candidate_fails_before_any_network_or_build(monkeypatch, tmp_path):
-    import sys
-
-    builder = builder_module()
-    source = tmp_path / "source"
-    committed_source(builder, source)
-    (source / "payload.py").write_text("value = 2\n")
-    pins = tmp_path / "pins.json"
-    pins.write_text(json.dumps({"rdflib-turbo": "a" * 40, "owlrl-turbo": "b" * 40}))
-    monkeypatch.setattr(builder, "ROOT", source)
-    monkeypatch.setattr(
-        sys, "argv", ["builder", "--sources", str(pins), "--output", str(tmp_path / "wheels")]
-    )
-
-    def unexpected(*args):
-        raise AssertionError("Dirty input must fail before clone/build")
-
-    monkeypatch.setattr(builder, "run", unexpected)
-    with pytest.raises(RuntimeError, match="clean source"):
-        builder.main()
-
-
-def test_source_snapshots_are_committed_and_exclude_ignored_artifacts(tmp_path):
-    builder = builder_module()
-    source = tmp_path / "source"
-    committed_source(builder, source)
-    revision = builder.checked_revision(source)
-    ignored = source / "ignored-output"
-    ignored.mkdir()
-    (ignored / "artifact.txt").write_text("must not enter a source build")
-    assert builder.checked_revision(source) == revision
-    checkout = tmp_path / "checkout"
-    builder.checkout_source(source, revision, checkout)
-    assert builder.checked_revision(checkout) == revision
-    assert not (checkout / "ignored-output").exists()
-    (source / "untracked.py").write_text("must fail, not be attributed to HEAD")
-    with pytest.raises(RuntimeError, match="clean source"):
-        builder.checked_revision(source)
 
 
 def test_companion_archive_build_ignores_the_destination_cargo_workspace(tmp_path):
@@ -118,109 +55,143 @@ edition = "2024"
     assert subprocess.Popen is original_spawner
 
 
-def test_candidate_rejects_stale_embedded_engine_before_build(monkeypatch, tmp_path):
-    builder = builder_module()
-    canonical = tmp_path / "canonical"
-    committed_source(builder, canonical)
-    stale = builder.checked_revision(canonical)
-    implementation = canonical / "crates/engine/src"
-    implementation.mkdir(parents=True)
-    (implementation / "lib.rs").write_text("pub trait GraphRead {}\n")
-    builder.run("git", "-C", canonical, "add", ".")
-    builder.run(
-        "git",
-        "-C",
-        canonical,
-        "-c",
-        "commit.gpgsign=false",
-        "-c",
-        "core.hooksPath=no-hooks",
-        "-c",
-        "user.name=Fixture",
-        "-c",
-        "user.email=fixture@example.invalid",
-        "commit",
-        "-m",
-        "test: add canonical reader",
-    )
-    current = builder.checked_revision(canonical)
-    runtime = tmp_path / "runtime"
-    runtime.mkdir()
+def test_release_builder_rejects_profile_overrides_before_any_native_work(monkeypatch, tmp_path):
+    module = builder_module()
+    monkeypatch.setenv("CARGO_PROFILE_RELEASE_OPT_LEVEL", "0")
+    with pytest.raises(ValueError, match="profile override"):
+        module.build_environment(tmp_path)
 
-    def declare(revision):
-        (runtime / "Cargo.toml").write_text(
-            "[dependencies]\npyshacl-turbo-engine = {git = "
-            '"https://github.com/legra-ai/pyshacl-turbo", rev = "' + revision + '"}\n'
-        )
 
-    run = builder.run
+def test_release_builder_rejects_git_to_archive_equivalence_before_build(monkeypatch, tmp_path):
+    module = builder_module()
     monkeypatch.setattr(
-        builder,
-        "run",
-        lambda *args: run(
-            *(
-                canonical if arg == "https://github.com/legra-ai/pyshacl-turbo" else arg
-                for arg in args
-            )
-        ),
+        module.sys,
+        "argv",
+        [
+            "builder",
+            "--provider-source",
+            str(tmp_path),
+            "--provider-revision",
+            "a" * 40,
+            "--facade-source",
+            str(tmp_path),
+            "--facade-revision",
+            "b" * 40,
+            "--facade-wheel",
+            str(tmp_path / "facade.whl"),
+            "--facade-wheel-sha256",
+            "c" * 64,
+            "--owlrl-source",
+            str(tmp_path),
+            "--owlrl-revision",
+            "d" * 40,
+            "--owlrl-wheel",
+            str(tmp_path / "owl.whl"),
+            "--owlrl-wheel-sha256",
+            "e" * 64,
+            "--output",
+            str(tmp_path / "output"),
+        ],
     )
-    declare(stale)
-    with pytest.raises(RuntimeError, match="canonical SHACL engine"):
-        builder.ensure_shared_engine(canonical, runtime)
-    declare(current)
-    builder.ensure_shared_engine(canonical, runtime)
+    with pytest.raises(ValueError, match="Git.*archive.*unsupported"):
+        module.main()
+    assert not (tmp_path / "output").exists()
 
 
-def test_candidate_fetches_engine_revision_outside_its_squashed_history(monkeypatch, tmp_path):
-    builder = builder_module()
-    repositories = []
-    for name in ("dependency", "candidate"):
-        source = tmp_path / name
-        committed_source(builder, source)
-        implementation = source / "crates/engine/src"
-        implementation.mkdir(parents=True)
-        (implementation / "lib.rs").write_text("pub trait GraphRead {}\n")
-        (source / "unrelated.txt").write_text(name)
-        builder.run("git", "-C", source, "add", ".")
-        builder.run(
-            "git",
-            "-C",
-            source,
-            "-c",
-            "commit.gpgsign=false",
-            "-c",
-            "core.hooksPath=no-hooks",
-            "-c",
-            "user.name=Fixture",
-            "-c",
-            "user.email=fixture@example.invalid",
-            "commit",
-            "-m",
-            "test: record independent engine history",
-        )
-        repositories.append(source)
-    dependency, canonical = repositories
-    revision = builder.checked_revision(dependency)
-    absent = subprocess.run(
-        ["git", "-C", str(canonical), "cat-file", "-e", revision], capture_output=True, check=False
+def test_pinned_uv_accepts_its_actual_distribution_build_metadata():
+    module = builder_module()
+    module.require_uv_version("uv 0.13.5 (Homebrew 2026-10-14 aarch64-apple-darwin)")
+    module.require_uv_version("uv 0.13.5")
+    for wrong in ("uv 0.4.27", "uv 0.13.1", "uv 0.13.50", "other 0.13.5", "uv 0.13.5-dev"):
+        with pytest.raises(ValueError, match="pinned uv"):
+            module.require_uv_version(wrong)
+
+
+@pytest.mark.parametrize(
+    "name",
+    [
+        "CARGO_BUILD_RUSTFLAGS",
+        "CARGO_TARGET_AARCH64_APPLE_DARWIN_RUSTFLAGS",
+        "CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_RUSTFLAGS",
+    ],
+)
+def test_release_builder_rejects_cargo_build_and_target_flag_overrides(monkeypatch, tmp_path, name):
+    module = builder_module()
+    (tmp_path / "rust-toolchain.toml").write_text('[toolchain]\nchannel="1.99.1"\n')
+    monkeypatch.setenv(name, "-C opt-level=0")
+    with pytest.raises(ValueError, match="profile override"):
+        module.build_environment(tmp_path)
+
+
+def test_release_builder_preserves_configured_compiler_cache_wrappers(monkeypatch, tmp_path):
+    module = builder_module()
+    (tmp_path / "rust-toolchain.toml").write_text('[toolchain]\nchannel="1.99.1"\n')
+    monkeypatch.setenv("RUSTC_WRAPPER", "/configured/sccache")
+    monkeypatch.setenv("CARGO_BUILD_RUSTC_WORKSPACE_WRAPPER", "/configured/workspace-wrapper")
+    env = module.build_environment(tmp_path)
+    assert env["RUSTC_WRAPPER"] == "/configured/sccache"
+    assert env["CARGO_BUILD_RUSTC_WORKSPACE_WRAPPER"] == "/configured/workspace-wrapper"
+
+
+def test_peer_wheels_are_retained_byte_identical_without_overwriting_originals(tmp_path):
+    module = builder_module()
+    original = tmp_path / "original-pure.whl"
+    original.write_bytes(b"original wheel bytes")
+    output = tmp_path / "candidate-wheels"
+    output.mkdir()
+    digest = hashlib.sha256(original.read_bytes()).hexdigest()
+    retained = module.copy_original_wheel(original, output, digest)
+    assert retained.name == original.name
+    assert retained.read_bytes() == original.read_bytes() == b"original wheel bytes"
+    with pytest.raises(FileExistsError):
+        module.copy_original_wheel(original, output, digest)
+    with pytest.raises(ValueError, match="original.*SHA-256"):
+        module.copy_original_wheel(original, output, "0" * 64)
+
+
+def test_worker_source_manifest_is_emitted_only_for_verified_release_inputs(tmp_path):
+    module = builder_module()
+    source_file = tmp_path / "sources.json"
+    receipt_file = tmp_path / "candidate-build.json"
+    receipt = {"status": "prepared", "performance_eligible": False}
+    receipt_file.write_text(json.dumps(receipt))
+    with pytest.raises(ValueError, match="verified RELEASE"):
+        module.write_worker_sources(receipt, receipt_file, source_file)
+    assert not source_file.exists()
+    receipt.update(
+        status="verified",
+        performance_eligible=True,
+        build_authority={"archive_sha256": "a" * 64},
+        source_identity={"engine_fingerprint": "b" * 64},
+        peers={
+            "facade": {"source": {"kind": "git", "revision": "c" * 40}},
+            "owlrl": {"source": {"kind": "original-sdist", "sha256": "d" * 64}},
+        },
+        harness_source={"revision": "e" * 40},
+        installed_candidate={"original_wheels": {"rdflib-turbo": {"sha256": "f" * 64}}},
     )
-    assert absent.returncode != 0
-    runtime = tmp_path / "runtime"
-    runtime.mkdir()
-    (runtime / "Cargo.toml").write_text(
-        "[dependencies]\npyshacl-turbo-engine = {git = "
-        '"https://github.com/legra-ai/pyshacl-turbo", rev = "' + revision + '"}\n'
-    )
-    run = builder.run
-    monkeypatch.setattr(
-        builder,
-        "run",
-        lambda *args: run(
-            *(
-                dependency if arg == "https://github.com/legra-ai/pyshacl-turbo" else arg
-                for arg in args
-            )
-        ),
-    )
-    builder.ensure_shared_engine(canonical, runtime)
-    subprocess.run(["git", "-C", str(canonical), "cat-file", "-e", revision], check=True)
+    receipt_file.write_text(json.dumps(receipt))
+    module.write_worker_sources(receipt, receipt_file, source_file)
+    manifest = json.loads(source_file.read_text())
+    assert manifest["rdflib-turbo"] == {
+        "kind": "original-sdist",
+        "sha256": "a" * 64,
+        "engine_fingerprint": "b" * 64,
+    }
+    assert manifest["owlrl-turbo"] == {"kind": "original-sdist", "sha256": "d" * 64}
+    assert manifest["reference_equality_gate"] == "benchmarks/releases.py"
+    assert manifest["build_receipt_sha256"] == hashlib.sha256(receipt_file.read_bytes()).hexdigest()
+
+
+def test_release_builder_preserves_the_real_setup_action_dev_profile_environment(
+    monkeypatch, tmp_path
+):
+    module = builder_module()
+    (tmp_path / "rust-toolchain.toml").write_text('[toolchain]\nchannel="1.99.1"\n')
+    monkeypatch.setenv("CARGO_PROFILE_DEV_DEBUG", "0")
+    monkeypatch.setenv("CARGO_INCREMENTAL", "0")
+    monkeypatch.setenv("CARGO_BUILD_WARNINGS", "deny")
+    env = module.build_environment(tmp_path)
+    assert env["CARGO_PROFILE_DEV_DEBUG"] == "0"
+    assert env["CARGO_INCREMENTAL"] == "0"
+    assert env["CARGO_BUILD_WARNINGS"] == "deny"
