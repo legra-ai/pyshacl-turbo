@@ -6,6 +6,7 @@ only the backend they measure. Timing and peak RSS use separate fresh processes.
 
 import argparse
 import hashlib
+import importlib.util
 import json
 import platform
 import random
@@ -20,6 +21,11 @@ from importlib.metadata import distribution
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+FANOUT_SPEC = importlib.util.spec_from_file_location(
+    "benchmark_inference_fanout", ROOT / "benchmarks/inference_fanout.py"
+)
+FANOUT = importlib.util.module_from_spec(FANOUT_SPEC)
+FANOUT_SPEC.loader.exec_module(FANOUT)
 _GRAPH_ENCODER = ContextVar("benchmark_graph_encoder", default="unique-anchors-v1")
 ENCODERS = ("unique-anchors-v1", "rdflib-v1")
 CONVERSIONS = {"from_rdflib", "to_rdflib", "roundtrip"}
@@ -65,6 +71,10 @@ def fixture(nodes, *, named=False):
     if named:
         return PREFIXES + schema + "ex:records {\n" + "".join(records) + "}\n"
     return PREFIXES + schema + "".join(records)
+
+
+def fanout_fixture(nodes, profile):
+    return FANOUT.fixture(nodes, profile)
 
 
 def nquads_fixture(nodes):
@@ -205,6 +215,8 @@ def prepare(job):
 
     rdflib.NORMALIZE_LITERALS = False
     operation, backend = job["operation"], job["backend"]
+    if "fixture" in job:
+        return FANOUT.prepare(job, graph_observation)
     native = backend in {"turbo", "turbo_shared"}
     named = operation in {"parse_nquads", "serialize_nquads", "select_named"}
     text = fixture(job["nodes"], named=named)
@@ -524,6 +536,7 @@ def environment():
         }
     files = [
         Path(__file__),
+        ROOT / "benchmarks/inference_fanout.py",
         ROOT / "benchmarks/uv.lock",
         ROOT / "benchmarks/pyproject.toml",
         ROOT / "tests/upstream_support/process_launch.py",

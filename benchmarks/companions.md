@@ -94,6 +94,26 @@ its ordering is not used to classify RDF regressions. Any changed RDF baseline,
 including an intentional correction, requires review and an explicit baseline
 update. Merely completing a run does not pass this correctness gate.
 
+## Literal fanout in version comparisons
+
+Version comparisons also submit the closed `literal-reflexivity` and
+`literal-type` profiles through these same workers, at widths32,128,512,1000.
+The latter adds one common range class. Inputs use unique literal words, so the
+width of a shared generalized membership prefix cannot hide behind repeated
+integer scores. These rows time public in-place OWL-RL only; parsing, export and
+complete observation encoding remain outside the timer. Existing employee,
+copy-by-default inference and full-pipeline cases retain their own boundaries.
+
+The new bounded observations retain complete RDF/generalized facts, literal
+cache metadata, public output/warnings, decimal state, raw namespace sequences,
+binding maps, input preservation and actual return/container distinctions.
+Different namespace sequence or public return state remains a difference even
+when graph structure agrees. Native Dataset and reference Graph routes are
+labeled separately; their physical containers are not asserted equivalent.
+Unsupported observations and output bounds fail rather than truncate. Historical
+`rdflib-v1` fingerprints are unchanged. Timings remain informational; the native
+indexed-work regression is the deterministic check against fanout scans.
+
 ## First baseline findings
 
 The historical correctness catalogue explicitly selects `--observation-encoder

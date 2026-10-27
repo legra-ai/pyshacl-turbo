@@ -40,6 +40,7 @@ def harness_hashes():
     paths = [
         Path(__file__).resolve(),
         ROOT / "benchmarks/companions.py",
+        ROOT / "benchmarks/inference_fanout.py",
         ROOT / "tests/upstream_support/process_launch.py",
     ]
     return {
@@ -212,6 +213,7 @@ def measure(executable, job, repeats, memory_repeats, timeout):
                     executable,
                     "-I",
                     ROOT / "benchmarks/companions.py",
+                    ROOT / "benchmarks/inference_fanout.py",
                     "--worker",
                     json.dumps(job),
                     "--repeats",
@@ -247,10 +249,52 @@ def compare_runs(reference, candidate):
     return companions.comparison_for_runs(reference, candidate)
 
 
-def require_standard_parity(reference, candidate):
+def release_jobs(sizes):
+    pipelines = [
+        {
+            "case": "pipeline_" + mode,
+            "mode": mode,
+            "nodes": nodes,
+            "operation": "pipeline_" + mode,
+            "contract": "pipeline",
+        }
+        for nodes in sizes
+        for mode in ("rdfs", "owlrl")
+    ]
+    return pipelines + [
+        {
+            "case": profile,
+            "mode": "owlrl",
+            "nodes": width,
+            "operation": "owlrl",
+            "fixture": profile,
+            "contract": "inference",
+        }
+        for width in companions.FANOUT.WIDTHS
+        for profile in companions.FANOUT.PROFILES
+    ]
+
+
+def require_standard_parity(reference, candidate, *, contract="pipeline"):
     left, right = reference["observation"], candidate["observation"]
     if left["closure"]["ordinary"] != right["closure"]["ordinary"]:
         raise RuntimeError("Shared candidate changed the ordinary RDF inference closure")
+    if contract == "inference":
+        required = {
+            "complete_term_metadata",
+            "namespaces_raw",
+            "namespace_bindings",
+            "public_effects",
+            "decimal",
+            "state",
+        }
+        if not required <= left.keys() or not required <= right.keys():
+            raise RuntimeError("Missing complete inference-only observation")
+        return
+    if contract != "pipeline":
+        raise ValueError("Unknown benchmark observation contract")
+    if "report" not in left or "report" not in right:
+        raise RuntimeError("Missing mandatory pipeline report")
     if (
         left["report"]["graph"] != right["report"]["graph"]
         or left["report"]["conforms"] != right["report"]["conforms"]
@@ -269,7 +313,7 @@ def write_report(report, output):
         f"Measured: {report['date']}; platform: {platform.platform()}.",
         f"Harness revision: `{report['source_revision']}`; dirty source tree: `{report['source_tree_dirty']}`. Candidate wheel source revisions and hashes are retained in the raw evidence.",
         "",
-        "| Pipeline | Nodes | Environment | Median ms | Min–max ms | Peak MiB | Full-output parity | Speedup vs Python |",
+        "| Operation/profile | Nodes | Environment | Median ms | Min–max ms | Peak MiB | Full-output parity | Speedup vs Python |",
         "|---|---:|---|---:|---:|---:|---|---:|",
     ]
     for row in report["runs"]:
@@ -277,7 +321,7 @@ def write_report(report, output):
             comparison = row.get("comparisons", {}).get(name, {})
             ratio = comparison.get("speedup")
             lines.append(
-                f"| {row['mode']} | {row['nodes']} | {name} | {value['median_ns'] / 1e6:.3f} | {value['min_ns'] / 1e6:.3f}–{value['max_ns'] / 1e6:.3f} | {value['median_peak_rss_bytes'] / 2**20:.2f} | {comparison.get('status', 'reference')} | {f'{ratio:.2f}×' if ratio is not None else '—'} |"
+                f"| {row['case']} | {row['nodes']} | {name} | {value['median_ns'] / 1e6:.3f} | {value['min_ns'] / 1e6:.3f}–{value['max_ns'] / 1e6:.3f} | {value['median_peak_rss_bytes'] / 2**20:.2f} | {comparison.get('status', 'reference')} | {f'{ratio:.2f}×' if ratio is not None else '—'} |"
             )
     lines += ["", "## Exact product versions", ""]
     for name, env in report["environments"].items():
@@ -335,7 +379,7 @@ def main():
         "source_revision": command(["git", "-C", ROOT, "rev-parse", "HEAD"]).strip(),
         "uv_version": command(["uv", "--version"]).strip(),
         "harness_sha256": harness_hashes(),
-        "method": "Serial isolated wheel environments; parse → in-place inference → validation, including shape compilation and full public report output. Shapes are parsed before timing. Python uses the original three libraries; shared Turbo retains one native dataset; historical Turbo includes RDFLib conversion. One warmup precedes retained timing samples. Independent cold processes measure whole-process peak RSS before observation encoding. Full-output speedups require stable, completely equal outputs. Generalized RDF differences remain visible. No timing threshold on shared CI runners.",
+        "method": "Serial isolated wheel environments; parse → in-place inference → validation, including shape compilation and full public report output. Shapes are parsed before timing. Python uses the original three libraries; shared Turbo retains one native dataset; historical Turbo includes RDFLib conversion. One warmup precedes retained timing samples. Independent cold processes measure whole-process peak RSS before observation encoding. Full-output speedups require stable, completely equal outputs. Generalized RDF differences remain visible. No timing threshold on shared CI runners. Closed literal fanout profiles separately measure public in-place OWL-RL only; parsing/export/audit are outside timers, and return/container/namespace/cache differences remain observed.",
     }
     executables = {}
     reference = next(env["id"] for env in envs if env["backend"] == "reference")
@@ -377,44 +421,53 @@ def main():
             report["environments"]["candidate"]["identity"] = installed
         # Builds, installs, and integration tests finish before any timed worker.
         rng = random.Random(20261017)
-        for nodes in args.nodes:
-            for mode in ("rdfs", "owlrl"):
-                row = {"mode": mode, "nodes": nodes, "environments": {}, "comparisons": {}}
-                report["runs"].append(row)
-                order = list(envs)
-                rng.shuffle(order)
-                for env in order:
-                    row["environments"][env["id"]] = measure(
-                        executables[env["id"]],
-                        {
-                            "backend": env["backend"],
-                            "operation": f"pipeline_{mode}",
-                            "nodes": nodes,
-                            "observation_encoder": "unique-anchors-v1",
+        for job in release_jobs(args.nodes):
+            row = {
+                "case": job["case"],
+                "mode": job["mode"],
+                "nodes": job["nodes"],
+                "contract": job["contract"],
+                "environments": {},
+                "comparisons": {},
+            }
+            report["runs"].append(row)
+            order = list(envs)
+            rng.shuffle(order)
+            for env in order:
+                row["environments"][env["id"]] = measure(
+                    executables[env["id"]],
+                    {
+                        **{
+                            key: value
+                            for key, value in job.items()
+                            if key not in {"case", "contract", "mode"}
                         },
-                        args.repeats,
-                        args.memory_repeats,
-                        args.timeout,
-                    )
-                ref = row["environments"][reference]
-                for env in envs:
-                    if env["id"] == reference:
-                        continue
-                    value = row["environments"][env["id"]]
-                    row["comparisons"][env["id"]] = compare_runs(ref, value)
-                    if env["backend"] == "turbo_shared":
-                        require_standard_parity(ref, value)
-                # Preserve direct release-to-release comparisons separately.
-                row["between_versions"] = {
-                    f"{left['id']} → {right['id']}": compare_runs(
-                        row["environments"][left["id"]], row["environments"][right["id"]]
-                    )
-                    for i, left in enumerate(envs)
-                    for right in envs[i + 1 :]
-                    if left["backend"] != "reference" and right["backend"] != "reference"
-                }
-                write_report(report, output)
-                print(f"Measured {mode}/{nodes}", flush=True)
+                        "backend": env["backend"],
+                        "observation_encoder": "unique-anchors-v1",
+                    },
+                    args.repeats,
+                    args.memory_repeats,
+                    args.timeout,
+                )
+            ref = row["environments"][reference]
+            for env in envs:
+                if env["id"] == reference:
+                    continue
+                value = row["environments"][env["id"]]
+                row["comparisons"][env["id"]] = compare_runs(ref, value)
+                if env["backend"] == "turbo_shared":
+                    require_standard_parity(ref, value, contract=job["contract"])
+            # Preserve direct release-to-release comparisons separately.
+            row["between_versions"] = {
+                f"{left['id']} → {right['id']}": compare_runs(
+                    row["environments"][left["id"]], row["environments"][right["id"]]
+                )
+                for i, left in enumerate(envs)
+                for right in envs[i + 1 :]
+                if left["backend"] != "reference" and right["backend"] != "reference"
+            }
+            write_report(report, output)
+            print(f"Measured {job['case']}/{job['nodes']}", flush=True)
     except Exception as error:
         report["error"] = str(error)
         write_report(report, output)
