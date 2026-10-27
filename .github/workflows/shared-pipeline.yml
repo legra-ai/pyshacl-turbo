@@ -30,21 +30,20 @@ jobs:
           fetch-depth: 0
       - uses: astral-sh/setup-uv@v10.3.2
         with:
-          version: "0.13.1"
+          version: "0.13.5"
       - uses: actions-rust-lang/setup-rust-toolchain@v2
         with:
           toolchain: 1.99.1
-      - name: Build all three wheels from exact source archives
-        run: uv run --no-project --python 3.13 python scripts/build_benchmark_wheels.py --output "$GITHUB_WORKSPACE/pipeline-wheels" || exit 1
+      - name: Prepare exact published original authorities and RELEASE measurement inputs
+        run: uv run --no-project --python 3.13 python -B scripts/build_published_benchmark.py --output "$RUNNER_TEMP/pipeline-build" || exit 1
       - name: Verify the shared path and measure versioned pipelines
         env:
           BENCHMARK_NODES: ${{ github.event_name == 'schedule' && '100 1000 10000' || '100 1000' }}
-          # An independent weekly run monitors the floating registry stack.
-          # Calls from release CI supply a tested revision and validate candidates
-          # against pinned baselines, so broken published pairs cannot block repair.
+          # Registry inputs must expose the exact declared native capability.
+          # Reference equality and complete outputs remain mandatory worker gates.
           BENCHMARK_MATRIX: ${{ github.event_name == 'schedule' && inputs.revision == '' && 'benchmarks/releases.json' || 'benchmarks/candidate-releases.json' }}
           BENCHMARK_TIMEOUT: ${{ github.event_name == 'schedule' && '900' || '180' }}
-        run: uv run --no-project --python 3.13 python benchmarks/releases.py --matrix "$BENCHMARK_MATRIX" --candidate-wheels "$GITHUB_WORKSPACE/pipeline-wheels" --integration-tests "$GITHUB_WORKSPACE/integration" --nodes $BENCHMARK_NODES --repeats 7 --memory-repeats 3 --timeout "$BENCHMARK_TIMEOUT" --output benchmark-artifacts/releases.json || exit 1
+        run: uv run --no-project --python 3.13 python benchmarks/releases.py --matrix "$BENCHMARK_MATRIX" --candidate-wheels "$RUNNER_TEMP/pipeline-build/candidate/candidate-wheels" --integration-tests "$GITHUB_WORKSPACE/integration" --nodes $BENCHMARK_NODES --repeats 7 --memory-repeats 3 --timeout "$BENCHMARK_TIMEOUT" --output benchmark-artifacts/releases.json || exit 1
       - name: Summarize measured results
         if: always()
         shell: uv run --no-project --python 3.13 python {0}
@@ -69,7 +68,21 @@ jobs:
         if: always()
         with:
           name: pipeline-wheels-${{ matrix.os }}
-          path: pipeline-wheels/*.whl
+          path: ${{ runner.temp }}/pipeline-build/candidate/candidate-wheels/*.whl
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: pipeline-input-authorities-${{ matrix.os }}
+          path: |
+            ${{ runner.temp }}/pipeline-build/published-benchmark-request.json
+            ${{ runner.temp }}/pipeline-build/facade-originals/*
+            ${{ runner.temp }}/pipeline-build/owl-originals/*
+            ${{ runner.temp }}/pipeline-build/published-provider/**/*.json
+            ${{ runner.temp }}/pipeline-build/published-provider/**/*.tar.gz
+            ${{ runner.temp }}/pipeline-build/published-provider/**/*.whl
+            ${{ runner.temp }}/pipeline-build/candidate/candidate-build.json
+            ${{ runner.temp }}/pipeline-build/candidate/installed-candidate.json
           if-no-files-found: error
 
   publish-history:
@@ -87,7 +100,7 @@ jobs:
           ref: ${{ inputs.revision || github.sha }}
       - uses: astral-sh/setup-uv@v10.3.2
         with:
-          version: "0.13.1"
+          version: "0.13.5"
       - uses: actions/download-artifact@v8
         with:
           pattern: pipeline-reports-*

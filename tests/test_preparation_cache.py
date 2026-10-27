@@ -1,5 +1,7 @@
 """Automatic compilation reuse must never reuse mutable input or query results."""
 
+from types import SimpleNamespace
+
 import pyshacl_turbo as turbo
 import pytest
 from rdflib import Literal
@@ -20,11 +22,12 @@ def test_repeated_top_level_calls_share_native_compilation_and_read_fresh_data(m
     native = turbo._native.CompiledShapes
     calls = []
 
-    def compile_native(*args):
+    def compile_native(*args, _policy):
+        assert _policy is turbo._native._REGEX_POLICY
         calls.append(args)
-        return native(*args)
+        return native.from_input(*args, _policy=_policy)
 
-    monkeypatch.setattr(turbo._native, "CompiledShapes", compile_native)
+    monkeypatch.setattr(turbo._native, "CompiledShapes", SimpleNamespace(from_input=compile_native))
     assert turbo.validate(graph(""), shacl_graph=shapes)[0]
     assert not turbo.validate(graph("ex:s ex:p 1."), shacl_graph=shapes)[0]
     assert len(calls) == 1
@@ -123,7 +126,7 @@ def test_compilation_hits_avoid_python_serialization_and_union_copies(dataset, m
     with monkeypatch.context() as patch:
         patch.setattr(Graph, "serialize", forbidden)
         patch.setattr(rdf, "union", forbidden)
-        patch.setattr(turbo._native, "CompiledShapes", forbidden)
+        patch.setattr(turbo._native, "CompiledShapes", SimpleNamespace(from_input=forbidden))
         for term_type in (URIRef, BNode, Literal):
             patch.setattr(term_type, "n3", forbidden)
         second = turbo.compile_shapes(source)
@@ -131,7 +134,7 @@ def test_compilation_hits_avoid_python_serialization_and_union_copies(dataset, m
     assert turbo._compile_native.cache_info().hits == 1
 
 
-def test_dataset_union_and_reordered_graph_share_exact_cache_contents():
+def test_reordered_datasets_reuse_source_but_contextless_union_has_a_distinct_key():
     from rdflib import BNode, Dataset, Graph
 
     source = graph('ex:UnionCache sh:targetSubjectsOf ex:p; sh:message "message".')
@@ -147,9 +150,20 @@ def test_dataset_union_and_reordered_graph_share_exact_cache_contents():
         reordered.add(triple)
     first = turbo.compile_shapes(dataset)
     second = turbo.compile_shapes(reordered)
-    assert first._native is second._native
+    reordered_dataset = Dataset(default_union=True)
+    for prefix, namespace in dataset.namespaces():
+        reordered_dataset.bind(prefix, namespace)
+    for context in (EX.second, EX.first):
+        for triple in reversed(list(source)):
+            reordered_dataset.graph(context).add(triple)
+    third = turbo.compile_shapes(reordered_dataset)
+    # Equal unions do not imply equal named GRAPH inputs. Record ordering within
+    # the same complete dataset remains irrelevant to the immutable cache key.
+    assert first._native is not second._native
+    assert first._native is third._native
     assert first._blank_nodes[str(blank)] is blank
     assert first.targeting(graph(""), EX.s) == [blank]
+    assert second.targeting(graph(""), EX.s) == [blank]
 
 
 @pytest.mark.parametrize("dataset", [False, True])
@@ -187,8 +201,8 @@ def test_compilation_snapshot_rejects_non_rdf_terms():
         turbo.compile_shapes(shapes)
 
 
-def test_native_shapes_key_preserves_exact_terms_and_deduplicates_union():
-    from pyshacl_turbo.rdf import decode, input_graph
+def test_native_shapes_key_preserves_exact_terms_and_full_dataset_placement():
+    from pyshacl_turbo.rdf import shape_batches, shape_graphs
     from rdflib import BNode, Dataset
     from rdflib.namespace import XSD
 
@@ -205,14 +219,26 @@ def test_native_shapes_key_preserves_exact_terms_and_deduplicates_union():
     source = Dataset(default_union=True)
     source.graph(EX.first).__iadd__(shapes)
     source.graph(EX.second).__iadd__(shapes)
-    canonical = turbo._native.canonical_shapes(iter([input_graph(source, direct=True).source]))
-    assert set(decode(canonical, preserve_ids=True)) == set(shapes)
-    assert canonical == turbo._native.canonical_shapes(
-        iter([input_graph(shapes, direct=True).source])
+    canonical = turbo._native.ShapesInput(shape_batches(source, {}), True, shape_graphs(source, {}))
+    # Four exact values in each of two contexts, plus two declared named graphs.
+    assert len(canonical) == 2 * len(values) + 2
+    assert canonical == turbo._native.ShapesInput(
+        shape_batches(source, {}), True, shape_graphs(source, {})
+    )
+    assert canonical != turbo._native.ShapesInput(shape_batches(shapes, {}))
+    changed = Dataset(default_union=True)
+    changed.graph(EX.first).__iadd__(shapes)
+    for value in values:
+        if value.datatype == XSD.string:
+            changed.graph(EX.second).add((blank, SH.message, Literal(str(value))))
+        else:
+            changed.graph(EX.second).add((blank, SH.message, value))
+    assert canonical != turbo._native.ShapesInput(
+        shape_batches(changed, {}), True, shape_graphs(changed, {})
     )
 
 
-def test_compilation_union_does_not_retain_context_only_blank_nodes():
+def test_dataset_compilation_does_not_retain_context_only_python_owners():
     from rdflib import BNode, Dataset
 
     source = Dataset(default_union=True)
@@ -224,9 +250,36 @@ def test_compilation_union_does_not_retain_context_only_blank_nodes():
     assert compiled.targeting(graph(""), EX.s) == [shape]
 
 
+@pytest.mark.parametrize("position", [0, 1, 2])
+def test_graph_first_blank_reused_in_statement_keeps_its_real_python_owner(position):
+    from pyshacl_turbo.term_input import _TermBatch
+    from rdflib import BNode
+
+    node = BNode("context-then-statement")
+    nodes = {}
+    batch = _TermBatch(nodes)
+    context_index = batch.intern(node, retain_blank_owner=False)
+    assert nodes == {}
+    statement = [EX.s, EX.p, EX.value]
+    statement[position] = node
+    batch.append(*statement, node, retain_graph_owner=False)
+    assert batch.quads[0][position] == context_index
+    assert nodes[str(node)] is node
+
+
+def test_data_transfer_keeps_its_existing_default_graph_owner_behavior():
+    from pyshacl_turbo.term_input import _TermBatch
+    from rdflib import BNode
+
+    node = BNode("data-context")
+    nodes = {}
+    _TermBatch(nodes).append(EX.s, EX.p, EX.value, node)
+    assert nodes[str(node)] is node
+
+
 def test_native_shapes_key_rejects_malformed_term_batches():
-    with pytest.raises(ValueError, match="Invalid RDF term record"):
-        turbo._native.canonical_shapes(iter([([(99, "invalid", None, None)], [])]))
+    with pytest.raises(ValueError, match="Invalid shapes term record"):
+        turbo._native.ShapesInput(iter([([(99, "invalid", None, None)], [])]))
 
 
 def test_compilation_releases_transfer_batch_before_native_compile(monkeypatch):
@@ -239,18 +292,19 @@ def test_compilation_releases_transfer_batch_before_native_compile(monkeypatch):
     snapshots = []
 
     class TrackedBatch(original_batch):
-        def __init__(self, *args):
-            super().__init__(*args)
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
             snapshots.append(weakref.ref(self))
 
-    def compile_native(*args):
+    def compile_native(*args, _policy):
+        assert _policy is turbo._native._REGEX_POLICY
         assert snapshots and all(snapshot() is None for snapshot in snapshots), (
             "Typed transfer batch outlived canonicalization"
         )
-        return original_compile(*args)
+        return original_compile.from_input(*args, _policy=_policy)
 
     monkeypatch.setattr(rdf, "_TermBatch", TrackedBatch)
-    monkeypatch.setattr(turbo._native, "CompiledShapes", compile_native)
+    monkeypatch.setattr(turbo._native, "CompiledShapes", SimpleNamespace(from_input=compile_native))
     turbo.compile_shapes(graph("ex:ReleasedBatch sh:targetNode ex:s."))
 
 
@@ -271,11 +325,12 @@ def test_shape_transfer_batches_are_bounded_and_preserve_blank_identity(dataset)
     nodes = {}
     batches = list(shape_batches(source, nodes))
     assert all(0 < len(quads) <= 256 for records, quads in batches)
-    assert all(len(records) <= 3 * 256 for records, quads in batches)
+    assert all(len(records) <= 4 * 256 for records, quads in batches)
     assert sum(len(quads) for records, quads in batches) == 513 * (2 if dataset else 1)
-    assert all(g is None for records, quads in batches for s, p, o, g in quads)
+    assert all((g is not None) == dataset for records, quads in batches for s, p, o, g in quads)
     assert nodes == {str(shape): shape}
-    assert turbo._native.canonical_shapes(iter(batches)).count(" .\n") == 513
+    key = turbo._native.ShapesInput(iter(batches), dataset)
+    assert len(key) == 513 * (2 if dataset else 1) + (2 if dataset else 0)
 
 
 def test_invalid_late_shape_batch_does_not_cache_partial_compilation(monkeypatch):
@@ -290,7 +345,7 @@ def test_invalid_late_shape_batch_does_not_cache_partial_compilation(monkeypatch
 
     with monkeypatch.context() as patch:
         patch.setattr(turbo, "shape_batches", invalid_batches)
-        with pytest.raises(ValueError, match="Invalid RDF term index"):
+        with pytest.raises(ValueError, match="Invalid shapes term index"):
             turbo.compile_shapes(shapes)
     assert turbo._compile_native.cache_info().currsize == 0
     assert turbo.compile_shapes(shapes).targeting(graph(""), EX.s) == [EX.LateBatch]
@@ -300,9 +355,9 @@ def test_invalid_late_shape_batch_does_not_cache_partial_compilation(monkeypatch
     "batch",
     [([], [(0, 0, 0, None)] * 257), ([(0, "urn:s", None, None)] * 1025, [])],
 )
-def test_canonical_shapes_rejects_oversized_transfer_batches(batch):
+def test_typed_shapes_rejects_oversized_transfer_batches(batch):
     with pytest.raises(ValueError, match="256"):
-        turbo._native.canonical_shapes(iter([batch]))
+        turbo._native.ShapesInput(iter([batch]))
 
 
 def test_compilation_reads_namespace_metadata_once(monkeypatch):

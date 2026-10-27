@@ -35,11 +35,8 @@ def test_diagnostic_namespace_stays_private_until_accepted(factory, inplace, bin
         reference.bind(prefix, namespace)
     expected = reference_validate(reference, shacl_graph=shapes, inference="owlrl", inplace=inplace)
     source = factory().parse(data=DATA)
-    if isinstance(source, Dataset):
-        source._native.bind_namespaces(bindings)
-    else:
-        for prefix, namespace in bindings:
-            source.bind(prefix, namespace)
+    for prefix, namespace in bindings:
+        source.bind(prefix, namespace)
     with source if hasattr(source, "__enter__") else nullcontext(source):
         before = tuple(source.namespaces())
         actual = validate(source, shacl_graph=shapes, inference="owlrl", inplace=inplace)

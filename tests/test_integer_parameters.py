@@ -102,9 +102,15 @@ def test_integer_parameters_preserve_reference_lexical_forms(parameter, lexical)
 @pytest.mark.parametrize("lexical", ["1__0", "_1", "1_", "1e2", "1.0", "", "no"])
 def test_malformed_integer_lexical_forms_raise(parameter, lexical):
     value = Literal(lexical, datatype=XSD.integer, normalize=False)
-    for validate in (pyshacl.validate, turbo.validate):
-        with pytest.raises((ConstraintLoadError, TypeError, ValueError)):
-            validate(graph('ex:s ex:p "abc".'), shacl_graph=parameter_shape(parameter, value))
+    with pytest.raises((ConstraintLoadError, TypeError)) as expected:
+        pyshacl.validate(graph('ex:s ex:p "abc".'), shacl_graph=parameter_shape(parameter, value))
+    expected_type = TypeError if type(expected.value) is TypeError else turbo.ConstraintLoadError
+    with pytest.raises(expected_type) as actual:
+        turbo.validate(graph('ex:s ex:p "abc".'), shacl_graph=parameter_shape(parameter, value))
+    assert str(actual.value) == str(expected.value)
+    assert actual.value.args == expected.value.args
+    if hasattr(expected.value, "link"):
+        assert actual.value.link == expected.value.link
 
 
 def test_zero_min_length_accepts_blank_nodes_like_reference():
