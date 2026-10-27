@@ -29,12 +29,16 @@ jobs:
       version: ${{ steps.release.outputs.version }}
       release: ${{ steps.release.outputs.release }}
     steps:
-      - uses: astral-sh/setup-uv@v10.3.1
+      - uses: astral-sh/setup-uv@v10.3.2
         with:
-          version: "0.13.1"
+          version: "0.13.5"
       - uses: actions/checkout@v7
         with:
           fetch-depth: 0
+      - name: Require the pinned shared planner to support a pure uv project
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: uv run --no-project --with pyyaml==6.0.3 python scripts/release_policy_capability.py --workflow .github/workflows/ci.yml --receipt "$RUNNER_TEMP/release-policy-capability.json"
       - uses: actions/create-github-app-token@v3
         id: writer
         if: github.ref == 'refs/heads/main'
@@ -43,13 +47,12 @@ jobs:
           private-key: ${{ secrets.RELEASE_WRITER_APP_KEY }}
           owner: ${{ github.repository_owner }}
           repositories: ${{ github.event.repository.name }}
-      - uses: actions-rust-lang/setup-rust-toolchain@v2
-        with:
-          toolchain: 1.99.1
       - uses: legra-ai/github-actions/.github/actions/prepare-cargo-release@586689276e02ded2be5b9dfffbed070a8a9ba50b
         id: release
         with:
           token: ${{ steps.writer.outputs.token || github.token }}
+          manifest-kind: uv
+          tag-format: pep440
 
   compatibility:
     needs: prepare
@@ -78,17 +81,23 @@ jobs:
       revision: ${{ needs.prepare.outputs.revision }}
 
   verify:
-    needs: [prepare]
+    needs: [prepare, wheels]
     strategy:
       fail-fast: false
       matrix:
         include:
           - os: ubuntu-latest
             python: '3.11'
+            coverage: ''
           - os: ubuntu-latest
             python: '3.13'
+            coverage: '--coverage'
           - os: macos-latest
             python: '3.13'
+            coverage: ''
+          - os: windows-latest
+            python: '3.13'
+            coverage: ''
     runs-on: ${{ matrix.os }}
     timeout-minutes: 25
     steps:
@@ -98,52 +107,42 @@ jobs:
       - uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.python }}
-      - uses: astral-sh/setup-uv@v10.3.1
+      - uses: astral-sh/setup-uv@v10.3.2
         with:
-          version: "0.13.1"
+          version: "0.13.5"
       - uses: actions-rust-lang/setup-rust-toolchain@v2
         with:
           toolchain: 1.99.1
-          components: rustfmt, clippy
-      - name: Build native extension and install pinned test dependencies
-        # Formatting uses its own nightly pin; compilation remains on 1.99.1.
-        run: make dev PYTHON=${{ matrix.python }}
-      - uses: dtolnay/rust-toolchain@nightly
+      - uses: actions/download-artifact@v8
         with:
-          toolchain: nightly-2026-10-16
-          components: rustfmt
-      - name: Python, Rust, formatting and lint checks
-        run: make check
-      - name: Patched datatype parser regressions
-        run: cargo test --locked -p oxsdatatypes --lib
-      - name: SPARQL evaluator defaults and opt-in compatibility features
-        if: matrix.os == 'ubuntu-latest' && matrix.python == '3.13'
-        run: make test-sparql-evaluator
-      - name: Python line and branch coverage with pytest-cov
-        if: matrix.os == 'ubuntu-latest' && matrix.python == '3.13'
-        run: make test-coverage
+          name: release-wheel
+          path: dist
+      - name: Validate the original pure wheel with its exact published native owner
+        run: uv run --no-project python -B scripts/provider_validation.py --facade-source "$GITHUB_WORKSPACE" --facade-wheel dist/*-py3-none-any.whl --output "$RUNNER_TEMP/facade-validation" ${{ matrix.coverage }}
       - name: Add coverage to the job summary
-        if: matrix.os == 'ubuntu-latest' && matrix.python == '3.13'
-        run: uv run --locked --extra test coverage report --format=markdown >> "$GITHUB_STEP_SUMMARY"
+        if: matrix.coverage != ''
+        env:
+          COVERAGE_FILE: ${{ runner.temp }}/facade-validation/python.coverage
+        run: uv run --project "$RUNNER_TEMP/facade-validation/project" --locked --no-sync coverage report --format=markdown >> "$GITHUB_STEP_SUMMARY"
       - uses: actions/upload-artifact@v7
-        if: always() && matrix.os == 'ubuntu-latest' && matrix.python == '3.13'
+        if: always() && matrix.coverage != ''
         with:
           name: python-coverage
           path: |
-            python-coverage.xml
-            python-coverage.json
-            htmlcov/
+            ${{ runner.temp }}/facade-validation/python-coverage.xml
+            ${{ runner.temp }}/facade-validation/python-coverage.json
+            ${{ runner.temp }}/facade-validation/htmlcov/
           if-no-files-found: error
 
   test:
     name: test
-    needs: [prepare, verify, compatibility, regex, sdist, wheels, native-coverage, shared-pipeline]
+    needs: [prepare, verify, compatibility, regex, sdist, wheels, wheel-acceptance, native-coverage, shared-pipeline]
     if: always()
     runs-on: ubuntu-latest
     steps:
-      - uses: astral-sh/setup-uv@v10.3.1
+      - uses: astral-sh/setup-uv@v10.3.2
         with:
-          version: "0.13.1"
+          version: "0.13.5"
       - name: Require every platform to pass
         env:
           RESULTS: ${{ toJSON(needs) }}
@@ -169,7 +168,7 @@ jobs:
         run: uv run --no-project python scripts/release_packages.py check-build
       - name: Verify declared registry companion before publication
         if: github.ref == 'refs/heads/main' && needs.prepare.outputs.release == 'true'
-        run: uv run --no-project python scripts/check_registry_pair.py dist/*manylinux*x86_64.whl
+        run: uv run --no-project python scripts/check_registry_pair.py dist/*-py3-none-any.whl
 
   sdist:
     needs: [prepare]
@@ -182,18 +181,15 @@ jobs:
       - uses: actions/setup-python@v7
         with:
           python-version: '3.13'
-      - uses: astral-sh/setup-uv@v10.3.1
+      - uses: astral-sh/setup-uv@v10.3.2
         with:
-          version: "0.13.1"
-      - uses: actions-rust-lang/setup-rust-toolchain@v2
-        with:
-          toolchain: 1.99.1
+          version: "0.13.5"
       - name: Build source distribution
         run: uv build --sdist --out-dir dist
       - name: Check source inventory, patched dependencies and license texts
         run: uv run --no-project python scripts/check_package.py dist/*.tar.gz
       - name: Check PyPI metadata rendering
-        run: uv tool run --from twine==6.2.0 twine check --strict dist/*
+        run: uv --project tools/packaging run --locked --only-group packaging twine check --strict dist/*
       - uses: actions/upload-artifact@v7
         with:
           name: release-sdist
@@ -202,29 +198,8 @@ jobs:
 
   wheels:
     needs: [prepare, sdist]
-    runs-on: ${{ matrix.os }}
-    timeout-minutes: 30
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - os: ubuntu-24.04
-            target: x86_64-unknown-linux-gnu
-            container: quay.io/pypa/manylinux_2_28_x86_64:latest
-          - os: ubuntu-24.04-arm
-            target: aarch64-unknown-linux-gnu
-            container: quay.io/pypa/manylinux_2_28_aarch64:latest
-          - os: macos-15-intel
-            target: x86_64-apple-darwin
-            args: --compatibility pypi
-            deployment_target: '10.12'
-          - os: macos-15
-            target: aarch64-apple-darwin
-            args: --compatibility pypi
-            deployment_target: '11.0'
-          - os: windows-latest
-            target: x86_64-pc-windows-msvc
-            args: --compatibility pypi
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7
         with:
@@ -232,43 +207,49 @@ jobs:
       - uses: actions/setup-python@v7
         with:
           python-version: '3.13'
-      - uses: astral-sh/setup-uv@v10.3.1
+      - uses: astral-sh/setup-uv@v10.3.2
         with:
-          version: "0.13.1"
-      - uses: actions-rust-lang/setup-rust-toolchain@v2
-        with:
-          toolchain: 1.99.1
-          target: ${{ matrix.target }}
+          version: "0.13.5"
       - uses: actions/download-artifact@v8
         with:
           name: release-sdist
           path: source-dist
-      - name: Unpack the verified source archive for the manylinux build
-        if: runner.os == 'Linux'
-        run: |
-          mkdir source-build || exit 1
-          # Restored Cargo outputs can be newer than archive timestamps. Establish
-          # checkout freshness while preserving the verified archive and source bytes.
-          tar -xzmf source-dist/*.tar.gz --strip-components=1 -C source-build || exit 1
-      - name: Build Linux release wheel with the native manylinux toolchain
-        if: runner.os == 'Linux'
-        run: sh scripts/build_manylinux.sh '${{ matrix.container }}' '${{ matrix.target }}' cp313-cp313
-      - name: Build release wheel from the verified source archive
-        if: runner.os != 'Linux'
-        env:
-          MACOSX_DEPLOYMENT_TARGET: ${{ matrix.deployment_target }}
-        run: uv build --wheel --out-dir dist -C 'maturin.build-args=--locked --target ${{ matrix.target }} ${{ matrix.args }}' source-dist/*.tar.gz
-      - name: Check wheel metadata, native extension and licenses
+      - name: Build the universal facade wheel from the original source archive
+        run: uv build --wheel --out-dir dist source-dist/*.tar.gz
+      - name: Check pure wheel metadata, payload and licenses
         run: uv run --no-project python scripts/check_package.py dist/*.whl
       - name: Check PyPI metadata rendering
-        run: uv tool run --from twine==6.2.0 twine check --strict dist/*
-      - name: Verify uv environments, locked projects, tools and optional Store input
-        run: uv run --no-project python scripts/test_wheel.py dist
+        run: uv --project tools/packaging run --locked --only-group packaging twine check --strict dist/*
       - uses: actions/upload-artifact@v7
         with:
-          name: release-wheel-${{ matrix.target }}
+          name: release-wheel
           path: dist/*.whl
           if-no-files-found: error
+
+  wheel-acceptance:
+    needs: [prepare, wheels]
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.prepare.outputs.revision }}
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.13'
+      - uses: astral-sh/setup-uv@v10.3.2
+        with:
+          version: "0.13.5"
+      - uses: actions/download-artifact@v8
+        with:
+          name: release-wheel
+          path: dist
+      - name: Verify the original facade wheel and its native provider on this OS
+        run: uv run --no-project python scripts/test_wheel.py dist
 
   publish:
     needs: [prepare, test]
@@ -286,9 +267,9 @@ jobs:
       RELEASE_VERSION: ${{ needs.prepare.outputs.version }}
       RELEASE_REVISION: ${{ needs.prepare.outputs.revision }}
     steps:
-      - uses: astral-sh/setup-uv@v10.3.1
+      - uses: astral-sh/setup-uv@v10.3.2
         with:
-          version: "0.13.1"
+          version: "0.13.5"
       - uses: actions/checkout@v7
         with:
           ref: ${{ needs.prepare.outputs.revision }}
@@ -346,9 +327,9 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - uses: astral-sh/setup-uv@v10.3.1
+      - uses: astral-sh/setup-uv@v10.3.2
         with:
-          version: "0.13.1"
+          version: "0.13.5"
       - uses: actions/checkout@v7
         with:
           ref: ${{ needs.prepare.outputs.revision }}

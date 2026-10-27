@@ -19,6 +19,11 @@ def digest(path):
         return hashlib.file_digest(source, "sha256").hexdigest()
 
 
+def require_release_version(version):
+    if "+" in version:
+        raise ValueError("Candidate artifacts cannot be published or tagged")
+
+
 def registry_json(url):
     try:
         with urlopen(url, timeout=60) as response:
@@ -30,6 +35,7 @@ def registry_json(url):
 
 
 def missing_packages(version, packages):
+    require_release_version(version)
     metadata = registry_json(f"https://pypi.org/pypi/pyshacl-turbo/{version}/json")
     published = (
         {entry["filename"]: entry["digests"]["sha256"] for entry in metadata["urls"]}
@@ -98,27 +104,19 @@ def read_bundle(bundle, version, revision, output):
 
 
 def inventory(directory, version):
+    require_release_version(version)
     packages = sorted(directory.iterdir())
-    wheels = [path for path in packages if path.suffix == ".whl"]
-    sdists = [path for path in packages if path.name == f"pyshacl_turbo-{version}.tar.gz"]
-    platforms = [
-        "manylinux_2_28_x86_64",
-        "manylinux_2_28_aarch64",
-        "macosx_10_12_x86_64",
-        "macosx_11_0_arm64",
-        "win_amd64",
-    ]
-    if len(packages) != 6 or len(sdists) != 1 or len(wheels) != 5:
-        raise ValueError("Expected one source archive and five platform wheels")
-    for platform in platforms:
-        if not any(
-            path.name == f"pyshacl_turbo-{version}-cp311-abi3-{platform}.whl" for path in wheels
-        ):
-            raise ValueError(f"Missing platform wheel: {platform}")
+    expected = {
+        f"pyshacl_turbo-{version}.tar.gz",
+        f"pyshacl_turbo-{version}-py3-none-any.whl",
+    }
+    if {path.name for path in packages} != expected or not all(path.is_file() for path in packages):
+        raise ValueError("Expected one source archive and one universal facade wheel")
     return packages
 
 
 def stage(version, revision):
+    require_release_version(version)
     tag = f"v{version}"
     bundle = Path("release-packages.zip")
     assets = json.loads(
@@ -138,7 +136,7 @@ def main():
     if command == "check-build":
         version = tomllib.loads(Path("pyproject.toml").read_text())["project"]["version"]
         inventory(Path("dist"), version)
-        print("Verified one source archive and all five release wheel filenames")
+        print("Verified one source archive and one universal facade wheel")
         return
     version = os.environ["RELEASE_VERSION"]
     if command == "stage":

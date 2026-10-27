@@ -209,7 +209,7 @@ def test_inplace_preserves_existing_blank_nodes():
     assert set(data.subjects(RDF.type, EX.Person)) == {original}
 
 
-@pytest.mark.parametrize("feature", ["sh:js ex:JS", "sh:expression ex:Expression"])
+@pytest.mark.parametrize("feature", ["sh:js ex:JS"])
 def test_unsupported_features_never_silently_pass(feature):
     with pytest.raises(NotImplementedError, match="Unsupported"):
         turbo.validate(

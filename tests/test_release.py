@@ -189,12 +189,16 @@ def test_retry_restores_original_archives(release, packages, tmp_path, monkeypat
     assert (tmp_path / "release-packages" / packages[0].name).read_bytes() == expected
 
 
-def test_python_and_workspace_metadata_agree():
+def test_pure_facade_metadata_has_one_version_and_license_authority():
     import tomllib
 
     root = Path(__file__).parents[1]
     python = tomllib.loads((root / "pyproject.toml").read_text())["project"]
-    rust = tomllib.loads((root / "Cargo.toml").read_text())["workspace"]["package"]
-    assert python["version"] == rust["version"]
-    assert python["license"] == rust["license"] == "MIT OR Apache-2.0"
+    assert python["version"]
+    assert not (root / "Cargo.toml").exists()
+    assert (
+        tomllib.loads((root / "pyproject.toml").read_text())["build-system"]["build-backend"]
+        == "hatchling.build"
+    )
+    assert python["license"] == "MIT OR Apache-2.0"
     assert "DataRoad Inc, Delaware, USA, trading as Legra" in (root / "LICENSE-MIT").read_text()

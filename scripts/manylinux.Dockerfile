@@ -1,5 +1,5 @@
 ARG MANYLINUX_IMAGE=quay.io/pypa/manylinux_2_28_x86_64:latest
-FROM ghcr.io/astral-sh/uv:0.13.1 AS uv
+FROM ghcr.io/astral-sh/uv:0.13.5 AS uv
 FROM ${MANYLINUX_IMAGE}
 COPY --from=uv /uv /usr/local/bin/uv
 RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs -o /tmp/turbo-rustup-init.sh || exit 1
