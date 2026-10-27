@@ -210,6 +210,10 @@ def test_release_consumer_and_markdown_keep_both_named_contracts(pair, tmp_path)
         "comparisons": {"native": suite.comparison_for_runs(left, right)},
     }
     envs = [{"id": "ref", "backend": "reference"}, {"id": "native", "backend": "turbo_shared"}]
+    row["availability"] = {
+        env["id"]: {"schema": "literal-inplace-owlrl-v1", "status": "measured_validated"}
+        for env in envs
+    }
     bench.add_logical_inplace_comparisons(row, envs, "ref")
     assert row["comparisons"]["native"] == {"status": "different", "speedup": None}
     assert row["logical_inplace_owlrl"]["native"]["speedup"] == 2
@@ -237,3 +241,37 @@ def test_release_consumer_and_markdown_keep_both_named_contracts(pair, tmp_path)
     pipeline = {"contract": "pipeline"}
     bench.add_logical_inplace_comparisons(pipeline, envs, "ref")
     assert pipeline == {"contract": "pipeline"}
+
+
+def test_future_native_contract_requires_complete_valid_worker_before_transition(pair, monkeypatch):
+    from test_fanout_availability import identity
+
+    _, _, right = pair
+    bench = load("releases")
+    env = {"id": "future-candidate", "backend": "turbo_shared"}
+    job = {
+        "contract": "inference",
+        "fixture": "literal-reflexivity",
+        "operation": "owlrl",
+        "nodes": 32,
+    }
+    row = {"contract": "inference", "environments": {}}
+    monkeypatch.setattr(bench, "measure", lambda *_: copy.deepcopy(right))
+    bench.measure_environment(
+        row, env, identity(version="99.1"), "actual-contract-fixture", job, 1, 1, 5
+    )
+    assert row["availability"][env["id"]]["status"] == "measured_validated"
+    for defect in ("return", "unstable", "missing"):
+        bad = copy.deepcopy(right)
+        if defect == "return":
+            bad["observation"]["public_effects"]["returned_input"] = False
+        elif defect == "unstable":
+            bad["stable"] = False
+        else:
+            del bad["observation"]["complete_term_metadata"]
+        monkeypatch.setattr(bench, "measure", lambda *_, value=bad: value)
+        broken = {"contract": "inference", "environments": {}}
+        with pytest.raises(RuntimeError):
+            bench.measure_environment(broken, env, identity(), "fixture", job, 1, 1, 5)
+        assert broken["availability"][env["id"]]["status"] == "contract_pending"
+        assert env["id"] in broken["environments"]  # Retain actual failing observation.

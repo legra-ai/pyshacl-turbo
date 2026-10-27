@@ -166,3 +166,15 @@ as equivalent or publishing a ratio based only on conformance.
 The next implementation work should address namespace/report fidelity and
 measure the memory/copy costs at the shared-dataset boundary. The benchmark does
 not yet establish which internal allocation dominates that peak.
+
+Closed fanout jobs also record explicit `literal-inplace-owlrl-v1` observer
+availability against actual resolved versions, lock and installed payload hashes.
+The known a2/a2/0.2.4 stack is marked not measured before invocation only after
+confirming its public Dataset namespace API is actually absent; its historical
+pipeline jobs remain unchanged. No namespace observation is invented. Other
+versions are not excluded by version number: a strict public-route preflight
+must succeed, followed by the real worker's complete schema, return-state and
+raw warm/cold stability checks before any comparison. Unknown contracts and
+API/observation failures are hard errors, not post-error exclusions. Candidate
+artifacts retain their candidate labels. The existing cross-package engine gate
+runs first, and configured version pins are unchanged.

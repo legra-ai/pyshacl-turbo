@@ -32,6 +32,11 @@ SPEC = importlib.util.spec_from_file_location(
 )
 companions = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(companions)
+AVAILABILITY_SPEC = importlib.util.spec_from_file_location(
+    "fanout_availability", ROOT / "benchmarks/fanout_availability.py"
+)
+availability = importlib.util.module_from_spec(AVAILABILITY_SPEC)
+AVAILABILITY_SPEC.loader.exec_module(availability)
 TURBO = {"rdflib-turbo", "owlrl-turbo", "pyshacl-turbo"}
 REFERENCE = {"rdflib", "owlrl", "pyshacl"}
 
@@ -41,6 +46,7 @@ def harness_hashes():
         Path(__file__).resolve(),
         ROOT / "benchmarks/companions.py",
         ROOT / "benchmarks/inference_fanout.py",
+        ROOT / "benchmarks/fanout_availability.py",
         ROOT / "tests/upstream_support/process_launch.py",
     ]
     return {
@@ -167,6 +173,10 @@ def identity():
         packages[name] = {
             "version": dist.version,
             "origin": json.loads(dist.read_text("direct_url.json") or "null"),
+            "payload_sha256": {
+                str(path): hashlib.sha256(dist.locate_file(path).read_bytes()).hexdigest()
+                for path in dist.files or []
+            },
             "native_sha256": {
                 str(path): hashlib.sha256(dist.locate_file(path).read_bytes()).hexdigest()
                 for path in dist.files or []
@@ -196,6 +206,7 @@ def identity():
         ):
             raise RuntimeError("Installed wheels have different canonical SHACL engine sources")
     return {
+        "fanout_observer": availability.public_contract(TURBO <= packages.keys()),
         "shared_protocols": protocols,
         "engine_sources": engines,
         "python": sys.version,
@@ -275,10 +286,37 @@ def release_jobs(sizes):
     ]
 
 
+def measure_environment(row, env, installed, executable, job, repeats, memory_repeats, timeout):
+    """Select the closed contract before using the unchanged serial launcher."""
+    if job["contract"] == "inference":
+        decision = availability.prepare(installed, env["backend"])
+        row.setdefault("availability", {})[env["id"]] = decision
+        if decision["status"] == "not_measured_observer_unavailable":
+            return
+    value = measure(
+        executable,
+        {
+            **{key: value for key, value in job.items() if key not in {"case", "contract", "mode"}},
+            "backend": env["backend"],
+            "observation_encoder": "unique-anchors-v1",
+        },
+        repeats,
+        memory_repeats,
+        timeout,
+    )
+    row["environments"][env["id"]] = value
+    if job["contract"] == "inference":
+        _, stable = companions.FANOUT._stable_projection(value, env["backend"])
+        if not stable:
+            raise RuntimeError("Complete raw observer samples are unstable")
+        decision["status"] = "measured_validated"
+
+
 def add_logical_inplace_comparisons(row, environments, reference):
     """Add a separate logical transition result without changing raw parity."""
     if row["contract"] != "inference":
         return
+    environments = availability.measured(row, environments)
     runs = row["environments"]
     row["logical_inplace_owlrl"] = {
         env["id"]: companions.FANOUT.logical_inplace_owlrl(
@@ -354,6 +392,12 @@ def write_report(report, output):
             lines.append(
                 f"| {row['case']} | {row['nodes']} | {name} | {value['median_ns'] / 1e6:.3f} | {value['min_ns'] / 1e6:.3f}–{value['max_ns'] / 1e6:.3f} | {value['median_peak_rss_bytes'] / 2**20:.2f} | {comparison.get('status', 'reference')} | {f'{ratio:.2f}×' if ratio is not None else '—'} | {scoped.get('status', '—')} | {f'{scoped_ratio:.2f}×' if scoped_ratio is not None else '—'} |"
             )
+    for row in report["runs"]:
+        for name, entry in row.get("availability", {}).items():
+            if entry["status"] == "not_measured_observer_unavailable":
+                lines.append(
+                    f"| {row['case']} | {row['nodes']} | {name} | — | — | — | not measured: {entry['reason']} | — | not measured | — |"
+                )
     lines += ["", "## Exact product versions", ""]
     for name, env in report["environments"].items():
         packages = env["identity"]["packages"]
@@ -467,23 +511,19 @@ def main():
             order = list(envs)
             rng.shuffle(order)
             for env in order:
-                row["environments"][env["id"]] = measure(
+                measure_environment(
+                    row,
+                    env,
+                    report["environments"][env["id"]]["identity"],
                     executables[env["id"]],
-                    {
-                        **{
-                            key: value
-                            for key, value in job.items()
-                            if key not in {"case", "contract", "mode"}
-                        },
-                        "backend": env["backend"],
-                        "observation_encoder": "unique-anchors-v1",
-                    },
+                    job,
                     args.repeats,
                     args.memory_repeats,
                     args.timeout,
                 )
+            measured_envs = availability.measured(row, envs)
             ref = row["environments"][reference]
-            for env in envs:
+            for env in measured_envs:
                 if env["id"] == reference:
                     continue
                 value = row["environments"][env["id"]]
@@ -495,8 +535,8 @@ def main():
                 f"{left['id']} → {right['id']}": compare_runs(
                     row["environments"][left["id"]], row["environments"][right["id"]]
                 )
-                for i, left in enumerate(envs)
-                for right in envs[i + 1 :]
+                for i, left in enumerate(measured_envs)
+                for right in measured_envs[i + 1 :]
                 if left["backend"] != "reference" and right["backend"] != "reference"
             }
             add_logical_inplace_comparisons(row, envs, reference)
