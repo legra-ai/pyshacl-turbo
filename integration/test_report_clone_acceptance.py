@@ -25,7 +25,7 @@ def test_shared_report_clone_rejection_discards_staged_rules(monkeypatch, kind):
     shapes.add((shapes.value(EX.S, SH.property), EX.note, note))
     data = rdflib_turbo.Dataset() if kind == "dataset" else rdflib_turbo.Graph()
     if kind == "dataset":
-        owner = data._native
+        owner = data.store.backend._native
         before = set(data.to_rdflib().quads())
     else:
         owner = data.store.backend._native
@@ -40,7 +40,7 @@ def test_shared_report_clone_rejection_discards_staged_rules(monkeypatch, kind):
         with pytest.raises(KeyboardInterrupt, match="caller rejected report clone"):
             turbo.validate(data, shacl_graph=shapes, advanced=True, inplace=True)
     if kind == "dataset":
-        assert data._native is owner
+        assert data.store.backend._native is owner
         assert set(data.to_rdflib().quads()) == before
     else:
         assert data.store.backend._native is owner

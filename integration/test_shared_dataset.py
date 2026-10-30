@@ -22,7 +22,7 @@ ex:P sh:path ex:name; sh:minCount 1.
 
 def test_three_products_use_one_dataset_and_complete_reference_report(monkeypatch):
     data = Dataset().parse(data=DATA)
-    identity = data._native
+    identity = data.store.backend._native
     expand(data, inference="rdfs", inplace=True)
     expected = reference_validate(data.to_rdflib().default_graph, shacl_graph=SHAPES)
     shape_graph = Graph().parse(data=SHAPES, format="turtle")
@@ -36,7 +36,7 @@ def test_three_products_use_one_dataset_and_complete_reference_report(monkeypatc
             patch.setattr(Dataset, name, forbidden)
         actual = program.validate(data)
         repeated = validate(data, shacl_graph=shape_graph)
-    assert data._native is identity
+    assert data.store.backend._native is identity
     for result in (actual, repeated):
         assert result[0] == expected[0]
         assert isomorphic(result[1], expected[1])

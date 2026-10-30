@@ -26,22 +26,38 @@ def quads(graph):
 @pytest.mark.parametrize("inplace", [False, True])
 def test_compiled_native_rules_preserve_exact_quads_and_namespace_bindings(monkeypatch, inplace):
     data = Dataset().parse(data=SOURCE, format="trig")
-    original = data._native
+    original = data.store.backend._native
     before = quads(data.to_rdflib())
     bindings = dict(data.namespaces())
     program = turbo.compile_shapes(Graph().parse(data=SHAPES, format="turtle"), advanced=True)
     expected = quads(program.shacl_rules(data.to_rdflib()))
+    copy_native = Dataset.copy
+    copies = []
+
+    def copy_owner(source):
+        assert source is data
+        assert not copies
+        assert set(source.quads()) == before
+        result = copy_native(source)
+        assert result.store.backend._native is not original
+        assert set(result.quads()) == before
+        assert set(source.quads()) == before
+        copies.append(result)
+        return result
 
     def forbidden(*args, **kwargs):
-        raise AssertionError("shared rules must not copy, serialize or convert native input")
+        raise AssertionError("shared rules must not serialize or convert native input")
 
     with monkeypatch.context() as patch:
-        for name in ("to_rdflib", "from_rdflib", "serialize", "copy"):
+        for name in ("to_rdflib", "from_rdflib", "serialize"):
             patch.setattr(Dataset, name, forbidden)
+        patch.setattr(Dataset, "copy", copy_owner)
         patch.setattr(turbo, "_input", forbidden)
         result = program.shacl_rules(data, inplace=inplace)
     assert (result is data) is inplace
-    assert data._native is original
+    assert copies == ([] if inplace else [result])
+    assert program._shared_program.shares_program(program._native)
+    assert data.store.backend._native is original
     assert quads(result.to_rdflib()) == expected
     assert dict(result.namespaces()) == bindings
     assert quads(data.to_rdflib()) == (expected if inplace else before)
