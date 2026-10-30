@@ -124,7 +124,7 @@ class CapturedCall:
 
 
 def prepare(job, graph_observation):
-    from rdflib import Graph
+    from rdflib import Graph, URIRef
 
     backend = job["backend"]
     if backend not in {"reference", "turbo", "turbo_shared"} or job["operation"] != "owlrl":
@@ -138,19 +138,46 @@ def prepare(job, graph_observation):
         source = Dataset().parse(data=text, format="turtle")
         invoke = lambda: expand(source, inference="owlrl", inplace=True)
 
-        def export():
+        def export(*, inferred=False):
             converted = source.to_rdflib()
             default = converted.default_graph.identifier
-            if any(g != default for _, _, _, g in converted.quads()):
-                raise RuntimeError("Closed fanout returned a non-default physical context")
-            return converted.default_graph
+            destination = URIRef("urn:owlrl-turbo:inference")
+            allowed = {default, destination} if inferred else {default}
+            graph = Graph()
+            for s, p, o, context in converted.quads():
+                if context not in allowed:
+                    raise RuntimeError(
+                        "Closed fanout returned an unexpected non-default physical context"
+                    )
+                graph.add((s, p, o))
+            return graph, converted
+
+        def physical_contexts(converted):
+            default = converted.default_graph.identifier
+            return sorted(
+                [
+                    {
+                        "graph": None if graph.identifier == default else term(graph.identifier),
+                        "facts": facts(graph),
+                        "count": len(graph),
+                    }
+                    for graph in (
+                        converted.graph(g) for g in {g for _, _, _, g in converted.quads()}
+                    )
+                    if len(graph)
+                ],
+                key=lambda row: json.dumps(row["graph"], sort_keys=True),
+            )
     else:
         from owlrl import DeductiveClosure, OWLRL_Semantics
 
         source = Graph().parse(data=text, format="turtle")
         invoke = lambda: DeductiveClosure(OWLRL_Semantics).expand(source)
-        export = lambda: source
-    initial = facts(export())
+        export = lambda **kwargs: (source, source)
+        physical_contexts = lambda converted: [
+            {"graph": None, "facts": facts(source), "count": len(source)}
+        ]
+    initial = facts(export()[0])
     before_flags = flags(decimal.getcontext().flags)
     before_traps = flags(decimal.getcontext().traps)
     expected_type = type(source)
@@ -161,7 +188,14 @@ def prepare(job, graph_observation):
             raise RuntimeError("Missing or foreign in-place fanout result")
         if (native and call.returned is not source) or (not native and call.returned is not None):
             raise RuntimeError("Public in-place API returned an unexpected source/None value")
-        graph = export()
+        graph, converted = export(inferred=True)
+        contexts = physical_contexts(converted)
+        default_facts = next((row["facts"] for row in contexts if row["graph"] is None), [])
+        default_present = {json.dumps(row, sort_keys=True) for row in default_facts}
+        if any(json.dumps(row, sort_keys=True) not in default_present for row in initial):
+            raise RuntimeError(
+                "In-place inference changed an input fact or its literal cache in the default graph"
+            )
         complete = facts(graph)
         present = {json.dumps(row, sort_keys=True) for row in complete}
         if any(json.dumps(row, sort_keys=True) not in present for row in initial):
@@ -175,6 +209,7 @@ def prepare(job, graph_observation):
             "input_count": len(initial),
             "closure": graph_observation(graph),
             "complete_term_metadata": complete,
+            "physical_contexts": contexts,
             "initial_term_metadata": initial,
             "namespaces_raw": namespaces,
             "namespace_bindings": dict(namespaces),
@@ -189,7 +224,7 @@ def prepare(job, graph_observation):
                 "input_facts_preserved": True,
                 "inplace": True,
                 "container": type(source).__module__ + "." + type(source).__qualname__,
-                "logical_scope": "default graph",
+                "logical_scope": "complete closure",
                 "native_dataset_reference_graph_routes_are_distinct": True,
             },
         }
@@ -287,7 +322,7 @@ def _projection(value, backend):
     if (
         state["inplace"] is not True
         or state["input_facts_preserved"] is not True
-        or state["logical_scope"] != "default graph"
+        or state["logical_scope"] != "complete closure"
     ):
         raise RuntimeError("Invalid in-place logical transition")
     if (
