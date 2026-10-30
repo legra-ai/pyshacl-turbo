@@ -27,6 +27,35 @@ def test_pure_facade_preparation_and_tagging_use_the_uv_release_policy():
     assert prepare["uses"].split("@")[1] == tag["uses"].split("@")[1]
 
 
+def test_release_preparation_preserves_the_minor_breaking_change_policy():
+    workflow = yaml.safe_load((ROOT / ".github/workflows/ci.yml").read_text())
+    prepare = next(
+        step for step in workflow["jobs"]["prepare"]["steps"] if step.get("id") == "release"
+    )
+    assert prepare["with"]["breaking-change-bump"] == "minor"
+
+
+def test_release_and_dependency_actions_use_one_immutable_policy_revision():
+    actions = []
+    for name in ("ci.yml", "dependabot-merge.yml"):
+        workflow = yaml.safe_load((ROOT / ".github/workflows" / name).read_text())
+        for job in workflow["jobs"].values():
+            actions.extend(
+                step["uses"]
+                for step in job.get("steps", [])
+                if step.get("uses", "").startswith("legra-ai/github-actions/.github/actions/")
+            )
+    assert {action.split("/")[-1].split("@")[0] for action in actions} == {
+        "prepare-cargo-release",
+        "tag-tested-release",
+        "generate-changelog",
+        "merge-tested-dependabot",
+    }
+    revisions = {action.split("@")[1] for action in actions}
+    assert len(revisions) == 1
+    assert re.fullmatch(r"[0-9a-f]{40}", revisions.pop())
+
+
 def test_release_builds_only_the_original_universal_facade_wheel():
     project = tomllib.loads((ROOT / "pyproject.toml").read_text())
     assert project["build-system"]["build-backend"] == "hatchling.build"
