@@ -101,8 +101,7 @@ def test_public_explicit_compilation_retains_eager_native_check(compiled):
     assert len(compiled.programs) == 1
     assert compiled.borrowed == []
     invalid = (
-        '@prefix sh:<http://www.w3.org/ns/shacl#>. '
-        '<urn:S> a sh:PropertyShape; sh:path "invalid".'
+        '@prefix sh:<http://www.w3.org/ns/shacl#>. <urn:S> a sh:PropertyShape; sh:path "invalid".'
     )
     with pytest.raises(turbo.ShapeLoadError) as failure:
         turbo.compile_shapes(invalid)

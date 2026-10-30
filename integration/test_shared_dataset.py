@@ -32,7 +32,15 @@ def test_three_products_use_one_dataset_and_complete_reference_report(monkeypatc
         raise AssertionError("shared validation must not copy, serialize or convert its dataset")
 
     with monkeypatch.context() as patch:
-        for name in ("to_rdflib", "from_rdflib", "serialize", "copy"):
+        for name in (
+            "to_rdflib",
+            "from_rdflib",
+            "serialize",
+            "copy",
+            "__iter__",
+            "triples",
+            "quads",
+        ):
             patch.setattr(Dataset, name, forbidden)
         actual = program.validate(data)
         repeated = validate(data, shacl_graph=shape_graph)
