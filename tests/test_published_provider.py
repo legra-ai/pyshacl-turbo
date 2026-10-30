@@ -72,7 +72,7 @@ def test_native_identity_is_derived_after_restoring_immutable_lock_peers(tmp_pat
     calls = []
     original = helper.load
 
-    def restore(source, facade, output):
+    def restore(source, output):
         calls.append("restore")
         destination.parent.mkdir()
         source.rename(destination)
@@ -111,9 +111,7 @@ def test_native_identity_is_derived_after_restoring_immutable_lock_peers(tmp_pat
             else original(name)
         ),
     )
-    result = helper.restore_source_identity(
-        owner, tmp_path / "current", tmp_path, archive, sha, "actual identity"
-    )
+    result = helper.restore_source_identity(owner, tmp_path, archive, sha, "actual identity")
     assert result["source"] == destination
     assert result["peers"]["declaration_peer"]["version"] == "0.6.1"
     assert calls == [

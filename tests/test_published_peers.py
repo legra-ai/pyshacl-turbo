@@ -174,8 +174,7 @@ def test_restore_keeps_original_declaration_peer_distinct_from_current_acceptanc
     current = tmp_path / "current-acceptance"
     current.mkdir()
     (current / "pyproject.toml").write_text(
-        '[project]\nname="pyshacl-turbo"\nversion="0.6.2"\n'
-        '[tool.uv.sources]\nrdflib-turbo={path="../rdflib-turbo",editable=true}\n'
+        '[project]\nname="pyshacl-turbo"\nversion="0.6.2"\ndependencies=["rdflib-turbo==0.2.0a9"]\n'
     )
     declared = tmp_path / "original-facade"
     declared.mkdir()
@@ -216,10 +215,10 @@ def test_restore_keeps_original_declaration_peer_distinct_from_current_acceptanc
     )
     if provider_path != "../rdflib-turbo":
         with pytest.raises(ValueError, match="native source peer"):
-            module.restore(native, current, tmp_path)
+            module.restore(native, tmp_path)
         assert native.is_dir()
     else:
-        result = module.restore(native, current, tmp_path)
+        result = module.restore(native, tmp_path)
         provider = Path(result["provider_source"])
         peer = Path(result["declaration_peer"]["source"])
         assert provider == tmp_path / "cohort/rdflib-turbo"

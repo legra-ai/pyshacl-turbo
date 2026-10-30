@@ -154,13 +154,15 @@ def original_peer(project, version, output, *, owner=None):
     return result
 
 
-def restore(owner, facade, output):
+def restore(owner, output):
     """Restore the published lock's peer, independently of current acceptance code."""
     owner, output = owner.resolve(strict=True), output.resolve(strict=True)
     if owner == output or not owner.is_relative_to(output):
         raise ValueError("Only the downloaded owner source may move inside its output cohort")
     owl_version = locked_version(owner, "owlrl-turbo")
-    native_name = adjacent_peer(facade, "rdflib-turbo")
+    native_name = tomllib.loads((owner / "pyproject.toml").read_text())["project"]["name"]
+    if native_name != "rdflib-turbo":
+        raise ValueError("Expected the original native provider project identity")
     facade_name = adjacent_peer(owner, "pyshacl-turbo")
     declared = prepare_declaration_peer(owner, output / "peers/pyshacl-turbo")
     declared_source = Path(declared["source"]).resolve(strict=True)
