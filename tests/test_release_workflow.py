@@ -11,6 +11,32 @@ import yaml
 ROOT = Path(__file__).parents[1]
 
 
+@pytest.mark.parametrize("name", ["compatibility", "regex", "native-coverage", "shared-pipeline"])
+def test_yaml_cohorts_declare_the_exact_build_interpreter(name):
+    workflow = yaml.safe_load((ROOT / f".github/workflows/{name}.yml").read_text())
+    job = workflow["jobs"][
+        "benchmark" if name == "shared-pipeline" else name.replace("native-coverage", "coverage")
+    ]
+    setups = [
+        step["with"]["python-version"]
+        for step in job["steps"]
+        if step.get("uses", "").startswith("actions/setup-python@")
+    ]
+    assert setups == ["3.13.16"]
+
+
+def test_minimum_runtime_keeps_its_separate_pinned_yaml_build_interpreter():
+    job = yaml.safe_load((ROOT / ".github/workflows/ci.yml").read_text())["jobs"]["verify"]
+    versions = [case["python"] for case in job["strategy"]["matrix"]["include"]]
+    assert versions == ["3.11", "3.13.16", "3.13.16", "3.13.16"]
+    setups = [
+        step for step in job["steps"] if step.get("uses", "").startswith("actions/setup-python@")
+    ]
+    assert setups[0]["with"]["python-version"] == "3.13.16"
+    assert setups[0]["if"] == "matrix.python == '3.11'"
+    assert setups[1]["with"]["python-version"] == "${{ matrix.python }}"
+
+
 def test_pure_facade_preparation_and_tagging_use_the_uv_release_policy():
     workflow = yaml.safe_load((ROOT / ".github/workflows/ci.yml").read_text())
     prepare = next(
