@@ -49,13 +49,21 @@ def run(command, *, directory=None, env=None, capture=False):
     # The registry probe installs the macOS no-fork launcher. Change the parent
     # directory explicitly instead of asking subprocess to use fork-only cwd=.
     with contextlib.chdir(directory) if directory else contextlib.nullcontext():
-        result = subprocess.run(
-            list(map(str, command)),
-            check=True,
-            env=env,
-            capture_output=capture,
-            text=True,
-        )
+        try:
+            result = subprocess.run(
+                list(map(str, command)),
+                check=True,
+                env=env,
+                capture_output=capture,
+                text=True,
+            )
+        except subprocess.CalledProcessError as error:
+            if capture:
+                if error.stdout:
+                    sys.stdout.write(error.stdout)
+                if error.stderr:
+                    sys.stderr.write(error.stderr)
+            raise
     return result.stdout if capture else None
 
 
@@ -145,7 +153,7 @@ spec = importlib.util.spec_from_file_location("verified_owner_companion", {str(o
 companion = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(companion)
 before = companion.verify_loaded(Path({str(wheel)!r}), Path({str(project / ".venv")!r}))
-from owlrl_turbo import DeductiveClosure, RDFS_OWLRL_Semantics
+from owlrl_turbo import expand
 
 if Dataset is not StoreDataset:
     raise RuntimeError("Published pipeline requires the canonical Dataset owner")
@@ -154,7 +162,9 @@ data = Dataset()
 native_owner = data.store.backend._native
 data.add((ex.subject, RDF.type, ex.Child))
 data.add((ex.Child, RDFS.subClassOf, ex.Parent))
-DeductiveClosure(RDFS_OWLRL_Semantics).expand(data)
+result = expand(data, inference="both", inplace=True)
+if result is not data:
+    raise RuntimeError("Published OWL closure replaced its caller dataset")
 if data.store.backend._native is not native_owner:
     raise RuntimeError("Published OWL closure replaced its native dataset owner")
 if (ex.subject, RDF.type, ex.Parent) not in data:

@@ -2,6 +2,7 @@
 
 import importlib.util
 import json
+import subprocess
 import sys
 from pathlib import Path
 
@@ -14,6 +15,65 @@ def helper():
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module
+
+
+def test_captured_failure_reports_both_streams_and_preserves_the_exception(monkeypatch, capsys):
+    module = helper()
+    failure = subprocess.CalledProcessError(
+        7, ["original-tool"], output="captured output\n", stderr="actual failure cause\n"
+    )
+
+    def fail(*args, **kwargs):
+        raise failure
+
+    monkeypatch.setattr(module.subprocess, "run", fail)
+    with pytest.raises(subprocess.CalledProcessError) as actual:
+        module.run(["original-tool"], capture=True)
+    assert actual.value is failure
+    streams = capsys.readouterr()
+    assert streams.out == "captured output\n"
+    assert streams.err == "actual failure cause\n"
+
+
+def test_three_product_probe_uses_the_original_expand_only_owl_api(tmp_path):
+    scripts = tmp_path / "owner/scripts"
+    scripts.mkdir(parents=True)
+    # Unit verifier stubs isolate the API call; original-wheel authority is
+    # independently exercised by the complete published-provider gate.
+    for name in ("pure_companion.py", "yaml_test_inputs.py"):
+        (scripts / name).write_text(
+            "def verify_loaded(wheel, environment):\n    return {'unit_verifier': True}\n"
+        )
+    code = helper().owl_probe(
+        tmp_path / "owner", tmp_path / "owl.whl", tmp_path / "project", tmp_path / "yaml.whl"
+    )
+    script = tmp_path / "probe.py"
+    script.write_text(
+        "import owlrl_turbo\n"
+        "for name in ('DeductiveClosure', 'RDFS_OWLRL_Semantics'):\n"
+        "    if hasattr(owlrl_turbo, name): delattr(owlrl_turbo, name)\n" + code
+    )
+    spec = importlib.util.spec_from_file_location(
+        "probe_launcher", Path(__file__).parent / "upstream_support/process_launch.py"
+    )
+    launcher = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(launcher)
+    process_type = launcher.Popen if sys.platform == "darwin" else subprocess.Popen
+    with process_type(
+        [sys.executable, "-I", "-B", str(script)],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+    ) as process:
+        stdout, stderr = process.communicate(timeout=20)
+        assert process.returncode == 0, stderr
+    record = json.loads(stdout)
+    assert record["pipeline"] == {
+        "canonical_dataset": True,
+        "inferred_type": True,
+        "conforms": True,
+        "same_native_owner": True,
+    }
 
 
 def test_validation_output_cannot_change_frozen_source(tmp_path):
