@@ -81,7 +81,9 @@ def test_validation_output_cannot_change_frozen_source(tmp_path):
         helper().require_output(tmp_path / "source", tmp_path / "source/output")
 
 
-def test_installed_checks_require_actual_registry_native_and_fa_payload_receipts(tmp_path):
+def test_installed_checks_require_actual_registry_native_and_fa_payload_receipts(
+    tmp_path, monkeypatch
+):
     source, wheel, project = [tmp_path / name for name in ("owner", "facade.whl", "project")]
     code = helper().installed_probe(source, wheel, project)
     assert "verify_loaded_facade" in code
@@ -89,12 +91,20 @@ def test_installed_checks_require_actual_registry_native_and_fa_payload_receipts
     assert "SHARED_SHACL_PROTOCOL" in code
     assert "forbid_conversion" in code
     assert "RECEIPT_PROBE" not in code
+    module = helper()
+    commands = []
+    monkeypatch.setattr(
+        module, "run", lambda command, **kwargs: commands.append(command) or "{}\n{}\n"
+    )
+    assert module.installed_receipts(source, wheel, project, {}) == [{}, {}]
+    index = commands[0].index("python")
+    assert commands[0][index : index + 4] == ["python", "-I", "-B", "-c"]
 
 
 def test_full_installed_tests_use_isolated_uv_and_preserve_coverage_gate(tmp_path):
     source, project, output = [tmp_path / name for name in ("source", "project", "output")]
     command = helper().test_command(source, project, output, coverage=True)
-    assert command[:9] == [
+    assert command[:10] == [
         "uv",
         "run",
         "--project",
@@ -103,9 +113,10 @@ def test_full_installed_tests_use_isolated_uv_and_preserve_coverage_gate(tmp_pat
         "--no-sync",
         "python",
         "-I",
+        "-B",
         "-m",
     ]
-    assert command[9] == "pytest"
+    assert command[10] == "pytest"
     assert str(source / "tests") in command
     assert "--cov-fail-under=100" in command
     assert "--cov-branch" in command
@@ -156,9 +167,12 @@ def test_actual_uv_child_preserves_bytecode_disabled_source_inventory(tmp_path):
         "module=importlib.util.module_from_spec(spec); spec.loader.exec_module(module); "
         "assert module.VALUE == 'original'; print(sys.dont_write_bytecode)"
     )
-    result = helper().run(
-        ["uv", "run", "--no-project", "--python", sys.executable, "python", "-c", code],
-        env=helper().environment(),
+    module = helper()
+    generated = module.test_command(tmp_path, tmp_path, tmp_path, coverage=False)
+    flags = generated[generated.index("python") + 1 : generated.index("-m")]
+    result = module.run(
+        ["uv", "run", "--no-project", "--python", sys.executable, "python", *flags, "-c", code],
+        env=module.environment(),
         capture=True,
     )
     assert result.strip() == "True"
