@@ -138,10 +138,7 @@ def prepare(job, graph_observation):
         source = Dataset().parse(data=text, format="turtle")
         invoke = lambda: expand(source, inference="owlrl", inplace=True)
 
-        converted = None
-
         def export(*, inferred=False):
-            nonlocal converted
             converted = source.to_rdflib()
             default = converted.default_graph.identifier
             destination = URIRef("urn:owlrl-turbo:inference")
@@ -153,9 +150,9 @@ def prepare(job, graph_observation):
                         "Closed fanout returned an unexpected non-default physical context"
                     )
                 graph.add((s, p, o))
-            return graph
+            return graph, converted
 
-        def physical_contexts():
+        def physical_contexts(converted):
             default = converted.default_graph.identifier
             return sorted(
                 [
@@ -176,9 +173,11 @@ def prepare(job, graph_observation):
 
         source = Graph().parse(data=text, format="turtle")
         invoke = lambda: DeductiveClosure(OWLRL_Semantics).expand(source)
-        export = lambda **kwargs: source
-        physical_contexts = lambda: [{"graph": None, "facts": facts(source), "count": len(source)}]
-    initial = facts(export())
+        export = lambda **kwargs: (source, source)
+        physical_contexts = lambda converted: [
+            {"graph": None, "facts": facts(source), "count": len(source)}
+        ]
+    initial = facts(export()[0])
     before_flags = flags(decimal.getcontext().flags)
     before_traps = flags(decimal.getcontext().traps)
     expected_type = type(source)
@@ -189,8 +188,8 @@ def prepare(job, graph_observation):
             raise RuntimeError("Missing or foreign in-place fanout result")
         if (native and call.returned is not source) or (not native and call.returned is not None):
             raise RuntimeError("Public in-place API returned an unexpected source/None value")
-        graph = export(inferred=True)
-        contexts = physical_contexts()
+        graph, converted = export(inferred=True)
+        contexts = physical_contexts(converted)
         default_facts = next((row["facts"] for row in contexts if row["graph"] is None), [])
         default_present = {json.dumps(row, sort_keys=True) for row in default_facts}
         if any(json.dumps(row, sort_keys=True) not in default_present for row in initial):

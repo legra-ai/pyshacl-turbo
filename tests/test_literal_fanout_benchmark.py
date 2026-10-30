@@ -418,3 +418,54 @@ def test_native_fanout_observes_named_inference_without_losing_physical_scope(mo
     assert contexts[0]["count"] == 32
     assert contexts[0]["facts"] == result["initial_term_metadata"]
     assert result["state"]["logical_scope"] == "complete closure"
+
+
+def test_initial_native_export_is_released_before_measured_inference(monkeypatch):
+    import sys
+    import weakref
+    from types import SimpleNamespace
+
+    from rdflib import Dataset
+
+    suite = load("companions")
+    exports = []
+
+    class Export:
+        def __init__(self, dataset):
+            self.dataset = dataset
+
+        def __getattr__(self, name):
+            return getattr(self.dataset, name)
+
+    class Owner:
+        def parse(self, *, data, format):
+            self.dataset = Dataset().parse(data=data, format=format)
+            return self
+
+        def to_rdflib(self):
+            exported = Export(self.dataset)
+            exports.append(weakref.ref(exported))
+            return exported
+
+        def namespaces(self):
+            return self.dataset.namespaces()
+
+    def expand(source, *, inference, inplace):
+        assert inference == "owlrl" and inplace
+        assert exports and all(ref() is None for ref in exports)
+        return source
+
+    monkeypatch.setitem(sys.modules, "rdflib_turbo", SimpleNamespace(Dataset=Owner))
+    monkeypatch.setitem(sys.modules, "owlrl_turbo", SimpleNamespace(expand=expand))
+    run, observe = suite.prepare(
+        {
+            "operation": "owlrl",
+            "backend": "turbo_shared",
+            "nodes": 32,
+            "fixture": "literal-reflexivity",
+        }
+    )
+    result = observe(run())
+    assert result["input_count"] == 32
+    assert result["physical_contexts"][0]["count"] == 32
+    assert all(ref() is None for ref in exports)
