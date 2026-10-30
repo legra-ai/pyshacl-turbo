@@ -161,6 +161,16 @@ def graph_observation(graph):
     }
 
 
+def logical_graph(dataset):
+    """Observe the complete Dataset relation, deduplicating physical contexts."""
+    from rdflib import Graph
+
+    graph = Graph()
+    for s, p, o, _ in dataset.quads():
+        graph.add((s, p, o))
+    return graph
+
+
 def dataset_observation(dataset):
     """Canonicalize quads together so graph scope and shared blank nodes survive."""
     from rdflib import BNode, Graph, Literal, Namespace
@@ -242,7 +252,7 @@ def prepare(job):
                 dataset = NativeDataset().parse(data=text)
                 closure = expand(dataset, inference=mode, inplace=True)
                 if backend == "turbo":
-                    closure = closure.to_rdflib().default_graph
+                    closure = logical_graph(closure.to_rdflib())
                 return closure, validate(closure, shacl_graph=shapes, inference="none")
         else:
             from owlrl import DeductiveClosure, OWLRL_Semantics, RDFS_Semantics
@@ -257,7 +267,7 @@ def prepare(job):
 
         return run, lambda value: {
             "closure": graph_observation(
-                value[0].to_rdflib().default_graph if backend == "turbo_shared" else value[0]
+                logical_graph(value[0].to_rdflib()) if backend == "turbo_shared" else value[0]
             ),
             "report": report_observation(value[1]),
         }
