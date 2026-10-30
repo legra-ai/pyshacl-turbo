@@ -81,6 +81,44 @@ def test_validation_output_cannot_change_frozen_source(tmp_path):
         helper().require_output(tmp_path / "source", tmp_path / "source/output")
 
 
+@pytest.mark.parametrize("suite", ["full", "compatibility"])
+def test_isolated_suite_loads_sibling_helpers_without_loading_source_product(tmp_path, suite):
+    source = tmp_path / "source"
+    tests = source / "tests"
+    tests.mkdir(parents=True)
+    (source / "pyshacl_turbo.py").write_text("raise RuntimeError('source product imported')\n")
+    (tests / "suite_harness.py").write_text("VALUE = 42\n")
+    body = (
+        "from suite_harness import VALUE\n"
+        "import pyshacl_turbo\n"
+        "def test_w3c_sparql_constraint():\n"
+        "    assert VALUE == 42\n"
+        "    assert 'site-packages' in pyshacl_turbo.__file__\n"
+    )
+    for name in ("test_w3c.py", "test_w3c_documents.py", "test_sparql.py"):
+        (tests / name).write_text(body)
+    module = helper()
+    context = {"acceptance": source, "project": tmp_path, "output": tmp_path}
+    command = (
+        module.test_command(source, tmp_path, tmp_path, coverage=False)
+        if suite == "full"
+        else module.compatibility_commands(context)[0][1]
+    )
+    arguments = [sys.executable, *map(str, command[command.index("python") + 1 :])]
+    spec = importlib.util.spec_from_file_location(
+        "suite_launcher", Path(__file__).parent / "upstream_support/process_launch.py"
+    )
+    launcher = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(launcher)
+    process_type = launcher.Popen if sys.platform == "darwin" else subprocess.Popen
+    with process_type(
+        arguments, cwd=source, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
+    ) as process:
+        stdout, stderr = process.communicate(timeout=30)
+    assert process.returncode == 0, stdout + stderr
+    assert "3 passed" in stdout
+
+
 def test_installed_checks_require_actual_registry_native_and_fa_payload_receipts(
     tmp_path, monkeypatch
 ):
@@ -120,7 +158,7 @@ def test_full_installed_tests_use_isolated_uv_and_preserve_coverage_gate(tmp_pat
     assert str(source / "tests") in command
     assert "--cov-fail-under=100" in command
     assert "--cov-branch" in command
-    assert "--import-mode=importlib" in command
+    assert "--import-mode=prepend" in command
 
 
 def test_current_acceptance_receipt_must_bind_every_source_byte():

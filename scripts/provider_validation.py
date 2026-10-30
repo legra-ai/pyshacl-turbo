@@ -98,7 +98,7 @@ def test_command(source, project, output, *, coverage):
         "pytest",
         str(source / "tests"),
         "-q",
-        "--import-mode=importlib",
+        "--import-mode=prepend",
     ]
     if coverage:
         command.extend(
@@ -472,7 +472,7 @@ def compatibility_commands(context):
                 source / "tests/test_w3c_documents.py",
                 str(source / "tests/test_sparql.py") + "::test_w3c_sparql_constraint",
                 "-q",
-                "--import-mode=importlib",
+                "--import-mode=prepend",
                 f"--junitxml={output / 'w3c-results.xml'}",
             ],
         ),
