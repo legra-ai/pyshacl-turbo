@@ -2,6 +2,7 @@
 
 import importlib.util
 import json
+import sys
 from pathlib import Path
 
 import pytest
@@ -83,6 +84,7 @@ def test_harness_identity_is_stable_when_started_through_a_symlink(tmp_path, mon
 def test_version_environment_does_not_join_or_modify_a_parent_uv_project(
     tmp_path, monkeypatch, no_config
 ):
+    monkeypatch.setenv("UV_PYTHON", sys.executable)
     if no_config:
         monkeypatch.setenv("UV_NO_CONFIG", "1")
     else:
