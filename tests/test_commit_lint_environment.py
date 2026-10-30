@@ -23,6 +23,10 @@ def test_commit_lint_runs_when_project_build_backend_is_unavailable(tmp_path):
     )
     for directory in ("python", "tests", "scripts", "benchmarks", "bin"):
         (tmp_path / directory).mkdir()
+    tooling = tmp_path / "tools/dev"
+    tooling.mkdir(parents=True)
+    for name in ("pyproject.toml", "uv.lock"):
+        (tooling / name).write_bytes((root / "tools/dev" / name).read_bytes())
     (tmp_path / "python/probe.py").write_text("value = 1\n")
     cargo = tmp_path / "bin/cargo"
     cargo.write_text('#!/bin/sh\nprintf "%s\\n" "$*" >> cargo-invocations\nexit 99\n')

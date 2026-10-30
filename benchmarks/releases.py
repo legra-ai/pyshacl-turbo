@@ -148,7 +148,7 @@ def setup(env, directory, wheels, python):
             *requirements,
         ]
     )
-    command(["uv", "sync", "--project", project, "--locked", "--no-build"])
+    command(["uv", "sync", "--project", project, "--locked", "--no-build", "--prerelease", "allow"])
     executable = project / ".venv/bin/python"
     identity = json.loads(command([executable, "-I", "-B", Path(__file__), "--identity"]))
     for name, specifier in env["requirements"].items():

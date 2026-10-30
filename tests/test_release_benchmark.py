@@ -79,7 +79,14 @@ def test_harness_identity_is_stable_when_started_through_a_symlink(tmp_path, mon
     }
 
 
-def test_version_environment_does_not_join_or_modify_a_parent_uv_project(tmp_path):
+@pytest.mark.parametrize("no_config", [False, True])
+def test_version_environment_does_not_join_or_modify_a_parent_uv_project(
+    tmp_path, monkeypatch, no_config
+):
+    if no_config:
+        monkeypatch.setenv("UV_NO_CONFIG", "1")
+    else:
+        monkeypatch.delenv("UV_NO_CONFIG", raising=False)
     bench = module()
     parent = tmp_path / "checkout"
     parent.mkdir()

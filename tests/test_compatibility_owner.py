@@ -52,7 +52,7 @@ def test_compatibility_commands_keep_all_existing_gates_in_the_isolated_project(
     for path in ("tests/test_w3c.py", "tests/test_w3c_documents.py"):
         assert state["acceptance"] / path in w3c
     assert str(state["acceptance"] / "tests/test_sparql.py") + "::test_w3c_sparql_constraint" in w3c
-    assert "--import-mode=importlib" in w3c
+    assert "--import-mode=prepend" in w3c
     assert f"--junitxml={state['output'] / 'w3c-results.xml'}" in w3c
     assert commands["upstream"][-2:] == ["--output", state["output"] / "upstream-results.json"]
     direct = commands["direct"]

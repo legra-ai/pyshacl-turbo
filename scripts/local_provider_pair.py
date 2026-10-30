@@ -11,7 +11,9 @@ def declaration(facade):
     manifest = tomllib.loads((facade / "pyproject.toml").read_text())
     if manifest["project"]["name"] != "pyshacl-turbo":
         raise ValueError("Expected the facade source project")
-    source = manifest["tool"]["uv"]["sources"]["rdflib-turbo"]
+    source = manifest.get("tool", {}).get("uv", {}).get("sources", {}).get("rdflib-turbo")
+    if source is None:
+        raise ValueError("Expected an explicit sibling editable provider declaration")
     relative = source["path"]
     if source != {"path": relative, "editable": True} or not relative.startswith("../"):
         raise ValueError("Expected an explicit sibling editable provider declaration")
