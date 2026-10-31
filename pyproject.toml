@@ -20,7 +20,7 @@ classifiers = [
     "Topic :: Software Development :: Libraries :: Python Modules",
 ]
 dependencies = [
-    "rdflib>=7.3,<8",
+    "rdflib[html]>=7.3,<8",
     "rdflib-turbo==0.2.0a20",
 ]
 

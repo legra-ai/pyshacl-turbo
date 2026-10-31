@@ -999,7 +999,7 @@ name = "pyshacl-turbo"
 version = "0.7.0"
 source = { editable = "." }
 dependencies = [
-    { name = "rdflib" },
+    { name = "rdflib", extra = ["html"] },
     { name = "rdflib-turbo" },
 ]
 
@@ -1034,7 +1034,7 @@ requires-dist = [
     { name = "pytest", marker = "extra == 'test'", specifier = ">=8,<10" },
     { name = "pytest-cov", marker = "extra == 'test'", specifier = ">=7.1,<8" },
     { name = "pyyaml", marker = "extra == 'test'", specifier = ">=6,<7" },
-    { name = "rdflib", specifier = ">=7.3,<8" },
+    { name = "rdflib", extras = ["html"], specifier = ">=7.3,<8" },
     { name = "rdflib-turbo", specifier = "==0.2.0a20" },
     { name = "rdflib-turbo", marker = "extra == 'test'", specifier = "==0.2.0a20" },
     { name = "ruff", marker = "extra == 'test'", specifier = ">=0.12" },
