@@ -120,9 +120,13 @@ def test_matched_graph_stage_keeps_registry_and_source_candidate_roles_separate(
         step for step in steps if "benchmarks/matched_graph_driver.py" in step.get("run", "")
     ]
     assert len(matched) == 1
+    assert matched[0]["if"] == "${{ !cancelled() }}"
     assert "--cohort benchmarks/matched-graph-releases.json" in matched[0]["run"]
     assert "--candidate-wheels" not in matched[0]["run"]
     old = [step for step in steps if "benchmarks/releases.py" in step.get("run", "")]
     assert len(old) == 1 and "--candidate-wheels" in old[0]["run"]
     uploads = [step for step in steps if step.get("uses", "").startswith("actions/upload-artifact")]
     assert any(step["with"]["name"].startswith("matched-graph-reports-") for step in uploads)
+    summary = next(step for step in steps if step.get("name") == "Summarize measured results")
+    assert "matched-graph/summary.json" in summary["run"]
+    assert 'get("status") == "complete"' in summary["run"]
