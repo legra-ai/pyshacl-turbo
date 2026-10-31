@@ -17,14 +17,17 @@ def load(name):
 
 
 @pytest.mark.parametrize("backend", ["reference", "turbo"])
+@pytest.mark.parametrize("cpu_clock", ["native", "coarse"])
 def test_sampling_has_no_observer_between_operations_and_reads_rss_before_export(
-    monkeypatch, backend
+    monkeypatch, backend, cpu_clock
 ):
     correctness = load("matched_graph_fanout")
     expected = json.loads(
         json.dumps(correctness.correctness(backend, 2, "literal-reflexivity", True))
     )
     sampler = load("matched_graph_sampling")
+    if cpu_clock == "coarse":
+        monkeypatch.setattr(sampler.time, "process_time_ns", lambda: 1000)
     events = []
     original_facts = sampler.CONTRACT._suite
 
@@ -46,7 +49,17 @@ def test_sampling_has_no_observer_between_operations_and_reads_rss_before_export
     assert events[:3] == ["rss", "rss", "facts"]
     assert result["peak_rss_bytes"] == 12345
     assert set(result["stages"]) == {"construct_parse", "class_expand", "validate", "total"}
-    assert all(value["wall_ns"] > 0 and value["cpu_ns"] > 0 for value in result["stages"].values())
+    # Windows CPU accounting may not advance for these tiny operations.
+    # Keep the raw zero instead of imposing a positive-duration threshold.
+    assert all(
+        type(value["wall_ns"]) is int
+        and value["wall_ns"] > 0
+        and type(value["cpu_ns"]) is int
+        and value["cpu_ns"] >= 0
+        for value in result["stages"].values()
+    )
+    if cpu_clock == "coarse":
+        assert all(value["cpu_ns"] == 0 for value in result["stages"].values())
 
 
 def test_false_policy_cannot_enter_the_timing_pipeline():
