@@ -37,6 +37,7 @@ test = [
     "ruff>=0.12",
     "pyyaml>=6,<7",
     "rdflib-turbo==0.2.0a20",
+    "owlrl-turbo==0.2.0a1",
 ]
 
 [project.scripts]

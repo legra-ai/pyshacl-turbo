@@ -153,6 +153,7 @@ def test_post_gate_owl_payload_drift_is_not_hidden_by_unchanged_native_pair(tmp_
             "installed_provider": native,
             "installed_facade": facade,
             "installed_owlrl": {"installed": {"payload": "original"}},
+            "execution_owlrl": {"wheel": str(tmp_path / "execution-owl.whl")},
             "installed_yaml": {"yaml": "original"},
         },
     }

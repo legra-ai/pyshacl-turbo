@@ -42,9 +42,8 @@ def pure_artifacts(source, output):
     return archives[0], wheel
 
 
-def original_owl_wheel(provider, output):
+def original_owl_wheel(owl, output):
     registry = load("provider_registry")
-    owl = provider["peers"]["owlrl"]
     document_path = Path(owl["registry_document"])
     document = json.loads(document_path.read_text())
     if (
@@ -63,8 +62,10 @@ def original_owl_wheel(provider, output):
     }
 
 
-def builder_arguments(source, revision, facade_wheel, provider, owl_wheel, output):
-    owl = provider["peers"]["owlrl"]
+def builder_arguments(
+    source, revision, facade_wheel, provider, owl_wheel, output, *, execution_owlrl
+):
+    owl = execution_owlrl
     return list(
         map(
             str,
@@ -119,16 +120,20 @@ def prepare(source, output):
         raise ValueError("Frozen facade source changed during its original archive build")
     # Registry capability precedes every OWL download and native compilation.
     provider = load("published_provider").resolve(source, wheel, output / "published-provider")
-    owl_wheel = original_owl_wheel(provider, output)
+    execution_owl = load("published_peers").execution_peer(
+        source, Path(provider["source"]), output / "execution-owlrl"
+    )
+    owl_wheel = original_owl_wheel(execution_owl, output)
     request.update(
         status="published-originals-verified",
         facade_archive=str(archive),
         facade_wheel=str(wheel),
         provider=provider,
+        execution_owlrl=execution_owl,
         owlrl_wheel=owl_wheel,
     )
     receipt.write_text(json.dumps(request, indent=2) + "\n")
-    return frozen, wheel, provider, owl_wheel
+    return frozen, wheel, provider, owl_wheel, execution_owl
 
 
 def main():
@@ -139,9 +144,15 @@ def main():
     if not sys.dont_write_bytecode:
         raise ValueError("Published original benchmark inputs require python -B")
     source, output = args.facade_source.resolve(strict=True), args.output.resolve()
-    frozen, wheel, provider, owl = prepare(source, output)
+    frozen, wheel, provider, owl, execution_owl = prepare(source, output)
     command = builder_arguments(
-        source, frozen["revision"], wheel, provider, owl, output / "candidate"
+        source,
+        frozen["revision"],
+        wheel,
+        provider,
+        owl,
+        output / "candidate",
+        execution_owlrl=execution_owl,
     )
     load("provider_validation").run(command, env=load("provider_validation").environment())
     if load("provider_coverage").freeze_tree(source, "pyshacl-turbo") != frozen:

@@ -41,8 +41,12 @@ def test_coverage_arguments_bind_original_provider_facade_and_owl_archives(tmp_p
         "acceptance": tmp_path / "current-facade",
         "wheel": tmp_path / "original.whl",
         "output": tmp_path / "proof",
-        "receipt": {"provider": authority},
+        "receipt": {
+            "provider": authority,
+            "execution_owlrl": dict(authority["peers"]["owlrl"]),
+        },
     }
+    authority["peers"]["owlrl"] = {"source": "immutable-build-peer"}
     args = helper().coverage_arguments(context)
     assert args.provider_source == context["owner"]
     assert args.facade_source == context["acceptance"]

@@ -16,7 +16,7 @@ def load(name):
 
 def coverage_arguments(context):
     authority = context["receipt"]["provider"]
-    owl = authority["peers"]["owlrl"]
+    owl = context["receipt"]["execution_owlrl"]
     return SimpleNamespace(
         provider_source=context["owner"],
         provider_revision=None,

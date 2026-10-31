@@ -272,7 +272,7 @@ def verify_runtime(context):
         or facade != context["receipt"]["installed_facade"]
     ):
         raise ValueError("Installed runtime payload changed during validation")
-    owl = context["receipt"]["provider"]["peers"]["owlrl"]
+    owl = context["receipt"]["execution_owlrl"]
     yaml = context["receipt"]["provider"]["peers"]["yaml_test_dependency"]
     yaml_inputs = load("published_peers").verify_yaml_test_dependency(context["owner"], yaml)
     yaml_wheel = yaml_inputs["wheel"]
@@ -321,6 +321,9 @@ def prepare(source, wheel, output):
     output.mkdir(parents=True, exist_ok=False)
     authority = load("published_provider").resolve(source, wheel, output / "provider")
     owner = Path(authority["source"])
+    execution_owl = load("published_peers").execution_peer(
+        source, owner, output / "execution-owlrl"
+    )
     acceptance = owner.parent / "current-facade"
     run(["git", "clone", "--no-checkout", source, acceptance])
     run(["git", "-C", acceptance, "checkout", "--detach", frozen["revision"]])
@@ -362,7 +365,7 @@ def prepare(source, wheel, output):
             ],
             env=env,
         )
-        owl = authority["peers"]["owlrl"]
+        owl = execution_owl
         owl_wheel = Path(owl["wheel"]).resolve(strict=True)
         if digest(owl_wheel) != owl["wheel_sha256"]:
             raise ValueError("Original OWL wheel differs from its retained registry SHA-256")
@@ -388,6 +391,7 @@ def prepare(source, wheel, output):
             "current_facade": frozen,
             "facade_inputs": facade_inputs,
             "provider": authority,
+            "execution_owlrl": execution_owl,
             "installed_provider": native,
             "installed_facade": facade,
             "installed_owlrl": installed_owl,
@@ -435,21 +439,11 @@ def verify_sources(context):
     load("published_peers").verify_yaml_test_dependency(context["owner"], yaml)
     if digest(Path(yaml["authority"])) != receipt["yaml_authority_sha256"]:
         raise ValueError("Original YAML authority changed during validation")
-    if (
-        registry.verify_extracted(
-            Path(owl["archive"]), Path(owl["source"]), owl["sha256"], exact_inventory=False
-        )
-        != owl["files"]
-    ):
-        raise ValueError("Original published OWL source changed during validation")
-    if (
-        digest(Path(owl["wheel"])) != owl["wheel_sha256"]
-        or load("published_peers")
-        .load_companion(context["owner"])
-        .verify_payload(Path(owl["source"]), Path(owl["wheel"]))
-        != owl["package_payload"]
-    ):
-        raise ValueError("Original published OWL wheel changed during validation")
+    load("published_peers").verify_owl_peer(context["owner"], owl)
+    execution_owl = receipt["execution_owlrl"]
+    if execution_owl["version"] != load("published_peers").execution_owl_version(context["source"]):
+        raise ValueError("Selected execution OWL differs from the frozen consumer test dependency")
+    load("published_peers").verify_owl_peer(context["owner"], execution_owl)
     if digest(context["project"] / "uv.lock") != receipt["environment_lock_sha256"]:
         raise ValueError("Installed validation lock changed")
     (output / "validation-verified.json").write_text(

@@ -856,6 +856,18 @@ wheels = [
 ]
 
 [[package]]
+name = "owlrl-turbo"
+version = "0.2.0a1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "rdflib-turbo" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/67/bc/ef65d230df90ef746343de42b47c9fb2b75f7c231df03c0b2113d36f9e96/owlrl_turbo-0.2.0a1.tar.gz", hash = "sha256:3e08ccd6b7f77e1370060c17529303e82b37233145e85362450c7053cf6c2a3a", size = 166103, upload-time = "2026-10-31T01:45:01.83Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/7f/c9/a874cae74288557f3ce24ee9dac591be53f9a5d5a986ace813b32552adc0/owlrl_turbo-0.2.0a1-py3-none-any.whl", hash = "sha256:4dfb52ab8d71b7c6729f076210171537d17fee8a74e27810dce61e811fe4d0ab", size = 15790, upload-time = "2026-10-31T01:45:00.667Z" },
+]
+
+[[package]]
 name = "packaging"
 version = "26.3"
 source = { registry = "https://pypi.org/simple" }
@@ -996,6 +1008,7 @@ oxigraph = [
     { name = "pyoxigraph" },
 ]
 test = [
+    { name = "owlrl-turbo" },
     { name = "pyshacl", extra = ["oxigraph"] },
     { name = "pytest" },
     { name = "pytest-cov" },
@@ -1015,6 +1028,7 @@ packaging = [
 
 [package.metadata]
 requires-dist = [
+    { name = "owlrl-turbo", marker = "extra == 'test'", specifier = "==0.2.0a1" },
     { name = "pyoxigraph", marker = "extra == 'oxigraph'", specifier = ">=0.5,<0.6" },
     { name = "pyshacl", extras = ["oxigraph"], marker = "extra == 'test'", specifier = "==0.40.1" },
     { name = "pytest", marker = "extra == 'test'", specifier = ">=8,<10" },

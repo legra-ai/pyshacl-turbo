@@ -154,6 +154,42 @@ def original_peer(project, version, output, *, owner=None):
     return result
 
 
+def execution_owl_version(consumer):
+    """Require one exact consumer test pin, independently of the owner's build lock."""
+    manifest = tomllib.loads((consumer / "pyproject.toml").read_text())
+    requirements = manifest.get("project", {}).get("optional-dependencies", {}).get("test", [])
+    candidates = [value for value in requirements if re.match(r"(?i)^owlrl[-_.]turbo\b", value)]
+    if len(candidates) != 1:
+        raise ValueError("Expected one exact consumer OWL test dependency")
+    match = re.fullmatch(r"owlrl-turbo==(" + load("provider_registry").VERSION + ")", candidates[0])
+    if match is None:
+        raise ValueError("Expected one unconditional exact registry OWL test dependency")
+    return match[1]
+
+
+def execution_peer(consumer, owner, output):
+    """Restore selected execution authority without changing original build peers."""
+    return original_peer("owlrl-turbo", execution_owl_version(consumer), output, owner=owner)
+
+
+def verify_owl_peer(owner, owl):
+    """Reattest each independently named build or execution original without relabeling."""
+    registry = load("provider_registry")
+    if (
+        registry.verify_extracted(
+            Path(owl["archive"]), Path(owl["source"]), owl["sha256"], exact_inventory=False
+        )
+        != owl["files"]
+    ):
+        raise ValueError("Original OWL source changed during validation")
+    if (
+        load("provider_validation").digest(Path(owl["wheel"])) != owl["wheel_sha256"]
+        or load_companion(owner).verify_payload(Path(owl["source"]), Path(owl["wheel"]))
+        != owl["package_payload"]
+    ):
+        raise ValueError("Original OWL wheel changed during validation")
+
+
 def restore(owner, output):
     """Restore the published lock's peer, independently of current acceptance code."""
     owner, output = owner.resolve(strict=True), output.resolve(strict=True)
