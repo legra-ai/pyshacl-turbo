@@ -161,6 +161,12 @@ def sample(backend, width, profile, expected):
             }
             oracle = {key: expected[key] for key in POST_FIELDS}
             oracle["diagnostics"] = expected["diagnostics"]
+            # Correctness authorities and retained samples use JSON transport.
+            # Roundtrip both sides at that boundary; preserve array order and
+            # every lexical/cache/assessment/flag field without normalization.
+            gate = CONTRACT.comparison(
+                json.loads(json.dumps(oracle)), json.loads(json.dumps(observation))
+            )
             return {
                 "scope": "public Graph construction+parse; class closure construction+expand; public validate(inplace=True,inference=none); imports/text/SHAPES/captures prepared outside; no intermediate observation scans",
                 "stages": {
@@ -172,7 +178,7 @@ def sample(backend, width, profile, expected):
                 "setup_peak_rss_bytes": setup_peak,
                 "peak_rss_bytes": peak,
                 "preparation": _elapsed(preparation_start, preparation_end),
-                "gate": CONTRACT.comparison(oracle, observation),
+                "gate": gate,
                 "observation": observation,
                 "intermediate_states": "No per-stage facts/cache/flags scans in sampled child; pinned correctness oracle establishes those boundaries separately",
             }

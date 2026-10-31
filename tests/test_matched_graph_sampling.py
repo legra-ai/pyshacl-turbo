@@ -1,6 +1,7 @@
 """The sampler must observe only after its absolute post-pipeline RSS read."""
 
 import importlib.util
+import json
 from copy import deepcopy
 from pathlib import Path
 
@@ -20,7 +21,9 @@ def test_sampling_has_no_observer_between_operations_and_reads_rss_before_export
     monkeypatch, backend
 ):
     correctness = load("matched_graph_fanout")
-    expected = correctness.correctness(backend, 2, "literal-reflexivity", True)
+    expected = json.loads(
+        json.dumps(correctness.correctness(backend, 2, "literal-reflexivity", True))
+    )
     sampler = load("matched_graph_sampling")
     events = []
     original_facts = sampler.CONTRACT._suite
