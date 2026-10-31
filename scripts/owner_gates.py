@@ -16,13 +16,15 @@ def compiler(owner):
     return channel
 
 
-def commands(owner, gate):
+def commands(owner, gate, *, yaml_authority):
     cargo = ["cargo", "+" + compiler(owner)]
     uv = ["uv", "run", "--no-project", "--python", sys.executable, "python", "-m"]
     if gate == "regex":
         return [("regex", [*uv, "scripts.vendor_regex_tests"])]
     if gate != "coverage":
         raise ValueError("Unknown native owner gate")
+    if yaml_authority is None:
+        raise ValueError("Native allocation gate requires its explicit original YAML authority")
     # bounded: the fixed native gate families preserved during ownership transfer.
     return [
         ("format", ["sh", "scripts/fmt.sh", "--check"]),
@@ -45,7 +47,10 @@ def commands(owner, gate):
         ("evaluator", [*uv, "scripts.vendor_evaluator_tests"]),
         ("dataset", [*uv, "scripts.vendor_dataset_tests"]),
         ("storage", ["make", "test-store-contract"]),
-        ("allocation", [*uv, "scripts.allocation_budgets"]),
+        (
+            "allocation",
+            [*uv, "scripts.allocation_budgets", "--yaml-authority", yaml_authority],
+        ),
     ]
 
 
@@ -56,7 +61,9 @@ def execute(context, gate):
     validation = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(validation)
     owner, output = context["owner"], context["output"]
-    selected = commands(owner, gate)
+    authority = context["receipt"]["provider"]
+    yaml_authority = Path(authority["peers"]["yaml_test_dependency"]["authority"])
+    selected = commands(owner, gate, yaml_authority=yaml_authority)
     expected = (
         ["scripts/vendor_regex_tests.py"]
         if gate == "regex"
@@ -71,7 +78,6 @@ def execute(context, gate):
     )
     if any(not (owner / name).is_file() for name in expected):
         raise ValueError("Published native owner is missing mandatory verification inputs")
-    authority = context["receipt"]["provider"]
     record = {
         "provider_source_sha256": authority["source_sha256"],
         "native_wheel_sha256": authority["native_wheel_sha256"],
