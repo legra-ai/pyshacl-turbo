@@ -100,3 +100,66 @@ def test_old_twelve_cases_and_comparators_keep_their_inventory():
         for profile in ["literal-reflexivity", "literal-type"]
         for width in [32, 128, 512, 1000]
     }
+
+
+def test_complete_artifact_manifest_does_not_reference_unpublished_virtualenvs(tmp_path):
+    driver = load("matched_graph_driver")
+    paths = [
+        "proofs/case.json.gz",
+        "locks/baseline/uv.lock",
+        "originals/provider.whl",
+        "originals/provider.tar.gz",
+        "released-baseline/.venv/data.json",
+    ]
+    for name in paths:
+        path = tmp_path / name
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(b"preserve this file")
+    assert set(driver.proof_hashes(tmp_path)) == set(paths[:-1])
+
+
+def test_even_matching_public_errors_stop_before_timing(tmp_path):
+    driver = load("matched_graph_driver")
+    calls = []
+
+    def invoke(project, job, proof):
+        calls.append(job["kind"])
+        driver.WORKER.write_proof(
+            proof, {"observation": {"error": {"type": "builtins.ValueError"}}}
+        )
+
+    with pytest.raises(RuntimeError, match="correctness.*error"):
+        driver.check_case(
+            invoke, {"reference": tmp_path, "turbo": tmp_path}, 32, "literal-type", tmp_path
+        )
+    assert calls == ["correctness", "correctness"]
+
+
+def test_lock_replay_uses_locked_sync_without_resolving_or_rewriting_input(tmp_path, monkeypatch):
+    authority = load("matched_graph_authority")
+    lock = tmp_path / "supplied.lock"
+    lock.write_text("immutable original lock")
+    commands = []
+
+    def command(argv):
+        commands.append(list(map(str, argv)))
+        if argv[1] == "init":
+            project = Path(argv[-1])
+            project.mkdir()
+            (project / "pyproject.toml").write_text(
+                '[project]\nname = "baseline"\nversion = "0.1.0"\nrequires-python = ">=3.13"\ndependencies = []\n'
+            )
+        return ""
+
+    monkeypatch.setattr(authority.RELEASES, "command", command)
+    monkeypatch.setattr(authority, "identity", lambda *args: {})
+    project, _ = authority.setup(
+        {"id": "baseline", "requirements": {"rdflib": "==7.6.0"}},
+        tmp_path,
+        "3.13.16",
+        Path("driver.py"),
+        lock,
+    )
+    assert (project / "uv.lock").read_bytes() == lock.read_bytes()
+    assert not any(argv[1] == "add" for argv in commands)
+    assert commands[-1][1] == "sync" and "--locked" in commands[-1] and "--no-build" in commands[-1]

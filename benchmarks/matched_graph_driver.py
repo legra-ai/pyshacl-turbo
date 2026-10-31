@@ -102,6 +102,8 @@ def check_case(invoke, projects, width, profile, output):
                 case["oracles"][backend] = str(proof.resolve())
         gate = WORKER.SAMPLER.CONTRACT.comparison(*observations)
         case["diagnostics"][str(normalize)] = gate
+        if gate["status"] == "error":
+            raise RuntimeError("Public correctness operation returned an error")
         if normalize:
             case["normal"] = gate
     return case
@@ -148,7 +150,21 @@ def harness_hashes(cohort):
     ]
     return {
         **RELEASES.harness_hashes(),
-        **{str(path.resolve()): AUTHORITY.sha(path) for path in paths},
+        **{
+            path.relative_to(ROOT).as_posix()
+            if path.is_relative_to(ROOT)
+            else "cohort_input": AUTHORITY.sha(path)
+            for path in paths
+        },
+    }
+
+
+def proof_hashes(output):
+    return {
+        str(path.relative_to(output)): AUTHORITY.sha(path)
+        for directory in ["proofs", "locks", "originals"]
+        for path in (output / directory).rglob("*")
+        if path.is_file()
     }
 
 
@@ -156,6 +172,8 @@ def run(args):
     if args.python != "3.13.16" or RELEASES.command(["uv", "--version"]).split()[1] != "0.13.5":
         raise RuntimeError("Use native UV0.13.5 and CPython3.13.16")
     iteration_order(args.repeats)
+    if len(set(args.roles)) != len(args.roles):
+        raise ValueError("Cohort roles must be unique")
     if any(width not in [32, 128, 512, 1000] for width in args.widths) or len(
         set(args.widths)
     ) != len(args.widths):
@@ -233,11 +251,7 @@ def run(args):
         record["guards_equal"] = before == after and record["harness"] == harness_hashes(
             args.cohort
         )
-        record["proof_sha256"] = {
-            str(path.relative_to(output)): AUTHORITY.sha(path)
-            for path in output.rglob("*")
-            if path.is_file() and path.suffix in {".gz", ".whl", ".json", ".toml", ".lock"}
-        }
+        record["proof_sha256"] = proof_hashes(output)
         (output / "summary.json").write_text(json.dumps(record, indent=2))
         (output / "summary.md").write_text(markdown(record))
         if not record["guards_equal"]:
@@ -260,6 +274,13 @@ def markdown(record):
         "| Role | Width | Profile | Normal gate | False gate | Total speed ratio | Absolute RSS reduction |",
         "|---|---:|---|---|---|---:|---:|",
     ]
+    for role, entry in record["roles"].items():
+        names = RELEASES.REFERENCE if role == "reference" else RELEASES.TURBO
+        versions = {name: entry["identity"]["packages"][name]["version"] for name in sorted(names)}
+        lines.insert(
+            3,
+            f"Resolved {role}: {versions}; whole-wheel cohort {entry['whole_wheel_cohort']}; execution reuse: {entry.get('deduplicated_from', 'none')}.",
+        )
     for case in record["cases"]:
         samples = case.get("samples", {})
         lines.append(
