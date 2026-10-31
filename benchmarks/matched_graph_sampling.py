@@ -59,6 +59,7 @@ def _elapsed(start, end):
 
 def sample(backend, width, profile, expected):
     """Call once per fresh child, with a previously accepted complete oracle."""
+    preparation_start = _clock()
     import rdflib
     from rdflib import Graph, URIRef
 
@@ -78,6 +79,7 @@ def sample(backend, width, profile, expected):
             warnings.simplefilter("always")
             before = CONTRACT._state()
             with contextlib.redirect_stdout(stdout), contextlib.redirect_stderr(stderr):
+                preparation_end = _clock()
                 setup_peak = peak_rss()
                 start = _clock()
                 source = factory(identifier=URIRef("urn:matched:graph"), bind_namespaces="rdflib")
@@ -169,6 +171,7 @@ def sample(backend, width, profile, expected):
                 },
                 "setup_peak_rss_bytes": setup_peak,
                 "peak_rss_bytes": peak,
+                "preparation": _elapsed(preparation_start, preparation_end),
                 "gate": CONTRACT.comparison(oracle, observation),
                 "observation": observation,
                 "intermediate_states": "No per-stage facts/cache/flags scans in sampled child; pinned correctness oracle establishes those boundaries separately",
