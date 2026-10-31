@@ -50,7 +50,8 @@ def harness_hashes():
         ROOT / "tests/upstream_support/process_launch.py",
     ]
     return {
-        str(path.relative_to(ROOT)): hashlib.sha256(path.read_bytes()).hexdigest() for path in paths
+        path.relative_to(ROOT).as_posix(): hashlib.sha256(path.read_bytes()).hexdigest()
+        for path in paths
     }
 
 
@@ -141,6 +142,8 @@ def setup(env, directory, wheels, python):
             "add",
             "--project",
             project,
+            "--python",
+            python,
             "--no-sync",
             "--no-build",
             "--prerelease",
@@ -148,8 +151,21 @@ def setup(env, directory, wheels, python):
             *requirements,
         ]
     )
-    command(["uv", "sync", "--project", project, "--locked", "--no-build"])
-    executable = project / ".venv/bin/python"
+    command(
+        [
+            "uv",
+            "sync",
+            "--project",
+            project,
+            "--python",
+            python,
+            "--locked",
+            "--no-build",
+            "--prerelease",
+            "allow",
+        ]
+    )
+    executable = project / ".venv" / ("Scripts/python.exe" if os.name == "nt" else "bin/python")
     identity = json.loads(command([executable, "-I", "-B", Path(__file__), "--identity"]))
     for name, specifier in env["requirements"].items():
         expected = (

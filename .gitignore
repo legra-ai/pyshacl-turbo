@@ -2,6 +2,7 @@
 /native-coverage/
 /vendor/spareval-0.2.7/target/
 /.venv/
+/tools/dev/.venv/
 /.venv-companions/
 /.wheel-venv/
 /.pytest_cache/

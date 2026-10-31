@@ -1,8 +1,59 @@
+import ntpath
+import nturl2path
+from pathlib import Path, PureWindowsPath
+
 import pytest
+import suite_harness
 from rdflib import RDF, BNode, Graph, Literal
 from rdflib.compare import isomorphic
 from suite_harness import SH, cases, report_view
 from test_compatibility import EX, graph
+
+
+@pytest.mark.parametrize("name", ["space file.ttl", "unicode-Ω.ttl", "literal%20.ttl"])
+def test_local_file_uri_decodes_exactly_once_inside_pinned_tree(tmp_path, monkeypatch, name):
+    root = tmp_path / "pinned"
+    root.mkdir()
+    target = root / name
+    target.write_text("fixture")
+    monkeypatch.setattr(suite_harness, "ROOT", root)
+    assert suite_harness.local_path(target.as_uri()) == target.resolve()
+
+
+def test_local_file_uri_rejects_external_paths_and_authorities(tmp_path, monkeypatch):
+    root = tmp_path / "pinned"
+    root.mkdir()
+    monkeypatch.setattr(suite_harness, "ROOT", root)
+    for uri in ((tmp_path / "outside.ttl").as_uri(), "file://remote/fixture.ttl", "https://x/a"):
+        with pytest.raises(ValueError):
+            suite_harness.local_path(uri)
+
+
+def test_local_file_uri_rejects_symlink_escape(tmp_path, monkeypatch):
+    root, outside = tmp_path / "pinned", tmp_path / "outside"
+    root.mkdir()
+    outside.mkdir()
+    (outside / "fixture.ttl").write_text("fixture")
+    (root / "escape").symlink_to(outside, target_is_directory=True)
+    monkeypatch.setattr(suite_harness, "ROOT", root)
+    with pytest.raises(ValueError, match="escapes pinned tree"):
+        suite_harness.local_path((root / "escape/fixture.ttl").as_uri())
+
+
+def test_windows_drive_file_uri_uses_windows_path_decoding(monkeypatch):
+    class WindowsPath(PureWindowsPath):
+        def resolve(self):
+            # Lexical Windows semantics only; actual filesystem acceptance is CI.
+            return WindowsPath(ntpath.normpath(str(self)))
+
+    root = WindowsPath("D:/suite root/w3c")
+    target = root / "unicode-Ω%20.ttl"
+    monkeypatch.setattr(suite_harness, "ROOT", root)
+    monkeypatch.setattr(suite_harness, "Path", WindowsPath)
+    monkeypatch.setattr(suite_harness, "url2pathname", nturl2path.url2pathname, raising=False)
+    assert suite_harness.local_path(target.as_uri()) == target
+    with pytest.raises(ValueError, match="escapes pinned tree"):
+        suite_harness.local_path("file:///E:/outside.ttl")
 
 
 def view(report):
@@ -93,11 +144,11 @@ def test_document_comparator_rejects_missing_and_duplicate_results():
     assert not isomorphic(document_view(original), document_view(changed))
 
 
-def test_inventory_retains_executed_upstream_failures(tmp_path, monkeypatch):
+@pytest.mark.parametrize("windows_paths", [False, True])
+def test_inventory_retains_executed_upstream_failures(tmp_path, monkeypatch, windows_paths):
     import json
     import runpy
     import sys
-    from pathlib import Path
 
     root = Path(__file__).resolve().parents[1]
     main = runpy.run_path(str(root / "scripts/coverage_inventory.py"))["main"]
@@ -121,6 +172,13 @@ def test_inventory_retains_executed_upstream_failures(tmp_path, monkeypatch):
     unique_lang = next(case for case in cases() if case.path.stem == "uniqueLang-002")
     monkeypatch.setitem(main.__globals__, "cases", lambda: [unique_lang])
     monkeypatch.setattr(sys, "argv", ["coverage_inventory.py", str(output)])
+    if windows_paths:
+        original = Path.relative_to
+
+        def relative(path, *args, **kwargs):
+            return PureWindowsPath(original(path, *args, **kwargs).as_posix())
+
+        monkeypatch.setattr(Path, "relative_to", relative)
     main()
     result = json.loads(output.read_text())
     assert result["w3c_summary"] == {"mismatch": 1}

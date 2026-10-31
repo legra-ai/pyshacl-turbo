@@ -21,7 +21,7 @@ classifiers = [
 ]
 dependencies = [
     "rdflib>=7.3,<8",
-    "rdflib-turbo==0.2.0a17",
+    "rdflib-turbo==0.2.0a20",
 ]
 
 [project.urls]
@@ -36,7 +36,8 @@ test = [
     "pyshacl[oxigraph]==0.40.1",
     "ruff>=0.12",
     "pyyaml>=6,<7",
-    "rdflib-turbo==0.2.0a17",
+    "rdflib-turbo==0.2.0a20",
+    "owlrl-turbo==0.2.0a1",
 ]
 
 [project.scripts]
@@ -93,9 +94,6 @@ show_contexts = true
 
 [tool.ruff]
 line-length = 100
-
-[tool.uv.sources]
-rdflib-turbo = { path = "../rdflib-turbo", editable = true }
 
 [dependency-groups]
 dev = [

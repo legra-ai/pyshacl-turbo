@@ -2,6 +2,7 @@
 
 import importlib.util
 import json
+import subprocess
 import sys
 from pathlib import Path
 
@@ -16,12 +17,111 @@ def helper():
     return module
 
 
+def test_captured_failure_reports_both_streams_and_preserves_the_exception(monkeypatch, capsys):
+    module = helper()
+    failure = subprocess.CalledProcessError(
+        7, ["original-tool"], output="captured output\n", stderr="actual failure cause\n"
+    )
+
+    def fail(*args, **kwargs):
+        raise failure
+
+    monkeypatch.setattr(module.subprocess, "run", fail)
+    with pytest.raises(subprocess.CalledProcessError) as actual:
+        module.run(["original-tool"], capture=True)
+    assert actual.value is failure
+    streams = capsys.readouterr()
+    assert streams.out == "captured output\n"
+    assert streams.err == "actual failure cause\n"
+
+
+def test_three_product_probe_uses_the_original_expand_only_owl_api(tmp_path):
+    scripts = tmp_path / "owner/scripts"
+    scripts.mkdir(parents=True)
+    # Unit verifier stubs isolate the API call; original-wheel authority is
+    # independently exercised by the complete published-provider gate.
+    for name in ("pure_companion.py", "yaml_test_inputs.py"):
+        (scripts / name).write_text(
+            "def verify_loaded(wheel, environment):\n    return {'unit_verifier': True}\n"
+        )
+    code = helper().owl_probe(
+        tmp_path / "owner", tmp_path / "owl.whl", tmp_path / "project", tmp_path / "yaml.whl"
+    )
+    script = tmp_path / "probe.py"
+    script.write_text(
+        "import owlrl_turbo\n"
+        "for name in ('DeductiveClosure', 'RDFS_OWLRL_Semantics'):\n"
+        "    if hasattr(owlrl_turbo, name): delattr(owlrl_turbo, name)\n" + code
+    )
+    spec = importlib.util.spec_from_file_location(
+        "probe_launcher", Path(__file__).parent / "upstream_support/process_launch.py"
+    )
+    launcher = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(launcher)
+    process_type = launcher.Popen if sys.platform == "darwin" else subprocess.Popen
+    with process_type(
+        [sys.executable, "-I", "-B", str(script)],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+    ) as process:
+        stdout, stderr = process.communicate(timeout=20)
+        assert process.returncode == 0, stderr
+    record = json.loads(stdout)
+    assert record["pipeline"] == {
+        "canonical_dataset": True,
+        "inferred_type": True,
+        "conforms": True,
+        "same_native_owner": True,
+    }
+
+
 def test_validation_output_cannot_change_frozen_source(tmp_path):
     with pytest.raises(ValueError, match="outside frozen facade"):
         helper().require_output(tmp_path / "source", tmp_path / "source/output")
 
 
-def test_installed_checks_require_actual_registry_native_and_fa_payload_receipts(tmp_path):
+@pytest.mark.parametrize("suite", ["full", "compatibility"])
+def test_isolated_suite_loads_sibling_helpers_without_loading_source_product(tmp_path, suite):
+    source = tmp_path / "source"
+    tests = source / "tests"
+    tests.mkdir(parents=True)
+    (source / "pyshacl_turbo.py").write_text("raise RuntimeError('source product imported')\n")
+    (tests / "suite_harness.py").write_text("VALUE = 42\n")
+    body = (
+        "from suite_harness import VALUE\n"
+        "import pyshacl_turbo\n"
+        "def test_w3c_sparql_constraint():\n"
+        "    assert VALUE == 42\n"
+        "    assert 'site-packages' in pyshacl_turbo.__file__\n"
+    )
+    for name in ("test_w3c.py", "test_w3c_documents.py", "test_sparql.py"):
+        (tests / name).write_text(body)
+    module = helper()
+    context = {"acceptance": source, "project": tmp_path, "output": tmp_path}
+    command = (
+        module.test_command(source, tmp_path, tmp_path, coverage=False)
+        if suite == "full"
+        else module.compatibility_commands(context)[0][1]
+    )
+    arguments = [sys.executable, *map(str, command[command.index("python") + 1 :])]
+    spec = importlib.util.spec_from_file_location(
+        "suite_launcher", Path(__file__).parent / "upstream_support/process_launch.py"
+    )
+    launcher = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(launcher)
+    process_type = launcher.Popen if sys.platform == "darwin" else subprocess.Popen
+    with process_type(
+        arguments, cwd=source, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
+    ) as process:
+        stdout, stderr = process.communicate(timeout=30)
+    assert process.returncode == 0, stdout + stderr
+    assert "3 passed" in stdout
+
+
+def test_installed_checks_require_actual_registry_native_and_fa_payload_receipts(
+    tmp_path, monkeypatch
+):
     source, wheel, project = [tmp_path / name for name in ("owner", "facade.whl", "project")]
     code = helper().installed_probe(source, wheel, project)
     assert "verify_loaded_facade" in code
@@ -29,12 +129,20 @@ def test_installed_checks_require_actual_registry_native_and_fa_payload_receipts
     assert "SHARED_SHACL_PROTOCOL" in code
     assert "forbid_conversion" in code
     assert "RECEIPT_PROBE" not in code
+    module = helper()
+    commands = []
+    monkeypatch.setattr(
+        module, "run", lambda command, **kwargs: commands.append(command) or "{}\n{}\n"
+    )
+    assert module.installed_receipts(source, wheel, project, {}) == [{}, {}]
+    index = commands[0].index("python")
+    assert commands[0][index : index + 4] == ["python", "-I", "-B", "-c"]
 
 
 def test_full_installed_tests_use_isolated_uv_and_preserve_coverage_gate(tmp_path):
     source, project, output = [tmp_path / name for name in ("source", "project", "output")]
     command = helper().test_command(source, project, output, coverage=True)
-    assert command[:9] == [
+    assert command[:10] == [
         "uv",
         "run",
         "--project",
@@ -43,13 +151,14 @@ def test_full_installed_tests_use_isolated_uv_and_preserve_coverage_gate(tmp_pat
         "--no-sync",
         "python",
         "-I",
+        "-B",
         "-m",
     ]
-    assert command[9] == "pytest"
+    assert command[10] == "pytest"
     assert str(source / "tests") in command
     assert "--cov-fail-under=100" in command
     assert "--cov-branch" in command
-    assert "--import-mode=importlib" in command
+    assert "--import-mode=prepend" in command
 
 
 def test_current_acceptance_receipt_must_bind_every_source_byte():
@@ -96,9 +205,12 @@ def test_actual_uv_child_preserves_bytecode_disabled_source_inventory(tmp_path):
         "module=importlib.util.module_from_spec(spec); spec.loader.exec_module(module); "
         "assert module.VALUE == 'original'; print(sys.dont_write_bytecode)"
     )
-    result = helper().run(
-        ["uv", "run", "--no-project", "--python", sys.executable, "python", "-c", code],
-        env=helper().environment(),
+    module = helper()
+    generated = module.test_command(tmp_path, tmp_path, tmp_path, coverage=False)
+    flags = generated[generated.index("python") + 1 : generated.index("-m")]
+    result = module.run(
+        ["uv", "run", "--no-project", "--python", sys.executable, "python", *flags, "-c", code],
+        env=module.environment(),
         capture=True,
     )
     assert result.strip() == "True"

@@ -65,7 +65,13 @@ def test_builder_receives_original_provider_and_owl_archives_without_git_guesses
     }
     owl = {"path": str(tmp_path / "owl.whl"), "sha256": "c" * 64}
     command = module.builder_arguments(
-        source, "d" * 40, wheel, provider, owl, tmp_path / "candidate"
+        source,
+        "d" * 40,
+        wheel,
+        provider,
+        owl,
+        tmp_path / "candidate",
+        execution_owlrl=provider["peers"]["owlrl"],
     )
     for flag, value in {
         "--provider-archive": provider["source_archive"],

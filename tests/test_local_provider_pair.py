@@ -1,6 +1,7 @@
 """A source archive checks declarations without assuming a sibling checkout."""
 
 import importlib.util
+import tomllib
 from pathlib import Path
 
 import pytest
@@ -14,9 +15,18 @@ def helper():
     return module
 
 
-def test_project_source_override_matches_its_actual_locked_declaration():
-    declaration = helper().declaration(Path(__file__).resolve().parents[1])
-    assert declaration["relative_path"].startswith("../")
+def test_registry_project_is_not_an_explicit_local_provider_declaration():
+    root = Path(__file__).resolve().parents[1]
+    manifest = tomllib.loads((root / "pyproject.toml").read_text())
+    (requirement,) = [
+        text for text in manifest["project"]["dependencies"] if text.startswith("rdflib-turbo==")
+    ]
+    lock = tomllib.loads((root / "uv.lock").read_text())
+    (provider,) = [entry for entry in lock["package"] if entry["name"] == "rdflib-turbo"]
+    assert provider["version"] == requirement.split("==")[1]
+    assert provider["source"] == {"registry": "https://pypi.org/simple"}
+    with pytest.raises(ValueError, match="explicit sibling editable provider declaration"):
+        helper().declaration(root)
 
 
 def paired_fixture(tmp_path):

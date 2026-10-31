@@ -116,9 +116,9 @@ def metadata(owner):
     return json.loads(result.stdout), {"rustc": rustc, "command": command, "maturin": maturin}
 
 
-def restore_source_identity(owner, facade, output, archive, sha256, expected_fingerprint):
+def restore_source_identity(owner, output, archive, sha256, expected_fingerprint):
     """Resolve identity at the final archive-faithful uv peer layout."""
-    peers = load("published_peers").restore(owner, facade, output)
+    peers = load("published_peers").restore(owner, output)
     owner = Path(peers["provider_source"])
     files = load("provider_registry").verify_extracted(archive, owner, sha256)
     load("published_peers").verify_declaration_peer(owner, peers["declaration_peer"])
@@ -166,7 +166,7 @@ def resolve(source, wheel, output):
     owner = registry.extract(archive, output / "source", archive_entry["digests"]["sha256"])
     verify_source_package(owner, payload, receipt["native_member"])
     restored = restore_source_identity(
-        owner, source, output, archive, archive_entry["digests"]["sha256"], receipt["fingerprint"]
+        owner, output, archive, archive_entry["digests"]["sha256"], receipt["fingerprint"]
     )
     owner = restored["source"]
     collector = owner / "scripts/native_coverage.py"

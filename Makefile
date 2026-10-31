@@ -18,8 +18,8 @@ test-coverage:
 	uv run --locked --extra test python scripts/coverage_badge.py --input python-coverage.json --output htmlcov/coverage.svg
 
 lint:
-	uv run --locked --only-group dev ruff check python tests benchmarks scripts
-	uv run --locked --only-group dev ruff format --check python tests benchmarks scripts
+	uv run --project tools/dev --locked --only-group dev ruff check python tests benchmarks scripts
+	uv run --project tools/dev --locked --only-group dev ruff format --check python tests benchmarks scripts
 
 check: test lint
 

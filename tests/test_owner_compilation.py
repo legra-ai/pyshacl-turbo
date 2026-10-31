@@ -14,6 +14,14 @@ SHAPES = """@prefix sh: <http://www.w3.org/ns/shacl#> .
 <urn:S> sh:targetNode <urn:s>; sh:class <urn:C>."""
 
 
+REPORT = (
+    "_:report <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> "
+    "<http://www.w3.org/ns/shacl#ValidationReport> .\n"
+    "_:report <http://www.w3.org/ns/shacl#conforms> "
+    '"true"^^<http://www.w3.org/2001/XMLSchema#boolean> .\n'
+)
+
+
 @pytest.fixture
 def provider(monkeypatch):
     calls = []
@@ -40,7 +48,7 @@ def provider(monkeypatch):
     @contextmanager
     def validate(owner, program, settings, inplace):
         calls.append(("validate", owner))
-        yield True, "", "Validation Report\nConforms: True\n", []
+        yield True, REPORT, "Validation Report\nConforms: True\n", []
         calls.append(("accept", owner))
 
     def compile_native(*args, _policy):

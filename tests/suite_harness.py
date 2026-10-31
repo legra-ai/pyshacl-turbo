@@ -3,7 +3,8 @@
 import json
 from dataclasses import dataclass
 from pathlib import Path
-from urllib.parse import unquote, urlparse
+from urllib.parse import urlparse
+from urllib.request import url2pathname
 
 import rdflib
 from rdflib import RDF, BNode, Graph, Literal, Namespace, URIRef
@@ -40,7 +41,7 @@ def local_path(uri):
     parsed = urlparse(str(uri))
     if parsed.scheme != "file" or parsed.netloc:
         raise ValueError(f"Non-local suite input: {uri}")
-    path = Path(unquote(parsed.path)).resolve()
+    path = Path(url2pathname(parsed.path)).resolve()
     if not path.is_relative_to(ROOT.resolve()):
         raise ValueError(f"Suite input escapes pinned tree: {uri}")
     return path

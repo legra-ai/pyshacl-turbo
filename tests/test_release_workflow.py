@@ -11,6 +11,77 @@ import yaml
 ROOT = Path(__file__).parents[1]
 
 
+@pytest.mark.parametrize("name", ["compatibility", "regex", "native-coverage", "shared-pipeline"])
+def test_yaml_cohorts_declare_the_exact_build_interpreter(name):
+    workflow = yaml.safe_load((ROOT / f".github/workflows/{name}.yml").read_text())
+    job = workflow["jobs"][
+        "benchmark" if name == "shared-pipeline" else name.replace("native-coverage", "coverage")
+    ]
+    setups = [
+        step["with"]["python-version"]
+        for step in job["steps"]
+        if step.get("uses", "").startswith("actions/setup-python@")
+    ]
+    assert setups == ["3.13.16"]
+
+
+def test_minimum_runtime_keeps_its_separate_pinned_yaml_build_interpreter():
+    job = yaml.safe_load((ROOT / ".github/workflows/ci.yml").read_text())["jobs"]["verify"]
+    versions = [case["python"] for case in job["strategy"]["matrix"]["include"]]
+    assert versions == ["3.11", "3.13.16", "3.13.16", "3.13.16"]
+    setups = [
+        step for step in job["steps"] if step.get("uses", "").startswith("actions/setup-python@")
+    ]
+    assert setups[0]["with"]["python-version"] == "3.13.16"
+    assert setups[0]["if"] == "matrix.python == '3.11'"
+    assert setups[1]["with"]["python-version"] == "${{ matrix.python }}"
+
+
+def test_pure_facade_preparation_and_tagging_use_the_uv_release_policy():
+    workflow = yaml.safe_load((ROOT / ".github/workflows/ci.yml").read_text())
+    prepare = next(
+        step for step in workflow["jobs"]["prepare"]["steps"] if step.get("id") == "release"
+    )
+    tag = next(
+        step
+        for step in workflow["jobs"]["publish"]["steps"]
+        if "/tag-tested-release@" in step.get("uses", "")
+    )
+    for step in [prepare, tag]:
+        assert step["with"]["manifest-kind"] == "uv"
+        assert step["with"]["tag-format"] == "pep440"
+    assert prepare["uses"].split("@")[1] == tag["uses"].split("@")[1]
+
+
+def test_release_preparation_preserves_the_minor_breaking_change_policy():
+    workflow = yaml.safe_load((ROOT / ".github/workflows/ci.yml").read_text())
+    prepare = next(
+        step for step in workflow["jobs"]["prepare"]["steps"] if step.get("id") == "release"
+    )
+    assert prepare["with"]["breaking-change-bump"] == "minor"
+
+
+def test_release_and_dependency_actions_use_one_immutable_policy_revision():
+    actions = []
+    for name in ("ci.yml", "dependabot-merge.yml"):
+        workflow = yaml.safe_load((ROOT / ".github/workflows" / name).read_text())
+        for job in workflow["jobs"].values():
+            actions.extend(
+                step["uses"]
+                for step in job.get("steps", [])
+                if step.get("uses", "").startswith("legra-ai/github-actions/.github/actions/")
+            )
+    assert {action.split("/")[-1].split("@")[0] for action in actions} == {
+        "prepare-cargo-release",
+        "tag-tested-release",
+        "generate-changelog",
+        "merge-tested-dependabot",
+    }
+    revisions = {action.split("@")[1] for action in actions}
+    assert len(revisions) == 1
+    assert re.fullmatch(r"[0-9a-f]{40}", revisions.pop())
+
+
 def test_release_builds_only_the_original_universal_facade_wheel():
     project = tomllib.loads((ROOT / "pyproject.toml").read_text())
     assert project["build-system"]["build-backend"] == "hatchling.build"

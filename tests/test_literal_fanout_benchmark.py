@@ -2,7 +2,9 @@
 
 import hashlib
 import importlib.util
+import sys
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 from rdflib import Literal, URIRef
@@ -14,6 +16,16 @@ def load(name):
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module
+
+
+def mock_worker_rss(monkeypatch, suite):
+    """Unit-test worker ordering independently of host RSS capabilities/units."""
+    resource = SimpleNamespace(
+        RUSAGE_SELF=object(), getrusage=lambda _: SimpleNamespace(ru_maxrss=10)
+    )
+    monkeypatch.setitem(sys.modules, "resource", resource)
+    monkeypatch.setattr(suite, "rss_bytes", lambda value, platform: value)
+    return resource
 
 
 GOLDENS = {
@@ -112,6 +124,7 @@ def test_inplace_setup_and_observation_remain_outside_existing_worker_timer(monk
     import owlrl
 
     suite = load("companions")
+    mock_worker_rss(monkeypatch, suite)
     events = []
 
     class Closure:
@@ -177,10 +190,8 @@ def test_inplace_changes_to_existing_literal_cache_fail_observation(monkeypatch)
 
 
 def test_cold_worker_runs_once_and_captures_peak_before_observation(monkeypatch):
-    import resource
-    from types import SimpleNamespace
-
     suite = load("companions")
+    resource = mock_worker_rss(monkeypatch, suite)
     events = []
 
     def prepare(_):
@@ -247,6 +258,7 @@ def test_release_worker_argv_is_accepted_by_the_real_companion_parser(monkeypatc
     import sys
 
     bench = load("releases")
+    mock_worker_rss(monkeypatch, bench.companions)
     calls = []
 
     def command(argv, *, timeout):
@@ -358,3 +370,114 @@ def test_native_export_uses_real_dataset_quad_contract(monkeypatch, named_stage)
         observation = observe(value)
         assert observation["input_count"] == 32
         assert observation["public_effects"]["returned_input"]
+
+
+def test_native_fanout_observes_named_inference_without_losing_physical_scope(monkeypatch):
+    import sys
+    from types import SimpleNamespace
+
+    from owlrl import DeductiveClosure, OWLRL_Semantics
+    from rdflib import Dataset, Graph
+
+    suite = load("companions")
+    destination = URIRef("urn:owlrl-turbo:inference")
+
+    class Owner:
+        def parse(self, *, data, format):
+            self.dataset = Dataset().parse(data=data, format=format)
+            return self
+
+        def to_rdflib(self):
+            return self.dataset
+
+        def namespaces(self):
+            return self.dataset.namespaces()
+
+    def expand(source, *, inference, inplace):
+        assert inference == "owlrl" and inplace
+        original = Graph()
+        for triple in source.dataset.default_graph:
+            original.add(triple)
+        DeductiveClosure(OWLRL_Semantics).expand(original)
+        for triple in original:
+            source.dataset.graph(destination).add(triple)
+        return source
+
+    monkeypatch.setitem(sys.modules, "rdflib_turbo", SimpleNamespace(Dataset=Owner))
+    monkeypatch.setitem(sys.modules, "owlrl_turbo", SimpleNamespace(expand=expand))
+    job = {
+        "operation": "owlrl",
+        "backend": "turbo_shared",
+        "nodes": 32,
+        "fixture": "literal-reflexivity",
+    }
+    run, observe = suite.prepare(job)
+    source = run()
+    result = observe(source)
+    original = Graph().parse(data=suite.fanout_fixture(32, job["fixture"]), format="turtle")
+    DeductiveClosure(OWLRL_Semantics).expand(original)
+    assert result["closure"] == suite.graph_observation(original)
+    assert result["complete_term_metadata"] == suite.FANOUT.facts(original)
+    assert len(source.dataset.default_graph) == 32
+    assert len(source.dataset.graph(destination)) == len(original)
+    contexts = result["physical_contexts"]
+    assert contexts[1] == {
+        "graph": suite.FANOUT.term(destination),
+        "facts": suite.FANOUT.facts(original),
+        "count": len(original),
+    }
+    assert contexts[0]["graph"] is None
+    assert contexts[0]["count"] == 32
+    assert contexts[0]["facts"] == result["initial_term_metadata"]
+    assert result["state"]["logical_scope"] == "complete closure"
+
+
+def test_initial_native_export_is_released_before_measured_inference(monkeypatch):
+    import sys
+    import weakref
+    from types import SimpleNamespace
+
+    from rdflib import Dataset
+
+    suite = load("companions")
+    exports = []
+
+    class Export:
+        def __init__(self, dataset):
+            self.dataset = dataset
+
+        def __getattr__(self, name):
+            return getattr(self.dataset, name)
+
+    class Owner:
+        def parse(self, *, data, format):
+            self.dataset = Dataset().parse(data=data, format=format)
+            return self
+
+        def to_rdflib(self):
+            exported = Export(self.dataset)
+            exports.append(weakref.ref(exported))
+            return exported
+
+        def namespaces(self):
+            return self.dataset.namespaces()
+
+    def expand(source, *, inference, inplace):
+        assert inference == "owlrl" and inplace
+        assert exports and all(ref() is None for ref in exports)
+        return source
+
+    monkeypatch.setitem(sys.modules, "rdflib_turbo", SimpleNamespace(Dataset=Owner))
+    monkeypatch.setitem(sys.modules, "owlrl_turbo", SimpleNamespace(expand=expand))
+    run, observe = suite.prepare(
+        {
+            "operation": "owlrl",
+            "backend": "turbo_shared",
+            "nodes": 32,
+            "fixture": "literal-reflexivity",
+        }
+    )
+    result = observe(run())
+    assert result["input_count"] == 32
+    assert result["physical_contexts"][0]["count"] == 32
+    assert all(ref() is None for ref in exports)

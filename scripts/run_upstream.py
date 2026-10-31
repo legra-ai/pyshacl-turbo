@@ -52,6 +52,8 @@ def main():
             "--continue-on-collection-errors",
             "--tb=short",
             "-q",
+            "-o",
+            "parametrize_long_str_id_strategy=legacy",
             "-W",
             "ignore::DeprecationWarning:rdflib",
             *files,

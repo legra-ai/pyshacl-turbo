@@ -154,13 +154,51 @@ def original_peer(project, version, output, *, owner=None):
     return result
 
 
-def restore(owner, facade, output):
+def execution_owl_version(consumer):
+    """Require one exact consumer test pin, independently of the owner's build lock."""
+    manifest = tomllib.loads((consumer / "pyproject.toml").read_text())
+    requirements = manifest.get("project", {}).get("optional-dependencies", {}).get("test", [])
+    candidates = [value for value in requirements if re.match(r"(?i)^owlrl[-_.]turbo\b", value)]
+    if len(candidates) != 1:
+        raise ValueError("Expected one exact consumer OWL test dependency")
+    match = re.fullmatch(r"owlrl-turbo==(" + load("provider_registry").VERSION + ")", candidates[0])
+    if match is None:
+        raise ValueError("Expected one unconditional exact registry OWL test dependency")
+    return match[1]
+
+
+def execution_peer(consumer, owner, output):
+    """Restore selected execution authority without changing original build peers."""
+    return original_peer("owlrl-turbo", execution_owl_version(consumer), output, owner=owner)
+
+
+def verify_owl_peer(owner, owl):
+    """Reattest each independently named build or execution original without relabeling."""
+    registry = load("provider_registry")
+    if (
+        registry.verify_extracted(
+            Path(owl["archive"]), Path(owl["source"]), owl["sha256"], exact_inventory=False
+        )
+        != owl["files"]
+    ):
+        raise ValueError("Original OWL source changed during validation")
+    if (
+        load("provider_validation").digest(Path(owl["wheel"])) != owl["wheel_sha256"]
+        or load_companion(owner).verify_payload(Path(owl["source"]), Path(owl["wheel"]))
+        != owl["package_payload"]
+    ):
+        raise ValueError("Original OWL wheel changed during validation")
+
+
+def restore(owner, output):
     """Restore the published lock's peer, independently of current acceptance code."""
     owner, output = owner.resolve(strict=True), output.resolve(strict=True)
     if owner == output or not owner.is_relative_to(output):
         raise ValueError("Only the downloaded owner source may move inside its output cohort")
     owl_version = locked_version(owner, "owlrl-turbo")
-    native_name = adjacent_peer(facade, "rdflib-turbo")
+    native_name = tomllib.loads((owner / "pyproject.toml").read_text())["project"]["name"]
+    if native_name != "rdflib-turbo":
+        raise ValueError("Expected the original native provider project identity")
     facade_name = adjacent_peer(owner, "pyshacl-turbo")
     declared = prepare_declaration_peer(owner, output / "peers/pyshacl-turbo")
     declared_source = Path(declared["source"]).resolve(strict=True)

@@ -1,15 +1,47 @@
 """Pure façade workflows delegate Rust authority without dropping native gates."""
 
+import importlib.util
 from pathlib import Path
 
 import pytest
 import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
+# Published Native20's full Ubuntu verification job budgets 90 minutes, unlike
+# its collector-only job's 25; source authority is the original D269 sdist.
+NATIVE20_FULL_UBUNTU_VERIFICATION_MINUTES = 90
 
 
 def workflow(name):
     return yaml.safe_load((ROOT / ".github/workflows" / name).read_text())
+
+
+def test_combined_coverage_and_owner_gates_use_the_full_verification_budget(tmp_path):
+    spec = importlib.util.spec_from_file_location("owner_gates", ROOT / "scripts/owner_gates.py")
+    owner_gates = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(owner_gates)
+    (tmp_path / "rust-toolchain.toml").write_text('[toolchain]\nchannel="1.99.1"\n')
+    families = dict(
+        owner_gates.commands(tmp_path, "coverage", yaml_authority=tmp_path / "yaml-inputs.json")
+    )
+    assert set(families) == {
+        "format",
+        "clippy",
+        "metadata",
+        "datatype",
+        "evaluator",
+        "dataset",
+        "storage",
+        "allocation",
+    }
+    job = workflow("native-coverage.yml")["jobs"]["coverage"]
+    delegation = [
+        step["run"] for step in job["steps"] if "scripts/owner_driver.py" in step.get("run", "")
+    ]
+    assert len(delegation) == 1 and "--gate coverage" in delegation[0]
+    # This delegates collector + the eight families above + API documentation,
+    # whose sequence is exercised by test_owner_driver, not collector-only work.
+    assert job["timeout-minutes"] == NATIVE20_FULL_UBUNTU_VERIFICATION_MINUTES
 
 
 @pytest.mark.parametrize(

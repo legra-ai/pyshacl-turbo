@@ -20,7 +20,7 @@ def test_measured_pipeline_shares_the_dataset_and_materializes_only_the_report(m
 
     def capture(data, **options):
         assert isinstance(data, Dataset)
-        observed.append(data._native)
+        observed.append(data.store.backend._native)
         return original(data, **options)
 
     def forbidden(*args, **kwargs):
@@ -35,5 +35,5 @@ def test_measured_pipeline_shares_the_dataset_and_materializes_only_the_report(m
         for name in ("to_rdflib", "from_rdflib", "serialize", "copy"):
             patch.setattr(Dataset, name, forbidden)
         value = run()
-    assert observed == [value[0]._native]
+    assert observed == [value[0].store.backend._native]
     assert "report" in observe(value)

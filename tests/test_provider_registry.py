@@ -4,9 +4,11 @@ import hashlib
 import importlib.util
 import io
 import tarfile
+import tomllib
 from pathlib import Path
 
 import pytest
+from packaging.version import Version
 
 
 def module():
@@ -22,6 +24,29 @@ def test_provider_requirement_is_an_exact_runtime_pin(tmp_path):
     path = tmp_path / "pyproject.toml"
     path.write_text('[project]\ndependencies=["rdflib>=7", "rdflib-turbo==0.2.0a9"]\n')
     assert module().declared_version(path) == "0.2.0a9"
+
+
+def test_facade_pins_the_published_shared_engine_for_runtime_and_tests():
+    manifest = Path(__file__).resolve().parents[1] / "pyproject.toml"
+    version = module().declared_version(manifest)
+    # a20 is the first published provider with the facade's native shacl module.
+    assert Version(version) >= Version("0.2.0a20")
+    project = tomllib.loads(manifest.read_text())["project"]
+    test_pins = [
+        requirement
+        for requirement in project["optional-dependencies"]["test"]
+        if requirement.startswith("rdflib-turbo")
+    ]
+    assert test_pins == [f"rdflib-turbo=={version}"]
+
+
+def test_root_lock_retains_the_declared_registry_provider():
+    root = Path(__file__).resolve().parents[1]
+    lock = tomllib.loads((root / "uv.lock").read_text())
+    providers = [package for package in lock["package"] if package["name"] == "rdflib-turbo"]
+    assert len(providers) == 1
+    assert providers[0]["version"] == module().declared_version(root / "pyproject.toml")
+    assert providers[0]["source"] == {"registry": "https://pypi.org/simple"}
 
 
 @pytest.mark.parametrize("project", ["rdflib-turbo", "pyshacl-turbo", "owlrl-turbo"])

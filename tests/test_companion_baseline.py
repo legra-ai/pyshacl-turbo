@@ -105,10 +105,19 @@ def test_dependabot_preserves_the_historical_benchmark_product_versions():
         manifest["project"]["dependencies"]
     )
     config = yaml.safe_load((root / ".github/dependabot.yml").read_text())
+    paths = [
+        path
+        for entry in config["updates"]
+        if entry["package-ecosystem"] == "uv"
+        for path in entry.get("directories", [entry.get("directory")])
+    ]
+    assert set(paths) == {"/", "/tools/dev", "/tools/packaging", "/benchmarks"}
+    assert len(paths) == len(set(paths))
     updates = next(
         entry
         for entry in config["updates"]
-        if entry["package-ecosystem"] == "uv" and entry["directory"] == "/benchmarks"
+        if entry["package-ecosystem"] == "uv"
+        and "/benchmarks" in entry.get("directories", [entry.get("directory")])
     )
     ignored = {entry["dependency-name"] for entry in updates.get("ignore", [])}
     assert ignored == set(pinned), "Only historical benchmark products must stay pinned"

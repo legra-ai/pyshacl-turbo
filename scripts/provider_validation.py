@@ -49,13 +49,21 @@ def run(command, *, directory=None, env=None, capture=False):
     # The registry probe installs the macOS no-fork launcher. Change the parent
     # directory explicitly instead of asking subprocess to use fork-only cwd=.
     with contextlib.chdir(directory) if directory else contextlib.nullcontext():
-        result = subprocess.run(
-            list(map(str, command)),
-            check=True,
-            env=env,
-            capture_output=capture,
-            text=True,
-        )
+        try:
+            result = subprocess.run(
+                list(map(str, command)),
+                check=True,
+                env=env,
+                capture_output=capture,
+                text=True,
+            )
+        except subprocess.CalledProcessError as error:
+            if capture:
+                if error.stdout:
+                    sys.stdout.write(error.stdout)
+                if error.stderr:
+                    sys.stderr.write(error.stderr)
+            raise
     return result.stdout if capture else None
 
 
@@ -85,11 +93,12 @@ def test_command(source, project, output, *, coverage):
         "--no-sync",
         "python",
         "-I",
+        "-B",
         "-m",
         "pytest",
         str(source / "tests"),
         "-q",
-        "--import-mode=importlib",
+        "--import-mode=prepend",
     ]
     if coverage:
         command.extend(
@@ -121,6 +130,7 @@ def installed_receipts(owner, wheel, project, env):
             "--no-sync",
             "python",
             "-I",
+            "-B",
             "-c",
             installed_probe(owner, wheel, project),
         ],
@@ -145,7 +155,7 @@ spec = importlib.util.spec_from_file_location("verified_owner_companion", {str(o
 companion = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(companion)
 before = companion.verify_loaded(Path({str(wheel)!r}), Path({str(project / ".venv")!r}))
-from owlrl_turbo import DeductiveClosure, RDFS_OWLRL_Semantics
+from owlrl_turbo import expand
 
 if Dataset is not StoreDataset:
     raise RuntimeError("Published pipeline requires the canonical Dataset owner")
@@ -154,7 +164,9 @@ data = Dataset()
 native_owner = data.store.backend._native
 data.add((ex.subject, RDF.type, ex.Child))
 data.add((ex.Child, RDFS.subClassOf, ex.Parent))
-DeductiveClosure(RDFS_OWLRL_Semantics).expand(data)
+result = expand(data, inference="both", inplace=True)
+if result is not data:
+    raise RuntimeError("Published OWL closure replaced its caller dataset")
 if data.store.backend._native is not native_owner:
     raise RuntimeError("Published OWL closure replaced its native dataset owner")
 if (ex.subject, RDF.type, ex.Parent) not in data:
@@ -260,7 +272,7 @@ def verify_runtime(context):
         or facade != context["receipt"]["installed_facade"]
     ):
         raise ValueError("Installed runtime payload changed during validation")
-    owl = context["receipt"]["provider"]["peers"]["owlrl"]
+    owl = context["receipt"]["execution_owlrl"]
     yaml = context["receipt"]["provider"]["peers"]["yaml_test_dependency"]
     yaml_inputs = load("published_peers").verify_yaml_test_dependency(context["owner"], yaml)
     yaml_wheel = yaml_inputs["wheel"]
@@ -309,6 +321,9 @@ def prepare(source, wheel, output):
     output.mkdir(parents=True, exist_ok=False)
     authority = load("published_provider").resolve(source, wheel, output / "provider")
     owner = Path(authority["source"])
+    execution_owl = load("published_peers").execution_peer(
+        source, owner, output / "execution-owlrl"
+    )
     acceptance = owner.parent / "current-facade"
     run(["git", "clone", "--no-checkout", source, acceptance])
     run(["git", "-C", acceptance, "checkout", "--detach", frozen["revision"]])
@@ -350,7 +365,7 @@ def prepare(source, wheel, output):
             ],
             env=env,
         )
-        owl = authority["peers"]["owlrl"]
+        owl = execution_owl
         owl_wheel = Path(owl["wheel"]).resolve(strict=True)
         if digest(owl_wheel) != owl["wheel_sha256"]:
             raise ValueError("Original OWL wheel differs from its retained registry SHA-256")
@@ -376,6 +391,7 @@ def prepare(source, wheel, output):
             "current_facade": frozen,
             "facade_inputs": facade_inputs,
             "provider": authority,
+            "execution_owlrl": execution_owl,
             "installed_provider": native,
             "installed_facade": facade,
             "installed_owlrl": installed_owl,
@@ -423,21 +439,11 @@ def verify_sources(context):
     load("published_peers").verify_yaml_test_dependency(context["owner"], yaml)
     if digest(Path(yaml["authority"])) != receipt["yaml_authority_sha256"]:
         raise ValueError("Original YAML authority changed during validation")
-    if (
-        registry.verify_extracted(
-            Path(owl["archive"]), Path(owl["source"]), owl["sha256"], exact_inventory=False
-        )
-        != owl["files"]
-    ):
-        raise ValueError("Original published OWL source changed during validation")
-    if (
-        digest(Path(owl["wheel"])) != owl["wheel_sha256"]
-        or load("published_peers")
-        .load_companion(context["owner"])
-        .verify_payload(Path(owl["source"]), Path(owl["wheel"]))
-        != owl["package_payload"]
-    ):
-        raise ValueError("Original published OWL wheel changed during validation")
+    load("published_peers").verify_owl_peer(context["owner"], owl)
+    execution_owl = receipt["execution_owlrl"]
+    if execution_owl["version"] != load("published_peers").execution_owl_version(context["source"]):
+        raise ValueError("Selected execution OWL differs from the frozen consumer test dependency")
+    load("published_peers").verify_owl_peer(context["owner"], execution_owl)
     if digest(context["project"] / "uv.lock") != receipt["environment_lock_sha256"]:
         raise ValueError("Installed validation lock changed")
     (output / "validation-verified.json").write_text(
@@ -460,7 +466,7 @@ def compatibility_commands(context):
                 source / "tests/test_w3c_documents.py",
                 str(source / "tests/test_sparql.py") + "::test_w3c_sparql_constraint",
                 "-q",
-                "--import-mode=importlib",
+                "--import-mode=prepend",
                 f"--junitxml={output / 'w3c-results.xml'}",
             ],
         ),

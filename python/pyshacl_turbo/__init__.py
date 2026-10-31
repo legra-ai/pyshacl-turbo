@@ -292,6 +292,8 @@ class CompiledShapes:
             try:
                 with execute(self._shared_program, json.dumps(settings), inplace) as result:
                     conforms, report, text, recursion_warnings = result
+                    if type(conforms) is not bool:
+                        raise TypeError("Native report conformance must be a boolean")
                     _emit_recursion_warnings(recursion_warnings)
                     report_graph = _graph(
                         report,
@@ -299,6 +301,7 @@ class CompiledShapes:
                         preserve_ids=True,
                         report=True,
                         normalize=_normalize_report_literals,
+                        _report_conforms=conforms,
                     )
                     for prefix, namespace in self._shape_namespaces:
                         report_graph.bind(prefix, namespace)
@@ -331,10 +334,17 @@ class CompiledShapes:
             [(p, str(ns)) for p, ns in data.namespaces.items()],
             _comparison_policy=_native._VALUE_COMPARISON_POLICY,
         )
+        if type(conforms) is not bool:
+            raise TypeError("Native report conformance must be a boolean")
         _emit_recursion_warnings(recursion_warnings)
         nodes = self._blank_nodes | data.blank_nodes
         report_graph = _graph(
-            report, nodes, preserve_ids=True, report=True, normalize=_normalize_report_literals
+            report,
+            nodes,
+            preserve_ids=True,
+            report=True,
+            normalize=_normalize_report_literals,
+            _report_conforms=conforms,
         )
         for prefix, namespace in self._shape_namespaces:
             report_graph.bind(prefix, namespace)

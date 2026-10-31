@@ -5,9 +5,8 @@ from dataclasses import dataclass, field
 from decimal import localcontext
 from io import StringIO
 from pathlib import Path
-from urllib.parse import unquote as url_unquote
 from urllib.parse import urlparse
-from urllib.request import Request, urlopen
+from urllib.request import Request, url2pathname, urlopen
 
 from rdflib import BNode, Dataset, Graph, Literal, URIRef
 from rdflib.namespace import OWL, NamespaceManager
@@ -75,12 +74,23 @@ def decode(
     *,
     report=False,
     normalize=None,
+    _report_conforms=None,
     _bind_namespaces="rdflib",
 ):
     if report:
         from .report_decode import decode_report
 
-        return decode_report(source, blank_nodes, multigraph, preserve_ids, identifier, normalize)
+        return decode_report(
+            source,
+            blank_nodes,
+            multigraph,
+            preserve_ids,
+            identifier,
+            normalize,
+            conforms=_report_conforms,
+        )
+    if _report_conforms is not None:
+        raise ValueError("Native conformance context requires report decoding")
     if not isinstance(source, str):
         return _decode_terms(
             source,
@@ -113,6 +123,7 @@ def _decode_terms(
     identifier,
     *,
     copied_subjects=None,
+    generated_boolean=None,
     normalize=None,
     _bind_namespaces="rdflib",
 ):
@@ -141,7 +152,10 @@ def _decode_terms(
         # Direct report terms restore existing values; conversion must not signal again.
         # One report-local context and the existing terms vector avoid per-term contexts.
         with localcontext():
-            for subject, _, obj, _ in quads:
+            for quad in quads:
+                subject, _, obj, _ = quad
+                if generated_boolean is not None and tuple(quad) == generated_boolean[0]:
+                    continue
                 if subject not in copied_subjects and records[obj][0] == 2 and terms[obj] is None:
                     _, lexical, datatype, language = records[obj]
                     terms[obj] = Literal(
@@ -156,12 +170,15 @@ def _decode_terms(
         if named
         else Graph(identifier=identifier, bind_namespaces=_bind_namespaces)
     )
-    for s, p, o, g in quads:
+    for quad in quads:
+        s, p, o, g = quad
         destination = (
             (result.default_graph if g is None else result.graph(terms[g])) if named else result
         )
         value = terms[o]
-        if copied_subjects is not None and records[o][0] == 2:
+        if generated_boolean is not None and tuple(quad) == generated_boolean[0]:
+            value = Literal(generated_boolean[1], normalize=False)
+        elif copied_subjects is not None and records[o][0] == 2:
             copied = s in copied_subjects
             if copied:
                 _, lexical, datatype, language = records[o]
@@ -259,7 +276,7 @@ def _document(source, rdf_format):
         stripped = source.lstrip()
         if stripped.startswith(("http://", "https://", "file:")) and "\n" not in source:
             if stripped.startswith("file:"):
-                return _document(Path(url_unquote(urlparse(source).path)), rdf_format)
+                return _document(Path(url2pathname(urlparse(source).path)), rdf_format)
             request = Request(
                 source,
                 headers={

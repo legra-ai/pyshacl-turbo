@@ -1,13 +1,13 @@
 #!/bin/sh
-if uv run --locked --only-group dev ruff check python tests benchmarks scripts; then
+if uv run --project tools/dev --locked --only-group dev ruff check python tests benchmarks scripts; then
     :
 else
-    printf 'Python lint check failed; run make dev before committing\n' >&2
+    printf 'Python lint check failed; run make lint before committing\n' >&2
     exit 1
 fi
-if uv run --locked --only-group dev ruff format --check python tests benchmarks scripts; then
+if uv run --project tools/dev --locked --only-group dev ruff format --check python tests benchmarks scripts; then
     :
 else
-    printf 'Python formatting check failed; run make dev before committing\n' >&2
+    printf 'Python formatting check failed; run make lint before committing\n' >&2
     exit 1
 fi

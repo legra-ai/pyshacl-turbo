@@ -56,8 +56,8 @@ def stage_reports(artifacts, destination, run_id, run_url):
                 "date": report["date"],
                 "revision": report["source_revision"],
                 "versions": versions,
-                "report": str(relative / "releases.md"),
-                "raw": str(relative / "releases.json.gz"),
+                "report": (relative / "releases.md").as_posix(),
+                "raw": (relative / "releases.json.gz").as_posix(),
                 "workflow": run_url,
             }
         )

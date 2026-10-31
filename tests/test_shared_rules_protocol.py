@@ -12,6 +12,14 @@ SHAPES = """@prefix sh: <http://www.w3.org/ns/shacl#> .
 <urn:S> sh:targetNode <urn:s>; sh:class <urn:C>."""
 
 
+REPORT = (
+    "_:report <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> "
+    "<http://www.w3.org/ns/shacl#ValidationReport> .\n"
+    "_:report <http://www.w3.org/ns/shacl#conforms> "
+    '"true"^^<http://www.w3.org/2001/XMLSchema#boolean> .\n'
+)
+
+
 @pytest.fixture
 def provider(monkeypatch):
     calls = []
@@ -44,7 +52,7 @@ def provider(monkeypatch):
             return result, []
 
         def validate(self, native, settings, inplace):
-            return True, "", "Validation Report\nConforms: True\n", []
+            return True, REPORT, "Validation Report\nConforms: True\n", []
 
     monkeypatch.setattr(runtime, "SHARED_SHACL_PROTOCOL", 1, raising=False)
     monkeypatch.setattr(runtime, "SharedShapes", Program, raising=False)

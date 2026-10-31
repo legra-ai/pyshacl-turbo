@@ -54,15 +54,14 @@ def runtime(tmp_path, monkeypatch, defect):
         def __contains__(self, triple):
             return triple in self.rows
 
-    class DeductiveClosure:
-        def __init__(self, semantics):
-            assert semantics == "actual-semantics"
-
-        def expand(self, data):
-            if defect != "missing-consequence":
-                data.add((ex.subject, RDF.type, ex.Parent))
-            if defect == "closure-owner":
-                data.store.backend._native = object()
+    def expand(data, *, inference, inplace):
+        assert inference == "both"
+        assert inplace is True
+        if defect != "missing-consequence":
+            data.add((ex.subject, RDF.type, ex.Parent))
+        if defect == "closure-owner":
+            data.store.backend._native = object()
+        return data
 
     def validate(data, *, shacl_graph):
         assert shacl_graph
@@ -75,8 +74,7 @@ def runtime(tmp_path, monkeypatch, defect):
     native.StoreDataset = object() if defect == "legacy-dataset" else Dataset
     owl = ModuleType("owlrl_turbo")
     if defect != "missing-api":
-        owl.DeductiveClosure = DeductiveClosure
-        owl.RDFS_OWLRL_Semantics = "actual-semantics"
+        owl.expand = expand
     facade = ModuleType("pyshacl_turbo")
     facade.validate = validate
     for module in (native, owl, facade):
@@ -155,6 +153,7 @@ def test_post_gate_owl_payload_drift_is_not_hidden_by_unchanged_native_pair(tmp_
             "installed_provider": native,
             "installed_facade": facade,
             "installed_owlrl": {"installed": {"payload": "original"}},
+            "execution_owlrl": {"wheel": str(tmp_path / "execution-owl.whl")},
             "installed_yaml": {"yaml": "original"},
         },
     }
