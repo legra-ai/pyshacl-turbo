@@ -5,9 +5,8 @@ from dataclasses import dataclass, field
 from decimal import localcontext
 from io import StringIO
 from pathlib import Path
-from urllib.parse import unquote as url_unquote
 from urllib.parse import urlparse
-from urllib.request import Request, urlopen
+from urllib.request import Request, url2pathname, urlopen
 
 from rdflib import BNode, Dataset, Graph, Literal, URIRef
 from rdflib.namespace import OWL, NamespaceManager
@@ -259,7 +258,7 @@ def _document(source, rdf_format):
         stripped = source.lstrip()
         if stripped.startswith(("http://", "https://", "file:")) and "\n" not in source:
             if stripped.startswith("file:"):
-                return _document(Path(url_unquote(urlparse(source).path)), rdf_format)
+                return _document(Path(url2pathname(urlparse(source).path)), rdf_format)
             request = Request(
                 source,
                 headers={

@@ -1,8 +1,10 @@
 """RDF boundary contracts, including real local HTTP responses and graph identity."""
 
 import io
+import nturl2path
 import threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from pathlib import PureWindowsPath
 
 import pyoxigraph as ox
 import pytest
@@ -11,6 +13,41 @@ from rdflib import BNode, Dataset, Graph, Literal, URIRef
 from rdflib.namespace import OWL
 from rdflib.plugins.parsers.ntriples import ParseError
 from test_compatibility import EX, graph
+
+
+@pytest.mark.parametrize("name", ["space file.ttl", "unicode-Ω.ttl", "literal%20.ttl"])
+def test_file_uri_names_preserve_encoding_and_literal_words(tmp_path, name):
+    path = tmp_path / name
+    path.write_bytes(b'\xef\xbb\xbf<#s> <urn:p> "01"^^<http://www.w3.org/2001/XMLSchema#integer>.')
+    result = rdf.load_from_source(path.as_uri())
+    value = result.value(URIRef(path.as_uri() + "#s"), URIRef("urn:p"))
+    assert str(value) == "01"
+    assert value.datatype == URIRef("http://www.w3.org/2001/XMLSchema#integer")
+
+
+def test_document_decodes_windows_file_uri_before_resolving_and_reading(monkeypatch):
+    expected = PureWindowsPath("C:/fixture root/unicode-Ω%20.ttl")
+    calls = []
+
+    class WindowsPath(PureWindowsPath):
+        def resolve(self, *, strict):
+            assert strict is True
+            assert self == expected
+            calls.append("resolve")
+            return self
+
+        def read_bytes(self):
+            assert self == expected
+            calls.append("read")
+            return b'\xef\xbb\xbf<#s> <urn:p> "word".'
+
+    monkeypatch.setattr(rdf, "Path", WindowsPath)
+    monkeypatch.setattr(rdf, "url2pathname", nturl2path.url2pathname, raising=False)
+    text, rdf_format, base = rdf._document(expected.as_uri(), None)
+    assert text == '<#s> <urn:p> "word".'
+    assert rdf_format == "turtle"
+    assert base == expected.as_uri()
+    assert calls == ["resolve", "read"]
 
 
 @pytest.fixture
