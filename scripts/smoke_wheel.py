@@ -4,6 +4,7 @@ import sys
 import warnings
 from importlib.resources import files
 from importlib.util import find_spec
+from xml.dom.minidom import DocumentFragment
 
 import pyshacl_turbo as turbo
 from rdflib import Dataset, Graph, Literal, Namespace, URIRef
@@ -11,6 +12,30 @@ from rdflib.namespace import RDF, RDFS, SH, XSD
 
 assert find_spec("pyshacl") is None
 assert find_spec("owlrl") is None
+assert find_spec("pytest") is None
+
+# Retained RDFLib 7.6 / pySHACL 0.40.1 Graph oracle, without their test extras.
+html_data = Graph().parse(
+    data='<urn:s> <urn:p> "<p>Hello</p>"^^<http://www.w3.org/1999/02/22-rdf-syntax-ns#HTML> .',
+    format="turtle",
+)
+html_shapes = Graph().parse(
+    data="""@prefix sh:<http://www.w3.org/ns/shacl#>.
+    <urn:S> a sh:PropertyShape; sh:targetNode <urn:s>;
+      sh:path <urn:p>; sh:nodeKind sh:IRI.""",
+    format="turtle",
+)
+html_before = set(html_data)
+html_conforms, html_report, _ = turbo.validate(html_data, shacl_graph=html_shapes)
+assert html_conforms is False
+html_value = next(html_report.objects(None, SH.value))
+assert str(html_value) == "<p>Hello"
+assert html_value.datatype == RDF.HTML and html_value.language is None
+assert html_value.ill_typed is False
+assert type(html_value.value) is DocumentFragment
+assert [child.toxml() for child in html_value.value.childNodes] == ["<p>Hello</p>"]
+assert set(html_data) == html_before
+
 ex = Namespace("https://example.com/")
 assert files(turbo).joinpath("py.typed").is_file()
 target_shapes = Graph()
@@ -57,7 +82,8 @@ for value, conforms in [("i-İ", True), ("i-ı", False), ("I-i", True)]:
     data.set((ex.s, ex.p, Literal(value)))
     assert program.validate(data)[0] is conforms
 print(
-    "Installed wheel passes identity, inference, recursion and regex checks without pySHACL/owlrl."
+    "Installed wheel passes HTML, identity, inference, recursion and regex checks "
+    "without pySHACL/owlrl/pytest."
 )
 
 if sys.argv[1:]:
