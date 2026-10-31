@@ -13,6 +13,8 @@ from pathlib import Path
 
 PLATFORMS = {"ubuntu-latest", "macos-latest"}
 FORMAT = {"schema": 1, "kind": "turbo-pipeline-history"}
+# Below the observed 45 MB endpoint limit; sizes include the complete JSON request.
+MAX_COMMIT_REQUEST_BYTES = 40_000_000
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "tests"))
 from upstream_support.process_launch import Popen
@@ -121,32 +123,94 @@ def api(path, method="GET", payload=None):
     return value
 
 
-def signed_commit(client, repository, branch, head, message, additions, deletions):
+def commit_payload(repository, branch, head, message, additions, deletions):
     query = """mutation($input:CreateCommitOnBranchInput!) {
       createCommitOnBranch(input:$input) { commit { oid signature { isValid } } }
     }"""
-    response = client(
-        "graphql",
-        "POST",
-        {
-            "query": query,
-            "variables": {
-                "input": {
-                    "branch": {"repositoryNameWithOwner": repository, "branchName": branch},
-                    "expectedHeadOid": head,
-                    "message": {"headline": message},
-                    "fileChanges": {
-                        "additions": additions,
-                        "deletions": [{"path": path} for path in deletions],
-                    },
-                }
-            },
+    return {
+        "query": query,
+        "variables": {
+            "input": {
+                "branch": {"repositoryNameWithOwner": repository, "branchName": branch},
+                "expectedHeadOid": head,
+                "message": {"headline": message},
+                "fileChanges": {
+                    "additions": additions,
+                    "deletions": [{"path": path} for path in deletions],
+                },
+            }
         },
+    }
+
+
+def signed_commit(client, repository, branch, head, message, additions, deletions):
+    response = client(
+        "graphql", "POST", commit_payload(repository, branch, head, message, additions, deletions)
     )
     commit = response["data"]["createCommitOnBranch"]["commit"]
     if not commit.get("signature") or commit["signature"].get("isValid") is not True:
         raise RuntimeError("GitHub did not return a verified signed history commit")
     return commit["oid"]
+
+
+def publish_additions(
+    client,
+    repository,
+    branch,
+    head,
+    message,
+    files,
+    run_id,
+    *,
+    max_bytes=MAX_COMMIT_REQUEST_BYTES,
+):
+    mutable_names = {"README.md", "history.json", ".benchmark-history-format.json"}
+    mutable_names.update(
+        f"latest-{platform}.{suffix}" for platform in PLATFORMS for suffix in ("md", "json.gz")
+    )
+    immutable, mutable, seen = [], [], set()
+    for addition in files:
+        path = addition["path"]
+        if path in seen:
+            raise ValueError(f"Duplicate history file: {path}")
+        seen.add(path)
+        if path in mutable_names:
+            mutable.append(addition)
+        elif path.startswith(f"runs/{run_id}/"):
+            immutable.append(addition)
+        else:
+            raise ValueError(f"Unexpected history publication file: {path}")
+    if {item["path"] for item in mutable} != mutable_names:
+        raise ValueError("History publication requires all seven mutable files")
+
+    def request_bytes(additions):
+        payload = commit_payload(repository, branch, head, message, additions, [])
+        return len(json.dumps(payload).encode("utf-8"))
+
+    # Preflight the entire plan before even immutable files become visible.
+    for addition in files:
+        if request_bytes([addition]) > max_bytes:
+            raise ValueError(f"History file exceeds the signed request limit: {addition['path']}")
+    if request_bytes(mutable) > max_bytes:
+        raise ValueError("Mutable history files exceed one atomic signed request")
+    batches, batch = [], []
+    for addition in immutable:
+        candidate = [*batch, addition]
+        if request_bytes(candidate) > max_bytes:
+            batches.append(batch)
+            batch = [addition]
+        else:
+            batch = candidate
+    if batch:
+        batches.append(batch)
+    batches.append(mutable)
+    for additions in batches:
+        if request_bytes(additions) > max_bytes:
+            raise ValueError("History commit exceeds the signed request limit")
+        head = signed_commit(client, repository, branch, head, message, additions, [])
+    # Signature verification follows each mutation. A final verification failure
+    # is reported, but cannot roll back aliases already written by that mutation.
+    return head
 
 
 def additions(directory, run_id):
@@ -206,14 +270,15 @@ def main():
         head = run("git", "-C", checkout, "rev-parse", "HEAD")
         stage_reports(args.artifacts, checkout, args.run_id, args.run_url)
         files = additions(checkout, args.run_id)
-        signed_commit(
+        publish_additions(
             api,
             args.repository,
             "benchmark-results",
             head,
             f"perf(history): record measured pipeline run {args.run_id}",
             files,
-            [],
+            args.run_id,
+            max_bytes=MAX_COMMIT_REQUEST_BYTES,
         )
 
 

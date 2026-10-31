@@ -1,10 +1,16 @@
 """Pure façade workflows delegate Rust authority without dropping native gates."""
 
 import importlib.util
+import json
+import os
+import subprocess
+import sys
+import tomllib
 from pathlib import Path
 
 import pytest
 import yaml
+from packaging.requirements import Requirement
 
 ROOT = Path(__file__).resolve().parents[1]
 # Published Native20's full Ubuntu verification job budgets 90 minutes, unlike
@@ -142,9 +148,99 @@ def test_active_workflows_use_the_current_uv_toolchain():
             for step in job.get("steps", []):
                 if step.get("uses", "").startswith("astral-sh/setup-uv@"):
                     selected.append((path.name, step))
-                    assert step["uses"] == "astral-sh/setup-uv@v10.3.2"
+                    assert step["uses"] == "astral-sh/setup-uv@v10.3.3"
                     assert step["with"]["version"] == "0.13.5"
     assert selected
+
+
+def test_declared_pytest_supports_the_runners_explicit_long_id_api(tmp_path):
+    requirements = tomllib.loads((ROOT / "pyproject.toml").read_text())["project"][
+        "optional-dependencies"
+    ]["test"]
+    requirement = next(
+        Requirement(value) for value in requirements if Requirement(value).name == "pytest"
+    )
+    assert (
+        "parametrize_long_str_id_strategy=legacy" in (ROOT / "scripts/run_upstream.py").read_text()
+    )
+    assert "9.1.1" not in requirement.specifier
+    assert "9.2.0" in requirement.specifier
+    lock = tomllib.loads((ROOT / "uv.lock").read_text())
+    selected = next(
+        package["version"] for package in lock["package"] if package["name"] == "pytest"
+    )
+    assert selected in requirement.specifier
+    # A frozen native provider can host this test with its own pytest version.
+    # Exercise the consumer's declared tool in its separate locked authority.
+    project = tmp_path / "pytest-api"
+    environment = {
+        key: value
+        for key, value in os.environ.items()
+        if key
+        not in {"VIRTUAL_ENV", "PYTHONPATH", "PYTHONHOME", "UV_PROJECT", "UV_PROJECT_ENVIRONMENT"}
+    }
+
+    def run(arguments):
+        result = subprocess.run(
+            arguments, env=environment, capture_output=True, text=True, timeout=120, check=False
+        )
+        assert result.returncode == 0, (arguments, result.stdout, result.stderr)
+        return result.stdout
+
+    run(
+        [
+            "uv",
+            "init",
+            "--bare",
+            "--no-workspace",
+            "--vcs",
+            "none",
+            "--python",
+            sys.executable,
+            str(project),
+        ]
+    )
+    run(
+        [
+            "uv",
+            "add",
+            "--project",
+            str(project),
+            "--python",
+            sys.executable,
+            "--no-build",
+            "pytest==" + selected,
+        ]
+    )
+    code = """import json, pytest
+config = pytest.Config.fromdictargs({}, ['-o', 'parametrize_long_str_id_strategy=legacy'])
+try:
+    print(json.dumps({'version': pytest.__version__, 'strategy': config.getini('parametrize_long_str_id_strategy')}))
+finally:
+    config._ensure_unconfigure()
+"""
+    output = run(
+        [
+            "uv",
+            "--directory",
+            str(project),
+            "run",
+            "--project",
+            str(project),
+            "--locked",
+            "--no-sync",
+            "--no-build",
+            "--python",
+            sys.executable,
+            "python",
+            "-I",
+            "-B",
+            "-c",
+            code,
+        ]
+    )
+    assert json.loads(output) == {"version": selected, "strategy": "legacy"}
+    print("Consumer pytest API authority:", output.strip())
 
 
 def test_release_metadata_check_uses_project_locked_twine():
