@@ -1,0 +1,17 @@
+{
+  "schema": 1,
+  "environments": [
+    {
+      "id": "python-reference", "role": "reference", "backend": "reference",
+      "requirements": {"rdflib": "==7.6.0", "owlrl": "==7.6.2", "pyshacl": "==0.40.1"}
+    },
+    {
+      "id": "released-baseline", "role": "baseline", "backend": "turbo",
+      "requirements": {"rdflib-turbo": "==0.2.0a23", "owlrl-turbo": "==0.2.0a1", "pyshacl-turbo": "==0.7.1", "rdflib": "==7.6.0"}
+    },
+    {
+      "id": "latest-compatible-released", "role": "latest-compatible-released", "backend": "published",
+      "requirements": {"rdflib-turbo": ">=0.2.0a23,<1", "owlrl-turbo": ">=0.2.0a1,<1", "pyshacl-turbo": ">=0.7.1,<1", "rdflib": "==7.6.0"}
+    }
+  ]
+}
