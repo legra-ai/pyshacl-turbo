@@ -48,6 +48,8 @@ def check(path):
             "scripts/provider_registry.py",
             "vendor/pyshacl/LICENSE.txt",
             "vendor/pyshacl-issue-70.patch",
+            "vendor/pyshacl/test/resources/dash_tests/target/sparqlTarget-001.test.ttl",
+            "vendor/pyshacl/test/resources/dash_tests/target/sparqlTargetType-001.test.ttl",
         ]:
             assert name in files, f"Source distribution cannot be verified/rebuilt: missing {name}"
         assert not any(name.startswith("crates/") for name in files), (
@@ -83,7 +85,7 @@ def check(path):
         == (Path(__file__).parents[1] / "vendor/pyshacl/LICENSE.txt").read_bytes()
     )
     assert not any("CHANGELOG" in name for name in files), "Generated changelog must not ship"
-    assert not any("/target/" in name or "/.venv/" in name for name in files)
+    assert not any(name.startswith("target/") or "/.venv/" in name for name in files)
     print(f"Verified {path.name}: metadata, licenses and packaged files")
 
 

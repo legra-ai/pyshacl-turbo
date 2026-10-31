@@ -51,7 +51,7 @@ def test_source_archive_preserves_verification_inputs_without_repository_hooks(
     )
     for name in expected:
         assert files[name] == (root / name).read_bytes(), name
-    assert not any("CHANGELOG" in name or "/target/" in name for name in files)
+    assert not any("CHANGELOG" in name or name.startswith("target/") for name in files)
 
 
 def test_source_distribution_uses_uv_lock_without_legacy_dependency_snapshots(source_archive_files):
@@ -61,6 +61,16 @@ def test_source_distribution_uses_uv_lock_without_legacy_dependency_snapshots(so
     for name in ("requirements-test.in", "requirements-test.lock"):
         assert not (root / name).exists()
         assert name not in files
+
+
+def test_source_archive_preserves_upstream_rdf_target_documents(source_archive_files):
+    root, files = source_archive_files
+    for name in (
+        "vendor/pyshacl/test/resources/dash_tests/target/sparqlTarget-001.test.ttl",
+        "vendor/pyshacl/test/resources/dash_tests/target/sparqlTargetType-001.test.ttl",
+    ):
+        assert name in files, f"RDF target fixture was mistaken for compiler output: {name}"
+        assert files[name] == (root / name).read_bytes()
 
 
 def test_facade_source_archive_has_no_dormant_native_implementation(source_archive_files):
