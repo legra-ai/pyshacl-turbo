@@ -29,8 +29,15 @@ def addition(path, contents):
     return {"path": path, "contents": base64.b64encode(contents).decode("ascii")}
 
 
-def server(bench, root, head, *, fault=None, acknowledge=False):
-    state = {"head": head, "mutations": [], "reads": [], "verified": [], "commits": {}}
+def server(bench, root, head, *, fault=None, acknowledge=False, stale_reads=0):
+    state = {
+        "head": head,
+        "mutations": [],
+        "reads": [],
+        "verified": [],
+        "commits": {},
+        "ref_reads": 0,
+    }
 
     def execute(path, method="GET", payload=None):
         if path == "graphql":
@@ -40,6 +47,7 @@ def server(bench, root, head, *, fault=None, acknowledge=False):
             if state["mutations"]:
                 assert state["verified"][-1] == state["head"]
             state["mutations"].append(request)
+            state["ref_reads"] = 0
             if fault == "unchanged":
                 raise bench.HistoryTransportError("HTTP 504")
             tree = bench.expected_tree(root, state["head"], request["fileChanges"]["additions"])
@@ -72,6 +80,9 @@ def server(bench, root, head, *, fault=None, acknowledge=False):
         if fault == "unreadable":
             raise bench.HistoryTransportError("readback unavailable")
         if "/git/ref/" in path:
+            state["ref_reads"] += 1
+            if state["ref_reads"] <= stale_reads:
+                return {"object": {"sha": state["mutations"][-1]["expectedHeadOid"]}}
             return {"object": {"sha": state["head"]}}
         commit = state["commits"][path.rsplit("/", 1)[1]]
         state["verified"].append(commit["sha"])
@@ -81,8 +92,12 @@ def server(bench, root, head, *, fault=None, acknowledge=False):
 
 
 @pytest.mark.parametrize("acknowledge", [False, True])
-def test_exact_whole_tree_is_required_before_the_next_mutable_batch(tmp_path, acknowledge):
+@pytest.mark.parametrize("stale_reads", [0, 2])
+def test_exact_whole_tree_is_required_before_the_next_mutable_batch(
+    tmp_path, monkeypatch, acknowledge, stale_reads
+):
     bench, root, head = repository(tmp_path)
+    monkeypatch.setattr(bench, "sleep", lambda seconds: None)
     immutable = [addition("runs/123-1/facts.bin", b"\x00\xffcomplete facts")]
     mutable = [addition(name, ("new " + name).encode()) for name in sorted(MUTABLE)]
     expected = bench.expected_tree(root, head, immutable)
@@ -92,7 +107,7 @@ def test_exact_whole_tree_is_required_before_the_next_mutable_batch(tmp_path, ac
         bench.run("git", "-C", root, "show", expected + ":older/retained.txt")
         == "previous older/retained.txt"
     )
-    execute, state = server(bench, root, head, acknowledge=acknowledge)
+    execute, state = server(bench, root, head, acknowledge=acknowledge, stale_reads=stale_reads)
     # The fake server keeps real trees while its signed commit OIDs are intentionally synthetic.
     trees = iter([expected, bench.expected_tree(root, expected, mutable)])
     original = bench.expected_tree
@@ -126,8 +141,11 @@ def test_exact_whole_tree_is_required_before_the_next_mutable_batch(tmp_path, ac
     "fault", ["tree", "parent", "message", "unsigned", "unchanged", "unreadable"]
 )
 @pytest.mark.parametrize("acknowledge", [False, True])
-def test_foreign_or_indeterminate_state_never_advances_to_aliases(tmp_path, fault, acknowledge):
+def test_foreign_or_indeterminate_state_never_advances_to_aliases(
+    tmp_path, monkeypatch, fault, acknowledge
+):
     bench, root, head = repository(tmp_path)
+    monkeypatch.setattr(bench, "sleep", lambda seconds: None)
     additions = [addition("runs/123-1/facts", b"facts")]
     execute, state = server(bench, root, head, fault=fault, acknowledge=acknowledge)
     tree = bench.expected_tree(root, head, additions)
