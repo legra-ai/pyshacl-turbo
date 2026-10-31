@@ -52,13 +52,13 @@ def test_fresh_ref_requests_require_cache_revalidation(monkeypatch):
     assert "Pragma: no-cache" in requests[0]
 
 
-@pytest.mark.parametrize("foreign", [False, True])
+@pytest.mark.parametrize("foreign,acknowledge", [(False, False), (False, True), (True, True)])
 def test_never_acknowledged_or_foreign_tip_cannot_accept_an_existing_commit(
-    tmp_path, monkeypatch, foreign
+    tmp_path, monkeypatch, foreign, acknowledge
 ):
     bench, root, head = repository(tmp_path)
     changes = [addition("runs/123-1/facts", b"complete facts")]
-    execute, state = server(bench, root, head, acknowledge=True)
+    execute, state = server(bench, root, head, acknowledge=acknowledge)
     reads, delays = [], []
 
     def stale(path, method="GET", payload=None):
@@ -68,7 +68,7 @@ def test_never_acknowledged_or_foreign_tip_cannot_accept_an_existing_commit(
         return execute(path, method, payload)
 
     monkeypatch.setattr(bench, "sleep", delays.append)
-    with pytest.raises(RuntimeError, match="no exact current branch acknowledgement"):
+    with pytest.raises(RuntimeError, match="no exact current branch acknowledgement") as failure:
         bench.signed_commit(
             stale,
             "owner/repo",
@@ -84,3 +84,7 @@ def test_never_acknowledged_or_foreign_tip_cannot_accept_an_existing_commit(
     assert state["verified"] == []
     assert len(reads) == (1 if foreign else 7)
     assert delays == ([] if foreign else [1, 2, 4, 8, 16, 32])
+    assert f"expected_parent={head}" in str(failure.value)
+    assert f"acknowledged={state['head'] if acknowledge else None}" in str(failure.value)
+    assert f"observed_tip={'f' * 40 if foreign else head}" in str(failure.value)
+    assert f"reads={len(reads)}" in str(failure.value)

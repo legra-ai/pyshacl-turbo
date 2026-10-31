@@ -182,7 +182,11 @@ def signed_commit(
             break
         sleep(2**attempt)
     if tip == head or (acknowledged is not None and tip != acknowledged):
-        raise RuntimeError("History mutation has no exact current branch acknowledgement")
+        raise RuntimeError(
+            "History mutation has no exact current branch acknowledgement "
+            f"(expected_parent={head}, acknowledged={acknowledged}, "
+            f"observed_tip={tip}, reads={attempt + 1})"
+        )
     observed = client(f"repos/{repository}/commits/{tip}")
     body = observed["commit"]
     if (
