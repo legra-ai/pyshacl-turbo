@@ -49,7 +49,7 @@ def commands(owner, gate, *, yaml_authority):
         ("storage", ["make", "test-store-contract"]),
         (
             "allocation",
-            [*uv, "scripts.allocation_budgets", "--yaml-authority", yaml_authority],
+            [*uv, "scripts.allocation_budgets", "--yaml-authority", str(yaml_authority)],
         ),
     ]
 
