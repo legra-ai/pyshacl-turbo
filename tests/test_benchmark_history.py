@@ -71,6 +71,18 @@ def test_history_commit_requires_a_verified_server_signature_and_exact_parent():
 
     def client(path, method="GET", payload=None):
         requests.append((path, method, payload))
+        if method == "GET":
+            if "/git/ref/" in path:
+                return {"object": {"sha": "b" * 40}}
+            return {
+                "sha": "b" * 40,
+                "parents": [{"sha": "a" * 40}],
+                "commit": {
+                    "message": "perf(history): retain measured results",
+                    "tree": {"sha": "c" * 40},
+                    "verification": {"verified": True},
+                },
+            }
         return {
             "data": {
                 "createCommitOnBranch": {
@@ -87,6 +99,7 @@ def test_history_commit_requires_a_verified_server_signature_and_exact_parent():
         "perf(history): retain measured results",
         [{"path": "report.json.gz", "contents": "AA=="}],
         [],
+        expected_tree="c" * 40,
     )
     assert oid == "b" * 40
     request = requests[0][2]["variables"]["input"]
@@ -105,6 +118,7 @@ def test_history_commit_requires_a_verified_server_signature_and_exact_parent():
             "perf(history): retain measured results",
             [],
             [],
+            expected_tree="c" * 40,
         )
 
 
