@@ -29,8 +29,8 @@ def test_provider_requirement_is_an_exact_runtime_pin(tmp_path):
 def test_facade_pins_the_published_shared_engine_for_runtime_and_tests():
     manifest = Path(__file__).resolve().parents[1] / "pyproject.toml"
     version = module().declared_version(manifest)
-    # a20 is the first published provider with the facade's native shacl module.
-    assert Version(version) >= Version("0.2.0a20")
+    # a24 includes the native focus/report ordering correction used by the facade.
+    assert Version(version) >= Version("0.2.0a24")
     project = tomllib.loads(manifest.read_text())["project"]
     test_pins = [
         requirement
