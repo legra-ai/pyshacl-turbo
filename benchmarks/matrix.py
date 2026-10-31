@@ -435,7 +435,7 @@ def main():
             "load_note": args.load_note,
         },
         "source_sha256": {
-            str(p.relative_to(ROOT)): hashlib.sha256(p.read_bytes()).hexdigest()
+            p.relative_to(ROOT).as_posix(): hashlib.sha256(p.read_bytes()).hexdigest()
             for p in sorted(sources)
         },
         "native_artifact": native,

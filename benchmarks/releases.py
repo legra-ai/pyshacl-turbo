@@ -50,7 +50,8 @@ def harness_hashes():
         ROOT / "tests/upstream_support/process_launch.py",
     ]
     return {
-        str(path.relative_to(ROOT)): hashlib.sha256(path.read_bytes()).hexdigest() for path in paths
+        path.relative_to(ROOT).as_posix(): hashlib.sha256(path.read_bytes()).hexdigest()
+        for path in paths
     }
 
 
