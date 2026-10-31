@@ -178,3 +178,71 @@ raw warm/cold stability checks before any comparison. Unknown contracts and
 API/observation failures are hard errors, not post-error exclusions. Candidate
 artifacts retain their candidate labels. The existing cross-package engine gate
 runs first, and configured version pins are unchanged.
+
+## Matched public Graph pipelines
+
+The separately named Graph benchmark uses the same public operation sequence in
+both arms: construct and parse a Graph, call
+`DeductiveClosure(OWLRL_Semantics).expand(graph, destination=graph)` (returning
+`None`), then call public validation with `inplace=True, inference="none"`.
+The native arm keeps the same DATA owner through all three products. Its
+implementation-qualified factory and owner diagnostics remain in the proofs;
+this operation comparison does not equate Python implementation type names or
+claim complete API replacement parity.
+
+Use native uv **0.13.5** and CPython **3.13.16** on Linux or macOS:
+
+```sh
+uv run --no-project --python 3.13.16 python -I -B benchmarks/matched_graph_driver.py \
+    --cohort benchmarks/matched-graph-releases.json \
+    --output benchmark-artifacts/matched-graph
+```
+
+The cohort file keeps two distinct native roles. `baseline` pins the released
+rdflib-turbo **0.2.0a23**, owlrl-turbo **0.2.0a1** and pyshacl-turbo **0.7.1**
+trio. `latest-compatible-released` jointly resolves the three published products
+with prereleases allowed, respecting their actual dependency constraints. It
+records the versions selected by native uv rather than assuming the newest
+provider is compatible with an older facade. The reference pins RDFLib7.6.0,
+OWL-RL7.6.2 and pySHACL0.40.1. Both roles retain their own lock and installed
+identity. Execution is reused only if **every resolved original wheel**, including
+transitive dependencies, is identical. No local runtime imports, source builds or
+source-derived benchmark wheels are accepted by this selector.
+
+For an exact replay, retain the cohort document and provide the archived locks:
+
+```sh
+uv run --no-project --python 3.13.16 python -I -B benchmarks/matched_graph_driver.py \
+    --cohort benchmarks/matched-graph-releases.json --roles baseline \
+    --lock-input reference=benchmark-artifacts/matched-graph/locks/reference/uv.lock \
+    --lock-input baseline=benchmark-artifacts/matched-graph/locks/baseline/uv.lock \
+    --output benchmark-artifacts/matched-graph-replay
+```
+
+Each case first compares complete facts, physical scopes, generalized terms,
+literal cache/assessment metadata, report graph/text, raw namespaces, effects,
+warnings and flags. `NORMALIZE_LITERALS=False` is a separate strict diagnostic:
+its observed Original validation module-flag side effect differs and earns no
+ratio. Only the separately declared `True` scenario may be sampled, after its
+complete correctness gates pass. Use `--correctness-only` for this first phase or
+`--widths 1000` to select the two largest cases.
+
+Samples run in fresh serial children with one warmup and at least five retained
+samples per arm. Arm order alternates each repetition. Imports, fixture text,
+SHAPES and capture setup stay outside the interval; Graph construction/parse,
+class closure construction/expansion and public validation are inside. No
+facts/cache/report scans run between those operations. Absolute process peak RSS
+is read immediately afterward, before observation encoding. It includes imports
+and setup; setup peaks are never subtracted and peaks are never summed. Raw
+per-stage wall/process-CPU clocks, total clocks, setup/startup diagnostics, host,
+versions and every complete observation are retained as lossless gzip proofs.
+Each timed result must match its correctness authority. Errors, unstable results
+or differing outputs cannot earn time or RSS ratios. This is a bounded synthetic
+workload measurement, not a universal speed or memory claim.
+
+`summary.json` and `summary.md` are the small report; `proofs/`, `locks/` and
+`originals/` retain complete outputs and exact registry artifacts. The existing
+shared benchmark workflow uploads these as `matched-graph-reports-*`, separately
+from its unchanged twelve pipeline/Dataset cases and their comparators. CI runs
+both frozen and latest-compatible roles without performance thresholds. The
+older Dataset route differences and null ratios remain intact.
