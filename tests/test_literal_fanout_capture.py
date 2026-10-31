@@ -7,7 +7,7 @@ import warnings
 from types import SimpleNamespace
 
 import pytest
-from test_literal_fanout_benchmark import load
+from test_literal_fanout_benchmark import load, mock_worker_rss
 
 JOB = {"operation": "owlrl", "backend": "reference", "nodes": 32, "fixture": "literal-reflexivity"}
 
@@ -26,6 +26,7 @@ def test_warning_encoding_is_after_the_timer_not_inside_the_public_call(monkeypa
     import owlrl
 
     suite = load("companions")
+    mock_worker_rss(monkeypatch, suite)
     timed, invoking = [False], [False]
     encoded = []
 
@@ -80,9 +81,8 @@ def test_end_prepare_capture_closes_idempotently_before_effect_encoding():
     "phase", ["setup_rss", "first_clock", "second_clock", "post_rss", "invoke", "observe"]
 )
 def test_worker_finally_cleans_captured_owner_on_every_baseexception(monkeypatch, phase):
-    import resource
-
     suite = load("companions")
+    resource = mock_worker_rss(monkeypatch, suite)
     before = capture_state()
 
     class Failure(BaseException):

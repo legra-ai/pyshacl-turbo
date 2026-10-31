@@ -165,7 +165,7 @@ def setup(env, directory, wheels, python):
             "allow",
         ]
     )
-    executable = project / ".venv/bin/python"
+    executable = project / ".venv" / ("Scripts/python.exe" if os.name == "nt" else "bin/python")
     identity = json.loads(command([executable, "-I", "-B", Path(__file__), "--identity"]))
     for name, specifier in env["requirements"].items():
         expected = (

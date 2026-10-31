@@ -2,7 +2,9 @@
 
 import hashlib
 import importlib.util
+import sys
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 from rdflib import Literal, URIRef
@@ -14,6 +16,16 @@ def load(name):
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module
+
+
+def mock_worker_rss(monkeypatch, suite):
+    """Unit-test worker ordering independently of host RSS capabilities/units."""
+    resource = SimpleNamespace(
+        RUSAGE_SELF=object(), getrusage=lambda _: SimpleNamespace(ru_maxrss=10)
+    )
+    monkeypatch.setitem(sys.modules, "resource", resource)
+    monkeypatch.setattr(suite, "rss_bytes", lambda value, platform: value)
+    return resource
 
 
 GOLDENS = {
@@ -112,6 +124,7 @@ def test_inplace_setup_and_observation_remain_outside_existing_worker_timer(monk
     import owlrl
 
     suite = load("companions")
+    mock_worker_rss(monkeypatch, suite)
     events = []
 
     class Closure:
@@ -177,10 +190,8 @@ def test_inplace_changes_to_existing_literal_cache_fail_observation(monkeypatch)
 
 
 def test_cold_worker_runs_once_and_captures_peak_before_observation(monkeypatch):
-    import resource
-    from types import SimpleNamespace
-
     suite = load("companions")
+    resource = mock_worker_rss(monkeypatch, suite)
     events = []
 
     def prepare(_):
@@ -247,6 +258,7 @@ def test_release_worker_argv_is_accepted_by_the_real_companion_parser(monkeypatc
     import sys
 
     bench = load("releases")
+    mock_worker_rss(monkeypatch, bench.companions)
     calls = []
 
     def command(argv, *, timeout):

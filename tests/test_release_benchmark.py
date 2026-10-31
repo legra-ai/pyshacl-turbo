@@ -140,3 +140,49 @@ def test_candidate_gate_uses_pinned_baselines_and_keeps_published_health_monitor
     )
     assert '--matrix "$BENCHMARK_MATRIX"' in step["run"]
     assert "continue-on-error" not in step
+
+
+@pytest.mark.parametrize("platform_name", ["posix", "nt"])
+def test_setup_selects_the_native_platform_virtual_environment_interpreter(
+    tmp_path, monkeypatch, platform_name
+):
+    from types import SimpleNamespace
+
+    bench = module()
+    monkeypatch.setattr(bench, "os", SimpleNamespace(name=platform_name))
+    project = tmp_path / "python-reference"
+    relative = "Scripts/python.exe" if platform_name == "nt" else "bin/python"
+    expected = project / ".venv" / relative
+    requirements = {"rdflib": "==7.6.0", "owlrl": "==7.6.2", "pyshacl": "==0.40.1"}
+    called = []
+
+    def command(argv):
+        called.append(argv)
+        if argv[0] == "uv":
+            if argv[1] == "init":
+                project.mkdir()
+                (project / "pyproject.toml").write_text('[project]\nname="unit-environment"\n')
+            elif argv[1] == "sync":
+                expected.parent.mkdir(parents=True)
+                expected.write_text("unit interpreter placeholder")
+                (project / "uv.lock").write_text("version = 1\n")
+            return ""
+        if argv[0] != expected or not expected.is_file():
+            raise FileNotFoundError("Virtual environment interpreter has the wrong platform layout")
+        assert argv[1:3] == ["-I", "-B"] and argv[-1] == "--identity"
+        return json.dumps({"packages": {n: {"version": v[2:]} for n, v in requirements.items()}})
+
+    monkeypatch.setattr(bench, "command", command)
+    executable, identity = bench.setup(
+        {"id": "python-reference", "backend": "reference", "requirements": requirements},
+        tmp_path,
+        None,
+        "3.13",
+    )
+    assert executable == expected
+    assert called[-1][0] == expected
+    assert identity["packages"]["rdflib"]["version"] == "7.6.0"
+    assert (
+        identity["uv_lock_sha256"]
+        == bench.hashlib.sha256((project / "uv.lock").read_bytes()).hexdigest()
+    )
