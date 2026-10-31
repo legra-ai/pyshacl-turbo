@@ -139,4 +139,5 @@ def decode_report(
         copied_subjects=copied_subjects,
         generated_boolean=generated_boolean,
         normalize=normalize,
+        _bind_namespaces="core",
     )
