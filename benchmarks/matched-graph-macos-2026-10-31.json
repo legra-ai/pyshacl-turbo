@@ -1,0 +1,317 @@
+{
+  "schema": 1,
+  "measurement_date": "2026-10-31",
+  "role": "one local canonical-registry workload run; not CI or a universal performance result",
+  "host": "macOS-27.0.1-arm64-arm-64bit-Mach-O",
+  "python": "3.13.16",
+  "uv": "0.13.5",
+  "warmups_per_case_per_arm": 1,
+  "retained_fresh_children_per_case_per_arm": 5,
+  "normalization_policy": true,
+  "scope": "Public Graph construction+parse, class DeductiveClosure construction+expand(destination=source), public validate(inplace=True,inference=none), same DATA owner; imports/text/SHAPES/capture setup outside total; no intermediate observation scans",
+  "rss_method": "Absolute whole-process ru_maxrss immediately after pipeline and before observation encoding; imports/setup/retained output included, setup peaks never subtracted, peaks never summed",
+  "source": {
+    "repository": "https://github.com/legra-ai/pyshacl-turbo",
+    "harness_revision": "1b2de03b073f3d91af2dbb4a2a28357164307447",
+    "driver": "matched_graph_driver.py",
+    "cohort": "matched-graph-releases.json",
+    "owner_proof": {
+      "file": "../tests/test_matched_graph_sampling.py",
+      "test": "test_actual_shared_graph_pipeline_never_exports_or_imports_data"
+    },
+    "harness_sha256": {
+      "benchmarks/releases.py": "6136b8454eb79100975edecd376f89c15dadc23acdb3fc46f6f9bf541b2d592c",
+      "benchmarks/companions.py": "69f1a331127725c8b42433894ba291c8cc2f2b4b28c5e80995b22df432d7fe50",
+      "benchmarks/inference_fanout.py": "f48cd7c5e5194b80bc34362ec42bace015d22647b95e07f9c985a40a81a7b02b",
+      "benchmarks/fanout_availability.py": "721d78608ec06a4d20d5fc7374c86a097f815240a37acfbc98ecc82faf36cac7",
+      "tests/upstream_support/process_launch.py": "65b62892a6a98b7280002574285affc8a063e1eb7328910c3f653ee7885a1c43",
+      "benchmarks/matched_graph_driver.py": "848ea8687b953396d99f33e874cd1d1e0f449a6b9c8bdcb067e6c25bcfaf35c8",
+      "benchmarks/matched_graph_authority.py": "0757bbf831a16aa01cdb4d2e79a35a879864171e5c213458f08d6b629eb90e3b",
+      "benchmarks/matched_graph_worker.py": "799dec8e42d7afe8c78e89c3499ca5f5a3e409f84124aaa5d3d649ff2e53aaaa",
+      "benchmarks/matched_graph_sampling.py": "d6594f2e3476d12d8f52422cbd345386dea5a0111b12f8b17fad847922602f1f",
+      "benchmarks/matched_graph_fanout.py": "b152839abb37c6947dac590df1e660f61a9e588e8474c78a9e89d7383b4a0bc9",
+      "benchmarks/matched-graph-releases.json": "3d34069fe05f7c4544596d78e3fef1da870618f4b916784cc2e1dbce8c610089"
+    },
+    "revision_url": "https://github.com/legra-ai/pyshacl-turbo/tree/1b2de03b073f3d91af2dbb4a2a28357164307447"
+  },
+  "versions": {
+    "reference": {
+      "html5rdf": "1.2.1",
+      "packaging": "26.3",
+      "pyshacl": "0.40.1",
+      "wcwidth": "0.9.4",
+      "owlrl": "7.6.2",
+      "prettytable": "3.18.0",
+      "rdflib": "7.6.0",
+      "pyparsing": "3.3.3"
+    },
+    "baseline": {
+      "html5rdf": "1.2.1",
+      "rdflib-turbo": "0.2.0a23",
+      "owlrl-turbo": "0.2.0a1",
+      "pyshacl-turbo": "0.7.1",
+      "rdflib": "7.6.0",
+      "pyparsing": "3.3.3"
+    }
+  },
+  "original_wheels": {
+    "reference": {
+      "html5rdf": {
+        "version": "1.2.1",
+        "sha256": "1f519121bc366af3e485310dc8041d2e86e5173c1a320fac3dc9d2604069b83e",
+        "file": "html5rdf-1.2.1-py2.py3-none-any.whl",
+        "url": "https://files.pythonhosted.org/packages/7d/c9/f6e1e8567660bc5b0aba281f2b0017b2a7665fcad6bf3ed67286a0c72cd4/html5rdf-1.2.1-py2.py3-none-any.whl"
+      },
+      "packaging": {
+        "version": "26.3",
+        "sha256": "d7193f7c8e4e93f444fde0262bf90af30e16fa0ad0ad44cb553c87339b23cd1c",
+        "file": "packaging-26.3-py3-none-any.whl",
+        "url": "https://files.pythonhosted.org/packages/63/34/ba1c580383c9eada3711951fef0795c80b829a078d72188184bcab9dd527/packaging-26.3-py3-none-any.whl"
+      },
+      "pyshacl": {
+        "version": "0.40.1",
+        "sha256": "27dd58c8ddfa103303b4a8c40b2c666332ffc912dbcd3137f7adc7b7bc5e6bda",
+        "file": "pyshacl-0.40.1-py3-none-any.whl",
+        "url": "https://files.pythonhosted.org/packages/03/90/7f35a79db93032ef20db5b740062b54afba32a2c2475a6f0a43c141a69de/pyshacl-0.40.1-py3-none-any.whl"
+      },
+      "wcwidth": {
+        "version": "0.9.4",
+        "sha256": "f279f32c8e206a9092fa350e53ca0c2bd8072e45b1c9fd31bb6d476b59b591c4",
+        "file": "wcwidth-0.9.4-cp310-abi3-macosx_11_0_arm64.whl",
+        "url": "https://files.pythonhosted.org/packages/04/e9/dfdca30ca36c472de3e260406dee29fc108499ec590c63b3fe279887ee9d/wcwidth-0.9.4-cp310-abi3-macosx_11_0_arm64.whl"
+      },
+      "owlrl": {
+        "version": "7.6.2",
+        "sha256": "83347bf7f133979e87b2b18695d51d25510b99cec3f6919b5df05d4fbf058ae0",
+        "file": "owlrl-7.6.2-py3-none-any.whl",
+        "url": "https://files.pythonhosted.org/packages/4a/5e/314be7440bf28dbd47f85321a7434c5b74179a762228487d6493c01bddce/owlrl-7.6.2-py3-none-any.whl"
+      },
+      "prettytable": {
+        "version": "3.18.0",
+        "sha256": "b3346e0e6f79180833aebaac088ae926340586cf6d7d991b9eb125b65f72313a",
+        "file": "prettytable-3.18.0-py3-none-any.whl",
+        "url": "https://files.pythonhosted.org/packages/fe/be/2e6798ace5cc036f5d05d36b7b2fd85346f1a708c87060890b070d0ec607/prettytable-3.18.0-py3-none-any.whl"
+      },
+      "rdflib": {
+        "version": "7.6.0",
+        "sha256": "30c0a3ebf4c0e09215f066be7246794b6492e054e782d7ac2a34c9f70a15e0dd",
+        "file": "rdflib-7.6.0-py3-none-any.whl",
+        "url": "https://files.pythonhosted.org/packages/10/c2/6604a71269e0c1bd75656d5a001432d16f2cc5b8c057140ec797155c295e/rdflib-7.6.0-py3-none-any.whl"
+      },
+      "pyparsing": {
+        "version": "3.3.3",
+        "sha256": "ece8c00a69cf01b45d0b1dedabb469c90d8caf996d4fda40f147627a122849a4",
+        "file": "pyparsing-3.3.3-py3-none-any.whl",
+        "url": "https://files.pythonhosted.org/packages/38/bb/d215ee7c73b61497b28a5503f9f53523f294fcc936762b7caf90e0c1c2b5/pyparsing-3.3.3-py3-none-any.whl"
+      }
+    },
+    "baseline": {
+      "html5rdf": {
+        "version": "1.2.1",
+        "sha256": "1f519121bc366af3e485310dc8041d2e86e5173c1a320fac3dc9d2604069b83e",
+        "file": "html5rdf-1.2.1-py2.py3-none-any.whl",
+        "url": "https://files.pythonhosted.org/packages/7d/c9/f6e1e8567660bc5b0aba281f2b0017b2a7665fcad6bf3ed67286a0c72cd4/html5rdf-1.2.1-py2.py3-none-any.whl"
+      },
+      "rdflib-turbo": {
+        "version": "0.2.0a23",
+        "sha256": "a431510853f5253432f7500cda30467382a4e9d575e404d9c7f48c12cfa6e64b",
+        "file": "rdflib_turbo-0.2.0a23-cp313-cp313-macosx_11_0_arm64.whl",
+        "url": "https://files.pythonhosted.org/packages/9a/0f/10c7a3aa26a4a1fced67e3960e8b85f80dd6ce1bba774505791dad258538/rdflib_turbo-0.2.0a23-cp313-cp313-macosx_11_0_arm64.whl"
+      },
+      "owlrl-turbo": {
+        "version": "0.2.0a1",
+        "sha256": "4dfb52ab8d71b7c6729f076210171537d17fee8a74e27810dce61e811fe4d0ab",
+        "file": "owlrl_turbo-0.2.0a1-py3-none-any.whl",
+        "url": "https://files.pythonhosted.org/packages/7f/c9/a874cae74288557f3ce24ee9dac591be53f9a5d5a986ace813b32552adc0/owlrl_turbo-0.2.0a1-py3-none-any.whl"
+      },
+      "pyshacl-turbo": {
+        "version": "0.7.1",
+        "sha256": "de42716f2e68cc14f38f161b570268125ad4e1e30f78c1f9862b2cda8c409638",
+        "file": "pyshacl_turbo-0.7.1-py3-none-any.whl",
+        "url": "https://files.pythonhosted.org/packages/96/b3/f5c2e9cd1d6110894b0d01c68991707dfbe14bf0506404f274a3e564f87c/pyshacl_turbo-0.7.1-py3-none-any.whl"
+      },
+      "rdflib": {
+        "version": "7.6.0",
+        "sha256": "30c0a3ebf4c0e09215f066be7246794b6492e054e782d7ac2a34c9f70a15e0dd",
+        "file": "rdflib-7.6.0-py3-none-any.whl",
+        "url": "https://files.pythonhosted.org/packages/10/c2/6604a71269e0c1bd75656d5a001432d16f2cc5b8c057140ec797155c295e/rdflib-7.6.0-py3-none-any.whl"
+      },
+      "pyparsing": {
+        "version": "3.3.3",
+        "sha256": "ece8c00a69cf01b45d0b1dedabb469c90d8caf996d4fda40f147627a122849a4",
+        "file": "pyparsing-3.3.3-py3-none-any.whl",
+        "url": "https://files.pythonhosted.org/packages/38/bb/d215ee7c73b61497b28a5503f9f53523f294fcc936762b7caf90e0c1c2b5/pyparsing-3.3.3-py3-none-any.whl"
+      }
+    }
+  },
+  "reproduce_argv": [
+    "uv",
+    "run",
+    "--no-project",
+    "--python",
+    "3.13.16",
+    "python",
+    "-I",
+    "-B",
+    "benchmarks/matched_graph_driver.py",
+    "--cohort",
+    "benchmarks/matched-graph-releases.json",
+    "--roles",
+    "baseline",
+    "--widths",
+    "1000",
+    "--repeats",
+    "5",
+    "--output",
+    "benchmark-artifacts/matched-graph-readme"
+  ],
+  "rows": [
+    {
+      "profile": "literal-reflexivity",
+      "width": 1000,
+      "normal_policy_gate": "equal",
+      "false_policy_gate": "different",
+      "conforms": true,
+      "closure": {
+        "ordinary": {
+          "triples": 2107,
+          "sha256": "83fb18796b0eafeb76c6d65e5388cd315ff649e6e09854c8441a1f5c0077e113",
+          "canonicalization": "unique-anchors-v1"
+        },
+        "full": {
+          "triples": 3107,
+          "sha256": "89a9e85d310a1ede3b2118b682385ab3beef5bb3b485f086d9b41e4ebe1713fa",
+          "canonicalization": "unique-anchors-v1"
+        },
+        "generalized_triples": 1000
+      },
+      "arms": {
+        "reference": {
+          "factory": "rdflib.graph.Graph",
+          "stage_median_ns": {
+            "construct_parse": {
+              "wall_ns": 14367167,
+              "cpu_ns": 14369000
+            },
+            "class_expand": {
+              "wall_ns": 253253416,
+              "cpu_ns": 253188000
+            },
+            "validate": {
+              "wall_ns": 17692667,
+              "cpu_ns": 17692000
+            },
+            "total": {
+              "wall_ns": 285227959,
+              "cpu_ns": 285163000
+            }
+          },
+          "absolute_peak_rss_median_bytes": 92291072,
+          "setup_peak_rss_median_bytes": 89128960
+        },
+        "turbo": {
+          "factory": "rdflib_turbo.graph.Graph",
+          "stage_median_ns": {
+            "construct_parse": {
+              "wall_ns": 1294667,
+              "cpu_ns": 1331000
+            },
+            "class_expand": {
+              "wall_ns": 18870583,
+              "cpu_ns": 18901000
+            },
+            "validate": {
+              "wall_ns": 5330000,
+              "cpu_ns": 5343000
+            },
+            "total": {
+              "wall_ns": 25508958,
+              "cpu_ns": 25581000
+            }
+          },
+          "absolute_peak_rss_median_bytes": 90308608,
+          "setup_peak_rss_median_bytes": 81559552
+        }
+      },
+      "total_wall_ratio": 11.181482167950568
+    },
+    {
+      "profile": "literal-type",
+      "width": 1000,
+      "normal_policy_gate": "equal",
+      "false_policy_gate": "different",
+      "conforms": true,
+      "closure": {
+        "ordinary": {
+          "triples": 2110,
+          "sha256": "bfeff68ce442074b188907423e2e6c89932a285df88c05d24704719c96e67640",
+          "canonicalization": "unique-anchors-v1"
+        },
+        "full": {
+          "triples": 4110,
+          "sha256": "eacf2f19365558ae9318f339cdbfb14eaafa6d204edadd223b9a0932cf5ba344",
+          "canonicalization": "unique-anchors-v1"
+        },
+        "generalized_triples": 2000
+      },
+      "arms": {
+        "reference": {
+          "factory": "rdflib.graph.Graph",
+          "stage_median_ns": {
+            "construct_parse": {
+              "wall_ns": 14444708,
+              "cpu_ns": 14445000
+            },
+            "class_expand": {
+              "wall_ns": 330616834,
+              "cpu_ns": 330617000
+            },
+            "validate": {
+              "wall_ns": 17861959,
+              "cpu_ns": 17862000
+            },
+            "total": {
+              "wall_ns": 362691583,
+              "cpu_ns": 362693000
+            }
+          },
+          "absolute_peak_rss_median_bytes": 105431040,
+          "setup_peak_rss_median_bytes": 101744640
+        },
+        "turbo": {
+          "factory": "rdflib_turbo.graph.Graph",
+          "stage_median_ns": {
+            "construct_parse": {
+              "wall_ns": 1300167,
+              "cpu_ns": 1323000
+            },
+            "class_expand": {
+              "wall_ns": 24899625,
+              "cpu_ns": 24918000
+            },
+            "validate": {
+              "wall_ns": 5329709,
+              "cpu_ns": 5353000
+            },
+            "total": {
+              "wall_ns": 31495750,
+              "cpu_ns": 31555000
+            }
+          },
+          "absolute_peak_rss_median_bytes": 103628800,
+          "setup_peak_rss_median_bytes": 94339072
+        }
+      },
+      "total_wall_ratio": 11.5155721962487
+    }
+  ],
+  "source_summary_sha256": "0982754c2dbeef0199224ff510c88cdea95eb6983cf7af622b9b4b5469952662",
+  "proof_scope": "Small numeric provenance only. Complete operation proofs were reviewed locally; independent continuous runs retain their own full gzip proofs/locks/originals in matched-graph-reports-* artifacts and have their own timings.",
+  "limitations": [
+    "Two conforming synthetic literal Graph cases, not production capacity or full API parity",
+    "Single macOS arm64 host, uncontrolled load, five retained samples; no confidence interval or universal speed/memory claim",
+    "NORMALIZE_LITERALS=False remains a strict DIFFERENT module-flag observation and has no timing or RSS ratio",
+    "Nominal implementation-qualified Graph/owner types remain distinct diagnostics",
+    "The existing twelve Dataset/pipeline benchmark cases and their gates remain separate"
+  ]
+}
