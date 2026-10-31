@@ -66,3 +66,65 @@ def test_failed_sample_cannot_earn_speed_or_rss_ratios():
     result = sampler.summarize([sample] * 5, [failed] * 5)
     assert result["speedup"] is None and result["rss_reduction"] is None
     assert result["status"] == "different"
+
+
+@pytest.mark.parametrize("profile", ["literal-reflexivity", "literal-type"])
+def test_actual_shared_graph_pipeline_never_exports_or_imports_data(monkeypatch, profile):
+    """Non-timed tripwires; sampling children do not contain these spies."""
+    from contextlib import contextmanager
+
+    import rdflib
+    from owlrl_turbo import DeductiveClosure, OWLRL_Semantics
+    from pyshacl_turbo import validate
+    from rdflib import Graph, URIRef
+    from rdflib_turbo import Dataset, _native
+    from rdflib_turbo import Graph as NativeGraph
+    from rdflib_turbo._inference import GraphInference
+    from rdflib_turbo._validation import GraphValidation
+    from rdflib_turbo.store import Transaction
+
+    sampler = load("matched_graph_sampling")
+    suite = sampler.CONTRACT._suite()
+    monkeypatch.setattr(rdflib, "NORMALIZE_LITERALS", True)
+    source = NativeGraph(identifier=URIRef("urn:matched:graph")).parse(
+        data=suite.FANOUT.fixture(2, profile), format="turtle"
+    )
+    shapes = Graph().parse(data=sampler.SHAPES, format="turtle")
+    owner, handle = source.store, source.store.backend._native
+    inference, validation = [], []
+    infer = GraphInference._infer_bound_scope
+    validate_shared = GraphValidation._validate_shared_shapes
+
+    def forbidden(*args, **kwargs):
+        raise AssertionError("DATA export/copy/import fallback reached")
+
+    def infer_spy(self, *args, **kwargs):
+        assert isinstance(self.store.backend, Transaction)
+        inference.append(type(self.store.backend._native))
+        return infer(self, *args, **kwargs)
+
+    @contextmanager
+    def validate_spy(self, program, settings, inplace):
+        assert type(program) is _native.SharedShapes and inplace is True
+        validation.append(isinstance(self.store.backend, Transaction))
+        with validate_shared(self, program, settings, inplace) as result:
+            yield result
+
+    with monkeypatch.context() as tripwires:
+        for name in ("triples", "__iter__", "serialize", "copy"):
+            tripwires.setattr(NativeGraph, name, forbidden)
+        tripwires.setattr(Dataset, "from_rdflib", forbidden)
+        tripwires.setattr(GraphInference, "_infer_bound_scope", infer_spy)
+        tripwires.setattr(GraphValidation, "_validate_shared_shapes", validate_spy)
+        with pytest.raises(AssertionError, match="fallback"):
+            source.serialize(format="turtle")
+        assert DeductiveClosure(OWLRL_Semantics).expand(source, destination=source) is None
+        conforms, report, text = validate(
+            source, shacl_graph=shapes, inplace=True, inference="none"
+        )
+    assert inference == [_native.NativeTransaction]
+    assert validation == [False, True]
+    assert source.store is owner and owner.backend._native is handle
+    assert conforms is True and len(report) == 2 and "Conforms: True" in text
+    expected = sampler.CONTRACT.correctness("reference", 2, profile, True)
+    assert suite.FANOUT.facts(source) == expected["complete_term_metadata"]
