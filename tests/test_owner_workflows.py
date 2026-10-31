@@ -1,10 +1,12 @@
 """Pure façade workflows delegate Rust authority without dropping native gates."""
 
 import importlib.util
+import tomllib
 from pathlib import Path
 
 import pytest
 import yaml
+from packaging.requirements import Requirement
 
 ROOT = Path(__file__).resolve().parents[1]
 # Published Native20's full Ubuntu verification job budgets 90 minutes, unlike
@@ -145,6 +147,25 @@ def test_active_workflows_use_the_current_uv_toolchain():
                     assert step["uses"] == "astral-sh/setup-uv@v10.3.3"
                     assert step["with"]["version"] == "0.13.5"
     assert selected
+
+
+def test_declared_pytest_supports_the_runners_explicit_long_id_api():
+    requirements = tomllib.loads((ROOT / "pyproject.toml").read_text())["project"][
+        "optional-dependencies"
+    ]["test"]
+    requirement = next(
+        Requirement(value) for value in requirements if Requirement(value).name == "pytest"
+    )
+    assert (
+        "parametrize_long_str_id_strategy=legacy" in (ROOT / "scripts/run_upstream.py").read_text()
+    )
+    assert "9.1.1" not in requirement.specifier
+    assert "9.2.0" in requirement.specifier
+    config = pytest.Config.fromdictargs({}, ["-o", "parametrize_long_str_id_strategy=legacy"])
+    try:
+        assert config.getini("parametrize_long_str_id_strategy") == "legacy"
+    finally:
+        config._ensure_unconfigure()
 
 
 def test_release_metadata_check_uses_project_locked_twine():

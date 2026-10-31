@@ -1031,7 +1031,7 @@ requires-dist = [
     { name = "owlrl-turbo", marker = "extra == 'test'", specifier = "==0.2.0a1" },
     { name = "pyoxigraph", marker = "extra == 'oxigraph'", specifier = ">=0.5,<0.6" },
     { name = "pyshacl", extras = ["oxigraph"], marker = "extra == 'test'", specifier = "==0.40.1" },
-    { name = "pytest", marker = "extra == 'test'", specifier = ">=8,<10" },
+    { name = "pytest", marker = "extra == 'test'", specifier = ">=9.2,<10" },
     { name = "pytest-cov", marker = "extra == 'test'", specifier = ">=7.1,<8" },
     { name = "pyyaml", marker = "extra == 'test'", specifier = ">=6,<7" },
     { name = "rdflib", extras = ["html"], specifier = ">=7.3,<8" },
