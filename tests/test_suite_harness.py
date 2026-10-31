@@ -1,6 +1,6 @@
 import ntpath
 import nturl2path
-from pathlib import PureWindowsPath
+from pathlib import Path, PureWindowsPath
 
 import pytest
 import suite_harness
@@ -144,11 +144,11 @@ def test_document_comparator_rejects_missing_and_duplicate_results():
     assert not isomorphic(document_view(original), document_view(changed))
 
 
-def test_inventory_retains_executed_upstream_failures(tmp_path, monkeypatch):
+@pytest.mark.parametrize("windows_paths", [False, True])
+def test_inventory_retains_executed_upstream_failures(tmp_path, monkeypatch, windows_paths):
     import json
     import runpy
     import sys
-    from pathlib import Path
 
     root = Path(__file__).resolve().parents[1]
     main = runpy.run_path(str(root / "scripts/coverage_inventory.py"))["main"]
@@ -172,6 +172,13 @@ def test_inventory_retains_executed_upstream_failures(tmp_path, monkeypatch):
     unique_lang = next(case for case in cases() if case.path.stem == "uniqueLang-002")
     monkeypatch.setitem(main.__globals__, "cases", lambda: [unique_lang])
     monkeypatch.setattr(sys, "argv", ["coverage_inventory.py", str(output)])
+    if windows_paths:
+        original = Path.relative_to
+
+        def relative(path, *args, **kwargs):
+            return PureWindowsPath(original(path, *args, **kwargs).as_posix())
+
+        monkeypatch.setattr(Path, "relative_to", relative)
     main()
     result = json.loads(output.read_text())
     assert result["w3c_summary"] == {"mismatch": 1}

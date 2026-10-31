@@ -93,7 +93,7 @@ def test_peer_payload_uses_its_declared_hatch_package_path(tmp_path):
     source = tmp_path / "owl-source"
     package = source / "src/owlrl_turbo"
     package.mkdir(parents=True)
-    (package / "__init__.py").write_text("VALUE = 1\n")
+    (package / "__init__.py").write_bytes(b"VALUE = 1\n")
     (source / "pyproject.toml").write_text(
         '[project]\nname="owlrl-turbo"\nversion="0.1.0a3"\n[tool.hatch.build.targets.wheel]\npackages=["src/owlrl_turbo"]\n'
     )
@@ -107,9 +107,10 @@ def test_peer_payload_uses_its_declared_hatch_package_path(tmp_path):
             "owlrl_turbo-0.1.0a3.dist-info/WHEEL", "Root-Is-Purelib: true\nTag: py3-none-any\n"
         )
     assert module.pure_payload(source, wheel, "owlrl-turbo")
-    (package / "__init__.py").write_text("VALUE = 2\n")
-    with pytest.raises(ValueError, match="source package differs"):
-        module.pure_payload(source, wheel, "owlrl-turbo")
+    for changed in (b"VALUE = 2\n", b"VALUE = 1\r\n"):
+        (package / "__init__.py").write_bytes(changed)
+        with pytest.raises(ValueError, match="source package differs"):
+            module.pure_payload(source, wheel, "owlrl-turbo")
 
 
 def test_owl_peer_original_archive_authority_is_disjoint_from_git(tmp_path):

@@ -19,13 +19,13 @@ def sync(tmp_path, monkeypatch):
     spec.loader.exec_module(module)
     monkeypatch.setattr(module, "ROOT", tmp_path)
     (tmp_path / "vendor").mkdir()
-    (tmp_path / "vendor/pyshacl-issue-70.patch").write_text(
-        "diff --git a/vendor/pyshacl/test/example.py b/vendor/pyshacl/test/example.py\n"
-        "--- a/vendor/pyshacl/test/example.py\n"
-        "+++ b/vendor/pyshacl/test/example.py\n"
-        "@@ -1 +1 @@\n"
-        "-assert conforms\n"
-        "+assert not conforms\n"
+    (tmp_path / "vendor/pyshacl-issue-70.patch").write_bytes(
+        b"diff --git a/vendor/pyshacl/test/example.py b/vendor/pyshacl/test/example.py\n"
+        b"--- a/vendor/pyshacl/test/example.py\n"
+        b"+++ b/vendor/pyshacl/test/example.py\n"
+        b"@@ -1 +1 @@\n"
+        b"-assert conforms\n"
+        b"+assert not conforms\n"
     )
 
     def download(url, timeout):
@@ -59,7 +59,7 @@ def test_refresh_applies_and_records_the_local_correction(sync):
 
 def test_refresh_stops_when_the_correction_does_not_apply(sync):
     patch = sync.ROOT / "vendor/pyshacl-issue-70.patch"
-    patch.write_text(patch.read_text().replace("-assert conforms", "-unexpected source"))
+    patch.write_bytes(patch.read_bytes().replace(b"-assert conforms", b"-unexpected source"))
     with pytest.raises(subprocess.CalledProcessError):
         sync.main()
     assert not (sync.ROOT / "tests/suite-sources.json").exists()

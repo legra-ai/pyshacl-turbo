@@ -44,7 +44,7 @@ def main():
             if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and node.name.startswith(
                 "test_"
             ):
-                prefix = f"{path.relative_to(ROOT / 'vendor/pyshacl')}::{node.name}"
+                prefix = f"{path.relative_to(ROOT / 'vendor/pyshacl').as_posix()}::{node.name}"
                 statuses = [
                     row["status"] for row in executed_cases if row["id"].split("[")[0] == prefix
                 ]
@@ -57,7 +57,7 @@ def main():
                     status = "excluded_js"
                 upstream.append(
                     {
-                        "file": str(path.relative_to(ROOT)),
+                        "file": path.relative_to(ROOT).as_posix(),
                         "name": node.name,
                         "line": node.lineno,
                         "status": status,

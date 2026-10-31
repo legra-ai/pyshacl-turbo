@@ -4,7 +4,7 @@ import importlib.util
 import runpy
 import subprocess
 import sys
-from pathlib import Path
+from pathlib import Path, PurePosixPath, PureWindowsPath
 from types import SimpleNamespace
 
 import pytest
@@ -28,7 +28,7 @@ def portable_id():
     ],
 )
 def test_absolute_and_file_uri_parameters_become_repository_relative(portable_id, root):
-    checkout = Path(root)
+    checkout = PurePosixPath(root)
     first = "vendor/pyshacl/test/resources/core/one.ttl"
     second = "vendor/pyshacl/test/resources/core/two.ttl"
     name = "test/test_sht_validate.py::test_sht_all"
@@ -37,7 +37,7 @@ def test_absolute_and_file_uri_parameters_become_repository_relative(portable_id
 
 
 def test_case_parameters_and_external_paths_are_not_erased(portable_id):
-    checkout = Path("/tmp/repo")
+    checkout = PurePosixPath("/tmp/repo")
     prefix = "test/example.py::test_case"
     for parameter in ("0", "1", "None", "other.ttl", "/tmp/external/file.ttl"):
         case = f"{prefix}[{parameter}]"
@@ -45,6 +45,12 @@ def test_case_parameters_and_external_paths_are_not_erased(portable_id):
     one = portable_id(f"{prefix}[/tmp/repo/vendor/one.ttl-0]", checkout)
     two = portable_id(f"{prefix}[/tmp/repo/vendor/one.ttl-1]", checkout)
     assert one != two
+
+
+def test_windows_file_uri_parameters_retain_their_case_identity(portable_id):
+    checkout = PureWindowsPath("D:/source tree")
+    case = f"test/example.py::test_case[{checkout.as_uri()}/vendor/one.ttl-0]"
+    assert portable_id(case, checkout) == "test/example.py::test_case[vendor/one.ttl-0]"
 
 
 def test_upstream_runner_keeps_complete_long_parameter_ids(tmp_path, monkeypatch):

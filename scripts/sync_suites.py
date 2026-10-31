@@ -49,14 +49,14 @@ def main():
                     raise ValueError(f"Missing archive content: {member.name}")
                 destination.parent.mkdir(parents=True, exist_ok=True)
                 destination.write_bytes(source.read())
-                files.append(str(relative))
+                files.append(relative.as_posix())
         inventory[name] = {"repository": repository, "revision": revision, "files": sorted(files)}
         if name == "pyshacl":
             patch = ROOT / "vendor/pyshacl-issue-70.patch"
             subprocess.run(["git", "apply", str(patch)], cwd=ROOT, check=True)
             inventory[name]["local_patches"] = [
                 {
-                    "path": str(patch.relative_to(ROOT)),
+                    "path": patch.relative_to(ROOT).as_posix(),
                     "sha256": hashlib.sha256(patch.read_bytes()).hexdigest(),
                 }
             ]
