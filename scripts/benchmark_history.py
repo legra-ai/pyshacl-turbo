@@ -11,6 +11,7 @@ import subprocess
 import sys
 import tempfile
 from pathlib import Path
+from time import sleep
 
 PLATFORMS = {"ubuntu-latest", "macos-latest"}
 FORMAT = {"schema": 1, "kind": "turbo-pipeline-history"}
@@ -125,6 +126,8 @@ def run(*arguments):
 
 def api(path, method="GET", payload=None):
     arguments = ["gh", "api", path, "--method", method]
+    if method == "GET" and "/git/ref/" in path:
+        arguments += ["--header", "Cache-Control: no-cache", "--header", "Pragma: no-cache"]
     if payload is not None:
         arguments += ["--input", "-"]
     result = command(arguments, payload)
@@ -171,9 +174,19 @@ def signed_commit(
     except HistoryTransportError:
         # A 504 can follow a successful server mutation. Never retry the write.
         pass
-    tip = client(f"repos/{repository}/git/ref/heads/{branch}")["object"]["sha"]
+    # A successful write can precede visibility through the REST ref endpoint.
+    # Revalidate reads only: never repeat the mutation or accept commit existence.
+    for attempt in range(7):
+        tip = client(f"repos/{repository}/git/ref/heads/{branch}")["object"]["sha"]
+        if tip != head or attempt == 6:
+            break
+        sleep(2**attempt)
     if tip == head or (acknowledged is not None and tip != acknowledged):
-        raise RuntimeError("History mutation has no exact current branch acknowledgement")
+        raise RuntimeError(
+            "History mutation has no exact current branch acknowledgement "
+            f"(expected_parent={head}, acknowledged={acknowledged}, "
+            f"observed_tip={tip}, reads={attempt + 1})"
+        )
     observed = client(f"repos/{repository}/commits/{tip}")
     body = observed["commit"]
     if (
