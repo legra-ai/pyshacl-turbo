@@ -188,6 +188,7 @@ class CompiledShapes:
             self._shared_spec = (source, advanced, namespaces, numeric_booleans)
 
     def _prepare(self, shacl_graph, shacl_graph_format, advanced):
+        self._advanced = advanced
         numeric_booleans = isinstance(shacl_graph, Graph)
         if isinstance(shacl_graph, ShapesGraph):
             numeric_booleans = shacl_graph._numeric_booleans
@@ -318,6 +319,8 @@ class CompiledShapes:
         ):
             raise TypeError("inplace=True requires an RDFLib Graph or pyoxigraph Store")
         data = _input(data_graph, data_graph_format, direct=True)
+        # Core validation cannot execute rules, so its input relation is unchanged.
+        write_data = inplace and self._advanced
         conforms, report, text, expanded, recursion_warnings = self._native.validate(
             data.source,
             data.format,
@@ -325,7 +328,7 @@ class CompiledShapes:
             iterate_rules,
             max_rule_iterations,
             15 if max_validation_depth is None else max_validation_depth,
-            inplace,
+            write_data,
             allow_infos,
             allow_warnings,
             abort_on_first,
@@ -348,7 +351,7 @@ class CompiledShapes:
         )
         for prefix, namespace in self._shape_namespaces:
             report_graph.bind(prefix, namespace)
-        if inplace:
+        if write_data:
             commit_serialized(data_graph, expanded, nodes, before=data)
         return conforms, report_graph, text
 
