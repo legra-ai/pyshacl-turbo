@@ -30,26 +30,26 @@ def files():
 
 
 def payload_size(bench, additions):
-    requests = []
-
-    def capture(path, method, payload):
-        requests.append(payload)
-        return {
-            "data": {
-                "createCommitOnBranch": {
-                    "commit": {"oid": "b" * 40, "signature": {"isValid": True}}
-                }
-            }
-        }
-
-    bench.signed_commit(capture, "owner/repo", "benchmark-results", HEAD, MESSAGE, additions, [])
-    return len(json.dumps(requests[0]).encode("utf-8"))
+    payload = bench.commit_payload("owner/repo", "benchmark-results", HEAD, MESSAGE, additions, [])
+    return len(json.dumps(payload).encode("utf-8"))
 
 
 def client(limit, *, fail_at=None, unsigned_at=None, race_at=None):
     state = {"head": HEAD, "requests": [], "mutable_written": False, "files": {}}
 
-    def execute(path, method, payload):
+    def execute(path, method="GET", payload=None):
+        if method == "GET":
+            if "/git/ref/" in path:
+                return {"object": {"sha": state["head"]}}
+            return {
+                "sha": state["head"],
+                "parents": [{"sha": state["requests"][-1]["expectedHeadOid"]}],
+                "commit": {
+                    "message": MESSAGE,
+                    "tree": {"sha": "c" * 40},
+                    "verification": {"verified": True},
+                },
+            }
         assert len(json.dumps(payload).encode("utf-8")) <= limit
         request = payload["variables"]["input"]
         index = len(state["requests"])
@@ -87,6 +87,7 @@ def publish(bench, execute, additions, limit):
         MESSAGE,
         additions,
         "123-1",
+        prepare_tree=lambda base, batch: "c" * 40,
         max_bytes=limit,
     )
 
@@ -182,6 +183,7 @@ def test_main_uses_bounded_signed_transport_for_complete_reports(tmp_path, monke
 
     monkeypatch.setattr(bench, "run", run)
     monkeypatch.setattr(bench, "api", execute)
+    monkeypatch.setattr(bench, "expected_tree", lambda checkout, base, batch: "c" * 40)
     monkeypatch.setattr(bench, "MAX_COMMIT_REQUEST_BYTES", limit, raising=False)
     monkeypatch.setattr(
         sys,

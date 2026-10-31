@@ -4,6 +4,7 @@ import argparse
 import base64
 import gzip
 import json
+import os
 import re
 import shutil
 import subprocess
@@ -87,25 +88,35 @@ def stage_reports(artifacts, destination, run_id, run_url):
     (destination / "README.md").write_text("\n".join(lines) + "\n")
 
 
-def command(arguments, payload=None):
+class HistoryTransportError(RuntimeError):
+    """The mutation command failed without an authoritative acknowledgement."""
+
+
+def command(arguments, payload=None, *, input_bytes=None, environment=None):
     with Popen(
         list(map(str, arguments)),
         stdin=subprocess.PIPE,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
-        text=True,
+        text=input_bytes is None,
+        env=environment,
     ) as process:
         try:
             stdout, stderr = process.communicate(
-                json.dumps(payload) if payload is not None else None, timeout=120
+                input_bytes
+                if input_bytes is not None
+                else json.dumps(payload)
+                if payload is not None
+                else None,
+                timeout=120,
             )
         except subprocess.TimeoutExpired:
             process.kill()
             process.communicate()
-            raise RuntimeError("Benchmark history command timed out") from None
+            raise HistoryTransportError("Benchmark history command timed out") from None
         if process.returncode:
-            raise RuntimeError(f"Benchmark history command failed: {arguments}\n{stderr}")
-    return stdout.strip()
+            raise HistoryTransportError(f"Benchmark history command failed: {arguments}\n{stderr}")
+    return (stdout.decode("utf-8") if isinstance(stdout, bytes) else stdout).strip()
 
 
 def run(*arguments):
@@ -143,14 +154,61 @@ def commit_payload(repository, branch, head, message, additions, deletions):
     }
 
 
-def signed_commit(client, repository, branch, head, message, additions, deletions):
-    response = client(
-        "graphql", "POST", commit_payload(repository, branch, head, message, additions, deletions)
-    )
-    commit = response["data"]["createCommitOnBranch"]["commit"]
-    if not commit.get("signature") or commit["signature"].get("isValid") is not True:
-        raise RuntimeError("GitHub did not return a verified signed history commit")
-    return commit["oid"]
+def signed_commit(
+    client, repository, branch, head, message, additions, deletions, *, expected_tree
+):
+    acknowledged = None
+    try:
+        response = client(
+            "graphql",
+            "POST",
+            commit_payload(repository, branch, head, message, additions, deletions),
+        )
+        commit = response["data"]["createCommitOnBranch"]["commit"]
+        if not commit.get("signature") or commit["signature"].get("isValid") is not True:
+            raise RuntimeError("GitHub did not return a verified signed history commit")
+        acknowledged = commit["oid"]
+    except HistoryTransportError:
+        # A 504 can follow a successful server mutation. Never retry the write.
+        pass
+    tip = client(f"repos/{repository}/git/ref/heads/{branch}")["object"]["sha"]
+    if tip == head or (acknowledged is not None and tip != acknowledged):
+        raise RuntimeError("History mutation has no exact current branch acknowledgement")
+    observed = client(f"repos/{repository}/commits/{tip}")
+    body = observed["commit"]
+    if (
+        observed["sha"] != tip
+        or [parent["sha"] for parent in observed["parents"]] != [head]
+        or body["message"] != message
+        or body["tree"]["sha"] != expected_tree
+        or body["verification"]["verified"] is not True
+    ):
+        raise RuntimeError("History commit does not match the exact verified signed postcondition")
+    return tip
+
+
+def expected_tree(checkout, base, additions):
+    """Build the whole expected tree with a private index, preserving every other file."""
+    with tempfile.TemporaryDirectory(prefix="turbo-history-index-") as temporary:
+        environment = {**os.environ, "GIT_INDEX_FILE": str(Path(temporary) / "index")}
+
+        def git(*arguments, input_bytes=None):
+            return command(
+                ["git", "-C", checkout, *arguments],
+                input_bytes=input_bytes,
+                environment=environment,
+            )
+
+        git("read-tree", base)
+        for addition in additions:
+            blob = git(
+                "hash-object",
+                "-w",
+                "--stdin",
+                input_bytes=base64.b64decode(addition["contents"], validate=True),
+            )
+            git("update-index", "--add", "--cacheinfo", "100644", blob, addition["path"])
+        return git("write-tree")
 
 
 def publish_additions(
@@ -162,6 +220,7 @@ def publish_additions(
     files,
     run_id,
     *,
+    prepare_tree,
     max_bytes=MAX_COMMIT_REQUEST_BYTES,
 ):
     mutable_names = {"README.md", "history.json", ".benchmark-history-format.json"}
@@ -204,10 +263,16 @@ def publish_additions(
     if batch:
         batches.append(batch)
     batches.append(mutable)
+    trees, tree = [], head
     for additions in batches:
+        tree = prepare_tree(tree, additions)
+        trees.append(tree)
+    for additions, tree in zip(batches, trees, strict=True):
         if request_bytes(additions) > max_bytes:
             raise ValueError("History commit exceeds the signed request limit")
-        head = signed_commit(client, repository, branch, head, message, additions, [])
+        head = signed_commit(
+            client, repository, branch, head, message, additions, [], expected_tree=tree
+        )
     # Signature verification follows each mutation. A final verification failure
     # is reported, but cannot roll back aliases already written by that mutation.
     return head
@@ -278,6 +343,7 @@ def main():
             f"perf(history): record measured pipeline run {args.run_id}",
             files,
             args.run_id,
+            prepare_tree=lambda base, batch: expected_tree(checkout, base, batch),
             max_bytes=MAX_COMMIT_REQUEST_BYTES,
         )
 
