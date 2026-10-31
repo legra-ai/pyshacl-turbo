@@ -47,16 +47,26 @@ jobs:
           BENCHMARK_MATRIX: ${{ github.event_name == 'schedule' && inputs.revision == '' && 'benchmarks/releases.json' || 'benchmarks/candidate-releases.json' }}
           BENCHMARK_TIMEOUT: ${{ github.event_name == 'schedule' && '900' || '180' }}
         run: uv run --no-project --python 3.13.16 python benchmarks/releases.py --matrix "$BENCHMARK_MATRIX" --candidate-wheels "$RUNNER_TEMP/pipeline-build/candidate/candidate-wheels" --integration-tests "$GITHUB_WORKSPACE/integration" --nodes $BENCHMARK_NODES --repeats 7 --memory-repeats 3 --timeout "$BENCHMARK_TIMEOUT" --output benchmark-artifacts/releases.json || exit 1
+      - name: Measure matched public Graph registry cohorts separately
+        if: ${{ !cancelled() }}
+        run: uv run --no-project --python 3.13.16 python -I -B benchmarks/matched_graph_driver.py --cohort benchmarks/matched-graph-releases.json --repeats 5 --output benchmark-artifacts/matched-graph || exit 1
       - name: Summarize measured results
         if: always()
         shell: uv run --no-project --python 3.13.16 python {0}
         run: |
+          import json
           import os
           from pathlib import Path
           report = Path('benchmark-artifacts/releases.md')
           if report.exists():
               with open(os.environ['GITHUB_STEP_SUMMARY'], 'a') as output:
                   output.write(report.read_text())
+          matched = Path('benchmark-artifacts/matched-graph/summary.json')
+          if matched.exists() and json.loads(matched.read_text()).get("status") == "complete":
+              report = matched.with_suffix('.md')
+              if report.exists():
+                  with open(os.environ['GITHUB_STEP_SUMMARY'], 'a') as output:
+                      output.write(report.read_text())
       - uses: actions/upload-artifact@v7
         if: always()
         with:
@@ -66,6 +76,18 @@ jobs:
             benchmark-artifacts/releases.json
             benchmark-artifacts/releases.md
             benchmark-artifacts/locks/
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: matched-graph-reports-${{ matrix.os }}
+          include-hidden-files: true
+          path: |
+            benchmark-artifacts/matched-graph/summary.json
+            benchmark-artifacts/matched-graph/summary.md
+            benchmark-artifacts/matched-graph/proofs/
+            benchmark-artifacts/matched-graph/locks/
+            benchmark-artifacts/matched-graph/originals/
           if-no-files-found: error
       - uses: actions/upload-artifact@v7
         if: always()
