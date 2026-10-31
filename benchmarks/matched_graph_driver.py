@@ -161,7 +161,7 @@ def harness_hashes(cohort):
 
 def proof_hashes(output):
     return {
-        str(path.relative_to(output)): AUTHORITY.sha(path)
+        path.relative_to(output).as_posix(): AUTHORITY.sha(path)
         for directory in ["proofs", "locks", "originals"]
         for path in (output / directory).rglob("*")
         if path.is_file()

@@ -163,3 +163,30 @@ def test_lock_replay_uses_locked_sync_without_resolving_or_rewriting_input(tmp_p
     assert (project / "uv.lock").read_bytes() == lock.read_bytes()
     assert not any(argv[1] == "add" for argv in commands)
     assert commands[-1][1] == "sync" and "--locked" in commands[-1] and "--no-build" in commands[-1]
+
+
+def test_artifact_manifest_paths_are_portable_on_windows(monkeypatch):
+    from pathlib import PureWindowsPath
+
+    driver = load("matched_graph_driver")
+
+    class File:
+        def is_file(self):
+            return True
+
+        def relative_to(self, output):
+            return PureWindowsPath("proofs/case.json.gz")
+
+    class Directory:
+        def __init__(self, name):
+            self.name = name
+
+        def rglob(self, pattern):
+            return [File()] if self.name == "proofs" else []
+
+    class Output:
+        def __truediv__(self, name):
+            return Directory(name)
+
+    monkeypatch.setattr(driver.AUTHORITY, "sha", lambda path: "a" * 64)
+    assert driver.proof_hashes(Output()) == {"proofs/case.json.gz": "a" * 64}
