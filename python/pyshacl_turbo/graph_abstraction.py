@@ -93,7 +93,7 @@ class RdfLibDataGraph(DataGraph):
     @default_union.setter
     def default_union(self, value):
         self._default_union = value
-        if isinstance(self.impl, Dataset):
+        if self.impl and isinstance(self.impl, Dataset):
             self.impl.default_union = value
 
     def is_multigraph(self):

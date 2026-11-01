@@ -124,6 +124,8 @@ def _decode_terms(
     *,
     copied_subjects=None,
     generated_boolean=None,
+    boolean_values=None,
+    selected_values=None,
     normalize=None,
     _bind_namespaces="rdflib",
 ):
@@ -152,8 +154,10 @@ def _decode_terms(
         # Direct report terms restore existing values; conversion must not signal again.
         # One report-local context and the existing terms vector avoid per-term contexts.
         with localcontext():
-            for quad in quads:
+            for quad_index, quad in enumerate(quads):
                 subject, _, obj, _ = quad
+                if boolean_values is not None and quad_index in boolean_values:
+                    continue
                 if generated_boolean is not None and tuple(quad) == generated_boolean[0]:
                     continue
                 if subject not in copied_subjects and records[obj][0] == 2 and terms[obj] is None:
@@ -170,7 +174,7 @@ def _decode_terms(
         if named
         else Graph(identifier=identifier, bind_namespaces=_bind_namespaces)
     )
-    for quad in quads:
+    for quad_index, quad in enumerate(quads):
         s, p, o, g = quad
         destination = (
             (result.default_graph if g is None else result.graph(terms[g])) if named else result
@@ -178,6 +182,12 @@ def _decode_terms(
         value = terms[o]
         if generated_boolean is not None and tuple(quad) == generated_boolean[0]:
             value = Literal(generated_boolean[1], normalize=False)
+        elif selected_values is not None and quad_index in selected_values:
+            value = selected_values[quad_index]
+        elif boolean_values is not None and quad_index in boolean_values:
+            from rdflib_turbo._literal import restore_boolean
+
+            value = restore_boolean(records[o][1], *boolean_values[quad_index])
         elif copied_subjects is not None and records[o][0] == 2:
             copied = s in copied_subjects
             if copied:
@@ -192,8 +202,13 @@ def _decode_terms(
     return result
 
 
-def _term_input(source, *, flatten=False):
+def _term_input(source, *, flatten=False, observe_booleans=False, dataset_factory=None):
     nodes = {}
+    if observe_booleans:
+        native = _native.BooleanInput(
+            source, nodes, flatten, _terms=(URIRef, BNode, Literal), _dataset=dataset_factory
+        )
+        return Input(native, "terms", None, nodes, dict(source.namespaces()))
     batch = _TermBatch(nodes)
     if source.context_aware:
         default = source.default_graph.identifier
@@ -409,7 +424,15 @@ def commit_serialized(target, source, nodes=None, *, before=None):
         merge_graph(target, decode(source, nodes, preserve_ids=True))
 
 
-def input_graph(source, rdf_format=None, *, flatten=False, direct=False):
+def input_graph(
+    source,
+    rdf_format=None,
+    *,
+    flatten=False,
+    direct=False,
+    observe_booleans=False,
+    _dataset_factory=None,
+):
     from .graph_abstraction import DataGraph, _reject_native_store_graph
 
     if isinstance(source, DataGraph):
@@ -432,7 +455,12 @@ def input_graph(source, rdf_format=None, *, flatten=False, direct=False):
     if not isinstance(source, Graph):
         source = load_from_source(source, rdf_format=rdf_format)
     if direct:
-        return _term_input(source, flatten=flatten)
+        return _term_input(
+            source,
+            flatten=flatten,
+            observe_booleans=observe_booleans,
+            dataset_factory=_dataset_factory,
+        )
     graph = union(source) if source.context_aware else source
     nodes = {str(n): n for n in graph.all_nodes() if isinstance(n, BNode)}
     if source.context_aware and not flatten:

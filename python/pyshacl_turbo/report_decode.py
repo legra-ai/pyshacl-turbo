@@ -6,6 +6,7 @@ from rdflib import BNode, URIRef
 from rdflib.namespace import RDF, SH, XSD
 from rdflib.plugins.parsers.ntriples import W3CNTriplesParser, r_literal, unquote, uriquote
 
+from . import _native
 from .rdf import _decode_terms, _NativeBlankNodes, _Parser
 
 
@@ -119,6 +120,11 @@ def _generated_boolean(records, quads, copied_subjects, conforms):
 def decode_report(
     source, blank_nodes, multigraph, preserve_ids, identifier, normalize, *, conforms=None
 ):
+    live_values = None
+    if isinstance(source, _native.SelectedLiteralReport):
+        batch, states, entries = source.take_parts()
+        source = (*batch, states)
+        live_values = dict(entries)
     if isinstance(source, str):
         sink, parser = _ReportSink(), _ReportParser()
         parser.sink = sink
@@ -127,7 +133,15 @@ def decode_report(
             nodes = _NativeBlankNodes(nodes)
         W3CNTriplesParser.parse(parser, StringIO(source), bnode_context=nodes)
         source = sink.records, sink.quads
-    records, quads = source
+    if len(source) == 3:
+        records, quads, states = source
+        from .boolean_output import boolean_occurrences
+
+        boolean_values = boolean_occurrences(records, quads, states)
+        source = records, quads
+    else:
+        records, quads = source
+        boolean_values = None
     copied_subjects = _description_subjects(records, quads)
     generated_boolean = _generated_boolean(records, quads, copied_subjects, conforms)
     return _decode_terms(
@@ -137,6 +151,8 @@ def decode_report(
         preserve_ids,
         identifier,
         copied_subjects=copied_subjects,
+        boolean_values=boolean_values,
+        selected_values=live_values,
         generated_boolean=generated_boolean,
         normalize=normalize,
         _bind_namespaces="core",

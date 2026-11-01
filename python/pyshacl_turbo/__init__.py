@@ -78,6 +78,19 @@ def _check_rule_output(runtime, source, result, inplace):
         raise RuntimeError("Invalid native rule expansion result ownership or graph scope")
 
 
+def _restore_selected_failure(function):
+    @wraps(function)
+    def wrapped(*args, **kwargs):
+        failure = None
+        try:
+            return function(*args, **kwargs)
+        except _native.SelectedSourceInterruption as carrier:
+            failure, traceback = carrier.args
+        raise BaseException.with_traceback(failure, traceback)
+
+    return wrapped
+
+
 def _failure_result(function):
     @wraps(function)
     def wrapped(*args, **kwargs):
@@ -155,13 +168,44 @@ def _document_source(data):
     )
 
 
-def _prepare_public_shapes(data, shapes, data_format, shapes_format, ontology, inference, imports):
+def _dataset_preparation(operation, *args):
+    try:
+        return operation(*args)
+    except RuntimeError as failure:
+        # Restore outside the public RuntimeError translator, preserving the
+        # actual first source exception without inspecting user error attributes.
+        raise _native.SelectedSourceInterruption(failure, sys.exc_info()[2]) from None
+
+
+def _dataset_view(data):
+    if (
+        not isinstance(data, DataGraph)
+        and issubclass(type(data), Dataset)
+        and _shared_runtime(data) is None
+    ):
+        return _dataset_preparation(DataGraph.from_rdflib_dataset, data)
+    return data
+
+
+def _prepare_public_shapes(
+    data,
+    shapes,
+    data_format,
+    shapes_format,
+    ontology,
+    inference,
+    imports,
+    *,
+    dataset_preparation=False,
+):
     if _document_source(data):
         data = load_from_source(
             data,
             rdf_format=data_format,
             multigraph=ontology is not None or inference not in (None, "none"),
         )
+    if dataset_preparation:
+        data = _dataset_view(data)
     if isinstance(shapes, ShapesGraph):
         return data, shapes
     graph_input = isinstance(shapes, Graph)
@@ -255,6 +299,7 @@ class CompiledShapes:
         focus_nodes=None,
         use_shapes=None,
         _normalize_report_literals=None,
+        _prepare_dataset=None,
     ):
         runtime = _shared_runtime(data_graph)
         if runtime is not None:
@@ -318,9 +363,25 @@ class CompiledShapes:
             isinstance(data_graph, (Graph, Input)) or is_oxigraph_store(data_graph)
         ):
             raise TypeError("inplace=True requires an RDFLib Graph or pyoxigraph Store")
-        data = _input(data_graph, data_graph_format, direct=True)
+        dataset_factory = None
+        if _prepare_dataset is None:
+            _prepare_dataset = self._shared_spec is not None and not self._shared_spec[1]
+        if _prepare_dataset:
+            data_graph = _dataset_view(data_graph)
+            if isinstance(data_graph, DataGraph) and data_graph.is_multigraph():
+                _dataset_preparation(setattr, data_graph, "default_union", True)
+                if issubclass(type(data_graph.impl), Dataset):
+                    dataset_factory = Dataset
+        data = _input(
+            data_graph,
+            data_graph_format,
+            direct=True,
+            observe_booleans=True,
+            _dataset_factory=dataset_factory,
+        )
         # Core validation cannot execute rules, so its input relation is unchanged.
         write_data = inplace and self._advanced
+
         conforms, report, text, expanded, recursion_warnings = self._native.validate(
             data.source,
             data.format,
@@ -354,6 +415,9 @@ class CompiledShapes:
         if write_data:
             commit_serialized(data_graph, expanded, nodes, before=data)
         return conforms, report_graph, text
+
+    _validate = validate
+    validate = _restore_selected_failure(validate)
 
     def shacl_rules(
         self,
@@ -443,6 +507,7 @@ def compile_shapes(shacl_graph, *, shacl_graph_format=None, advanced=False):
     return CompiledShapes(shacl_graph, shacl_graph_format=shacl_graph_format, advanced=advanced)
 
 
+@_restore_selected_failure
 @_failure_result
 def validate(
     data_graph,
@@ -536,6 +601,7 @@ def validate(
     if native_validation and check_dash and inference not in (None, "none"):
         raise NotImplementedError("Native pre-inference with check_dash_result is not implemented")
     original = data_graph
+    dataset_preparation = not advanced and ont_graph is None and inference in (None, "none")
     if caller_shapes:
         data_graph, shacl_graph = _prepare_public_shapes(
             data_graph,
@@ -545,6 +611,7 @@ def validate(
             ont_graph,
             inference,
             do_owl_imports,
+            dataset_preparation=dataset_preparation,
         )
     original_snapshot = _input(data_graph) if is_oxigraph_store(data_graph) else None
     inference = inference_mode(inference)
@@ -568,7 +635,7 @@ def validate(
             snapshot.preserve_ids,
         )
     program = _compile_for_data(shacl_graph, data_graph, shacl_graph_format, advanced)
-    result = program.validate(
+    result = program._validate(
         data_graph,
         data_graph_format=data_graph_format,
         inplace=inplace or check_dash,
@@ -582,8 +649,15 @@ def validate(
         focus_nodes=focus_nodes,
         use_shapes=use_shapes,
         _normalize_report_literals=report_normalize,
+        _prepare_dataset=dataset_preparation,
     )
-    if inplace and isinstance(original, Graph) and original is not data_graph:
+    borrowed_original = isinstance(data_graph, DataGraph) and data_graph.impl is original
+    if (
+        inplace
+        and isinstance(original, Graph)
+        and original is not data_graph
+        and not borrowed_original
+    ):
         merge_graph(original, load_from_source(data_graph))
     elif inplace and is_oxigraph_store(original) and original is not data_graph:
         snapshot = _input(data_graph)

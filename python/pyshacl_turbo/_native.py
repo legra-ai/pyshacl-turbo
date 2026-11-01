@@ -13,7 +13,11 @@ ShapeLoadFailure = _bindings.ShapeLoadFailure
 ConstraintLoadFailure = _bindings.ConstraintLoadFailure
 parse_rdf = _bindings.parse_rdf
 ShapesInput = _bindings.ShapesInput
+BooleanInput = _bindings.BooleanInput
+SelectedLiteralReport = _bindings.SelectedLiteralReport
 additions = _bindings.additions
 infer = _bindings.infer
 inoculate = _bindings.inoculate
 query = _bindings.query
+
+SelectedSourceInterruption = _bindings.SelectedSourceInterruption
