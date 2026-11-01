@@ -8,7 +8,7 @@ from pathlib import Path
 from urllib.parse import urlparse
 from urllib.request import Request, url2pathname, urlopen
 
-from rdflib import BNode, Dataset, Graph, Literal, URIRef
+from rdflib import BNode, ConjunctiveGraph, Dataset, Graph, Literal, URIRef
 from rdflib.namespace import OWL, NamespaceManager
 from rdflib.plugins.parsers.nquads import NQuadsParser
 from rdflib.plugins.parsers.ntriples import (
@@ -514,6 +514,14 @@ def copy_graph(source):
     return result
 
 
+def _legacy_context_graph(graph):
+    return isinstance(graph, ConjunctiveGraph) and not isinstance(graph, Dataset)
+
+
+def _default_context(graph):
+    return graph.default_context if _legacy_context_graph(graph) else graph.default_graph
+
+
 def merge_graph(target, source):
     from .graph_abstraction import DataGraph, _reject_native_store_graph
 
@@ -524,15 +532,21 @@ def merge_graph(target, source):
     _reject_native_store_graph(target)
     _reject_native_store_graph(source)
     if source.context_aware and target.context_aware:
-        for context in source.graphs():
+        contexts = source.contexts() if _legacy_context_graph(source) else source.graphs()
+        for context in contexts:
             destination = (
-                target.default_graph
-                if context.identifier == source.default_graph.identifier
-                else target.graph(context.identifier)
+                _default_context(target)
+                if context.identifier == _default_context(source).identifier
+                else (
+                    target.get_context(context.identifier)
+                    if _legacy_context_graph(target)
+                    else target.graph(context.identifier)
+                )
             )
             destination += context
     elif target.context_aware:
-        target.default_graph += source
+        destination = _default_context(target)
+        destination += source
     else:
         target += union(source) if source.context_aware else source
     return target
