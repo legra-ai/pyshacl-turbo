@@ -67,7 +67,7 @@ include = [
     "/README.md",
 ]
 exclude = [
-    "**/target/**",
+    "/target/**",
     "**/__pycache__/**",
     "**/.pytest_cache/**",
     "**/.ruff_cache/**",
