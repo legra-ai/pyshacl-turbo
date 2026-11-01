@@ -378,6 +378,7 @@ class CompiledShapes:
             direct=True,
             observe_booleans=True,
             _dataset_factory=dataset_factory,
+            _borrow=not self._advanced and self._native.selected_frames_only,
         )
         # Core validation cannot execute rules, so its input relation is unchanged.
         write_data = inplace and self._advanced

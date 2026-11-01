@@ -202,11 +202,18 @@ def _decode_terms(
     return result
 
 
-def _term_input(source, *, flatten=False, observe_booleans=False, dataset_factory=None):
+def _term_input(
+    source, *, flatten=False, observe_booleans=False, dataset_factory=None, borrow=False, view=None
+):
     nodes = {}
     if observe_booleans:
         native = _native.BooleanInput(
-            source, nodes, flatten, _terms=(URIRef, BNode, Literal), _dataset=dataset_factory
+            source,
+            nodes,
+            flatten,
+            _terms=(URIRef, BNode, Literal),
+            _dataset=dataset_factory,
+            _view=view if borrow else None,
         )
         return Input(native, "terms", None, nodes, dict(source.namespaces()))
     batch = _TermBatch(nodes)
@@ -432,10 +439,12 @@ def input_graph(
     direct=False,
     observe_booleans=False,
     _dataset_factory=None,
+    _borrow=False,
 ):
     from .graph_abstraction import DataGraph, _reject_native_store_graph
 
-    if isinstance(source, DataGraph):
+    view = source if isinstance(source, DataGraph) else None
+    if view is not None:
         source = source.impl
     _reject_native_store_graph(source)
     if isinstance(source, Input):
@@ -455,11 +464,16 @@ def input_graph(
     if not isinstance(source, Graph):
         source = load_from_source(source, rdf_format=rdf_format)
     if direct:
+        borrow = _borrow and not source.context_aware
+        if borrow and view is None:
+            view = DataGraph.from_rdflib_graph(source)
         return _term_input(
             source,
             flatten=flatten,
             observe_booleans=observe_booleans,
             dataset_factory=_dataset_factory,
+            borrow=borrow,
+            view=view if borrow else None,
         )
     graph = union(source) if source.context_aware else source
     nodes = {str(n): n for n in graph.all_nodes() if isinstance(n, BNode)}
