@@ -9,7 +9,10 @@ from rdflib.namespace import RDF, SH
 @pytest.mark.parametrize("dataset", [False, True])
 @pytest.mark.parametrize("inplace", [False, True])
 @pytest.mark.parametrize("advanced", [False, True])
-def test_core_validation_omits_expanded_input(monkeypatch, dataset, inplace, advanced):
+@pytest.mark.parametrize("prepare_dataset", [None, False])
+def test_core_validation_omits_expanded_input(
+    monkeypatch, dataset, inplace, advanced, prepare_dataset
+):
     data = Dataset(default_union=True) if dataset else Graph()
     target = data.default_graph if dataset else data
     subject, predicate = URIRef("urn:focus"), URIRef("urn:p")
@@ -42,7 +45,7 @@ def test_core_validation_omits_expanded_input(monkeypatch, dataset, inplace, adv
 
     program._native = NativeSpy()
     monkeypatch.setattr(turbo, "commit_serialized", record_commit)
-    conforms, report, _ = program.validate(data, inplace=inplace)
+    conforms, report, _ = program.validate(data, inplace=inplace, _prepare_dataset=prepare_dataset)
     assert conforms is True
     root = next(report.subjects(RDF.type, SH.ValidationReport))
     assert report.value(root, SH.conforms) == Literal(True)
