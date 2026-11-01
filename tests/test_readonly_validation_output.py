@@ -29,6 +29,8 @@ def test_core_validation_omits_expanded_input(monkeypatch, dataset, inplace, adv
     commit = turbo.commit_serialized
 
     class NativeSpy:
+        selected_frames_only = native.selected_frames_only
+
         def validate(self, *args, **kwargs):
             result = native.validate(*args, **kwargs)
             exported.append((args[6], result[3]))
