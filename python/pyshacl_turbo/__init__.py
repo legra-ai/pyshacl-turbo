@@ -508,8 +508,6 @@ def compile_shapes(shacl_graph, *, shacl_graph_format=None, advanced=False):
     return CompiledShapes(shacl_graph, shacl_graph_format=shacl_graph_format, advanced=advanced)
 
 
-@_restore_selected_failure
-@_failure_result
 def validate(
     data_graph,
     *args,
@@ -673,6 +671,10 @@ def validate(
         fmt = serialize_report_graph if isinstance(serialize_report_graph, str) else "turtle"
         result = conforms, report.serialize(format=fmt, encoding="utf-8"), text
     return result
+
+
+_validate_direct = _restore_selected_failure(validate)
+validate = _restore_selected_failure(_failure_result(validate))
 
 
 def shacl_rules(

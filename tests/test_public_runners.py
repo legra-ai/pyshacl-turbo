@@ -208,6 +208,27 @@ def test_direct_validator_raises_validation_failure_instead_of_top_level_result(
             runner.run()
 
 
+@pytest.mark.parametrize("engine,module", [(pyshacl, "pyshacl"), (turbo, "pyshacl_turbo")])
+def test_direct_validator_restores_actual_source_runtime_error(engine, module):
+    shapes = Graph().parse(
+        data="""@prefix sh: <http://www.w3.org/ns/shacl#> .
+        <urn:S> sh:targetNode <urn:s>; sh:path <urn:p>; sh:minCount 1.""",
+        format="turtle",
+    )
+    failure = RuntimeError("source objects stopped")
+
+    class Interrupted(Graph):
+        def objects(self, *args, **kwargs):
+            raise failure
+
+    runner = engine.Validator(
+        wrapped(module, Interrupted()), shacl_graph=shapes, options={"inplace": True}
+    )
+    with pytest.raises(RuntimeError) as caught:
+        runner.run()
+    assert caught.value is failure
+
+
 @pytest.mark.parametrize("dataset", [False, True])
 @pytest.mark.parametrize("inplace", [False, True])
 def test_validator_constructor_and_run_match_reference(dataset, inplace):
