@@ -21,7 +21,7 @@ classifiers = [
 ]
 dependencies = [
     "rdflib[html]>=7.3,<8",
-    "rdflib-turbo==0.2.0a24",
+    "rdflib-turbo==0.2.0a27",
 ]
 
 [project.urls]
@@ -36,7 +36,7 @@ test = [
     "pyshacl[oxigraph]==0.40.1",
     "ruff>=0.12",
     "pyyaml>=6,<7",
-    "rdflib-turbo==0.2.0a24",
+    "rdflib-turbo==0.2.0a27",
     "owlrl-turbo==0.2.0a1",
 ]
 
