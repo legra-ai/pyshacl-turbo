@@ -2,19 +2,23 @@
 
 import pyshacl_turbo as turbo
 import pytest
-from rdflib import Dataset, Graph, Literal, URIRef
+from rdflib import ConjunctiveGraph, Dataset, Graph, Literal, URIRef
 from rdflib.namespace import RDF, SH
 
 
-@pytest.mark.parametrize("dataset", [False, True])
+@pytest.mark.parametrize("dataset", [False, True, "conjunctive"])
 @pytest.mark.parametrize("inplace", [False, True])
 @pytest.mark.parametrize("advanced", [False, True])
 @pytest.mark.parametrize("prepare_dataset", [None, False])
 def test_core_validation_omits_expanded_input(
     monkeypatch, dataset, inplace, advanced, prepare_dataset
 ):
-    data = Dataset(default_union=True) if dataset else Graph()
-    target = data.default_graph if dataset else data
+    if dataset == "conjunctive":
+        data = ConjunctiveGraph()
+        target = data.default_context
+    else:
+        data = Dataset(default_union=True) if dataset else Graph()
+        target = data.default_graph if dataset else data
     subject, predicate = URIRef("urn:focus"), URIRef("urn:p")
     target.add((subject, predicate, Literal("valid")))
     shapes = Graph().parse(
