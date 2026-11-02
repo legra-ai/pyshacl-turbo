@@ -354,8 +354,8 @@ def worker(engine_name, case, repeats):
         and engine.validate.__module__ != engine_name
     ):
         raise RuntimeError("The direct audit refuses a redirected validation entrypoint")
-    if engine_name == "pyshacl" and engine.__version__ != "0.40.1":
-        raise RuntimeError("The comparison requires the pinned pySHACL 0.40.1")
+    if engine_name == "pyshacl" and engine.__version__ != "0.40.2":
+        raise RuntimeError("The comparison requires the pinned pySHACL 0.40.2")
     if case["kind"] == "export":
         return {"state": "ok", "observation": {"present": hasattr(engine, case["name"])}}
     if case["kind"] == "cli":
