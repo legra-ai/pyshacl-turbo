@@ -27,7 +27,11 @@ remain exceptions; no alternate engine runs after an error.
 Public validation and rule expansion prepare caller-supplied shapes through
 ShapesGraph before inference or target snapshots. Match the original's ordered
 owl:Class/rdfs:Class and owl:DatatypeProperty/rdf:Property subclass additions,
-including repeated add calls, selected contexts, aliases and Dataset union mode.
+including selected contexts, aliases and Dataset union mode. With the reference
+updated to pySHACL 0.40.2, initialization checks membership under a lock and
+writes only absent triples; repeated construction no longer repeats writes.
+Dataset membership and writes use its default graph. ConjunctiveGraph keeps its
+union membership behavior, so a triple in another context suppresses its add.
 Parse data first: invalid data does not write shapes, while later inference or
 shape errors retain these input-preparation writes. This also applies when an
 explicit caller graph serves both input roles; it does not authorize committing

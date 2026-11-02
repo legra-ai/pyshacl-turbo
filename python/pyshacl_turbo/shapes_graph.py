@@ -2,6 +2,7 @@
 
 import logging
 from collections.abc import Iterable
+from threading import Lock
 from typing import ClassVar
 
 from rdflib import BNode, Dataset, Graph, Literal, URIRef
@@ -9,6 +10,8 @@ from rdflib.namespace import OWL, RDF, RDFS
 from rdflib.util import from_n3
 
 from .shape import Shape
+
+_system_triples_lock = Lock()
 
 
 class ShapesGraph:
@@ -31,8 +34,11 @@ class ShapesGraph:
         self._add_system_triples()
 
     def _add_system_triples(self):
-        for triple in self.system_triples:
-            self.graph.add(triple)
+        graph = self.graph.default_graph if isinstance(self.graph, Dataset) else self.graph
+        with _system_triples_lock:
+            for triple in self.system_triples:
+                if triple not in graph:
+                    graph.add(triple)
 
     def _compile(self):
         from . import CompiledShapes
