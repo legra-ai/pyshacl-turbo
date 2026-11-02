@@ -74,3 +74,19 @@ def test_public_rules_return_live_view_with_reference_scope_and_mutation(kind, i
             )
         )
     assert observed[0] == observed[1]
+
+
+@pytest.mark.parametrize("inplace", [False, True])
+def test_public_rules_preserve_an_existing_rdflib_datagraph_view(inplace):
+    observations = []
+    for name in ("pyshacl", "pyshacl_turbo"):
+        engine = importlib.import_module(name)
+        cls = importlib.import_module(name + ".graph_abstraction").DataGraph
+        source, shapes = inputs("graph")
+        wrapped = cls.from_rdflib(source)
+        result = engine.shacl_rules(wrapped, shacl_graph=shapes, inplace=inplace)
+        assert isinstance(result, cls)
+        assert ((EX.focus, EX.added, Literal(True)) in source) is inplace
+        assert (result.default_graph.store is source.store) is inplace
+        observations.append((result is wrapped, set(result.quads()), result.identifier))
+    assert observations[0] == observations[1]
