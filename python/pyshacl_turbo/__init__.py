@@ -730,12 +730,20 @@ def shacl_rules(
         do_owl_imports,
         _bind_namespaces="core" if document else "rdflib",
     )
+    expand_inplace = inplace
+    if isinstance(original, Graph):
+        owns_preparation = data_graph is not original
+        if not isinstance(data_graph, DataGraph):
+            data_graph = DataGraph.from_rdflib(data_graph)
+        if not inplace and not owns_preparation:
+            data_graph = data_graph.clone()
+        expand_inplace = True
     result = _compile_for_data(
         shacl_graph, data_graph, shacl_graph_format, advanced, rules=True
     ).shacl_rules(
         data_graph,
         data_graph_format=data_graph_format,
-        inplace=inplace,
+        inplace=expand_inplace,
         iterate_rules=iterate_rules,
         max_rule_iterations=max_rule_iterations,
         max_validation_depth=max_validation_depth,
@@ -751,6 +759,8 @@ def shacl_rules(
     if document:
         result = DataGraph.from_rdflib(result)
     if serialize_expanded_graph:
+        if isinstance(result, DataGraph):
+            result = result._view
         rdf_format = serialize_expanded_graph_format or "trig"
         if (
             rdf_format in {"json-ld", "nquads"}
@@ -764,6 +774,8 @@ def shacl_rules(
                 dataset.bind(prefix, namespace)
             result = dataset
         return result.serialize(format=rdf_format)
+    if isinstance(original, Graph) and not isinstance(result, DataGraph):
+        result = DataGraph.from_rdflib(result)
     return result
 
 

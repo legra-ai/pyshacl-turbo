@@ -218,9 +218,14 @@ def _term_input(
         return Input(native, "terms", None, nodes, dict(source.namespaces()))
     batch = _TermBatch(nodes)
     if source.context_aware:
-        default = source.default_graph.identifier
+        default = (
+            source.default_graph.identifier
+            if isinstance(source, Dataset)
+            else source.default_context.identifier
+        )
         for s, p, o, g in source.quads():
-            batch.append(s, p, o, None if flatten or g == default else g)
+            context = getattr(g, "identifier", g)
+            batch.append(s, p, o, None if flatten or context == default else context)
     else:
         for s, p, o in source:
             batch.append(s, p, o)
