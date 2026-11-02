@@ -756,7 +756,13 @@ def shacl_rules(
         use_shapes=use_shapes,
         **({"_return_dataset": True} if document else {}),
     )
-    if inplace and isinstance(original, Graph) and original is not data_graph:
+    borrowed_result = isinstance(result, DataGraph) and result.impl is original
+    if (
+        inplace
+        and isinstance(original, Graph)
+        and original is not data_graph
+        and not borrowed_result
+    ):
         merge_graph(original, result)
         result = original
     elif inplace and is_oxigraph_store(original) and original is not data_graph:
