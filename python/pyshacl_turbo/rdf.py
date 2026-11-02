@@ -456,7 +456,7 @@ def input_graph(
 
         return Input(
             source.dump(format=pyoxigraph.RdfFormat.N_QUADS).decode("utf-8"),
-            "oxigraph-nquads",
+            "nquads",
             None,
             {},
             preserve_ids=True,
