@@ -226,3 +226,17 @@ def test_graph_merge_preserves_named_contexts_when_available(source_dataset, tar
     if target_dataset:
         destination = target.graph(EX.named) if source_dataset else target.default_graph
         assert (EX.s, EX.p, Literal("new")) in destination
+
+
+@pytest.mark.parametrize("format,typed", [("nquads", False), ("oxigraph-nquads", True)])
+def test_explicit_snapshot_profile_preserves_scope_and_declared_string_identity(format, typed):
+    # A saved explicit profile is distinct from the live Store adapter's plain strings.
+    snapshot = rdf.Input(
+        '_:subject <urn:p> "ok" <urn:graph> .', format, None, {}, preserve_ids=True
+    )
+    loaded = rdf.load_from_source(snapshot, multigraph=True)
+    datatype = URIRef("http://www.w3.org/2001/XMLSchema#string") if typed else None
+    assert set(loaded.graph(URIRef("urn:graph"))) == {
+        (BNode("subject"), URIRef("urn:p"), Literal("ok", datatype=datatype))
+    }
+    assert set(loaded.default_graph) == set()
