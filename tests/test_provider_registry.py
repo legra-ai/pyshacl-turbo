@@ -26,8 +26,8 @@ def test_provider_requirement_is_an_exact_runtime_pin(tmp_path):
     assert module().declared_version(path) == "0.2.0a9"
 
 
-def test_facade_pins_the_published_shared_engine_for_runtime_and_tests():
-    manifest = Path(__file__).resolve().parents[1] / "pyproject.toml"
+def test_facade_pins_the_published_shared_engine_for_runtime_and_tests(canonical_release_project):
+    manifest = canonical_release_project / "pyproject.toml"
     version = module().declared_version(manifest)
     # a24 includes the native focus/report ordering correction used by the facade.
     assert Version(version) >= Version("0.2.0a24")
@@ -40,8 +40,8 @@ def test_facade_pins_the_published_shared_engine_for_runtime_and_tests():
     assert test_pins == [f"rdflib-turbo=={version}"]
 
 
-def test_root_lock_retains_the_declared_registry_provider():
-    root = Path(__file__).resolve().parents[1]
+def test_root_lock_retains_the_declared_registry_provider(canonical_release_project):
+    root = canonical_release_project
     lock = tomllib.loads((root / "uv.lock").read_text())
     providers = [package for package in lock["package"] if package["name"] == "rdflib-turbo"]
     assert len(providers) == 1

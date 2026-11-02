@@ -43,7 +43,7 @@ class Validator(Runner):
         )
 
     def run(self):
-        from . import _shared_runtime, validate
+        from . import _shared_runtime, _validate_direct
 
         target = self._prepare_target()
         self._prepare_focus_nodes(target)
@@ -53,7 +53,7 @@ class Validator(Runner):
             if key not in {"logger", "use_js", "sparql_mode", "inference", "inplace"}
         }
         native = _shared_runtime(target.impl) is not None
-        return validate.__wrapped__(
+        return _validate_direct(
             target.impl,
             shacl_graph=self.shacl_graph,
             inplace=self.inplace if native else True,

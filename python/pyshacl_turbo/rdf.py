@@ -8,7 +8,7 @@ from pathlib import Path
 from urllib.parse import urlparse
 from urllib.request import Request, url2pathname, urlopen
 
-from rdflib import BNode, Dataset, Graph, Literal, URIRef
+from rdflib import BNode, ConjunctiveGraph, Dataset, Graph, Literal, URIRef
 from rdflib.namespace import OWL, NamespaceManager
 from rdflib.plugins.parsers.nquads import NQuadsParser
 from rdflib.plugins.parsers.ntriples import (
@@ -124,6 +124,8 @@ def _decode_terms(
     *,
     copied_subjects=None,
     generated_boolean=None,
+    boolean_values=None,
+    selected_values=None,
     normalize=None,
     _bind_namespaces="rdflib",
 ):
@@ -152,8 +154,10 @@ def _decode_terms(
         # Direct report terms restore existing values; conversion must not signal again.
         # One report-local context and the existing terms vector avoid per-term contexts.
         with localcontext():
-            for quad in quads:
+            for quad_index, quad in enumerate(quads):
                 subject, _, obj, _ = quad
+                if boolean_values is not None and quad_index in boolean_values:
+                    continue
                 if generated_boolean is not None and tuple(quad) == generated_boolean[0]:
                     continue
                 if subject not in copied_subjects and records[obj][0] == 2 and terms[obj] is None:
@@ -170,7 +174,7 @@ def _decode_terms(
         if named
         else Graph(identifier=identifier, bind_namespaces=_bind_namespaces)
     )
-    for quad in quads:
+    for quad_index, quad in enumerate(quads):
         s, p, o, g = quad
         destination = (
             (result.default_graph if g is None else result.graph(terms[g])) if named else result
@@ -178,6 +182,12 @@ def _decode_terms(
         value = terms[o]
         if generated_boolean is not None and tuple(quad) == generated_boolean[0]:
             value = Literal(generated_boolean[1], normalize=False)
+        elif selected_values is not None and quad_index in selected_values:
+            value = selected_values[quad_index]
+        elif boolean_values is not None and quad_index in boolean_values:
+            from rdflib_turbo._literal import restore_boolean
+
+            value = restore_boolean(records[o][1], *boolean_values[quad_index])
         elif copied_subjects is not None and records[o][0] == 2:
             copied = s in copied_subjects
             if copied:
@@ -192,8 +202,20 @@ def _decode_terms(
     return result
 
 
-def _term_input(source, *, flatten=False):
+def _term_input(
+    source, *, flatten=False, observe_booleans=False, dataset_factory=None, borrow=False, view=None
+):
     nodes = {}
+    if observe_booleans:
+        native = _native.BooleanInput(
+            source,
+            nodes,
+            flatten,
+            _terms=(URIRef, BNode, Literal),
+            _dataset=dataset_factory,
+            _view=view if borrow else None,
+        )
+        return Input(native, "terms", None, nodes, dict(source.namespaces()))
     batch = _TermBatch(nodes)
     if source.context_aware:
         default = source.default_graph.identifier
@@ -409,10 +431,20 @@ def commit_serialized(target, source, nodes=None, *, before=None):
         merge_graph(target, decode(source, nodes, preserve_ids=True))
 
 
-def input_graph(source, rdf_format=None, *, flatten=False, direct=False):
+def input_graph(
+    source,
+    rdf_format=None,
+    *,
+    flatten=False,
+    direct=False,
+    observe_booleans=False,
+    _dataset_factory=None,
+    _borrow=False,
+):
     from .graph_abstraction import DataGraph, _reject_native_store_graph
 
-    if isinstance(source, DataGraph):
+    view = source if isinstance(source, DataGraph) else None
+    if view is not None:
         source = source.impl
     _reject_native_store_graph(source)
     if isinstance(source, Input):
@@ -432,7 +464,17 @@ def input_graph(source, rdf_format=None, *, flatten=False, direct=False):
     if not isinstance(source, Graph):
         source = load_from_source(source, rdf_format=rdf_format)
     if direct:
-        return _term_input(source, flatten=flatten)
+        borrow = _borrow and not source.context_aware
+        if borrow and view is None:
+            view = DataGraph.from_rdflib_graph(source)
+        return _term_input(
+            source,
+            flatten=flatten,
+            observe_booleans=observe_booleans,
+            dataset_factory=_dataset_factory,
+            borrow=borrow,
+            view=view if borrow else None,
+        )
     graph = union(source) if source.context_aware else source
     nodes = {str(n): n for n in graph.all_nodes() if isinstance(n, BNode)}
     if source.context_aware and not flatten:
@@ -472,6 +514,14 @@ def copy_graph(source):
     return result
 
 
+def _legacy_context_graph(graph):
+    return isinstance(graph, ConjunctiveGraph) and not isinstance(graph, Dataset)
+
+
+def _default_context(graph):
+    return graph.default_context if _legacy_context_graph(graph) else graph.default_graph
+
+
 def merge_graph(target, source):
     from .graph_abstraction import DataGraph, _reject_native_store_graph
 
@@ -482,15 +532,21 @@ def merge_graph(target, source):
     _reject_native_store_graph(target)
     _reject_native_store_graph(source)
     if source.context_aware and target.context_aware:
-        for context in source.graphs():
+        contexts = source.contexts() if _legacy_context_graph(source) else source.graphs()
+        for context in contexts:
             destination = (
-                target.default_graph
-                if context.identifier == source.default_graph.identifier
-                else target.graph(context.identifier)
+                _default_context(target)
+                if context.identifier == _default_context(source).identifier
+                else (
+                    target.get_context(context.identifier)
+                    if _legacy_context_graph(target)
+                    else target.graph(context.identifier)
+                )
             )
             destination += context
     elif target.context_aware:
-        target.default_graph += source
+        destination = _default_context(target)
+        destination += source
     else:
         target += union(source) if source.context_aware else source
     return target

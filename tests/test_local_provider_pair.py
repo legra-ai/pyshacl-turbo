@@ -15,8 +15,8 @@ def helper():
     return module
 
 
-def test_registry_project_is_not_an_explicit_local_provider_declaration():
-    root = Path(__file__).resolve().parents[1]
+def test_registry_project_is_not_an_explicit_local_provider_declaration(canonical_release_project):
+    root = canonical_release_project
     manifest = tomllib.loads((root / "pyproject.toml").read_text())
     (requirement,) = [
         text for text in manifest["project"]["dependencies"] if text.startswith("rdflib-turbo==")

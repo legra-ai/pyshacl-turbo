@@ -2,16 +2,33 @@
 
 import pyshacl_turbo as turbo
 import pytest
-from rdflib import Dataset, Graph, Literal, URIRef
+from pyshacl_turbo.graph_abstraction import RdfLibDataGraph
+from pyshacl_turbo.rdf import merge_graph
+from rdflib import ConjunctiveGraph, Dataset, Graph, Literal, URIRef
 from rdflib.namespace import RDF, SH
 
 
-@pytest.mark.parametrize("dataset", [False, True])
+@pytest.mark.parametrize("dataset", [False, True, "conjunctive", "conjunctive-view"])
 @pytest.mark.parametrize("inplace", [False, True])
 @pytest.mark.parametrize("advanced", [False, True])
-def test_core_validation_omits_expanded_input(monkeypatch, dataset, inplace, advanced):
-    data = Dataset(default_union=True) if dataset else Graph()
-    target = data.default_graph if dataset else data
+@pytest.mark.parametrize("prepare_dataset", [None, False])
+def test_core_validation_omits_expanded_input(
+    monkeypatch, dataset, inplace, advanced, prepare_dataset
+):
+    if dataset in ("conjunctive", "conjunctive-view"):
+        data = ConjunctiveGraph()
+        target = data.default_context
+        if dataset == "conjunctive-view":
+
+            class UnionView(RdfLibDataGraph):
+                def is_multigraph(self):
+                    return True
+
+            # A union view does not make the underlying legacy graph a Dataset.
+            data = UnionView(data.store, impl=data)
+    else:
+        data = Dataset(default_union=True) if dataset else Graph()
+        target = data.default_graph if dataset else data
     subject, predicate = URIRef("urn:focus"), URIRef("urn:p")
     target.add((subject, predicate, Literal("valid")))
     shapes = Graph().parse(
@@ -29,6 +46,8 @@ def test_core_validation_omits_expanded_input(monkeypatch, dataset, inplace, adv
     commit = turbo.commit_serialized
 
     class NativeSpy:
+        selected_frames_only = native.selected_frames_only
+
         def validate(self, *args, **kwargs):
             result = native.validate(*args, **kwargs)
             exported.append((args[6], result[3]))
@@ -40,7 +59,7 @@ def test_core_validation_omits_expanded_input(monkeypatch, dataset, inplace, adv
 
     program._native = NativeSpy()
     monkeypatch.setattr(turbo, "commit_serialized", record_commit)
-    conforms, report, _ = program.validate(data, inplace=inplace)
+    conforms, report, _ = program.validate(data, inplace=inplace, _prepare_dataset=prepare_dataset)
     assert conforms is True
     root = next(report.subjects(RDF.type, SH.ValidationReport))
     assert report.value(root, SH.conforms) == Literal(True)
@@ -75,3 +94,27 @@ def test_advanced_rule_validation_keeps_inplace_effects():
         (subject, added, Literal("derived")),
     }
     assert (URIRef("urn:shape"), RDF.type, SH.NodeShape) in shapes
+
+
+@pytest.mark.parametrize("source_kind", ["graph", "dataset", "conjunctive"])
+@pytest.mark.parametrize("target_kind", ["dataset", "conjunctive"])
+def test_merge_keeps_legacy_and_dataset_default_and_named_contexts(source_kind, target_kind):
+    subject, predicate = URIRef("urn:subject"), URIRef("urn:predicate")
+    default_row = (subject, predicate, Literal("default"))
+    named_row = (subject, predicate, Literal("named"))
+    name = URIRef("urn:named")
+    source = {"graph": Graph, "dataset": Dataset, "conjunctive": ConjunctiveGraph}[source_kind]()
+    if source_kind == "graph":
+        source.add(default_row)
+    elif source_kind == "dataset":
+        source.default_graph.add(default_row)
+        source.graph(name).add(named_row)
+    else:
+        source.default_context.add(default_row)
+        source.get_context(name).add(named_row)
+    target = Dataset() if target_kind == "dataset" else ConjunctiveGraph()
+    assert merge_graph(target, source) is target
+    default = target.default_graph if target_kind == "dataset" else target.default_context
+    named = target.graph(name) if target_kind == "dataset" else target.get_context(name)
+    assert set(default) == {default_row}
+    assert set(named) == (set() if source_kind == "graph" else {named_row})

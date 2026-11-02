@@ -153,7 +153,8 @@ def test_full_validation_boundary_rejects_invalid_status_before_warning_material
     else:
         data = Graph()
         program._native = SimpleNamespace(
-            validate=lambda *args, **kwargs: (status, payload(), "", "", [])
+            selected_frames_only=program._native.selected_frames_only,
+            validate=lambda *args, **kwargs: (status, payload(), "", "", []),
         )
     with pytest.raises(TypeError, match="conformance must be a boolean"):
         program.validate(data)
