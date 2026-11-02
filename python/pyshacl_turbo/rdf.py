@@ -484,10 +484,11 @@ def input_graph(
     nodes = {str(n): n for n in graph.all_nodes() if isinstance(n, BNode)}
     if source.context_aware and not flatten:
         lines = []
-        for context in source.graphs():
+        contexts = source.contexts() if _legacy_context_graph(source) else source.graphs()
+        for context in contexts:
             suffix = (
                 ""
-                if context.identifier == source.default_graph.identifier
+                if context.identifier == _default_context(source).identifier
                 else " " + context.identifier.n3()
             )
             if isinstance(context.identifier, BNode):

@@ -2,7 +2,7 @@ import pyshacl_turbo as turbo
 import pytest
 from rdflib import BNode, Graph, Literal
 from rdflib.compare import isomorphic
-from test_compatibility import EX, SH, compare, graph, reference_rules
+from test_compatibility import EX, SH, compare, graph, reference_rules, triple_graph
 
 
 def test_condition_lists_cannot_silently_become_unconstrained_shapes():
@@ -14,7 +14,7 @@ def test_condition_lists_cannot_silently_become_unconstrained_shapes():
     """)
     for data in [graph(""), graph("ex:alice ex:missing true.")]:
         assert isomorphic(
-            turbo.shacl_rules(data, shacl_graph=shapes), reference_rules(data, shapes)
+            triple_graph(turbo.shacl_rules(data, shacl_graph=shapes)), reference_rules(data, shapes)
         )
 
 
@@ -25,7 +25,8 @@ def test_constant_construct_without_this_variable():
           sh:construct "CONSTRUCT { <https://example.com/constant> <https://example.com/p> true } WHERE {}".
     """)
     assert isomorphic(
-        turbo.shacl_rules(graph(""), shacl_graph=shapes), reference_rules(graph(""), shapes)
+        triple_graph(turbo.shacl_rules(graph(""), shacl_graph=shapes)),
+        reference_rules(graph(""), shapes),
     )
 
 
@@ -39,7 +40,7 @@ def test_rule_additions_not_visible_between_focus_nodes():
         """.
     ''')
     actual = turbo.shacl_rules(graph(""), shacl_graph=shapes)
-    assert isomorphic(actual, reference_rules(graph(""), shapes))
+    assert isomorphic(triple_graph(actual), reference_rules(graph(""), shapes))
     assert set(actual.subjects(EX.eligible, Literal(True))) == {EX.a, EX.b}
 
 
@@ -155,4 +156,6 @@ def test_rule_and_target_prefix_declarations():
             sh:construct "CONSTRUCT { $this ex:bound true } WHERE { FILTER(BOUND($this)) }"].
     """)
     data = graph("ex:a a ex:C.")
-    assert isomorphic(turbo.shacl_rules(data, shacl_graph=shapes), reference_rules(data, shapes))
+    assert isomorphic(
+        triple_graph(turbo.shacl_rules(data, shacl_graph=shapes)), reference_rules(data, shapes)
+    )

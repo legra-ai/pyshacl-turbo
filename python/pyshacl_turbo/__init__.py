@@ -734,7 +734,11 @@ def shacl_rules(
     rdflib_object = isinstance(original, Graph) and _shared_runtime(original) is None
     if rdflib_object:
         owns_preparation = data_graph is not original
-        if not isinstance(data_graph, DataGraph):
+        if owns_preparation:
+            prepared = DataGraph.from_rdflib(original).clone()
+            merge_graph(prepared, data_graph)
+            data_graph = prepared
+        elif not isinstance(data_graph, DataGraph):
             data_graph = DataGraph.from_rdflib(data_graph)
         if not inplace and not owns_preparation:
             data_graph = data_graph.clone()
