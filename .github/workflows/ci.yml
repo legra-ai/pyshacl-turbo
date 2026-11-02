@@ -289,7 +289,7 @@ jobs:
           revision: ${{ needs.prepare.outputs.revision }}
           manifest-kind: uv
           tag-format: pep440
-      - uses: legra-ai/github-actions/.github/actions/generate-changelog@5c494a21a1df770e526e069ddf0dac0c0797e374
+      - uses: legra-ai/github-actions/.github/actions/generate-changelog@a5c09a79911f1b735f871b2b957304b340c68b2b
         with:
           revision: ${{ needs.prepare.outputs.revision }}
       - uses: softprops/action-gh-release@v3
