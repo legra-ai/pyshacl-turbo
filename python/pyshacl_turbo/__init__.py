@@ -731,7 +731,8 @@ def shacl_rules(
         _bind_namespaces="core" if document else "rdflib",
     )
     expand_inplace = inplace
-    if isinstance(original, Graph):
+    rdflib_object = isinstance(original, Graph) and _shared_runtime(original) is None
+    if rdflib_object:
         owns_preparation = data_graph is not original
         if not isinstance(data_graph, DataGraph):
             data_graph = DataGraph.from_rdflib(data_graph)
@@ -774,7 +775,7 @@ def shacl_rules(
                 dataset.bind(prefix, namespace)
             result = dataset
         return result.serialize(format=rdf_format)
-    if isinstance(original, Graph) and not isinstance(result, DataGraph):
+    if rdflib_object and not isinstance(result, DataGraph):
         result = DataGraph.from_rdflib(result)
     return result
 
