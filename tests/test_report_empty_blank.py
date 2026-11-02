@@ -3,8 +3,9 @@
 import pyshacl
 import pyshacl_turbo as turbo
 import pytest
-from rdflib import Graph
+from rdflib import BNode, Graph, URIRef
 from rdflib.compare import isomorphic
+from rdflib.namespace import SH
 
 PREFIXES = """@prefix ex:<urn:example:>. @prefix sh:<http://www.w3.org/ns/shacl#>.
 @prefix rdf:<http://www.w3.org/1999/02/22-rdf-syntax-ns#>.\n"""
@@ -42,10 +43,11 @@ CASES = {
 
 def inputs(case):
     data, shapes = CASES[case]
-    return (
-        Graph().parse(data=PREFIXES + data, format="turtle"),
-        Graph().parse(data=PREFIXES + shapes, format="turtle"),
-    )
+    data_graph = Graph().parse(data=PREFIXES + data, format="turtle")
+    shapes_graph = Graph().parse(data=PREFIXES + shapes, format="turtle")
+    if case == "focus":
+        shapes_graph.set((URIRef("urn:example:S"), SH.targetNode, BNode("absent-focus")))
+    return data_graph, shapes_graph
 
 
 def compare_complete(case):
