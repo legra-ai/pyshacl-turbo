@@ -157,12 +157,13 @@ def test_input_snapshot_can_be_loaded_and_flattened_without_losing_blank_node_id
     assert set(rdf.load_from_source(flat)) == {(EX.s, EX.p, node)}
 
 
-def test_native_store_snapshot_load_preserves_explicit_string_types():
+def test_native_store_snapshot_load_uses_reference_plain_string_identity():
     source = ox.Store()
     source.load(input=f'<{EX.s}> <{EX.p}> "ok" .', format=ox.RdfFormat.N_TRIPLES)
     snapshot = rdf.input_graph(source)
     loaded = rdf.load_from_source(snapshot)
-    assert loaded.value(EX.s, EX.p).datatype == URIRef("http://www.w3.org/2001/XMLSchema#string")
+    assert loaded.value(EX.s, EX.p) == Literal("ok")
+    assert loaded.value(EX.s, EX.p).datatype is None
     with pytest.raises(ValueError, match="original input snapshot"):
         rdf.commit_serialized(source, snapshot.source)
     assert len(source) == 1

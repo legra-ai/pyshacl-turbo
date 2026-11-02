@@ -6,6 +6,7 @@ import pytest
 from rdflib import BNode, ConjunctiveGraph, Dataset, Graph, Namespace
 from rdflib.compare import isomorphic
 from rdflib_turbo import Graph as NativeGraph
+from test_shapes_bootstrap import SYSTEM
 
 SH = Namespace("http://www.w3.org/ns/shacl#")
 EX = Namespace("urn:constructed-shapes:")
@@ -36,10 +37,20 @@ def test_constructed_shapes_ignore_document_format(
     def forbidden_traversal(*args, **kwargs):
         raise AssertionError("Native shapes must use the shared compiler")
 
+    triples = NativeGraph.triples
+    probes = []  # bounded: exactly two system-triple membership probes.
+
+    def bootstrap_membership(graph, pattern):
+        assert graph is actual_shapes and pattern in SYSTEM
+        probes.append(pattern)
+        return triples(graph, pattern)
+
     if graph_type is NativeGraph:
         monkeypatch.setattr(NativeGraph, "serialize", forbidden_traversal)
-        monkeypatch.setattr(NativeGraph, "triples", forbidden_traversal)
+        monkeypatch.setattr(NativeGraph, "triples", bootstrap_membership)
     actual = turbo.validate(Graph(), shacl_graph=actual_shapes, shacl_graph_format=rdf_format)
+    if graph_type is NativeGraph:
+        assert probes == list(SYSTEM)
     assert actual[0] is expected[0] is False
     assert isomorphic(actual[1], expected[1])
     assert actual[2] == expected[2]
