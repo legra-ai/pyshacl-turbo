@@ -706,10 +706,9 @@ def shacl_rules(
         shacl_graph, shacl_graph_format = data_graph, data_graph_format
     original = data_graph
     public_input_view = None
-    runtime = sys.modules.get("rdflib_turbo")
-    if issubclass(type(original), DataGraph):
+    if isinstance(original, DataGraph):
         public_input_view = original
-    elif runtime is not None and issubclass(type(original), (runtime.Graph, runtime.Dataset)):
+    elif isinstance(original, Graph):
         public_input_view = DataGraph.from_rdflib(original)
     document = _document_source(original)
     if document:
@@ -741,11 +740,11 @@ def shacl_rules(
     if rdflib_object:
         owns_preparation = data_graph is not original
         if owns_preparation:
-            prepared = DataGraph.from_rdflib(original).clone()
+            prepared = public_input_view.clone()
             merge_graph(prepared, data_graph)
             data_graph = prepared
         elif not isinstance(data_graph, DataGraph):
-            data_graph = DataGraph.from_rdflib(data_graph)
+            data_graph = public_input_view
         if not inplace and not owns_preparation:
             data_graph = data_graph.clone()
         expand_inplace = True

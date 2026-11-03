@@ -148,10 +148,11 @@ def test_public_native_view_reads_dataset_settings_before_rule_writes():
 
 
 @pytest.mark.parametrize("inplace", [False, True])
-def test_public_native_settings_failure_precedes_loading_shapes(tmp_path, inplace):
+@pytest.mark.parametrize("native", [False, True])
+def test_public_settings_failure_precedes_loading_shapes(tmp_path, inplace, native):
     from rdflib_turbo import StoreDataset
 
-    class Source(StoreDataset):
+    class Source(StoreDataset if native else Dataset):
         @property
         def default_union(self):
             if self.__dict__.get("armed", False):
