@@ -218,9 +218,14 @@ def _term_input(
         return Input(native, "terms", None, nodes, dict(source.namespaces()))
     batch = _TermBatch(nodes)
     if source.context_aware:
-        default = source.default_graph.identifier
+        default = (
+            source.default_graph.identifier
+            if isinstance(source, Dataset)
+            else source.default_context.identifier
+        )
         for s, p, o, g in source.quads():
-            batch.append(s, p, o, None if flatten or g == default else g)
+            context = getattr(g, "identifier", g)
+            batch.append(s, p, o, None if flatten or context == default else context)
     else:
         for s, p, o in source:
             batch.append(s, p, o)
@@ -456,7 +461,7 @@ def input_graph(
 
         return Input(
             source.dump(format=pyoxigraph.RdfFormat.N_QUADS).decode("utf-8"),
-            "oxigraph-nquads",
+            "nquads",
             None,
             {},
             preserve_ids=True,
@@ -479,10 +484,11 @@ def input_graph(
     nodes = {str(n): n for n in graph.all_nodes() if isinstance(n, BNode)}
     if source.context_aware and not flatten:
         lines = []
-        for context in source.graphs():
+        contexts = source.contexts() if _legacy_context_graph(source) else source.graphs()
+        for context in contexts:
             suffix = (
                 ""
-                if context.identifier == source.default_graph.identifier
+                if context.identifier == _default_context(source).identifier
                 else " " + context.identifier.n3()
             )
             if isinstance(context.identifier, BNode):

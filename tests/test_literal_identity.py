@@ -36,7 +36,7 @@ def test_rules_copy_both_string_forms_without_changing_identity():
       sh:construct "CONSTRUCT { $this <https://example.com/copied> ?v } WHERE { $this <https://example.com/p> ?v }"] .""")
     actual = turbo.shacl_rules(data, shacl_graph=shapes)
     expected = reference_rules(data, shapes)
-    assert set(actual) == set(expected)
+    assert set(actual.triples((None, None, None))) == set(expected)
     assert set(actual.objects(EX.s, EX.copied)) == {
         Literal("value"),
         Literal("value", datatype=XSD.string),
@@ -76,7 +76,7 @@ def test_rules_preserve_computed_string_datatypes(expression, typed):
     expected = reference_rules(data, shapes)
     assert expected.value(EX.s, EX.copied) == Literal("3", datatype=XSD.string if typed else None)
     actual = turbo.shacl_rules(data, shacl_graph=shapes, advanced=True)
-    assert set(actual) == set(expected)
+    assert set(actual.triples((None, None, None))) == set(expected)
 
 
 def test_sparql_preserves_identity_but_compares_string_values():

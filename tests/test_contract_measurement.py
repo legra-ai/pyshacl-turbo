@@ -2,6 +2,7 @@
 
 import importlib.util
 import sys
+import tomllib
 from pathlib import Path
 
 import pytest
@@ -134,4 +135,26 @@ def test_audit_refuses_an_accidentally_redirected_reference(monkeypatch):
 
     monkeypatch.setattr(pyshacl, "validate", pyshacl_turbo.validate)
     with pytest.raises(RuntimeError, match="redirect"):
+        measurement.worker("pyshacl", {"kind": "export", "name": "validate"}, 1)
+
+
+def test_reference_worker_accepts_exact_declared_test_dependency():
+    import pyshacl
+
+    manifest = tomllib.loads((measurement.ROOT / "pyproject.toml").read_text())
+    assert (
+        f"pyshacl[oxigraph]=={pyshacl.__version__}"
+        in manifest["project"]["optional-dependencies"]["test"]
+    )
+    assert measurement.worker("pyshacl", {"kind": "export", "name": "validate"}, 1) == {
+        "state": "ok",
+        "observation": {"present": True},
+    }
+
+
+def test_reference_worker_rejects_an_unpinned_version(monkeypatch):
+    import pyshacl
+
+    monkeypatch.setattr(pyshacl, "__version__", "0.40.1")
+    with pytest.raises(RuntimeError, match="pinned pySHACL"):
         measurement.worker("pyshacl", {"kind": "export", "name": "validate"}, 1)

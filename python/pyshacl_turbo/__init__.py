@@ -730,12 +730,25 @@ def shacl_rules(
         do_owl_imports,
         _bind_namespaces="core" if document else "rdflib",
     )
+    expand_inplace = inplace
+    rdflib_object = isinstance(original, Graph) and _shared_runtime(original) is None
+    if rdflib_object:
+        owns_preparation = data_graph is not original
+        if owns_preparation:
+            prepared = DataGraph.from_rdflib(original).clone()
+            merge_graph(prepared, data_graph)
+            data_graph = prepared
+        elif not isinstance(data_graph, DataGraph):
+            data_graph = DataGraph.from_rdflib(data_graph)
+        if not inplace and not owns_preparation:
+            data_graph = data_graph.clone()
+        expand_inplace = True
     result = _compile_for_data(
         shacl_graph, data_graph, shacl_graph_format, advanced, rules=True
     ).shacl_rules(
         data_graph,
         data_graph_format=data_graph_format,
-        inplace=inplace,
+        inplace=expand_inplace,
         iterate_rules=iterate_rules,
         max_rule_iterations=max_rule_iterations,
         max_validation_depth=max_validation_depth,
@@ -743,7 +756,13 @@ def shacl_rules(
         use_shapes=use_shapes,
         **({"_return_dataset": True} if document else {}),
     )
-    if inplace and isinstance(original, Graph) and original is not data_graph:
+    borrowed_result = isinstance(result, DataGraph) and result.impl is original
+    if (
+        inplace
+        and isinstance(original, Graph)
+        and original is not data_graph
+        and not borrowed_result
+    ):
         merge_graph(original, result)
         result = original
     elif inplace and is_oxigraph_store(original) and original is not data_graph:
@@ -751,6 +770,8 @@ def shacl_rules(
     if document:
         result = DataGraph.from_rdflib(result)
     if serialize_expanded_graph:
+        if isinstance(result, DataGraph):
+            result = result._view
         rdf_format = serialize_expanded_graph_format or "trig"
         if (
             rdf_format in {"json-ld", "nquads"}
@@ -764,6 +785,8 @@ def shacl_rules(
                 dataset.bind(prefix, namespace)
             result = dataset
         return result.serialize(format=rdf_format)
+    if rdflib_object and not isinstance(result, DataGraph):
+        result = DataGraph.from_rdflib(result)
     return result
 
 

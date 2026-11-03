@@ -27,9 +27,11 @@ an individual constraint. Exact Core comparisons and SPARQL sameTerm retain
 identity; SPARQL value equality continues to compare values. Without the feature,
 the vendored crate retains upstream RDF 1.1 string identity.
 
-Restore explicit xsd:string at the Store input boundary, matching the reference
-Store adapter. Store dump abbreviations must not silently change that adapter's
-term identity. Caller-side Store canonicalization remains irreversible.
+The original Store adapter used explicit xsd:string. With the independent
+reference updated to pySHACL 0.40.2, Store input now uses plain string identity,
+matching that adapter's correction. Use the ordinary N-Quads input profile for
+Store snapshots; do not change explicitly typed literals in caller RDFLib
+Graphs or documents. Caller-side Store canonicalization remains irreversible.
 
 Use value equality for literal objects in DASH inference expectations. This
 changes only the expected-result adapter; validation retains exact RDF terms.

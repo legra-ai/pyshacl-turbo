@@ -47,7 +47,7 @@ def native_store_adapter(module):
     )
     snapshot = input_graph(store)
     assert isinstance(snapshot, Input)
-    assert snapshot.format == "oxigraph-nquads" and snapshot.preserve_ids
+    assert snapshot.format == "nquads" and snapshot.preserve_ids
     assert set(
         ox.parse(snapshot.source, format=ox.RdfFormat.N_QUADS, rename_blank_nodes=False)
     ) == set(store)

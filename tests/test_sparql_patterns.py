@@ -112,7 +112,7 @@ def test_sparql_replace_rule_output_matches_reference(pattern, replacement, flag
     )
     expected = reference_rules(data, shapes)
     actual = turbo.shacl_rules(data, shacl_graph=shapes, advanced=True)
-    assert set(actual) == set(expected)
+    assert set(actual.triples((None, None, None))) == set(expected)
 
 
 @pytest.mark.parametrize("expression", ['REGEX(?value, "(")', 'REPLACE(?value, "a", "$2") = "x"'])
@@ -142,7 +142,9 @@ def test_sparql_replace_preserves_literal_identity(source, constant):
             ),
         )
     )
-    assert set(turbo.shacl_rules(data, shacl_graph=shapes)) == set(reference_rules(data, shapes))
+    assert set(turbo.shacl_rules(data, shacl_graph=shapes).triples((None, None, None))) == set(
+        reference_rules(data, shapes)
+    )
 
 
 def test_native_function_preserves_argument_lexical_identity():
@@ -152,7 +154,9 @@ def test_native_function_preserves_argument_lexical_identity():
       sh:select "SELECT ?arg WHERE {}".
       ex:S sh:targetNode ex:s; sh:rule [a sh:SPARQLRule;
       sh:construct "CONSTRUCT { $this <https://example.com/result> ?result } WHERE { $this <https://example.com/p> ?value . BIND(ex:identity(?value) AS ?result) }"] .""")
-    assert set(turbo.shacl_rules(data, shacl_graph=shapes)) == set(reference_rules(data, shapes))
+    assert set(turbo.shacl_rules(data, shacl_graph=shapes).triples((None, None, None))) == set(
+        reference_rules(data, shapes)
+    )
 
 
 @pytest.mark.parametrize("template", [r"\q", "$99", r"\g<missing>", "\\", r"\400", r"\g<>"])

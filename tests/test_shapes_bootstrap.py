@@ -65,7 +65,7 @@ def test_validate_bootstrap_preserves_alias_context_order_and_repeat(
     other = Graph(store=selected.store, identifier=EX.other)
     other.add(SYSTEM[0])
     add = source.store.add
-    calls = []  # bounded: exactly two bootstrap writes per validation invocation.
+    calls = []  # bounded: at most two first-initialization writes.
 
     def observe(triple, context, quoted=False):
         if triple in SYSTEM:
@@ -77,14 +77,10 @@ def test_validate_bootstrap_preserves_alias_context_order_and_repeat(
     for _ in range(2):
         result = implementation.validate(Graph(), shacl_graph=source)
         assert result[0] is False
-        assert set(alias) == before | set(SYSTEM)
+        assert set(alias) == before | set(SYSTEM[1:] if kind == "conjunctive" else SYSTEM)
         assert set(other) == {SYSTEM[0]}
-    assert calls == [
-        (SYSTEM[0], selected.identifier, False),
-        (SYSTEM[1], selected.identifier, False),
-        (SYSTEM[0], selected.identifier, True),
-        (SYSTEM[1], selected.identifier, True),
-    ]
+    expected = SYSTEM[1:] if kind == "conjunctive" else SYSTEM
+    assert calls == [(triple, selected.identifier, False) for triple in expected]
     if isinstance(source, Dataset):
         assert source.default_union is True
 

@@ -23,6 +23,14 @@ def graph(body):
     return Graph().parse(data=PREFIXES + body, format="turtle")
 
 
+def triple_graph(source):
+    """Read the explicit triple view; public DataGraph iteration yields quads."""
+    output = Graph()
+    for triple in source.triples((None, None, None)):
+        output.add(triple)
+    return output
+
+
 def reference_rules(data, shapes, **options):
     # 0.40.1 returns a DataGraph wrapper whose iteration yields quads even for
     # Graph inputs. Assert single-graph semantics before reading its triples.
@@ -55,7 +63,7 @@ def test_complete_pipeline_matches_report_and_expansion():
     assert set(report.objects(None, SH.focusNode)) == {EX.bob}
     expected = reference_rules(data, shapes)
     actual = turbo.shacl_rules(data, shacl_graph=shapes, advanced=True)
-    assert isomorphic(actual, expected)
+    assert isomorphic(triple_graph(actual), expected)
     assert (EX.alice, EX.eligible, Literal(True)) in actual
     assert (EX.bob, EX.eligible, Literal(True)) in actual
     assert (EX.carol, EX.eligible, Literal(True)) not in actual
@@ -139,7 +147,9 @@ def test_deactivated_shape_and_rule():
           sh:construct "CONSTRUCT { $this <https://example.com/p> true } WHERE {}".
     """)
     compare(data, shapes)
-    assert isomorphic(turbo.shacl_rules(data, shacl_graph=shapes, advanced=True), data)
+    assert isomorphic(
+        triple_graph(turbo.shacl_rules(data, shacl_graph=shapes, advanced=True)), data
+    )
 
 
 def test_rule_order_conditions_and_deferred_insertions():
@@ -153,7 +163,7 @@ def test_rule_order_conditions_and_deferred_insertions():
     """)
     actual = turbo.shacl_rules(graph(""), shacl_graph=shapes, advanced=True)
     expected = reference_rules(graph(""), shapes)
-    assert isomorphic(actual, expected)
+    assert isomorphic(triple_graph(actual), expected)
     assert (EX.alice, EX.done, Literal(True)) in actual
 
 
@@ -170,7 +180,7 @@ def test_rule_iteration(iterate):
     ''')
     actual = turbo.shacl_rules(data, shacl_graph=shapes, advanced=True, iterate_rules=iterate)
     expected = reference_rules(data, shapes, iterate_rules=iterate)
-    assert isomorphic(actual, expected)
+    assert isomorphic(triple_graph(actual), expected)
     assert ((EX.alice, EX.reachable, EX.c) in actual) is iterate
 
 

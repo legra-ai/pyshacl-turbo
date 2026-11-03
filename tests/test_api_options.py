@@ -110,7 +110,8 @@ def test_rule_inference_commits_to_the_original_input(store):
     result = turbo.shacl_rules(data, shacl_graph=shapes, inference="rdfs", inplace=True)
     assert (EX.s, EX.p, Literal(2)) in turbo.load_from_source(data)
     if not store:
-        assert result is data
+        assert isinstance(result, turbo.graph_abstraction.DataGraph)
+        assert result.impl is data
 
 
 def test_inference_accepts_namespace_free_graphs_and_shape_focus_prefixes():

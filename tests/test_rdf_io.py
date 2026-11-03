@@ -157,12 +157,13 @@ def test_input_snapshot_can_be_loaded_and_flattened_without_losing_blank_node_id
     assert set(rdf.load_from_source(flat)) == {(EX.s, EX.p, node)}
 
 
-def test_native_store_snapshot_load_preserves_explicit_string_types():
+def test_native_store_snapshot_load_uses_reference_plain_string_identity():
     source = ox.Store()
     source.load(input=f'<{EX.s}> <{EX.p}> "ok" .', format=ox.RdfFormat.N_TRIPLES)
     snapshot = rdf.input_graph(source)
     loaded = rdf.load_from_source(snapshot)
-    assert loaded.value(EX.s, EX.p).datatype == URIRef("http://www.w3.org/2001/XMLSchema#string")
+    assert loaded.value(EX.s, EX.p) == Literal("ok")
+    assert loaded.value(EX.s, EX.p).datatype is None
     with pytest.raises(ValueError, match="original input snapshot"):
         rdf.commit_serialized(source, snapshot.source)
     assert len(source) == 1
@@ -225,3 +226,17 @@ def test_graph_merge_preserves_named_contexts_when_available(source_dataset, tar
     if target_dataset:
         destination = target.graph(EX.named) if source_dataset else target.default_graph
         assert (EX.s, EX.p, Literal("new")) in destination
+
+
+@pytest.mark.parametrize("format,typed", [("nquads", False), ("oxigraph-nquads", True)])
+def test_explicit_snapshot_profile_preserves_scope_and_declared_string_identity(format, typed):
+    # A saved explicit profile is distinct from the live Store adapter's plain strings.
+    snapshot = rdf.Input(
+        '_:subject <urn:p> "ok" <urn:graph> .', format, None, {}, preserve_ids=True
+    )
+    loaded = rdf.load_from_source(snapshot, multigraph=True)
+    datatype = URIRef("http://www.w3.org/2001/XMLSchema#string") if typed else None
+    assert set(loaded.graph(URIRef("urn:graph"))) == {
+        (BNode("subject"), URIRef("urn:p"), Literal("ok", datatype=datatype))
+    }
+    assert set(loaded.default_graph) == set()

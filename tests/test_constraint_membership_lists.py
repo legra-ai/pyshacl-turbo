@@ -67,11 +67,21 @@ def test_membership_heads_match_complete_original_reports(kind, graph_type, monk
     def forbid_traversal(*args, **kwargs):
         raise AssertionError("Native membership compilation must borrow its source")
 
+    triples = NativeGraph.triples
+    probes = []  # bounded: the two exact system-triple membership checks only.
+
+    def bootstrap_membership(graph, pattern):
+        assert graph is shapes and pattern in SYSTEM
+        probes.append(pattern)
+        return triples(graph, pattern)
+
     with monkeypatch.context() as patch:
         if graph_type is NativeGraph:
-            patch.setattr(NativeGraph, "triples", forbid_traversal)
+            patch.setattr(NativeGraph, "triples", bootstrap_membership)
             patch.setattr(NativeGraph, "serialize", forbid_traversal)
         actual = turbo.validate(data, shacl_graph=shapes)
+    if graph_type is NativeGraph:
+        assert len(probes) == 2 and set(probes) == SYSTEM
     assert_report(actual, expected)
     assert set(data) == set(original_data) == before_data
     assert set(shapes) == set(original_shapes) == before_shapes | SYSTEM
