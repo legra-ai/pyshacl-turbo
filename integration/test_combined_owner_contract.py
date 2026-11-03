@@ -84,7 +84,9 @@ def test_top_level_real_native_rules_reuse_one_compiled_owner(monkeypatch, compi
         patch.setattr(type(data), "serialize", forbidden)
         patch.setattr(type(data), "to_rdflib", forbidden)
         patch.setattr(turbo, "_input", forbidden)
-        assert turbo.shacl_rules(data, shacl_graph=shapes, inplace=True) is data
+        result = turbo.shacl_rules(data, shacl_graph=shapes, inplace=True)
+        assert isinstance(result, turbo.graph_abstraction.DataGraph)
+        assert result.impl is data
     assert data.store.backend._native is owner
     assert len(compiled.programs) == 1
     assert compiled.borrowed == compiled.programs
