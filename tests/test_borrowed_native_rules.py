@@ -63,7 +63,8 @@ def test_native_rule_output_matches_original_without_validating_constraints(kind
     assert quads(owner) == quads(expected_owner)
     assert dict(result.namespaces()) == dict(selected.namespaces())
     if inplace:
-        assert result is selected
+        assert isinstance(result, turbo.graph_abstraction.DataGraph)
+        assert result.impl is selected
         assert (S, Q, Literal("present")) in facts(selected)
         if kind != "dataset":
             assert (URIRef("urn:other"), Q, Literal("outside")) not in facts(owner.graph(HIDDEN))

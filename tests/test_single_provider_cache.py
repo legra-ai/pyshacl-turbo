@@ -85,11 +85,8 @@ def test_repeated_rules_reuse_program_without_reusing_data(compilation, factory)
     for value in (1, 2):
         data = factory().parse(data=f"<urn:s> <urn:p> {value}.", format="turtle")
         result = turbo.shacl_rules(data, shacl_graph=shapes, inplace=True)
-        if factory is Graph:
-            assert isinstance(result, turbo.graph_abstraction.DataGraph)
-            assert result.impl is data
-        else:
-            assert result is data
+        assert isinstance(result, turbo.graph_abstraction.DataGraph)
+        assert result.impl is data
         graph = data.to_rdflib() if factory is runtime.Dataset else data
         expected = {
             (URIRef("urn:s"), URIRef("urn:derived"), Literal(True)),

@@ -68,7 +68,7 @@ def provider(monkeypatch):
 def test_top_level_shared_execution_compiles_only_in_owner(provider, rules):
     data = rdflib_turbo.Dataset()
     if rules:
-        assert turbo.shacl_rules(data, shacl_graph=SHAPES, inplace=True) is data
+        assert turbo.shacl_rules(data, shacl_graph=SHAPES, inplace=True).impl is data
         assert [kind for kind, _ in provider] == ["compile", "expand", "accept-rules"]
     else:
         assert turbo.validate(data, shacl_graph=SHAPES)[0]

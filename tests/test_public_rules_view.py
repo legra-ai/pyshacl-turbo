@@ -3,14 +3,25 @@
 import importlib
 
 import pytest
-from rdflib import ConjunctiveGraph, Dataset, Graph, Literal, Namespace
+from rdflib import BNode, ConjunctiveGraph, Dataset, Graph, Literal, Namespace
 from rdflib.namespace import RDF, SH
 
 EX = Namespace("urn:public-rule-view:")
 
 
 def inputs(kind):
-    if kind.startswith("dataset"):
+    if kind.startswith("native"):
+        from rdflib_turbo import Graph as NativeGraph
+        from rdflib_turbo import StoreDataset
+
+        if kind == "native-dataset":
+            source = StoreDataset(default_union=True)
+            source.graph(EX.empty)
+            source.graph(EX.named).add((EX.namedValue, EX.p, Literal("named")))
+        else:
+            identifier = BNode("public-source") if kind == "native-blank" else EX.source
+            source = NativeGraph(identifier=identifier)
+    elif kind.startswith("dataset"):
         source = Dataset(default_union=True)
         if kind == "dataset-custom":
             source.default_graph = source.graph(EX.default)
@@ -36,7 +47,18 @@ def inputs(kind):
 
 @pytest.mark.parametrize(
     "kind,inference",
-    [(kind, None) for kind in ("graph", "dataset", "dataset-custom", "conjunctive")]
+    [
+        (kind, None)
+        for kind in (
+            "graph",
+            "dataset",
+            "dataset-custom",
+            "conjunctive",
+            "native-graph",
+            "native-blank",
+            "native-dataset",
+        )
+    ]
     + [(kind, "rdfs") for kind in ("graph", "conjunctive")],
 )
 @pytest.mark.parametrize("inplace", [False, True])
@@ -52,7 +74,7 @@ def test_public_rules_return_live_view_with_reference_scope_and_mutation(kind, i
         )
         assert isinstance(result, cls)
         assert result is not source
-        assert result.is_multigraph() == kind.startswith("dataset")
+        assert result.is_multigraph() == (kind.startswith("dataset") or kind == "native-dataset")
         rows = list(result)
         assert all(len(row) == 4 for row in rows)
         assert set(rows) == set(result.quads())
@@ -77,12 +99,13 @@ def test_public_rules_return_live_view_with_reference_scope_and_mutation(kind, i
 
 
 @pytest.mark.parametrize("inplace", [False, True])
-def test_public_rules_preserve_an_existing_rdflib_datagraph_view(inplace):
+@pytest.mark.parametrize("kind", ["graph", "native-graph", "native-dataset"])
+def test_public_rules_preserve_an_existing_rdflib_datagraph_view(inplace, kind):
     observations = []
     for name in ("pyshacl", "pyshacl_turbo"):
         engine = importlib.import_module(name)
         cls = importlib.import_module(name + ".graph_abstraction").DataGraph
-        source, shapes = inputs("graph")
+        source, shapes = inputs(kind)
         wrapped = cls.from_rdflib(source)
         result = engine.shacl_rules(wrapped, shacl_graph=shapes, inplace=inplace)
         assert isinstance(result, cls)

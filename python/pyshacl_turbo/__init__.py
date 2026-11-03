@@ -785,7 +785,9 @@ def shacl_rules(
                 dataset.bind(prefix, namespace)
             result = dataset
         return result.serialize(format=rdf_format)
-    if rdflib_object and not isinstance(result, DataGraph):
+    if inplace and isinstance(original, DataGraph) and result is original._view:
+        return original
+    if isinstance(original, Graph) and not isinstance(result, DataGraph):
         result = DataGraph.from_rdflib(result)
     return result
 

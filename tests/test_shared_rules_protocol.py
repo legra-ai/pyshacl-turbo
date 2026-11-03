@@ -156,7 +156,7 @@ def test_compiled_rules_do_not_transport_native_input(provider, monkeypatch):
 
 def test_public_rules_forward_native_input_without_replacing_wrapper(provider):
     data = rdflib_turbo.Dataset()
-    assert turbo.shacl_rules(data, shacl_graph=SHAPES, inplace=True) is data
+    assert turbo.shacl_rules(data, shacl_graph=SHAPES, inplace=True).impl is data
 
 
 @pytest.mark.parametrize("rdf_format", ["nquads", "json-ld"])
