@@ -62,7 +62,7 @@ def test_outplace_result_rejects_wrong_owner_scope_or_category(invalid_kind, mon
 @pytest.mark.parametrize("inplace", [False, True])
 def test_actual_adapter_result_has_independent_owner_or_exact_source(factory, inplace):
     source = factory()
-    result = turbo.shacl_rules(source, shacl_graph=SHAPES, inplace=inplace)
+    result = turbo.compile_shapes(SHAPES).shacl_rules(source, inplace=inplace)
     assert (result is source) is inplace
     result.close()
     source.close()
@@ -74,7 +74,7 @@ def test_datagraph_adapter_preserves_its_selected_native_view(locked, inplace):
     source = runtime.Dataset()
     view = source.graph(URIRef("urn:selected")) if locked else source
     wrapped = DataGraph(source.store, impl=source, locked_context=view if locked else None)
-    result = turbo.shacl_rules(wrapped, shacl_graph=SHAPES, inplace=inplace)
+    result = turbo.compile_shapes(SHAPES).shacl_rules(wrapped, inplace=inplace)
     assert (result is view) is inplace
     if locked:
         assert result.identifier == view.identifier

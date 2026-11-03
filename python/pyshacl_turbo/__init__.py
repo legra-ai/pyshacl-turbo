@@ -705,6 +705,11 @@ def shacl_rules(
     if shacl_graph is None:
         shacl_graph, shacl_graph_format = data_graph, data_graph_format
     original = data_graph
+    public_input_view = None
+    if isinstance(original, DataGraph):
+        public_input_view = original
+    elif isinstance(original, Graph):
+        public_input_view = DataGraph.from_rdflib(original)
     document = _document_source(original)
     if document:
         data_graph = load_from_source(
@@ -735,11 +740,11 @@ def shacl_rules(
     if rdflib_object:
         owns_preparation = data_graph is not original
         if owns_preparation:
-            prepared = DataGraph.from_rdflib(original).clone()
+            prepared = public_input_view.clone()
             merge_graph(prepared, data_graph)
             data_graph = prepared
         elif not isinstance(data_graph, DataGraph):
-            data_graph = DataGraph.from_rdflib(data_graph)
+            data_graph = public_input_view
         if not inplace and not owns_preparation:
             data_graph = data_graph.clone()
         expand_inplace = True
@@ -785,7 +790,9 @@ def shacl_rules(
                 dataset.bind(prefix, namespace)
             result = dataset
         return result.serialize(format=rdf_format)
-    if rdflib_object and not isinstance(result, DataGraph):
+    if inplace and public_input_view is not None:
+        return public_input_view
+    if isinstance(original, Graph) and not isinstance(result, DataGraph):
         result = DataGraph.from_rdflib(result)
     return result
 
