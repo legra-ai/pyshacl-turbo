@@ -705,6 +705,12 @@ def shacl_rules(
     if shacl_graph is None:
         shacl_graph, shacl_graph_format = data_graph, data_graph_format
     original = data_graph
+    public_input_view = None
+    runtime = sys.modules.get("rdflib_turbo")
+    if issubclass(type(original), DataGraph):
+        public_input_view = original
+    elif runtime is not None and issubclass(type(original), (runtime.Graph, runtime.Dataset)):
+        public_input_view = DataGraph.from_rdflib(original)
     document = _document_source(original)
     if document:
         data_graph = load_from_source(
@@ -743,11 +749,6 @@ def shacl_rules(
         if not inplace and not owns_preparation:
             data_graph = data_graph.clone()
         expand_inplace = True
-    native_result_view = None
-    if inplace and isinstance(original, Graph) and not rdflib_object:
-        native_result_view = (
-            original if isinstance(original, DataGraph) else DataGraph.from_rdflib(original)
-        )
     result = _compile_for_data(
         shacl_graph, data_graph, shacl_graph_format, advanced, rules=True
     ).shacl_rules(
@@ -790,8 +791,8 @@ def shacl_rules(
                 dataset.bind(prefix, namespace)
             result = dataset
         return result.serialize(format=rdf_format)
-    if native_result_view is not None:
-        return native_result_view
+    if inplace and public_input_view is not None:
+        return public_input_view
     if isinstance(original, Graph) and not isinstance(result, DataGraph):
         result = DataGraph.from_rdflib(result)
     return result

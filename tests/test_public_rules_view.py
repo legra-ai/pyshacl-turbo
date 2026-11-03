@@ -145,3 +145,31 @@ def test_public_native_view_reads_dataset_settings_before_rule_writes():
         assert result.impl is source
         observations.append((calls, set(result.quads()), len(source)))
     assert observations[0] == observations[1]
+
+
+@pytest.mark.parametrize("inplace", [False, True])
+def test_public_native_settings_failure_precedes_loading_shapes(tmp_path, inplace):
+    from rdflib_turbo import StoreDataset
+
+    class Source(StoreDataset):
+        @property
+        def default_union(self):
+            if self.__dict__.get("armed", False):
+                raise self.failure
+            return False
+
+        @default_union.setter
+        def default_union(self, value):
+            pass
+
+    for name in ("pyshacl", "pyshacl_turbo"):
+        source = Source().add((EX.focus, RDF.type, EX.Person))
+        failure = ValueError("source setting failure")
+        source.failure = failure
+        source.armed = True
+        with pytest.raises(ValueError) as raised:
+            importlib.import_module(name).shacl_rules(
+                source, shacl_graph=str(tmp_path / "missing.ttl"), inplace=inplace
+            )
+        assert raised.value is failure
+        assert len(source) == 1
