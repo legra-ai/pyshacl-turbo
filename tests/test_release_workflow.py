@@ -82,6 +82,18 @@ def test_release_and_dependency_actions_use_one_immutable_policy_revision():
     assert re.fullmatch(r"[0-9a-f]{40}", revisions.pop())
 
 
+def test_dependabot_updates_the_shared_release_policy_as_one_sha_cohort():
+    config = yaml.safe_load((ROOT / ".github/dependabot.yml").read_text())
+    actions = next(
+        update for update in config["updates"] if update["package-ecosystem"] == "github-actions"
+    )
+    groups = actions["groups"]
+    assert next(iter(groups)) == "release-policy"
+    policy = groups["release-policy"]
+    assert policy["patterns"] == ["legra-ai/github-actions*"]
+    assert "update-types" not in policy
+
+
 def test_release_builds_only_the_original_universal_facade_wheel():
     project = tomllib.loads((ROOT / "pyproject.toml").read_text())
     assert project["build-system"]["build-backend"] == "hatchling.build"
