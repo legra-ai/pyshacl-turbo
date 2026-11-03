@@ -113,3 +113,35 @@ def test_public_rules_preserve_an_existing_rdflib_datagraph_view(inplace, kind):
         assert (result.default_graph.store is source.store) is inplace
         observations.append((result is wrapped, set(result.quads()), result.identifier))
     assert observations[0] == observations[1]
+
+
+def test_public_native_view_reads_dataset_settings_before_rule_writes():
+    from rdflib_turbo import StoreDataset
+
+    observations = []
+    for name in ("pyshacl", "pyshacl_turbo"):
+        calls = []
+        failure = ValueError("default union read after writes")
+
+        class Source(StoreDataset):
+            @property
+            def default_union(self):
+                if self.__dict__.get("armed", False):
+                    self.probe_calls.append(len(self))
+                    if len(self) > 1:
+                        raise self.probe_failure
+                return self.__dict__.get("_probe_union", False)
+
+            @default_union.setter
+            def default_union(self, value):
+                self._probe_union = value
+
+        _, shapes = inputs("graph")
+        source = Source().add((EX.focus, RDF.type, EX.Person))
+        source.probe_calls = calls
+        source.probe_failure = failure
+        source.armed = True
+        result = importlib.import_module(name).shacl_rules(source, shacl_graph=shapes, inplace=True)
+        assert result.impl is source
+        observations.append((calls, set(result.quads()), len(source)))
+    assert observations[0] == observations[1]

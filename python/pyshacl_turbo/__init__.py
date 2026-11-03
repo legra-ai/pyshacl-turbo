@@ -743,6 +743,11 @@ def shacl_rules(
         if not inplace and not owns_preparation:
             data_graph = data_graph.clone()
         expand_inplace = True
+    native_result_view = None
+    if inplace and isinstance(original, Graph) and not rdflib_object:
+        native_result_view = (
+            original if isinstance(original, DataGraph) else DataGraph.from_rdflib(original)
+        )
     result = _compile_for_data(
         shacl_graph, data_graph, shacl_graph_format, advanced, rules=True
     ).shacl_rules(
@@ -785,8 +790,8 @@ def shacl_rules(
                 dataset.bind(prefix, namespace)
             result = dataset
         return result.serialize(format=rdf_format)
-    if inplace and isinstance(original, DataGraph) and result is original._view:
-        return original
+    if native_result_view is not None:
+        return native_result_view
     if isinstance(original, Graph) and not isinstance(result, DataGraph):
         result = DataGraph.from_rdflib(result)
     return result
