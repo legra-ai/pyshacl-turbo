@@ -38,6 +38,8 @@ updates:
     schedule:
       interval: daily
     groups:
+      release-policy:
+        patterns: ['legra-ai/github-actions*']
       compatible:
         update-types: [minor, patch]
         patterns: ['*']
