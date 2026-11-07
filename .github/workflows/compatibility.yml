@@ -38,7 +38,7 @@ jobs:
           python-version: '3.13.16'
       - uses: astral-sh/setup-uv@v10.3.3
         with:
-          version: "0.13.5"
+          version: "0.13.7"
       - name: Install the published native owner's source identity tooling
         uses: actions-rust-lang/setup-rust-toolchain@v2
         with:

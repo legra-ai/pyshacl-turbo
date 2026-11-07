@@ -149,7 +149,7 @@ def test_active_workflows_use_the_current_uv_toolchain():
                 if step.get("uses", "").startswith("astral-sh/setup-uv@"):
                     selected.append((path.name, step))
                     assert step["uses"] == "astral-sh/setup-uv@v10.3.3"
-                    assert step["with"]["version"] == "0.13.5"
+                    assert step["with"]["version"] == "0.13.7"
     assert selected
 
 

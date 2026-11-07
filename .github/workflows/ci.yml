@@ -31,7 +31,7 @@ jobs:
     steps:
       - uses: astral-sh/setup-uv@v10.3.3
         with:
-          version: "0.13.5"
+          version: "0.13.7"
       - uses: actions/checkout@v7
         with:
           fetch-depth: 0
@@ -47,7 +47,7 @@ jobs:
           private-key: ${{ secrets.RELEASE_WRITER_APP_KEY }}
           owner: ${{ github.repository_owner }}
           repositories: ${{ github.event.repository.name }}
-      - uses: legra-ai/github-actions/.github/actions/prepare-cargo-release@3d81bf46b840ade0eb37eaeac5b216f0edb41ad9
+      - uses: legra-ai/github-actions/.github/actions/prepare-cargo-release@3b2727b42d2c062e39e8443669af0258382b83e7
         id: release
         with:
           token: ${{ steps.writer.outputs.token || github.token }}
@@ -115,7 +115,7 @@ jobs:
           python-version: ${{ matrix.python }}
       - uses: astral-sh/setup-uv@v10.3.3
         with:
-          version: "0.13.5"
+          version: "0.13.7"
       - uses: actions-rust-lang/setup-rust-toolchain@v2
         with:
           toolchain: 1.99.1
@@ -148,7 +148,7 @@ jobs:
     steps:
       - uses: astral-sh/setup-uv@v10.3.3
         with:
-          version: "0.13.5"
+          version: "0.13.7"
       - name: Require every platform to pass
         env:
           RESULTS: ${{ toJSON(needs) }}
@@ -189,7 +189,7 @@ jobs:
           python-version: '3.13.16'
       - uses: astral-sh/setup-uv@v10.3.3
         with:
-          version: "0.13.5"
+          version: "0.13.7"
       - name: Build source distribution
         run: uv build --sdist --out-dir dist
       - name: Check source inventory, patched dependencies and license texts
@@ -215,7 +215,7 @@ jobs:
           python-version: '3.13.16'
       - uses: astral-sh/setup-uv@v10.3.3
         with:
-          version: "0.13.5"
+          version: "0.13.7"
       - uses: actions/download-artifact@v8
         with:
           name: release-sdist
@@ -249,7 +249,7 @@ jobs:
           python-version: '3.13.16'
       - uses: astral-sh/setup-uv@v10.3.3
         with:
-          version: "0.13.5"
+          version: "0.13.7"
       - uses: actions/download-artifact@v8
         with:
           name: release-wheel
@@ -275,7 +275,7 @@ jobs:
     steps:
       - uses: astral-sh/setup-uv@v10.3.3
         with:
-          version: "0.13.5"
+          version: "0.13.7"
       - uses: actions/checkout@v7
         with:
           ref: ${{ needs.prepare.outputs.revision }}
@@ -283,13 +283,13 @@ jobs:
       - uses: actions/setup-python@v7
         with:
           python-version: '3.13.16'
-      - uses: legra-ai/github-actions/.github/actions/tag-tested-release@3d81bf46b840ade0eb37eaeac5b216f0edb41ad9
+      - uses: legra-ai/github-actions/.github/actions/tag-tested-release@3b2727b42d2c062e39e8443669af0258382b83e7
         with:
           version: ${{ needs.prepare.outputs.version }}
           revision: ${{ needs.prepare.outputs.revision }}
           manifest-kind: uv
           tag-format: pep440
-      - uses: legra-ai/github-actions/.github/actions/generate-changelog@3d81bf46b840ade0eb37eaeac5b216f0edb41ad9
+      - uses: legra-ai/github-actions/.github/actions/generate-changelog@3b2727b42d2c062e39e8443669af0258382b83e7
         with:
           revision: ${{ needs.prepare.outputs.revision }}
       - uses: softprops/action-gh-release@v3
@@ -337,7 +337,7 @@ jobs:
     steps:
       - uses: astral-sh/setup-uv@v10.3.3
         with:
-          version: "0.13.5"
+          version: "0.13.7"
       - uses: actions/checkout@v7
         with:
           ref: ${{ needs.prepare.outputs.revision }}

@@ -195,7 +195,7 @@ def test_owner_formatting_jobs_install_the_pinned_nightly(workflow, job):
     document = yaml.safe_load((ROOT / ".github/workflows" / workflow).read_text())
     assert any(
         step.get("uses") == "actions-rust-lang/setup-rust-toolchain@v2"
-        and step.get("with", {}).get("toolchain") == "nightly-2026-10-16"
+        and step.get("with", {}).get("toolchain") == "nightly-2026-11-07"
         and "rustfmt" in step["with"]["components"]
         for step in document["jobs"][job]["steps"]
     )
