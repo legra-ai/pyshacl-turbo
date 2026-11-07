@@ -53,5 +53,5 @@ def test_release_setup_identity_disables_bytecode_before_script(tmp_path, monkey
         return json.dumps({"packages": {}}) if "--identity" in argv else ""
 
     monkeypatch.setattr(bench, "command", command)
-    bench.setup({"id": "fixture", "requirements": {}}, tmp_path, None, "3.13.16")
+    bench.setup({"id": "fixture", "requirements": {}}, tmp_path, None, "3.13.18")
     assert_python_flags(next(argv for argv in calls if "--identity" in argv))

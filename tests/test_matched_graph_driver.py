@@ -156,7 +156,7 @@ def test_lock_replay_uses_locked_sync_without_resolving_or_rewriting_input(tmp_p
     project, _ = authority.setup(
         {"id": "baseline", "requirements": {"rdflib": "==7.6.0"}},
         tmp_path,
-        "3.13.16",
+        "3.13.18",
         Path("driver.py"),
         lock,
     )
