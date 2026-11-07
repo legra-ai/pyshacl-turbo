@@ -258,3 +258,16 @@ def test_release_metadata_check_uses_project_locked_twine():
 
     manifest = tomllib.loads((ROOT / "pyproject.toml").read_text())
     assert manifest["dependency-groups"]["packaging"] == ["twine==7.0.0"]
+
+
+def test_companion_test_dependency_accepts_current_maintenance_alphas():
+    requirements = tomllib.loads((ROOT / "pyproject.toml").read_text())["project"][
+        "optional-dependencies"
+    ]["test"]
+    requirement = next(
+        Requirement(value) for value in requirements if Requirement(value).name == "owlrl-turbo"
+    )
+    for supported in ("0.2.0a1", "0.2.0a2"):
+        assert requirement.specifier.contains(supported, prereleases=True)
+    for unsupported in ("0.2.0a0", "0.3.0"):
+        assert not requirement.specifier.contains(unsupported, prereleases=True)
