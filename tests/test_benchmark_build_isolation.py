@@ -27,7 +27,7 @@ def test_companion_archive_build_ignores_the_destination_cargo_workspace(tmp_pat
     source.mkdir()
     (source / "src").mkdir()
     (source / "pyproject.toml").write_text("""[build-system]
-requires = ["maturin==1.15.0"]
+requires = ["maturin==1.16.0"]
 build-backend = "maturin"
 [project]
 name = "isolated-benchmark-fixture"
