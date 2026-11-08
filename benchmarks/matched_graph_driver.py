@@ -169,8 +169,8 @@ def proof_hashes(output):
 
 
 def run(args):
-    if args.python != "3.13.16" or RELEASES.command(["uv", "--version"]).split()[1] != "0.13.5":
-        raise RuntimeError("Use native UV0.13.5 and CPython3.13.16")
+    if args.python != "3.13.18" or RELEASES.command(["uv", "--version"]).split()[1] != "0.13.7":
+        raise RuntimeError("Use native UV0.13.7 and CPython3.13.18")
     iteration_order(args.repeats)
     if len(set(args.roles)) != len(args.roles):
         raise ValueError("Cohort roles must be unique")
@@ -303,7 +303,7 @@ def main():
     parser.add_argument("--lock-input", action="append", default=[], metavar="ROLE=LOCK")
     parser.add_argument("--widths", nargs="+", type=int, default=[32, 128, 512, 1000])
     parser.add_argument("--repeats", type=int, default=5)
-    parser.add_argument("--python", default="3.13.16")
+    parser.add_argument("--python", default="3.13.18")
     parser.add_argument("--output", type=Path, default=Path("benchmark-artifacts/matched-graph"))
     parser.add_argument("--correctness-only", action="store_true")
     parser.add_argument("--worker", help=argparse.SUPPRESS)

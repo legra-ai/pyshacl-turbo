@@ -190,3 +190,12 @@ def test_artifact_manifest_paths_are_portable_on_windows(monkeypatch):
 
     monkeypatch.setattr(driver.AUTHORITY, "sha", lambda path: "a" * 64)
     assert driver.proof_hashes(Output()) == {"proofs/case.json.gz": "a" * 64}
+
+
+def test_current_ci_tool_versions_reach_the_sampling_contract(monkeypatch):
+    from types import SimpleNamespace
+
+    driver = load("matched_graph_driver")
+    monkeypatch.setattr(driver.RELEASES, "command", lambda argv: "uv 0.13.7")
+    with pytest.raises(ValueError):
+        driver.run(SimpleNamespace(python="3.13.18", repeats=4))
