@@ -40,7 +40,7 @@ jobs:
           components: rustfmt
       - uses: actions-rust-lang/setup-rust-toolchain@v2
         with:
-          toolchain: nightly-2026-11-07
+          toolchain: nightly-2026-11-08
           components: rustfmt
       - name: Build the original pure facade archives
         run: |
