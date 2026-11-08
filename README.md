@@ -155,10 +155,11 @@ pySHACL. **SHACL-JS is planned.** Review the
 
 ## Install
 
-Requires Python 3.11+. Wheels are available for Linux x86-64/ARM64 (glibc
-2.28+), macOS Intel/Apple Silicon, and Windows x86-64. Rust is only needed when
-building from source. The compatibility measurements and remaining limits above
-apply to the current release.
+Requires Python 3.11–3.15. New shared-runtime wheels target Linux x86-64/ARM64
+(glibc 2.28+), macOS Apple Silicon, and Windows x86-64. Intel macOS wheels remain
+available for older releases. Installing supported native wheels requires no Rust
+toolchain. The compatibility measurements and remaining limits above apply to the
+current release.
 
 Add the package to your [uv project](https://docs.astral.sh/uv/guides/projects/):
 
