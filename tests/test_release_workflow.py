@@ -25,6 +25,19 @@ def test_yaml_cohorts_declare_the_exact_build_interpreter(name):
     assert setups == ["3.13.18"]
 
 
+def test_windows_pinned_runtime_uses_the_uv_python_catalogue():
+    jobs = yaml.safe_load((ROOT / ".github/workflows/ci.yml").read_text())["jobs"]
+    for name, version in (("verify", "${{ matrix.python }}"), ("wheel-acceptance", "3.13.18")):
+        steps = jobs[name]["steps"]
+        uv = next(step for step in steps if step.get("uses", "").startswith("astral-sh/setup-uv@"))
+        assert uv["with"]["python-version"] == version
+        assert all(
+            step.get("if") == "matrix.python == '3.11'"
+            for step in steps
+            if step.get("uses", "").startswith("actions/setup-python@")
+        )
+
+
 def test_minimum_runtime_keeps_its_separate_pinned_yaml_build_interpreter():
     job = yaml.safe_load((ROOT / ".github/workflows/ci.yml").read_text())["jobs"]["verify"]
     versions = [case["python"] for case in job["strategy"]["matrix"]["include"]]
@@ -34,7 +47,11 @@ def test_minimum_runtime_keeps_its_separate_pinned_yaml_build_interpreter():
     ]
     assert setups[0]["with"]["python-version"] == "3.13.18"
     assert setups[0]["if"] == "matrix.python == '3.11'"
-    assert setups[1]["with"]["python-version"] == "${{ matrix.python }}"
+    assert len(setups) == 1
+    uv = next(
+        step for step in job["steps"] if step.get("uses", "").startswith("astral-sh/setup-uv@")
+    )
+    assert uv["with"]["python-version"] == "${{ matrix.python }}"
 
 
 def test_pure_facade_preparation_and_tagging_use_the_uv_release_policy():
