@@ -59,8 +59,8 @@ def origins(backend):
 
 
 def execute(job, proof, entered):
-    if sys.version_info[:3] != (3, 13, 16):
-        raise RuntimeError("Matched benchmark requires CPython3.13.16")
+    if sys.version_info[:3] != (3, 13, 18):
+        raise RuntimeError("Matched benchmark requires CPython3.13.18")
     if job["backend"] not in {"reference", "turbo"}:
         raise ValueError("Unknown matched backend")
     if job["kind"] == "correctness":

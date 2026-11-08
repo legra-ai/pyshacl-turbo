@@ -79,7 +79,7 @@ def metadata(owner):
         raise ValueError("Published provider does not own its local SHACL engine")
     maturin = manifest["tool"]["maturin"]
     if (
-        manifest["build-system"]["requires"] != ["maturin==1.15.0"]
+        manifest["build-system"]["requires"] != ["maturin==1.16.0"]
         or maturin["profile"] != "release"
         or maturin["locked"] is not True
         or set(maturin["features"]) != {"pyo3/extension-module", "persistence"}

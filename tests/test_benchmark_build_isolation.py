@@ -27,7 +27,7 @@ def test_companion_archive_build_ignores_the_destination_cargo_workspace(tmp_pat
     source.mkdir()
     (source / "src").mkdir()
     (source / "pyproject.toml").write_text("""[build-system]
-requires = ["maturin==1.15.0"]
+requires = ["maturin==1.16.0"]
 build-backend = "maturin"
 [project]
 name = "isolated-benchmark-fixture"
@@ -100,9 +100,9 @@ def test_release_builder_rejects_git_to_archive_equivalence_before_build(monkeyp
 
 def test_pinned_uv_accepts_its_actual_distribution_build_metadata():
     module = builder_module()
-    module.require_uv_version("uv 0.13.5 (Homebrew 2026-10-14 aarch64-apple-darwin)")
-    module.require_uv_version("uv 0.13.5")
-    for wrong in ("uv 0.4.27", "uv 0.13.1", "uv 0.13.50", "other 0.13.5", "uv 0.13.5-dev"):
+    module.require_uv_version("uv 0.13.7 (Homebrew 2026-10-14 aarch64-apple-darwin)")
+    module.require_uv_version("uv 0.13.7")
+    for wrong in ("uv 0.4.27", "uv 0.13.1", "uv 0.13.70", "other 0.13.7", "uv 0.13.7-dev"):
         with pytest.raises(ValueError, match="pinned uv"):
             module.require_uv_version(wrong)
 

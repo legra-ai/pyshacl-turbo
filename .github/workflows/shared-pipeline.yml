@@ -28,17 +28,15 @@ jobs:
         with:
           ref: ${{ inputs.revision || github.sha }}
           fetch-depth: 0
-      - uses: actions/setup-python@v7
-        with:
-          python-version: '3.13.16'
       - uses: astral-sh/setup-uv@v10.3.3
         with:
-          version: "0.13.5"
+          version: "0.13.7"
+          python-version: '3.13.18'
       - uses: actions-rust-lang/setup-rust-toolchain@v2
         with:
           toolchain: 1.99.1
       - name: Prepare exact published original authorities and RELEASE measurement inputs
-        run: uv run --no-project --python 3.13.16 python -B scripts/build_published_benchmark.py --output "$RUNNER_TEMP/pipeline-build" || exit 1
+        run: uv run --no-project --python 3.13.18 python -B scripts/build_published_benchmark.py --output "$RUNNER_TEMP/pipeline-build" || exit 1
       - name: Verify the shared path and measure versioned pipelines
         env:
           BENCHMARK_NODES: ${{ github.event_name == 'schedule' && '100 1000 10000' || '100 1000' }}
@@ -46,13 +44,13 @@ jobs:
           # Reference equality and complete outputs remain mandatory worker gates.
           BENCHMARK_MATRIX: ${{ github.event_name == 'schedule' && inputs.revision == '' && 'benchmarks/releases.json' || 'benchmarks/candidate-releases.json' }}
           BENCHMARK_TIMEOUT: ${{ github.event_name == 'schedule' && '900' || '180' }}
-        run: uv run --no-project --python 3.13.16 python benchmarks/releases.py --matrix "$BENCHMARK_MATRIX" --candidate-wheels "$RUNNER_TEMP/pipeline-build/candidate/candidate-wheels" --integration-tests "$GITHUB_WORKSPACE/integration" --nodes $BENCHMARK_NODES --repeats 7 --memory-repeats 3 --timeout "$BENCHMARK_TIMEOUT" --output benchmark-artifacts/releases.json || exit 1
+        run: uv run --no-project --python 3.13.18 python benchmarks/releases.py --matrix "$BENCHMARK_MATRIX" --candidate-wheels "$RUNNER_TEMP/pipeline-build/candidate/candidate-wheels" --integration-tests "$GITHUB_WORKSPACE/integration" --nodes $BENCHMARK_NODES --repeats 7 --memory-repeats 3 --timeout "$BENCHMARK_TIMEOUT" --output benchmark-artifacts/releases.json || exit 1
       - name: Measure matched public Graph registry cohorts separately
         if: ${{ !cancelled() }}
-        run: uv run --no-project --python 3.13.16 python -I -B benchmarks/matched_graph_driver.py --cohort benchmarks/matched-graph-releases.json --repeats 5 --output benchmark-artifacts/matched-graph || exit 1
+        run: uv run --no-project --python 3.13.18 python -I -B benchmarks/matched_graph_driver.py --cohort benchmarks/matched-graph-releases.json --repeats 5 --output benchmark-artifacts/matched-graph || exit 1
       - name: Summarize measured results
         if: always()
-        shell: uv run --no-project --python 3.13.16 python {0}
+        shell: uv run --no-project --python 3.13.18 python {0}
         run: |
           import json
           import os
@@ -125,7 +123,7 @@ jobs:
           ref: ${{ inputs.revision || github.sha }}
       - uses: astral-sh/setup-uv@v10.3.3
         with:
-          version: "0.13.5"
+          version: "0.13.7"
       - uses: actions/download-artifact@v8
         with:
           pattern: pipeline-reports-*
@@ -136,4 +134,4 @@ jobs:
           BENCHMARK_REPOSITORY: ${{ github.repository }}
           BENCHMARK_RUN_ID: ${{ github.run_id }}-${{ github.run_attempt }}
           BENCHMARK_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-        run: uv run --no-project --python 3.13.16 python scripts/benchmark_history.py --artifacts measured-reports --repository "$BENCHMARK_REPOSITORY" --run-id "$BENCHMARK_RUN_ID" --run-url "$BENCHMARK_RUN_URL" || exit 1
+        run: uv run --no-project --python 3.13.18 python scripts/benchmark_history.py --artifacts measured-reports --repository "$BENCHMARK_REPOSITORY" --run-id "$BENCHMARK_RUN_ID" --run-url "$BENCHMARK_RUN_URL" || exit 1

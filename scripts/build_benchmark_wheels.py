@@ -107,8 +107,8 @@ def parser():
 
 
 def require_uv_version(version):
-    if version.split()[:2] != ["uv", "0.13.5"]:
-        raise ValueError("Candidate builds require the pinned uv 0.13.5")
+    if version.split()[:2] != ["uv", "0.13.7"]:
+        raise ValueError("Candidate builds require the pinned uv 0.13.7")
 
 
 def write_worker_sources(receipt, receipt_file, source_file):

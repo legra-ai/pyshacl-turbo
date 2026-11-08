@@ -1,5 +1,5 @@
 [build-system]
-requires = ["hatchling>=1.32.3,<2"]
+requires = ["hatchling>=1.33.0,<2"]
 build-backend = "hatchling.build"
 
 [project]
@@ -21,7 +21,7 @@ classifiers = [
 ]
 dependencies = [
     "rdflib[html]>=7.3,<8",
-    "rdflib-turbo==0.2.0a33",
+    "rdflib-turbo==0.2.0a37",
 ]
 
 [project.urls]
@@ -36,8 +36,8 @@ test = [
     "pyshacl[oxigraph]==0.40.2",
     "ruff>=0.12",
     "pyyaml>=6,<7",
-    "rdflib-turbo==0.2.0a33",
-    "owlrl-turbo==0.2.0a1",
+    "rdflib-turbo==0.2.0a37",
+    "owlrl-turbo>=0.2.0a1,<0.3",
 ]
 
 [project.scripts]

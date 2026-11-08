@@ -20,21 +20,45 @@ def test_yaml_cohorts_declare_the_exact_build_interpreter(name):
     setups = [
         step["with"]["python-version"]
         for step in job["steps"]
-        if step.get("uses", "").startswith("actions/setup-python@")
+        if step.get("uses", "").startswith(
+            "astral-sh/setup-uv@" if name == "shared-pipeline" else "actions/setup-python@"
+        )
     ]
-    assert setups == ["3.13.16"]
+    assert setups == ["3.13.18"]
+
+
+def test_cross_platform_pinned_runtimes_use_the_uv_python_catalogue():
+    jobs = yaml.safe_load((ROOT / ".github/workflows/ci.yml").read_text())["jobs"]
+    shared = yaml.safe_load((ROOT / ".github/workflows/shared-pipeline.yml").read_text())
+    for job, version in (
+        (jobs["verify"], "${{ matrix.python }}"),
+        (jobs["wheel-acceptance"], "3.13.18"),
+        (shared["jobs"]["benchmark"], "3.13.18"),
+    ):
+        steps = job["steps"]
+        uv = next(step for step in steps if step.get("uses", "").startswith("astral-sh/setup-uv@"))
+        assert uv["with"]["python-version"] == version
+        assert all(
+            step.get("if") == "matrix.python == '3.11'"
+            for step in steps
+            if step.get("uses", "").startswith("actions/setup-python@")
+        )
 
 
 def test_minimum_runtime_keeps_its_separate_pinned_yaml_build_interpreter():
     job = yaml.safe_load((ROOT / ".github/workflows/ci.yml").read_text())["jobs"]["verify"]
     versions = [case["python"] for case in job["strategy"]["matrix"]["include"]]
-    assert versions == ["3.11", "3.13.16", "3.13.16", "3.13.16"]
+    assert versions == ["3.11", "3.13.18", "3.13.18", "3.13.18"]
     setups = [
         step for step in job["steps"] if step.get("uses", "").startswith("actions/setup-python@")
     ]
-    assert setups[0]["with"]["python-version"] == "3.13.16"
+    assert setups[0]["with"]["python-version"] == "3.13.18"
     assert setups[0]["if"] == "matrix.python == '3.11'"
-    assert setups[1]["with"]["python-version"] == "${{ matrix.python }}"
+    assert len(setups) == 1
+    uv = next(
+        step for step in job["steps"] if step.get("uses", "").startswith("astral-sh/setup-uv@")
+    )
+    assert uv["with"]["python-version"] == "${{ matrix.python }}"
 
 
 def test_pure_facade_preparation_and_tagging_use_the_uv_release_policy():
@@ -195,7 +219,7 @@ def test_owner_formatting_jobs_install_the_pinned_nightly(workflow, job):
     document = yaml.safe_load((ROOT / ".github/workflows" / workflow).read_text())
     assert any(
         step.get("uses") == "actions-rust-lang/setup-rust-toolchain@v2"
-        and step.get("with", {}).get("toolchain") == "nightly-2026-10-16"
+        and step.get("with", {}).get("toolchain") == "nightly-2026-11-08"
         and "rustfmt" in step["with"]["components"]
         for step in document["jobs"][job]["steps"]
     )

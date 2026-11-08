@@ -156,7 +156,7 @@ def test_lock_replay_uses_locked_sync_without_resolving_or_rewriting_input(tmp_p
     project, _ = authority.setup(
         {"id": "baseline", "requirements": {"rdflib": "==7.6.0"}},
         tmp_path,
-        "3.13.16",
+        "3.13.18",
         Path("driver.py"),
         lock,
     )
@@ -190,3 +190,24 @@ def test_artifact_manifest_paths_are_portable_on_windows(monkeypatch):
 
     monkeypatch.setattr(driver.AUTHORITY, "sha", lambda path: "a" * 64)
     assert driver.proof_hashes(Output()) == {"proofs/case.json.gz": "a" * 64}
+
+
+def test_current_ci_tool_versions_reach_the_sampling_contract(monkeypatch):
+    from types import SimpleNamespace
+
+    driver = load("matched_graph_driver")
+    monkeypatch.setattr(driver.RELEASES, "command", lambda argv: "uv 0.13.7")
+    with pytest.raises(ValueError):
+        driver.run(SimpleNamespace(python="3.13.18", repeats=4))
+
+
+def test_current_ci_python_reaches_the_worker_backend_contract(monkeypatch):
+    worker = load("matched_graph_worker")
+    monkeypatch.setattr(worker.sys, "version_info", (3, 13, 18))
+    with pytest.raises(ValueError, match="Unknown matched backend"):
+        worker.execute({"backend": "foreign"}, None, 0)
+
+
+def test_manylinux_build_uses_the_current_native_uv_release():
+    dockerfile = (ROOT / "scripts/manylinux.Dockerfile").read_text()
+    assert "FROM ghcr.io/astral-sh/uv:0.13.7 AS uv" in dockerfile

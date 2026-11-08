@@ -134,7 +134,7 @@ def test_source_metadata_selects_the_owners_compiler_without_a_facade_toolchain(
     )
     (tmp_path / "rust-toolchain.toml").write_text('[toolchain]\nchannel="1.99.1"\n')
     (tmp_path / "pyproject.toml").write_text(
-        '[build-system]\nrequires=["maturin==1.15.0"]\n'
+        '[build-system]\nrequires=["maturin==1.16.0"]\n'
         '[tool.maturin]\nprofile="release"\nlocked=true\nfeatures=["pyo3/extension-module","persistence"]\n'
     )
     calls = []

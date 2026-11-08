@@ -3,9 +3,11 @@
 import importlib.util
 import json
 import re
+import subprocess
 import sys
 import tomllib
 from pathlib import Path, PurePosixPath
+from tempfile import TemporaryDirectory
 
 
 def load(name):
@@ -58,7 +60,7 @@ def verify_yaml_test_dependency(owner, dependency):
 
 def prepare_yaml_test_dependency(owner, output):
     """Build one original pure test wheel from the verified owner's frozen lock."""
-    record = load_yaml(owner).prepare(owner, output, "3.13.16")
+    record = load_yaml(owner).prepare(owner, output, "3.13.18")
     dependency = {"authority": str(output / "yaml-inputs.json"), "record": record}
     verify_yaml_test_dependency(owner, dependency)
     return dependency
@@ -155,16 +157,63 @@ def original_peer(project, version, output, *, owner=None):
 
 
 def execution_owl_version(consumer):
-    """Require one exact consumer test pin, independently of the owner's build lock."""
+    """Select the consumer's exact registry lock after uv validates its requirement."""
     manifest = tomllib.loads((consumer / "pyproject.toml").read_text())
     requirements = manifest.get("project", {}).get("optional-dependencies", {}).get("test", [])
     candidates = [value for value in requirements if re.match(r"(?i)^owlrl[-_.]turbo\b", value)]
     if len(candidates) != 1:
-        raise ValueError("Expected one exact consumer OWL test dependency")
-    match = re.fullmatch(r"owlrl-turbo==(" + load("provider_registry").VERSION + ")", candidates[0])
-    if match is None:
-        raise ValueError("Expected one unconditional exact registry OWL test dependency")
-    return match[1]
+        raise ValueError("Expected one consumer OWL test dependency")
+    if re.fullmatch(r"owlrl-turbo[<>=!~][^@;\s\[\]]+", candidates[0]) is None:
+        raise ValueError("Expected one unconditional registry OWL test dependency")
+    sources = manifest.get("tool", {}).get("uv", {}).get("sources", {})
+    if any(re.sub(r"[-_.]+", "-", name).lower() == "owlrl-turbo" for name in sources):
+        raise ValueError("Execution OWL dependency cannot override its registry source")
+    version = locked_version(consumer, "owlrl-turbo")
+    lock = tomllib.loads((consumer / "uv.lock").read_text())
+    package = next(item for item in lock["package"] if item["name"] == "owlrl-turbo")
+    if package.get("source") != {"registry": "https://pypi.org/simple"}:
+        raise ValueError("Execution OWL dependency must be locked to the original registry")
+    verify_execution_requirement(candidates[0], version)
+    return version
+
+
+def verify_execution_requirement(requirement, version):
+    """Have uv check this registry requirement without resolving unrelated source bindings."""
+    with TemporaryDirectory(prefix="turbo-owl-authority-") as directory:
+        project = Path(directory)
+        python_version = ".".join(map(str, sys.version_info[:3]))
+        (project / "pyproject.toml").write_text(
+            '[project]\nname="turbo-owl-execution-authority"\nversion="0.0.0"\n'
+            + f'requires-python="=={python_version}"\n'
+            + "dependencies="
+            + json.dumps([requirement, f"owlrl-turbo=={version}"])
+            + "\n"
+        )
+        result = subprocess.run(
+            [
+                "uv",
+                "lock",
+                "--project",
+                str(project),
+                "--no-config",
+                "--no-build",
+                "--default-index",
+                "https://pypi.org/simple",
+                "--python",
+                sys.executable,
+            ],
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+        if result.returncode:
+            raise ValueError("Consumer OWL requirement validation failed: " + result.stderr)
+        lock = tomllib.loads((project / "uv.lock").read_text())
+        (selected,) = [item for item in lock["package"] if item["name"] == "owlrl-turbo"]
+        if selected["version"] != version or selected["source"] != {
+            "registry": "https://pypi.org/simple"
+        }:
+            raise ValueError("OWL resolution changed the locked original registry peer")
 
 
 def execution_peer(consumer, owner, output):
