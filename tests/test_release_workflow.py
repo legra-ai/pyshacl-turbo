@@ -20,15 +20,22 @@ def test_yaml_cohorts_declare_the_exact_build_interpreter(name):
     setups = [
         step["with"]["python-version"]
         for step in job["steps"]
-        if step.get("uses", "").startswith("actions/setup-python@")
+        if step.get("uses", "").startswith(
+            "astral-sh/setup-uv@" if name == "shared-pipeline" else "actions/setup-python@"
+        )
     ]
     assert setups == ["3.13.18"]
 
 
-def test_windows_pinned_runtime_uses_the_uv_python_catalogue():
+def test_cross_platform_pinned_runtimes_use_the_uv_python_catalogue():
     jobs = yaml.safe_load((ROOT / ".github/workflows/ci.yml").read_text())["jobs"]
-    for name, version in (("verify", "${{ matrix.python }}"), ("wheel-acceptance", "3.13.18")):
-        steps = jobs[name]["steps"]
+    shared = yaml.safe_load((ROOT / ".github/workflows/shared-pipeline.yml").read_text())
+    for job, version in (
+        (jobs["verify"], "${{ matrix.python }}"),
+        (jobs["wheel-acceptance"], "3.13.18"),
+        (shared["jobs"]["benchmark"], "3.13.18"),
+    ):
+        steps = job["steps"]
         uv = next(step for step in steps if step.get("uses", "").startswith("astral-sh/setup-uv@"))
         assert uv["with"]["python-version"] == version
         assert all(
