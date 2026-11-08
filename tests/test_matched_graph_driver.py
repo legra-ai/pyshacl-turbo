@@ -199,3 +199,15 @@ def test_current_ci_tool_versions_reach_the_sampling_contract(monkeypatch):
     monkeypatch.setattr(driver.RELEASES, "command", lambda argv: "uv 0.13.7")
     with pytest.raises(ValueError):
         driver.run(SimpleNamespace(python="3.13.18", repeats=4))
+
+
+def test_current_ci_python_reaches_the_worker_backend_contract(monkeypatch):
+    worker = load("matched_graph_worker")
+    monkeypatch.setattr(worker.sys, "version_info", (3, 13, 18))
+    with pytest.raises(ValueError, match="Unknown matched backend"):
+        worker.execute({"backend": "foreign"}, None, 0)
+
+
+def test_manylinux_build_uses_the_current_native_uv_release():
+    dockerfile = (ROOT / "scripts/manylinux.Dockerfile").read_text()
+    assert "FROM ghcr.io/astral-sh/uv:0.13.7 AS uv" in dockerfile
