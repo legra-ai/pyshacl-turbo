@@ -17,6 +17,30 @@ SHAPES = """@prefix sh: <http://www.w3.org/ns/shacl#> .
 <urn:S> sh:targetNode <urn:s>; sh:class <urn:C>."""
 
 
+@pytest.mark.parametrize("kind", ["Shape", "Constraint"])
+def test_native_shape_source_errors_preserve_public_contract_and_cause(kind):
+    from pyshacl import errors as reference_errors
+
+    native_error = getattr(turbo._native, kind + "LoadFailure")(
+        "source failure", "urn:error:details"
+    )
+    expected = getattr(reference_errors, kind + "LoadError")(*native_error.args)
+    calls = []
+
+    class Source:
+        def _compile_shared_shapes(self, advanced):
+            calls.append(advanced)
+            raise native_error
+
+    with pytest.raises(getattr(turbo, kind + "LoadError")) as actual:
+        turbo.CompiledShapes(Source(), advanced=True)
+    assert calls == [True]
+    assert actual.value.args == expected.args
+    assert str(actual.value) == str(expected)
+    assert repr(actual.value) == repr(expected)
+    assert actual.value.__cause__ is native_error
+
+
 def test_old_runtime_and_text_format_are_rejected_before_conversion(monkeypatch):
     monkeypatch.delattr(runtime, "SHARED_SHACL_PROTOCOL", raising=False)
     data = rdflib_turbo.Dataset()
