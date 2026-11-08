@@ -7,6 +7,7 @@ import subprocess
 import sys
 import tomllib
 from pathlib import Path, PurePosixPath
+from tempfile import TemporaryDirectory
 
 
 def load(name):
@@ -172,24 +173,47 @@ def execution_owl_version(consumer):
     package = next(item for item in lock["package"] if item["name"] == "owlrl-turbo")
     if package.get("source") != {"registry": "https://pypi.org/simple"}:
         raise ValueError("Execution OWL dependency must be locked to the original registry")
-    result = subprocess.run(
-        [
-            "uv",
-            "lock",
-            "--project",
-            str(consumer),
-            "--check",
-            "--offline",
-            "--python",
-            sys.executable,
-        ],
-        check=False,
-        capture_output=True,
-        text=True,
-    )
-    if result.returncode:
-        raise ValueError("Consumer lock differs from its declared dependencies: " + result.stderr)
+    verify_execution_requirement(candidates[0], version)
     return version
+
+
+def verify_execution_requirement(requirement, version):
+    """Have uv check this registry requirement without resolving unrelated source bindings."""
+    with TemporaryDirectory(prefix="turbo-owl-authority-") as directory:
+        project = Path(directory)
+        python_version = ".".join(map(str, sys.version_info[:3]))
+        (project / "pyproject.toml").write_text(
+            '[project]\nname="turbo-owl-execution-authority"\nversion="0.0.0"\n'
+            + f'requires-python="=={python_version}"\n'
+            + "dependencies="
+            + json.dumps([requirement, f"owlrl-turbo=={version}"])
+            + "\n"
+        )
+        result = subprocess.run(
+            [
+                "uv",
+                "lock",
+                "--project",
+                str(project),
+                "--no-config",
+                "--no-build",
+                "--default-index",
+                "https://pypi.org/simple",
+                "--python",
+                sys.executable,
+            ],
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+        if result.returncode:
+            raise ValueError("Consumer OWL requirement validation failed: " + result.stderr)
+        lock = tomllib.loads((project / "uv.lock").read_text())
+        (selected,) = [item for item in lock["package"] if item["name"] == "owlrl-turbo"]
+        if selected["version"] != version or selected["source"] != {
+            "registry": "https://pypi.org/simple"
+        }:
+            raise ValueError("OWL resolution changed the locked original registry peer")
 
 
 def execution_peer(consumer, owner, output):

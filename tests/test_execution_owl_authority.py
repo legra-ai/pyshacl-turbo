@@ -2,6 +2,7 @@
 
 import copy
 import importlib.util
+import re
 import tempfile
 import tomllib
 import unittest
@@ -37,8 +38,26 @@ class AuthorityTests(unittest.TestCase):
                 manifest.replace(original, "owlrl-turbo>=0.3,<0.4")
             )
             (root / "uv.lock").write_bytes((ROOT / "uv.lock").read_bytes())
-            with self.assertRaisesRegex(ValueError, "Consumer lock differs"):
+            with self.assertRaisesRegex(ValueError, "requirement validation failed"):
                 module("published_peers").execution_owl_version(root)
+
+    def test_owl_selection_does_not_resolve_unrelated_candidate_source_paths(self):
+        manifest = (ROOT / "pyproject.toml").read_text()
+        binding = 'rdflib-turbo={path="../missing-native-owner",editable=true}'
+        if "[tool.uv.sources]" in manifest:
+            manifest, changed = re.subn(r"(?m)^rdflib-turbo\s*=\s*\{[^\n]*\}", binding, manifest)
+            self.assertEqual(changed, 1)
+        else:
+            manifest += "\n[tool.uv.sources]\n" + binding + "\n"
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "pyproject.toml").write_text(manifest)
+            (root / "uv.lock").write_bytes((ROOT / "uv.lock").read_bytes())
+            lock = tomllib.loads((root / "uv.lock").read_text())
+            expected = next(
+                item["version"] for item in lock["package"] if item["name"] == "owlrl-turbo"
+            )
+            self.assertEqual(module("published_peers").execution_owl_version(root), expected)
 
     def context(self):
         old = {
@@ -178,11 +197,16 @@ class AuthorityTests(unittest.TestCase):
             (root / "uv.lock").write_text(
                 '[[package]]\nname="owlrl-turbo"\nversion="0.2.0a1"\nsource={' + encoded + "}\n"
             )
-            with patch.object(
-                peers.subprocess,
-                "run",
-                return_value=SimpleNamespace(returncode=check_returncode, stderr="invalid lock"),
-            ):
+
+            def resolve(argv, **kwargs):
+                project = Path(argv[argv.index("--project") + 1])
+                (project / "uv.lock").write_text(
+                    '[[package]]\nname="owlrl-turbo"\nversion="0.2.0a1"\n'
+                    'source={registry="https://pypi.org/simple"}\n'
+                )
+                return SimpleNamespace(returncode=check_returncode, stderr="invalid lock")
+
+            with patch.object(peers.subprocess, "run", side_effect=resolve):
                 return peers.execution_owl_version(root)
 
     def test_exact_consumer_test_authority(self):
@@ -210,7 +234,7 @@ class AuthorityTests(unittest.TestCase):
         ):
             with self.subTest(source=source), self.assertRaises(ValueError):
                 self.requirement(requirements, source=source)
-        with self.assertRaisesRegex(ValueError, "Consumer lock differs"):
+        with self.assertRaisesRegex(ValueError, "requirement validation failed"):
             self.requirement(requirements, check_returncode=1)
 
 
