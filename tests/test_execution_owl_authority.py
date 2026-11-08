@@ -178,7 +178,16 @@ class AuthorityTests(unittest.TestCase):
                 peers.verify_owl_peer(Path("/owner"), peer)
             current[key] = before
 
-    def requirement(self, requirements, *, source=None, binding=False, check_returncode=0):
+    def requirement(
+        self,
+        requirements,
+        *,
+        source=None,
+        binding=False,
+        check_returncode=0,
+        resolved_version="0.2.0a1",
+        resolved_registry="https://pypi.org/simple",
+    ):
         peers = module("published_peers")
         peers.load = lambda name: SimpleNamespace(
             VERSION=r"[0-9]+\.[0-9]+\.[0-9]+(?:a[0-9]+)?", PROJECTS={"owlrl-turbo"}
@@ -201,8 +210,8 @@ class AuthorityTests(unittest.TestCase):
             def resolve(argv, **kwargs):
                 project = Path(argv[argv.index("--project") + 1])
                 (project / "uv.lock").write_text(
-                    '[[package]]\nname="owlrl-turbo"\nversion="0.2.0a1"\n'
-                    'source={registry="https://pypi.org/simple"}\n'
+                    '[[package]]\nname="owlrl-turbo"\n'
+                    + f'version="{resolved_version}"\nsource={{registry="{resolved_registry}"}}\n'
                 )
                 return SimpleNamespace(returncode=check_returncode, stderr="invalid lock")
 
@@ -211,6 +220,17 @@ class AuthorityTests(unittest.TestCase):
 
     def test_exact_consumer_test_authority(self):
         self.assertEqual(self.requirement(["pytest==9.1.1", "owlrl-turbo==0.2.0a1"]), "0.2.0a1")
+
+    def test_uv_cannot_replace_the_locked_version_or_original_registry(self):
+        for changed in (
+            {"resolved_version": "0.2.0a2"},
+            {"resolved_registry": "https://example.org/simple"},
+        ):
+            with (
+                self.subTest(changed=changed),
+                self.assertRaisesRegex(ValueError, "changed the locked original registry peer"),
+            ):
+                self.requirement(["owlrl-turbo>=0.2.0a1,<0.3"], **changed)
 
     def test_missing_url_marker_extras_and_duplicate_rejected(self):
         for requirements in (
