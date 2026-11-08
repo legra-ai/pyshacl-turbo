@@ -43,9 +43,15 @@ def test_packaging_sync_and_command_work_without_any_source_peer(tmp_path):
         name: value
         for name, value in os.environ.items()
         if name
-        not in {"VIRTUAL_ENV", "PYTHONPATH", "PYTHONHOME", "UV_PROJECT", "UV_PROJECT_ENVIRONMENT"}
+        not in {
+            "VIRTUAL_ENV",
+            "PYTHONPATH",
+            "PYTHONHOME",
+            "UV_PROJECT",
+            "UV_PROJECT_ENVIRONMENT",
+            "UV_PYTHON",
+        }
     }
-    environment["UV_PYTHON"] = "3.13.18"
     subprocess.run(
         [
             "uv",
