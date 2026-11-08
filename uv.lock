@@ -996,7 +996,7 @@ oxigraph = [
 
 [[package]]
 name = "pyshacl-turbo"
-version = "0.10.0"
+version = "0.10.1"
 source = { editable = "." }
 dependencies = [
     { name = "rdflib", extra = ["html"] },
