@@ -47,7 +47,7 @@ jobs:
           private-key: ${{ secrets.RELEASE_WRITER_APP_KEY }}
           owner: ${{ github.repository_owner }}
           repositories: ${{ github.event.repository.name }}
-      - uses: legra-ai/github-actions/.github/actions/prepare-cargo-release@3b2727b42d2c062e39e8443669af0258382b83e7
+      - uses: legra-ai/github-actions/.github/actions/prepare-cargo-release@73b8b18ad18c56f35a6a450f41091a2f848669ba
         id: release
         with:
           token: ${{ steps.writer.outputs.token || github.token }}
@@ -283,13 +283,13 @@ jobs:
       - uses: actions/setup-python@v7
         with:
           python-version: '3.13.18'
-      - uses: legra-ai/github-actions/.github/actions/tag-tested-release@3b2727b42d2c062e39e8443669af0258382b83e7
+      - uses: legra-ai/github-actions/.github/actions/tag-tested-release@73b8b18ad18c56f35a6a450f41091a2f848669ba
         with:
           version: ${{ needs.prepare.outputs.version }}
           revision: ${{ needs.prepare.outputs.revision }}
           manifest-kind: uv
           tag-format: pep440
-      - uses: legra-ai/github-actions/.github/actions/generate-changelog@3b2727b42d2c062e39e8443669af0258382b83e7
+      - uses: legra-ai/github-actions/.github/actions/generate-changelog@73b8b18ad18c56f35a6a450f41091a2f848669ba
         with:
           revision: ${{ needs.prepare.outputs.revision }}
       - uses: softprops/action-gh-release@v3
