@@ -214,7 +214,10 @@ def test_target_class_m0_child_property_keeps_inherited_focus_authority(validato
 
 @pytest.mark.parametrize("validator", [pyshacl.validate, turbo.validate])
 @pytest.mark.parametrize("role", [SH.targetSubjectsOf, SH.targetObjectsOf])
-@pytest.mark.parametrize("kind", ["long", "short", "iterator-error", "generator"])
+@pytest.mark.parametrize(
+    "kind",
+    ["pair", "list", "long", "short", "empty", "not-iterable", "iterator-error", "generator"],
+)
 def test_mixed_core_pair_targets_use_actual_two_item_unpacking(validator, role, kind):
     focus, other = URIRef("urn:focus"), URIRef("urn:other")
     failure = LookupError("actual source pair iterator")
@@ -242,10 +245,18 @@ def test_mixed_core_pair_targets_use_actual_two_item_unpacking(validator, role, 
 
         def subject_objects(self, predicate=None, unique=False):
             if predicate == D:
+                if kind == "pair":
+                    return iter([pair])
+                if kind == "list":
+                    return iter([list(pair), list(pair)])
                 if kind == "long":
                     return iter([(*pair, other)])
                 if kind == "short":
                     return iter([pair[:1]])
+                if kind == "empty":
+                    return iter([()])
+                if kind == "not-iterable":
+                    return iter([None])
                 if kind == "iterator-error":
                     return iter([Row()])
                 return iter([iter(pair)])
@@ -274,15 +285,20 @@ def test_mixed_core_pair_targets_use_actual_two_item_unpacking(validator, role, 
         assert observed.value is failure
         assert observed.value.__context__ is None
         assert events == ["row-iter"]
-    elif kind in {"short", "long"}:
-        with pytest.raises(ValueError) as observed:
+    elif kind in {"short", "long", "empty", "not-iterable"}:
+        malformed = {
+            "short": pair[:1],
+            "long": (*pair, other),
+            "empty": (),
+            "not-iterable": None,
+        }[kind]
+        error_type = TypeError if kind == "not-iterable" else ValueError
+        with pytest.raises(error_type) as expected:
+            _subject, _object = malformed
+        with pytest.raises(error_type) as observed:
             validator(data, shacl_graph=shapes)
-        expected = (
-            "not enough values to unpack (expected 2, got 1)"
-            if kind == "short"
-            else "too many values to unpack (expected 2)"
-        )
-        assert observed.value.args == (expected,)
+        assert observed.value.args == expected.value.args
+        assert observed.value.__context__ is None
     else:
         result = validator(data, shacl_graph=shapes)
         assert result[0] is False
