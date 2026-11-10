@@ -39,6 +39,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: uv run --no-project --with pyyaml==6.0.3 python scripts/release_policy_capability.py --workflow .github/workflows/ci.yml --receipt "$RUNNER_TEMP/release-policy-capability.json"
+      - run: uv run --no-project python scripts/test_dependabot_policy.py
       - uses: actions/create-github-app-token@v3
         id: writer
         if: github.ref == 'refs/heads/main'
