@@ -11,6 +11,11 @@ import yaml
 ROOT = Path(__file__).resolve().parents[1]
 
 
+def test_facade_declares_the_audited_native_python_range():
+    manifest = tomllib.loads((ROOT / "pyproject.toml").read_text())
+    assert manifest["project"]["requires-python"] == ">=3.11,<3.16"
+
+
 def test_packaging_uses_an_independent_locked_project():
     tools = ROOT / "tools/packaging"
     manifest = tomllib.loads((tools / "pyproject.toml").read_text())
