@@ -11,6 +11,11 @@ import yaml
 ROOT = Path(__file__).resolve().parents[1]
 
 
+def test_facade_declares_the_audited_native_python_range():
+    manifest = tomllib.loads((ROOT / "pyproject.toml").read_text())
+    assert manifest["project"]["requires-python"] == ">=3.11,<3.16"
+
+
 def test_packaging_uses_an_independent_locked_project():
     tools = ROOT / "tools/packaging"
     manifest = tomllib.loads((tools / "pyproject.toml").read_text())
@@ -43,9 +48,15 @@ def test_packaging_sync_and_command_work_without_any_source_peer(tmp_path):
         name: value
         for name, value in os.environ.items()
         if name
-        not in {"VIRTUAL_ENV", "PYTHONPATH", "PYTHONHOME", "UV_PROJECT", "UV_PROJECT_ENVIRONMENT"}
+        not in {
+            "VIRTUAL_ENV",
+            "PYTHONPATH",
+            "PYTHONHOME",
+            "UV_PROJECT",
+            "UV_PROJECT_ENVIRONMENT",
+            "UV_PYTHON",
+        }
     }
-    environment["UV_PYTHON"] = "3.13.18"
     subprocess.run(
         [
             "uv",

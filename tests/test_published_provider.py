@@ -3,6 +3,7 @@
 import hashlib
 import importlib.util
 import io
+import json
 import tarfile
 from pathlib import Path
 from types import SimpleNamespace
@@ -135,7 +136,7 @@ def test_source_metadata_selects_the_owners_compiler_without_a_facade_toolchain(
     (tmp_path / "rust-toolchain.toml").write_text('[toolchain]\nchannel="1.99.1"\n')
     (tmp_path / "pyproject.toml").write_text(
         '[build-system]\nrequires=["maturin==1.16.0"]\n'
-        '[tool.maturin]\nprofile="release"\nlocked=true\nfeatures=["pyo3/extension-module","persistence"]\n'
+        '[tool.maturin]\nprofile="release"\nlocked=true\nfeatures=["pyo3/extension-module","pyo3/abi3-py311","persistence"]\n'
     )
     calls = []
 
@@ -148,9 +149,36 @@ def test_source_metadata_selects_the_owners_compiler_without_a_facade_toolchain(
             )
         assert command[:3] == ["cargo", "+1.99.1", "metadata"]
         assert command[command.index("--filter-platform") + 1] == "x86_64-unknown-linux-gnu"
+        assert set(command[command.index("--features") + 1].split(",")) == {
+            "pyo3/extension-module",
+            "pyo3/abi3-py311",
+            "persistence",
+        }
         return SimpleNamespace(stdout='{"source":"fixture"}')
 
     monkeypatch.setattr(helper.subprocess, "run", run)
     metadata, _ = helper.metadata(tmp_path)
     assert metadata == {"source": "fixture"}
     assert len(calls) == 2
+
+
+@pytest.mark.parametrize(
+    "features",
+    [
+        ["pyo3/extension-module", "persistence"],
+        ["pyo3/extension-module", "pyo3/abi3-py310", "persistence"],
+        ["pyo3/extension-module", "pyo3/abi3-py311", "persistence", "unexpected"],
+    ],
+)
+def test_native_profile_rejects_missing_or_unexpected_abi_features(tmp_path, monkeypatch, features):
+    helper = module()
+    (tmp_path / "Cargo.toml").write_text(
+        '[dependencies]\npyshacl-turbo-engine={path="crates/engine"}\n'
+    )
+    (tmp_path / "pyproject.toml").write_text(
+        '[build-system]\nrequires=["maturin==1.16.0"]\n'
+        '[tool.maturin]\nprofile="release"\nlocked=true\nfeatures=' + json.dumps(features) + "\n"
+    )
+    monkeypatch.setattr(helper.subprocess, "run", lambda *args, **kwargs: pytest.fail("compiled"))
+    with pytest.raises(ValueError, match="tested native build profile"):
+        helper.metadata(tmp_path)

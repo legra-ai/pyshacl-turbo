@@ -82,7 +82,7 @@ def metadata(owner):
         manifest["build-system"]["requires"] != ["maturin==1.16.0"]
         or maturin["profile"] != "release"
         or maturin["locked"] is not True
-        or set(maturin["features"]) != {"pyo3/extension-module", "persistence"}
+        or set(maturin["features"]) != {"pyo3/extension-module", "pyo3/abi3-py311", "persistence"}
     ):
         raise ValueError("Published provider differs from the tested native build profile")
     expected = tomllib.loads((owner / "rust-toolchain.toml").read_text())["toolchain"]["channel"]
