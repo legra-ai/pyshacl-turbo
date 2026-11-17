@@ -1,19 +1,31 @@
 {
   "schema": 1,
-  "reference_version": "0.40.1",
-  "turbo_version": "0.1.0",
-  "measured_at": "2026-10-11T17:40:02.622306+00:00",
-  "build_kind": "working-tree release build (see source and native binary hashes)",
+  "reference_version": "0.40.2",
+  "turbo_version": "0.10.2",
+  "provider_version": "0.2.0a39",
+  "measured_at": "2026-11-17T22:50:58.559792+00:00",
+  "build_kind": "installed shared native provider and pure Python facade",
+  "performance_eligible": false,
+  "measurement_scope": "finite direct-contract diagnostics; not an optimized pipeline benchmark",
   "platform": "macOS-27.0.1-arm64-arm-64bit-Mach-O",
-  "python": "3.13.16",
-  "source_sha256": "886645896d5995ef763c3f560c289d49a5497f69a2f4d85326033b4767ec1b32",
-  "native_binary_sha256": "dabb9d867c84091926a18b9834412eb951f7699b936685bcc1c9e8122139cb0c",
+  "python": "3.13.18",
+  "source_sha256": "c2b3cc33bad8b0e0bc650f99a0842c13f62e880b1a63f8c619b119f471bc1aee",
+  "source_scope": "pure Python, tests, scripts, vendor fixtures, pyproject.toml and uv.lock",
+  "native_binary_sha256": "804cd98b47cea286ed2c85787785f41e55cd2dc88363b6fe4e8c20e63f1d7382",
+  "runtime_authority": {
+    "native_binary": "/Users/jgeluk/.claude/jobs/25af06d0/tmp/ph17-pyshacl/.venv/lib/python3.13/site-packages/rdflib_turbo/_native.abi3.so",
+    "native_binary_sha256": "804cd98b47cea286ed2c85787785f41e55cd2dc88363b6fe4e8c20e63f1d7382",
+    "engine_fingerprint": "18e10cf1c7094f10447bd828f74aab8446a65314c646f70848f6acb793fe06b1",
+    "provider_version": "0.2.0a39",
+    "facade_version": "0.10.2",
+    "artifact_verified": false
+  },
   "repeats": 5,
   "timeout_seconds": 10,
   "summary": {
-    "equal": 45,
-    "different": 15,
+    "equal": 55,
     "reference_error": 1,
+    "different": 5,
     "reference_timeout": 1
   },
   "unmeasured": [
@@ -28,8 +40,9 @@
   "cases": [
     {
       "id": "validate/graph/violation",
+      "origin": "first-party",
       "status": "equal",
-      "speedup": 0.6798620246367467,
+      "speedup": 0.8990058783063921,
       "pyshacl": {
         "state": "ok",
         "observation": {
@@ -47,11 +60,11 @@
           "warnings": []
         },
         "samples_ns": [
-          487750,
-          340583,
-          305333,
-          297125,
-          469459
+          443625,
+          362000,
+          318875,
+          566625,
+          309583
         ]
       },
       "pyshacl_turbo": {
@@ -71,18 +84,19 @@
           "warnings": []
         },
         "samples_ns": [
-          500959,
-          483334,
-          464333,
-          553041,
-          675792
+          606750,
+          375333,
+          470042,
+          402667,
+          370708
         ]
       }
     },
     {
       "id": "validate/graph/conforming",
+      "origin": "first-party",
       "status": "equal",
-      "speedup": 0.7225250214707983,
+      "speedup": 0.9345484737332435,
       "pyshacl": {
         "state": "ok",
         "observation": {
@@ -100,11 +114,11 @@
           "warnings": []
         },
         "samples_ns": [
-          264917,
-          259958,
-          225417,
-          388334,
-          226584
+          283167,
+          478167,
+          239750,
+          239417,
+          222292
         ]
       },
       "pyshacl_turbo": {
@@ -124,18 +138,19 @@
           "warnings": []
         },
         "samples_ns": [
-          374708,
-          338500,
-          414500,
-          355375,
-          359791
+          335292,
+          271834,
+          256541,
+          241917,
+          251250
         ]
       }
     },
     {
       "id": "validate/dataset/violation",
+      "origin": "first-party",
       "status": "equal",
-      "speedup": 0.572930518548883,
+      "speedup": 1.266781399803954,
       "pyshacl": {
         "state": "ok",
         "observation": {
@@ -153,11 +168,11 @@
           "warnings": []
         },
         "samples_ns": [
-          349416,
-          350458,
-          304833,
-          302750,
-          469208
+          42870708,
+          1011750,
+          377750,
+          566041,
+          310083
         ]
       },
       "pyshacl_turbo": {
@@ -177,18 +192,19 @@
           "warnings": []
         },
         "samples_ns": [
-          699375,
-          639333,
-          609875,
-          604459,
-          575500
+          648792,
+          880625,
+          446834,
+          398667,
+          352334
         ]
       }
     },
     {
       "id": "validate/dataset/conforming",
+      "origin": "first-party",
       "status": "equal",
-      "speedup": 0.42059514544039456,
+      "speedup": 0.70579523026051,
       "pyshacl": {
         "state": "ok",
         "observation": {
@@ -206,11 +222,11 @@
           "warnings": []
         },
         "samples_ns": [
-          270750,
-          320959,
-          231292,
-          220625,
-          208208
+          303458,
+          236584,
+          219208,
+          215834,
+          209542
         ]
       },
       "pyshacl_turbo": {
@@ -230,18 +246,19 @@
           "warnings": []
         },
         "samples_ns": [
-          1112042,
-          549916,
-          507833,
-          513083,
-          564541
+          340250,
+          310583,
+          269458,
+          267125,
+          455125
         ]
       }
     },
     {
       "id": "validate/store/violation",
+      "origin": "first-party",
       "status": "equal",
-      "speedup": 0.8685393013100436,
+      "speedup": 0.7179499085465565,
       "pyshacl": {
         "state": "ok",
         "observation": {
@@ -259,11 +276,11 @@
           "warnings": []
         },
         "samples_ns": [
-          484000,
-          397791,
-          363416,
-          372958,
-          464834
+          446250,
+          396666,
+          355625,
+          330375,
+          339209
         ]
       },
       "pyshacl_turbo": {
@@ -283,18 +300,19 @@
           "warnings": []
         },
         "samples_ns": [
-          473666,
-          458000,
-          441709,
-          429334,
-          730916
+          495334,
+          380834,
+          364917,
+          1216958,
+          961208
         ]
       }
     },
     {
       "id": "validate/store/conforming",
+      "origin": "first-party",
       "status": "equal",
-      "speedup": 0.6737505226480837,
+      "speedup": 1.1814261441673868,
       "pyshacl_turbo": {
         "state": "ok",
         "observation": {
@@ -312,11 +330,11 @@
           "warnings": []
         },
         "samples_ns": [
-          358750,
-          323375,
-          386666,
-          1917708,
-          348584
+          312833,
+          264000,
+          239541,
+          233416,
+          220291
         ]
       },
       "pyshacl": {
@@ -336,18 +354,19 @@
           "warnings": []
         },
         "samples_ns": [
-          304708,
-          241708,
-          226250,
-          394291,
-          216084
+          312959,
+          361625,
+          283000,
+          247667,
+          239583
         ]
       }
     },
     {
       "id": "validate/text/violation",
+      "origin": "first-party",
       "status": "equal",
-      "speedup": 0.8262618230085095,
+      "speedup": 1.3285637411915439,
       "pyshacl_turbo": {
         "state": "ok",
         "observation": {
@@ -362,11 +381,11 @@
           "warnings": []
         },
         "samples_ns": [
-          717667,
-          676541,
-          2196125,
-          610083,
-          603542
+          1427250,
+          585375,
+          513584,
+          688208,
+          482584
         ]
       },
       "pyshacl": {
@@ -383,18 +402,19 @@
           "warnings": []
         },
         "samples_ns": [
-          567167,
-          486083,
-          637625,
-          559000,
-          506125
+          579083,
+          777708,
+          500625,
+          2869750,
+          1790917
         ]
       }
     },
     {
       "id": "validate/text/conforming",
+      "origin": "first-party",
       "status": "equal",
-      "speedup": 1.2185966624950915,
+      "speedup": 0.8310368946370182,
       "pyshacl": {
         "state": "ok",
         "observation": {
@@ -409,11 +429,11 @@
           "warnings": []
         },
         "samples_ns": [
-          664084,
-          408834,
-          1046250,
-          413708,
-          786917
+          487667,
+          408584,
+          379166,
+          387333,
+          375083
         ]
       },
       "pyshacl_turbo": {
@@ -430,18 +450,19 @@
           "warnings": []
         },
         "samples_ns": [
-          830083,
-          544958,
-          536292,
-          507292,
-          2188458
+          592833,
+          715417,
+          466084,
+          460750,
+          460500
         ]
       }
     },
     {
       "id": "validate/bytes/violation",
+      "origin": "first-party",
       "status": "equal",
-      "speedup": 0.6913270233726097,
+      "speedup": 0.9554766577409967,
       "pyshacl": {
         "state": "ok",
         "observation": {
@@ -456,11 +477,11 @@
           "warnings": []
         },
         "samples_ns": [
-          510291,
-          456667,
-          444208,
-          447375,
-          429625
+          673333,
+          1616042,
+          622292,
+          1037375,
+          555041
         ]
       },
       "pyshacl_turbo": {
@@ -477,18 +498,19 @@
           "warnings": []
         },
         "samples_ns": [
-          688042,
-          647125,
-          2192458,
-          635375,
-          627208
+          764084,
+          530375,
+          518791,
+          704709,
+          1962542
         ]
       }
     },
     {
       "id": "validate/bytes/conforming",
+      "origin": "first-party",
       "status": "equal",
-      "speedup": 0.5534968174697823,
+      "speedup": 0.23005469447429125,
       "pyshacl_turbo": {
         "state": "ok",
         "observation": {
@@ -503,11 +525,11 @@
           "warnings": []
         },
         "samples_ns": [
-          706042,
-          726375,
-          558792,
-          524917,
-          2010916
+          541375,
+          666208,
+          2758625,
+          1809083,
+          1793417
         ]
       },
       "pyshacl": {
@@ -524,18 +546,19 @@
           "warnings": []
         },
         "samples_ns": [
-          624167,
-          399750,
-          390792,
-          389625,
-          379167
+          472708,
+          412709,
+          412584,
+          404209,
+          388334
         ]
       }
     },
     {
       "id": "validate/list",
+      "origin": "first-party",
       "status": "equal",
-      "speedup": 0.6980508190371534,
+      "speedup": 0.9408631090154198,
       "pyshacl_turbo": {
         "state": "ok",
         "observation": {
@@ -579,11 +602,11 @@
           "warnings": []
         },
         "samples_ns": [
-          808083,
-          769833,
-          939709,
-          760750,
-          881291
+          618083,
+          591458,
+          541708,
+          557334,
+          537166
         ]
       },
       "pyshacl": {
@@ -629,18 +652,19 @@
           "warnings": []
         },
         "samples_ns": [
-          564083,
-          715917,
-          533833,
-          1806292,
-          522250
+          534084,
+          524375,
+          494250,
+          537792,
+          485042
         ]
       }
     },
     {
       "id": "validate_each/list",
+      "origin": "first-party",
       "status": "equal",
-      "speedup": 0.6649591872297588,
+      "speedup": 0.9255521435518594,
       "pyshacl": {
         "state": "ok",
         "observation": {
@@ -684,11 +708,11 @@
           "warnings": []
         },
         "samples_ns": [
-          770292,
-          530416,
-          652291,
-          514208,
-          483875
+          606750,
+          528584,
+          508167,
+          494625,
+          481625
         ]
       },
       "pyshacl_turbo": {
@@ -734,18 +758,19 @@
           "warnings": []
         },
         "samples_ns": [
-          826750,
-          797667,
-          981875,
-          773333,
-          746167
+          591750,
+          549042,
+          551083,
+          533500,
+          509833
         ]
       }
     },
     {
       "id": "validate/tuple",
+      "origin": "first-party",
       "status": "equal",
-      "speedup": 0.6449856325652205,
+      "speedup": 1.0998143730198007,
       "pyshacl_turbo": {
         "state": "ok",
         "observation": {
@@ -789,11 +814,11 @@
           "warnings": []
         },
         "samples_ns": [
-          828958,
-          791167,
-          945958,
-          1200250,
-          789458
+          608209,
+          578917,
+          560542,
+          1645292,
+          614375
         ]
       },
       "pyshacl": {
@@ -839,18 +864,19 @@
           "warnings": []
         },
         "samples_ns": [
-          753250,
-          536042,
-          515375,
-          499583,
-          534666
+          833708,
+          631667,
+          557041,
+          668917,
+          1317500
         ]
       }
     },
     {
       "id": "validate_each/tuple",
+      "origin": "first-party",
       "status": "equal",
-      "speedup": 0.6111072368067552,
+      "speedup": 4.5643415813953485,
       "pyshacl_turbo": {
         "state": "ok",
         "observation": {
@@ -894,11 +920,11 @@
           "warnings": []
         },
         "samples_ns": [
-          1077000,
-          817000,
-          950500,
-          874709,
-          799167
+          1338667,
+          618750,
+          549291,
+          736625,
+          671875
         ]
       },
       "pyshacl": {
@@ -944,18 +970,19 @@
           "warnings": []
         },
         "samples_ns": [
-          534541,
-          548167,
-          592500,
-          521208,
-          490083
+          576792,
+          520708,
+          14296542,
+          3066667,
+          14925458
         ]
       }
     },
     {
       "id": "validate/user-list",
+      "origin": "first-party",
       "status": "equal",
-      "speedup": 0.6803048307473086,
+      "speedup": 1.0392556342684722,
       "pyshacl": {
         "state": "ok",
         "observation": {
@@ -999,11 +1026,11 @@
           "warnings": []
         },
         "samples_ns": [
-          620000,
-          532792,
-          834334,
-          537583,
-          510000
+          12087084,
+          658542,
+          677125,
+          641500,
+          575417
         ]
       },
       "pyshacl_turbo": {
@@ -1049,18 +1076,19 @@
           "warnings": []
         },
         "samples_ns": [
-          834167,
-          790209,
-          945083,
-          767875,
-          759625
+          651084,
+          610250,
+          590708,
+          633667,
+          1478792
         ]
       }
     },
     {
       "id": "validate_each/user-list",
+      "origin": "first-party",
       "status": "equal",
-      "speedup": 0.6264147784757149,
+      "speedup": 1.0163897158322057,
       "pyshacl_turbo": {
         "state": "ok",
         "observation": {
@@ -1104,11 +1132,11 @@
           "warnings": []
         },
         "samples_ns": [
-          824334,
-          838708,
-          947417,
-          757500,
-          753875
+          620125,
+          552416,
+          612208,
+          554250,
+          525500
         ]
       },
       "pyshacl": {
@@ -1154,16 +1182,17 @@
           "warnings": []
         },
         "samples_ns": [
-          525291,
-          545000,
-          516375,
-          481000,
-          487916
+          563334,
+          608375,
+          527750,
+          502292,
+          3715208
         ]
       }
     },
     {
       "id": "validate_each/reject-empty-list",
+      "origin": "first-party",
       "status": "equal",
       "pyshacl_turbo": {
         "state": "ok",
@@ -1186,11 +1215,11 @@
           "warnings": []
         },
         "samples_ns": [
-          3042,
-          2000,
-          2584,
-          1625,
-          1500
+          3750,
+          2334,
+          1834,
+          3000,
+          2042
         ]
       },
       "pyshacl": {
@@ -1214,16 +1243,17 @@
           "warnings": []
         },
         "samples_ns": [
-          5292,
-          3833,
-          3250,
-          4542,
-          2000
+          4500,
+          2708,
+          5625,
+          4000,
+          2708
         ]
       }
     },
     {
       "id": "validate_each/reject-graph",
+      "origin": "first-party",
       "status": "equal",
       "pyshacl_turbo": {
         "state": "ok",
@@ -1249,11 +1279,11 @@
           "warnings": []
         },
         "samples_ns": [
-          2792,
+          3750,
           2000,
-          1334,
-          3333,
-          1875
+          1708,
+          1458,
+          1375
         ]
       },
       "pyshacl": {
@@ -1280,16 +1310,17 @@
           "warnings": []
         },
         "samples_ns": [
-          4834,
-          2208,
-          3667,
-          3084,
-          3041
+          4125,
+          2667,
+          2333,
+          2125,
+          2458
         ]
       }
     },
     {
       "id": "validate_each/reject-text",
+      "origin": "first-party",
       "status": "equal",
       "pyshacl_turbo": {
         "state": "ok",
@@ -1312,11 +1343,11 @@
           "warnings": []
         },
         "samples_ns": [
-          2291,
-          1459,
-          1166,
-          1083,
-          1084
+          10625,
+          4000,
+          1458,
+          4125,
+          1583
         ]
       },
       "pyshacl": {
@@ -1340,18 +1371,19 @@
           "warnings": []
         },
         "samples_ns": [
-          2416,
-          3166,
-          1334,
-          1209,
-          3208
+          2625,
+          1625,
+          1291,
+          1292,
+          1166
         ]
       }
     },
     {
       "id": "validate/legacy-positional",
+      "origin": "first-party",
       "status": "equal",
-      "speedup": 0.6444797742238947,
+      "speedup": 0.8694673255242699,
       "pyshacl_turbo": {
         "state": "ok",
         "observation": {
@@ -1369,11 +1401,11 @@
           "warnings": []
         },
         "samples_ns": [
-          531500,
-          550500,
-          468916,
-          463542,
-          655042
+          1279333,
+          459417,
+          376167,
+          452000,
+          453917
         ]
       },
       "pyshacl": {
@@ -1393,18 +1425,19 @@
           "warnings": []
         },
         "samples_ns": [
-          342541,
-          370292,
-          303375,
-          302125,
-          480500
+          394666,
+          344167,
+          327250,
+          530666,
+          427000
         ]
       }
     },
     {
       "id": "validate_each/legacy-positional",
+      "origin": "first-party",
       "status": "equal",
-      "speedup": 0.6489124032739606,
+      "speedup": 1.145470924630393,
       "pyshacl_turbo": {
         "state": "ok",
         "observation": {
@@ -1448,11 +1481,11 @@
           "warnings": []
         },
         "samples_ns": [
-          847000,
-          787792,
-          926792,
-          753458,
-          751541
+          596917,
+          554208,
+          526167,
+          508958,
+          508500
         ]
       },
       "pyshacl": {
@@ -1498,21 +1531,19 @@
           "warnings": []
         },
         "samples_ns": [
-          531333,
-          540667,
-          511208,
-          488583,
-          476708
+          623834,
+          1697541,
+          594667,
+          602709,
+          546750
         ]
       }
     },
     {
       "id": "shacl_rules/legacy-positional",
-      "status": "different",
-      "different_fields": [
-        "context_aware",
-        "identifier_type"
-      ],
+      "origin": "first-party",
+      "status": "equal",
+      "speedup": 0.7435384538174206,
       "pyshacl": {
         "state": "ok",
         "observation": {
@@ -1531,11 +1562,11 @@
           "warnings": []
         },
         "samples_ns": [
-          214917,
-          196500,
-          184458,
-          329708,
-          175541
+          261708,
+          207416,
+          206000,
+          190250,
+          334583
         ]
       },
       "pyshacl_turbo": {
@@ -1546,8 +1577,8 @@
             "statements": 3,
             "digest": "3bdba9b330cd40bc3157f1989c5a0954e6dba7c7bec8819a9e22f076ed7a48ad1"
           },
-          "context_aware": false,
-          "identifier_type": "URIRef",
+          "context_aware": true,
+          "identifier_type": "str",
           "identifier": "urn:contract:input",
           "mutation": {
             "statements": 3,
@@ -1556,18 +1587,19 @@
           "warnings": []
         },
         "samples_ns": [
-          356250,
-          325625,
-          327708,
-          313291,
-          326166
+          339625,
+          288667,
+          278958,
+          274000,
+          274416
         ]
       }
     },
     {
       "id": "validate/rules-focus",
+      "origin": "first-party",
       "status": "equal",
-      "speedup": 0.5584006505929727,
+      "speedup": 0.8487669906998274,
       "pyshacl": {
         "state": "ok",
         "observation": {
@@ -1585,11 +1617,11 @@
           "warnings": []
         },
         "samples_ns": [
-          372708,
-          311041,
-          298000,
-          292084,
-          282542
+          436875,
+          508750,
+          318583,
+          322708,
+          310833
         ]
       },
       "pyshacl_turbo": {
@@ -1609,21 +1641,19 @@
           "warnings": []
         },
         "samples_ns": [
-          550792,
-          533667,
-          2308167,
-          530500,
-          495083
+          513041,
+          433209,
+          380208,
+          372542,
+          368166
         ]
       }
     },
     {
       "id": "shacl_rules/rules-focus",
-      "status": "different",
-      "different_fields": [
-        "context_aware",
-        "identifier_type"
-      ],
+      "origin": "first-party",
+      "status": "equal",
+      "speedup": 0.5224227622721568,
       "pyshacl": {
         "state": "ok",
         "observation": {
@@ -1642,11 +1672,11 @@
           "warnings": []
         },
         "samples_ns": [
-          206458,
-          187167,
-          166792,
-          154250,
-          149250
+          252208,
+          193833,
+          169417,
+          159042,
+          152042
         ]
       },
       "pyshacl_turbo": {
@@ -1657,8 +1687,8 @@
             "statements": 4,
             "digest": "5b833b49c040b2d09b6d917c581274be7c2fe1466cee56a480fc116be0e28a0f3"
           },
-          "context_aware": false,
-          "identifier_type": "URIRef",
+          "context_aware": true,
+          "identifier_type": "str",
           "identifier": "urn:contract:input",
           "mutation": {
             "statements": 4,
@@ -1667,18 +1697,19 @@
           "warnings": []
         },
         "samples_ns": [
-          550167,
-          510458,
-          517708,
-          483750,
-          488875
+          805875,
+          410458,
+          308958,
+          324291,
+          267500
         ]
       }
     },
     {
       "id": "validate/rules-shape",
+      "origin": "first-party",
       "status": "equal",
-      "speedup": 0.5955480875525094,
+      "speedup": 0.6723582423733557,
       "pyshacl_turbo": {
         "state": "ok",
         "observation": {
@@ -1696,11 +1727,11 @@
           "warnings": []
         },
         "samples_ns": [
-          565500,
-          565375,
-          2240042,
-          523041,
-          511250
+          521625,
+          444875,
+          506458,
+          446625,
+          423958
         ]
       },
       "pyshacl": {
@@ -1720,21 +1751,19 @@
           "warnings": []
         },
         "samples_ns": [
-          336708,
-          337958,
-          476041,
-          272083,
-          271167
+          371833,
+          300292,
+          293125,
+          297666,
+          15783875
         ]
       }
     },
     {
       "id": "shacl_rules/rules-shape",
-      "status": "different",
-      "different_fields": [
-        "context_aware",
-        "identifier_type"
-      ],
+      "origin": "first-party",
+      "status": "equal",
+      "speedup": 0.42174835452584997,
       "pyshacl_turbo": {
         "state": "ok",
         "observation": {
@@ -1743,8 +1772,8 @@
             "statements": 5,
             "digest": "6b8f5a10f86de59e1bff4d0728de42796bcc84a0e7bd2bb2c9ac928655e089bbf"
           },
-          "context_aware": false,
-          "identifier_type": "URIRef",
+          "context_aware": true,
+          "identifier_type": "str",
           "identifier": "urn:contract:input",
           "mutation": {
             "statements": 5,
@@ -1753,11 +1782,11 @@
           "warnings": []
         },
         "samples_ns": [
-          579375,
-          607584,
-          575542,
-          541458,
-          713208
+          960792,
+          422958,
+          800833,
+          427708,
+          971125
         ]
       },
       "pyshacl": {
@@ -1778,18 +1807,19 @@
           "warnings": []
         },
         "samples_ns": [
-          186875,
-          159083,
-          135209,
-          139625,
-          134958
+          425792,
+          337750,
+          154583,
+          258875,
+          512083
         ]
       }
     },
     {
       "id": "validate/rules-untargeted",
+      "origin": "first-party",
       "status": "equal",
-      "speedup": 0.515590887057683,
+      "speedup": 0.6021238568068984,
       "pyshacl": {
         "state": "ok",
         "observation": {
@@ -1807,11 +1837,11 @@
           "warnings": []
         },
         "samples_ns": [
-          315583,
-          276750,
-          265916,
-          242583,
-          240958
+          364125,
+          288041,
+          273375,
+          258875,
+          445708
         ]
       },
       "pyshacl_turbo": {
@@ -1831,21 +1861,19 @@
           "warnings": []
         },
         "samples_ns": [
-          547792,
-          515750,
-          2283709,
-          495959,
-          483583
+          508292,
+          478375,
+          523125,
+          437625,
+          391542
         ]
       }
     },
     {
       "id": "shacl_rules/rules-untargeted",
-      "status": "different",
-      "different_fields": [
-        "context_aware",
-        "identifier_type"
-      ],
+      "origin": "first-party",
+      "status": "equal",
+      "speedup": 0.6082724014336918,
       "pyshacl": {
         "state": "ok",
         "observation": {
@@ -1864,11 +1892,11 @@
           "warnings": []
         },
         "samples_ns": [
-          148834,
-          121083,
-          112542,
-          185583,
-          126917
+          485833,
+          225500,
+          169708,
+          137541,
+          141500
         ]
       },
       "pyshacl_turbo": {
@@ -1879,8 +1907,8 @@
             "statements": 4,
             "digest": "53c6eb2787948aa2099d3c5a0dd01ee6a0d061d8961f9188825f6578bc2bd6671"
           },
-          "context_aware": false,
-          "identifier_type": "URIRef",
+          "context_aware": true,
+          "identifier_type": "str",
           "identifier": "urn:contract:input",
           "mutation": {
             "statements": 4,
@@ -1889,18 +1917,19 @@
           "warnings": []
         },
         "samples_ns": [
-          535917,
-          506708,
-          547583,
-          494833,
-          489458
+          331458,
+          327167,
+          278208,
+          279000,
+          265084
         ]
       }
     },
     {
       "id": "validate/rules-override-target",
+      "origin": "first-party",
       "status": "equal",
-      "speedup": 0.4798205769008841,
+      "speedup": 1.7714088291746641,
       "pyshacl": {
         "state": "ok",
         "observation": {
@@ -1918,11 +1947,11 @@
           "warnings": []
         },
         "samples_ns": [
-          305000,
-          253750,
-          253625,
-          232791,
-          227834
+          906417,
+          733708,
+          370000,
+          807541,
+          978834
         ]
       },
       "pyshacl_turbo": {
@@ -1942,21 +1971,19 @@
           "warnings": []
         },
         "samples_ns": [
-          528583,
-          619292,
-          2133250,
-          524542,
-          497208
+          455875,
+          1778750,
+          486417,
+          428375,
+          379250
         ]
       }
     },
     {
       "id": "shacl_rules/rules-override-target",
-      "status": "different",
-      "different_fields": [
-        "context_aware",
-        "identifier_type"
-      ],
+      "origin": "first-party",
+      "status": "equal",
+      "speedup": 0.44724165839903923,
       "pyshacl_turbo": {
         "state": "ok",
         "observation": {
@@ -1965,8 +1992,8 @@
             "statements": 4,
             "digest": "5ba4108fd503f0ba0ef3c5e96532be06ae7ad88a47a333ae3bfc476c527088bfd"
           },
-          "context_aware": false,
-          "identifier_type": "URIRef",
+          "context_aware": true,
+          "identifier_type": "str",
           "identifier": "urn:contract:input",
           "mutation": {
             "statements": 4,
@@ -1975,11 +2002,11 @@
           "warnings": []
         },
         "samples_ns": [
-          537500,
-          515833,
-          546750,
-          516333,
-          565292
+          343000,
+          306416,
+          293708,
+          264750,
+          334666
         ]
       },
       "pyshacl": {
@@ -2000,18 +2027,19 @@
           "warnings": []
         },
         "samples_ns": [
-          186875,
-          130500,
-          116375,
-          110125,
-          106917
+          207875,
+          156208,
+          137042,
+          121084,
+          113875
         ]
       }
     },
     {
       "id": "shacl_rules/serialize-trig",
+      "origin": "first-party",
       "status": "equal",
-      "speedup": 0.8638306329660834,
+      "speedup": 0.7219083328472381,
       "pyshacl": {
         "state": "ok",
         "observation": {
@@ -2027,11 +2055,11 @@
           "warnings": []
         },
         "samples_ns": [
-          504667,
-          591291,
-          413000,
-          499834,
-          447209
+          709125,
+          599875,
+          489667,
+          473333,
+          532167
         ]
       },
       "pyshacl_turbo": {
@@ -2049,18 +2077,19 @@
           "warnings": []
         },
         "samples_ns": [
-          666792,
-          578625,
-          580208,
-          565625,
-          548875
+          737167,
+          13755375,
+          937500,
+          627208,
+          610250
         ]
       }
     },
     {
       "id": "shacl_rules/serialize-turtle",
+      "origin": "first-party",
       "status": "equal",
-      "speedup": 0.6900447665742911,
+      "speedup": 0.7664130021007515,
       "pyshacl_turbo": {
         "state": "ok",
         "observation": {
@@ -2076,11 +2105,11 @@
           "warnings": []
         },
         "samples_ns": [
-          753291,
-          586375,
-          584334,
-          690000,
-          575166
+          635625,
+          567416,
+          561958,
+          536334,
+          21222958
         ]
       },
       "pyshacl": {
@@ -2098,18 +2127,19 @@
           "warnings": []
         },
         "samples_ns": [
-          476500,
-          404625,
-          422375,
-          388583,
-          385167
+          914458,
+          498167,
+          434875,
+          405125,
+          388417
         ]
       }
     },
     {
       "id": "shacl_rules/serialize-nt",
+      "origin": "first-party",
       "status": "equal",
-      "speedup": 0.6942703839337404,
+      "speedup": 0.8090863558321155,
       "pyshacl": {
         "state": "ok",
         "observation": {
@@ -2125,11 +2155,11 @@
           "warnings": []
         },
         "samples_ns": [
-          363791,
-          313000,
-          290166,
-          306458,
-          478459
+          926334,
+          392542,
+          342167,
+          585667,
+          314416
         ]
       },
       "pyshacl_turbo": {
@@ -2147,18 +2177,19 @@
           "warnings": []
         },
         "samples_ns": [
-          547833,
-          450833,
-          471792,
-          440583,
-          436292
+          769083,
+          508208,
+          485167,
+          470958,
+          465666
         ]
       }
     },
     {
       "id": "shacl_rules/serialize-json-ld",
+      "origin": "first-party",
       "status": "equal",
-      "speedup": 0.5151578876533033,
+      "speedup": 0.5502100252779707,
       "pyshacl_turbo": {
         "state": "ok",
         "observation": {
@@ -2174,11 +2205,11 @@
           "warnings": []
         },
         "samples_ns": [
-          760084,
-          713292,
-          713458,
-          695334,
-          676500
+          1955833,
+          845292,
+          747291,
+          709375,
+          698792
         ]
       },
       "pyshacl": {
@@ -2196,16 +2227,17 @@
           "warnings": []
         },
         "samples_ns": [
-          448125,
-          375458,
-          345375,
-          367458,
-          350417
+          514667,
+          411167,
+          367375,
+          366792,
+          597959
         ]
       }
     },
     {
       "id": "shacl_rules/serialize-xml",
+      "origin": "first-party",
       "status": "reference_error",
       "turbo_state": "ok",
       "pyshacl_turbo": {
@@ -2223,11 +2255,11 @@
           "warnings": []
         },
         "samples_ns": [
-          563875,
-          2064250,
-          513666,
-          494625,
-          484834
+          690792,
+          565083,
+          525375,
+          509084,
+          710458
         ]
       },
       "pyshacl": {
@@ -2249,6 +2281,7 @@
     },
     {
       "id": "inference/rdfs/complete-closure",
+      "origin": "first-party",
       "status": "different",
       "different_fields": [
         "mutation"
@@ -2270,11 +2303,11 @@
           "warnings": []
         },
         "samples_ns": [
-          943916,
-          874709,
-          856583,
-          860708,
-          847125
+          1018500,
+          1727667,
+          902334,
+          891875,
+          878667
         ]
       },
       "pyshacl_turbo": {
@@ -2294,16 +2327,17 @@
           "warnings": []
         },
         "samples_ns": [
-          1805542,
-          1713542,
-          1818209,
-          1878708,
-          1705708
+          3445417,
+          1577709,
+          1364875,
+          1721042,
+          1385417
         ]
       }
     },
     {
       "id": "inference/owlrl/complete-closure",
+      "origin": "first-party",
       "status": "different",
       "different_fields": [
         "mutation"
@@ -2325,11 +2359,11 @@
           "warnings": []
         },
         "samples_ns": [
-          8195208,
-          8268875,
-          8185083,
-          7856250,
-          9306083
+          12605917,
+          5883291,
+          7854833,
+          7575833,
+          5162292
         ]
       },
       "pyshacl": {
@@ -2349,16 +2383,17 @@
           "warnings": []
         },
         "samples_ns": [
-          10851583,
-          10279042,
-          10253167,
-          10473125,
-          10246875
+          9713166,
+          9535750,
+          9701042,
+          9612041,
+          9752833
         ]
       }
     },
     {
       "id": "inference/both/complete-closure",
+      "origin": "first-party",
       "status": "different",
       "different_fields": [
         "mutation"
@@ -2380,11 +2415,11 @@
           "warnings": []
         },
         "samples_ns": [
-          67852084,
-          69949791,
-          68747083,
-          67953958,
-          71172625
+          62593625,
+          79553458,
+          116267417,
+          90865000,
+          76943209
         ]
       },
       "pyshacl_turbo": {
@@ -2404,20 +2439,18 @@
           "warnings": []
         },
         "samples_ns": [
-          25739042,
-          25165083,
-          27617208,
-          25409500,
-          25427125
+          16069291,
+          119486584,
+          16057166,
+          15806875,
+          127696750
         ]
       }
     },
     {
       "id": "errors/shape-load",
-      "status": "different",
-      "different_fields": [
-        "error"
-      ],
+      "origin": "first-party",
+      "status": "equal",
       "pyshacl": {
         "state": "ok",
         "observation": {
@@ -2444,27 +2477,30 @@
           "warnings": []
         },
         "samples_ns": [
-          199375,
-          171167,
-          175292,
-          165375,
-          230750
+          212375,
+          174000,
+          296042,
+          167792,
+          164333
         ]
       },
       "pyshacl_turbo": {
         "state": "ok",
         "observation": {
           "error": {
-            "class": "ValueError",
+            "class": "ShapeLoadError",
             "bases": [
+              "ReportableRuntimeError",
+              "RuntimeError",
               "Exception",
               "BaseException",
               "object"
             ],
-            "message": "NodeShape <urn:example:S> cannot have sh:path",
-            "args_type": "tuple",
+            "message": "A shape defined as a NodeShape cannot be the subject of a 'sh:path' predicate.\nFor reference, see https://www.w3.org/TR/shacl/#node-shapes",
+            "args_type": "list",
             "args": [
-              "NodeShape <urn:example:S> cannot have sh:path"
+              "A shape defined as a NodeShape cannot be the subject of a 'sh:path' predicate.",
+              "https://www.w3.org/TR/shacl/#node-shapes"
             ]
           },
           "mutation": {
@@ -2474,16 +2510,17 @@
           "warnings": []
         },
         "samples_ns": [
-          108209,
-          82875,
-          76542,
-          75042,
-          70458
+          125250,
+          99792,
+          86958,
+          89583,
+          82291
         ]
       }
     },
     {
       "id": "errors/constraint-load",
+      "origin": "first-party",
       "status": "different",
       "different_fields": [
         "error"
@@ -2514,11 +2551,11 @@
           "warnings": []
         },
         "samples_ns": [
-          303584,
-          279791,
-          261375,
-          263417,
-          427625
+          485334,
+          344125,
+          415000,
+          250959,
+          234417
         ]
       },
       "pyshacl_turbo": {
@@ -2544,16 +2581,17 @@
           "warnings": []
         },
         "samples_ns": [
-          105583,
-          88833,
-          80125,
-          88042,
-          78583
+          142834,
+          105750,
+          94791,
+          97209,
+          88917
         ]
       }
     },
     {
       "id": "errors/rule-load",
+      "origin": "first-party",
       "status": "different",
       "different_fields": [
         "error"
@@ -2581,11 +2619,11 @@
           "warnings": []
         },
         "samples_ns": [
-          222500,
-          226500,
-          198833,
-          195542,
-          327791
+          2890250,
+          237208,
+          343792,
+          505750,
+          279208
         ]
       },
       "pyshacl_turbo": {
@@ -2611,16 +2649,17 @@
           "warnings": []
         },
         "samples_ns": [
-          105000,
-          137542,
-          93208,
-          91959,
-          84291
+          150833,
+          147333,
+          112500,
+          96459,
+          98959
         ]
       }
     },
     {
       "id": "reference/empty-document-autodetection",
+      "origin": "first-party",
       "status": "reference_timeout",
       "turbo_state": "ok",
       "pyshacl": {
@@ -2641,16 +2680,17 @@
           "warnings": []
         },
         "samples_ns": [
-          673875,
-          643875,
-          3343083,
-          698625,
-          711750
+          757209,
+          601125,
+          534333,
+          659167,
+          423083
         ]
       }
     },
     {
       "id": "exports/validate",
+      "origin": "first-party",
       "status": "equal",
       "pyshacl": {
         "state": "ok",
@@ -2667,6 +2707,7 @@
     },
     {
       "id": "exports/validate_each",
+      "origin": "first-party",
       "status": "equal",
       "pyshacl": {
         "state": "ok",
@@ -2683,6 +2724,7 @@
     },
     {
       "id": "exports/shacl_rules",
+      "origin": "first-party",
       "status": "equal",
       "pyshacl_turbo": {
         "state": "ok",
@@ -2699,14 +2741,12 @@
     },
     {
       "id": "exports/Validator",
-      "status": "different",
-      "different_fields": [
-        "present"
-      ],
+      "origin": "first-party",
+      "status": "equal",
       "pyshacl_turbo": {
         "state": "ok",
         "observation": {
-          "present": false
+          "present": true
         }
       },
       "pyshacl": {
@@ -2718,14 +2758,12 @@
     },
     {
       "id": "exports/RuleExpandRunner",
-      "status": "different",
-      "different_fields": [
-        "present"
-      ],
+      "origin": "first-party",
+      "status": "equal",
       "pyshacl_turbo": {
         "state": "ok",
         "observation": {
-          "present": false
+          "present": true
         }
       },
       "pyshacl": {
@@ -2737,14 +2775,12 @@
     },
     {
       "id": "exports/Shape",
-      "status": "different",
-      "different_fields": [
-        "present"
-      ],
+      "origin": "first-party",
+      "status": "equal",
       "pyshacl_turbo": {
         "state": "ok",
         "observation": {
-          "present": false
+          "present": true
         }
       },
       "pyshacl": {
@@ -2756,14 +2792,12 @@
     },
     {
       "id": "exports/ShapesGraph",
-      "status": "different",
-      "different_fields": [
-        "present"
-      ],
+      "origin": "first-party",
+      "status": "equal",
       "pyshacl_turbo": {
         "state": "ok",
         "observation": {
-          "present": false
+          "present": true
         }
       },
       "pyshacl": {
@@ -2775,6 +2809,7 @@
     },
     {
       "id": "exports/__version__",
+      "origin": "first-party",
       "status": "equal",
       "pyshacl_turbo": {
         "state": "ok",
@@ -2791,6 +2826,7 @@
     },
     {
       "id": "cli/shapes-alias",
+      "origin": "first-party",
       "status": "equal",
       "pyshacl_turbo": {
         "state": "ok",
@@ -2817,6 +2853,7 @@
     },
     {
       "id": "cli/allow-infos-alias",
+      "origin": "first-party",
       "status": "equal",
       "pyshacl": {
         "state": "ok",
@@ -2843,6 +2880,7 @@
     },
     {
       "id": "cli/allow-warnings-alias",
+      "origin": "first-party",
       "status": "equal",
       "pyshacl_turbo": {
         "state": "ok",
@@ -2869,6 +2907,7 @@
     },
     {
       "id": "cli/warning-short",
+      "origin": "first-party",
       "status": "equal",
       "pyshacl": {
         "state": "ok",
@@ -2895,6 +2934,7 @@
     },
     {
       "id": "cli/max-depth",
+      "origin": "first-party",
       "status": "equal",
       "pyshacl": {
         "state": "ok",
@@ -2921,6 +2961,7 @@
     },
     {
       "id": "cli/automatic-format",
+      "origin": "first-party",
       "status": "equal",
       "pyshacl": {
         "state": "ok",
@@ -2947,6 +2988,7 @@
     },
     {
       "id": "cli/focus-whitespace",
+      "origin": "first-party",
       "status": "equal",
       "pyshacl": {
         "state": "ok",
@@ -2973,6 +3015,7 @@
     },
     {
       "id": "cli/shape-whitespace",
+      "origin": "first-party",
       "status": "equal",
       "pyshacl": {
         "state": "ok",
@@ -2999,6 +3042,7 @@
     },
     {
       "id": "cli/validate-each",
+      "origin": "first-party",
       "status": "equal",
       "pyshacl_turbo": {
         "state": "ok",
@@ -3019,6 +3063,7 @@
     },
     {
       "id": "cli/rules-selection",
+      "origin": "first-party",
       "status": "equal",
       "pyshacl": {
         "state": "ok",
@@ -3045,6 +3090,7 @@
     },
     {
       "id": "cli/no-input",
+      "origin": "first-party",
       "status": "equal",
       "pyshacl": {
         "state": "ok",
@@ -3065,6 +3111,7 @@
     },
     {
       "id": "cli/missing-input",
+      "origin": "first-party",
       "status": "equal",
       "pyshacl": {
         "state": "ok",

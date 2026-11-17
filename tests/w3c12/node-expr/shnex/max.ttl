@@ -1,0 +1,83 @@
+@prefix ex: <http://example.com/ns#> .
+@prefix mf: <http://www.w3.org/2001/sw/DataAccess/tests/test-manifest#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix shnex: <http://www.w3.org/ns/shacl-node-expr#> .
+@prefix sht: <http://www.w3.org/ns/shacl-test#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<>
+  rdf:type mf:Manifest ;
+  mf:entries (
+      <max-empty>
+      <max-list-3>
+      <max-mixed-numerics>
+      <max-strings>
+      <max-dates>
+    ) ;
+.
+
+<max-empty>
+  rdf:type sht:EvalNodeExpr ;
+  rdfs:label "Test of a max expression on an empty list" ;
+  mf:action [
+    sht:nodeExpr [
+      shnex:max [] ;
+    ] ;
+  ] ;
+  mf:requires sht:NodeExpr ;
+  mf:result () ;
+  mf:status sht:approved ;
+.
+
+<max-list-3>
+  rdf:type sht:EvalNodeExpr ;
+  rdfs:label "Test of a max expression on a list with three members" ;
+  mf:action [
+    sht:nodeExpr [
+      shnex:max ( 4 5 3 ) ;
+    ] ;
+  ] ;
+  mf:requires sht:NodeExpr ;
+  mf:result ( 5 ) ;
+  mf:status sht:approved ;
+.
+
+<max-mixed-numerics>
+  rdf:type sht:EvalNodeExpr ;
+  rdfs:label "Test of a max expression on integers and decimals, which are compared by value" ;
+  mf:action [
+    sht:nodeExpr [
+      shnex:max ( 1 2.5 2 ) ;
+    ] ;
+  ] ;
+  mf:requires sht:NodeExpr ;
+  mf:result ( 2.5 ) ;
+  mf:status sht:approved ;
+.
+<max-strings>
+  rdf:type sht:EvalNodeExpr ;
+  rdfs:label "Test of a max expression on strings" ;
+  mf:action [
+    sht:nodeExpr [
+      shnex:max ( "b" "a" "c" ) ;
+    ] ;
+  ] ;
+  mf:requires sht:NodeExpr ;
+  mf:result ( "c" ) ;
+  mf:status sht:approved ;
+.
+<max-dates>
+  rdf:type sht:EvalNodeExpr ;
+  rdfs:label "Test of a max expression on dates" ;
+  mf:action [
+    sht:nodeExpr [
+      shnex:max ( "2024-01-01"^^xsd:date "2023-12-31"^^xsd:date "2024-06-30"^^xsd:date ) ;
+    ] ;
+  ] ;
+  mf:requires sht:NodeExpr ;
+  mf:result ( "2024-06-30"^^xsd:date ) ;
+  mf:status sht:approved ;
+.
