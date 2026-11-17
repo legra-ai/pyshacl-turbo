@@ -77,7 +77,7 @@ def test_direct_contract_header_names_current_versions():
     assert measured["runtime_authority"]["provider_version"] == pinned["rdflib-turbo"]
     assert measured["runtime_authority"]["facade_version"] == measured["turbo_version"]
     assert within_one_release(measured["turbo_version"], version)
-    header = (ROOT / "docs/direct-contract.md").read_text().splitlines()[2]
+    header = (ROOT / "docs/direct-contract.md").read_text(encoding="utf-8").splitlines()[2]
     assert header == (
         f"Reference: pySHACL {pinned['pyshacl']}. Turbo: {measured['turbo_version']}"
         f" with rdflib-turbo {pinned['rdflib-turbo']}."
@@ -88,14 +88,14 @@ def test_direct_contract_counts_and_markdown_do_not_drift():
     measured = json.loads((ROOT / "docs/direct-contract.json").read_text())
     assert measured["summary"] == dict(Counter(row["status"] for row in measured["cases"]))
     rendered = contract.markdown(measured, Ledger.load())
-    assert (ROOT / "docs/direct-contract.md").read_text() == rendered
+    assert (ROOT / "docs/direct-contract.md").read_text(encoding="utf-8") == rendered
     assert f"Outcomes: {measured['summary']}." in rendered
 
 
 def test_committed_counts_and_readme_match_a_fresh_measurement():
     committed = json.loads(report.SUMMARY.read_text())
     assert report.collect() == committed
-    readme = report.README.read_text()
+    readme = report.README.read_text(encoding="utf-8")
     assert report.readme_section(readme) == report.render(committed)
 
 

@@ -121,7 +121,7 @@ class Ledger:
 
     @classmethod
     def load(cls, path: Path = LEDGER) -> Ledger:
-        document = tomllib.loads(path.read_text())
+        document = tomllib.loads(path.read_text(encoding="utf-8"))
         if set(document) != {"divergence"}:
             raise ValueError("The ledger contains only [[divergence]] tables")
         entries = tuple(Divergence.parse(row) for row in document["divergence"])

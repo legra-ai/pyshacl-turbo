@@ -110,7 +110,7 @@ class Document:
 
     @classmethod
     def read(cls, path: Path) -> Document:
-        text = path.read_text()
+        text = path.read_text(encoding="utf-8")
         try:
             return cls(parse(text, path), False)
         except BadSyntax:
@@ -133,7 +133,7 @@ class W3cSuite:
 
     @cached_property
     def vendored(self) -> frozenset[str]:
-        sources = json.loads((TESTS / "suite-sources.json").read_text())
+        sources = json.loads((TESTS / "suite-sources.json").read_text(encoding="utf-8"))
         key = {Suite.W3C_SHACL10: "w3c", Suite.W3C_SHACL12: "w3c12"}[self.suite]
         return frozenset(sources[key]["files"])
 

@@ -52,16 +52,18 @@ def results():
 
 
 def test_pinned_source_records_url_commit_date_license_and_checksums():
-    source = json.loads((TESTS / "suite-sources.json").read_text())["w3c12"]
+    source = json.loads((TESTS / "suite-sources.json").read_text(encoding="utf-8"))["w3c12"]
     assert source["repository"] == "w3c/data-shapes"
     assert source["url"] == (
         f"https://codeload.github.com/w3c/data-shapes/tar.gz/{source['revision']}"
     )
     assert source["committed_at"] == "2026-11-16T22:33:45Z"
     assert source["license"] == "W3C Software and Document License"
-    assert "W3C Software and Document License" in (TESTS / "w3c12/LICENSE.md").read_text()
+    assert "W3C Software and Document License" in (TESTS / "w3c12/LICENSE.md").read_text(
+        encoding="utf-8"
+    )
     sums = {}
-    for line in (TESTS.parent / source["sha256sums"]).read_text().splitlines():
+    for line in (TESTS.parent / source["sha256sums"]).read_text(encoding="utf-8").splitlines():
         digest, name = line.split("  ", 1)
         sums[name] = digest
     assert sorted(sums) == source["files"]
@@ -101,5 +103,5 @@ def test_differences_from_pyshacl_match_the_ledger_exactly(results):
 
 
 def test_committed_counts_match_this_measurement(results):
-    committed = json.loads((TESTS.parent / "docs/conformance.json").read_text())
+    committed = json.loads((TESTS.parent / "docs/conformance.json").read_text(encoding="utf-8"))
     assert committed[Suite.W3C_SHACL12.value] == SuiteTally.of(results).to_json()

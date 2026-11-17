@@ -627,7 +627,7 @@ def main():
     }
     ledger = Ledger.load()
     args.output.write_text(json.dumps(report, indent=2) + "\n")
-    args.output.with_suffix(".md").write_text(markdown(report, ledger))
+    args.output.with_suffix(".md").write_text(markdown(report, ledger), encoding="utf-8")
     if args.baseline:
         baseline = json.loads(args.baseline.read_text())
         check_baseline(rows, {row["id"]: row for row in baseline["cases"]})

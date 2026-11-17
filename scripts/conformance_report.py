@@ -53,8 +53,8 @@ def w3c(suite: W3cSuite) -> dict[str, object]:
 
 
 def upstream() -> dict[str, object]:
-    turbo = json.loads((ROOT / "docs/upstream-coverage.json").read_text())
-    reference = json.loads((ROOT / "docs/upstream-reference.json").read_text())
+    turbo = json.loads((ROOT / "docs/upstream-coverage.json").read_text(encoding="utf-8"))
+    reference = json.loads((ROOT / "docs/upstream-reference.json").read_text(encoding="utf-8"))
     origins = Counter(row["origin"] for row in turbo["cases"])
     return {
         "cases": len(turbo["cases"]),
@@ -67,7 +67,7 @@ def upstream() -> dict[str, object]:
 
 
 def direct() -> dict[str, object]:
-    report = json.loads((ROOT / "docs/direct-contract.json").read_text())
+    report = json.loads((ROOT / "docs/direct-contract.json").read_text(encoding="utf-8"))
     return {
         "cases": len(report["cases"]),
         "origin": {Origin.FIRST_PARTY.value: len(report["cases"])},
@@ -163,8 +163,8 @@ def readme_section(text: str) -> str:
 def main() -> None:
     summary = collect()
     SUMMARY.write_text(json.dumps(summary, indent=2) + "\n")
-    text = README.read_text()
-    README.write_text(text.replace(readme_section(text), render(summary)))
+    text = README.read_text(encoding="utf-8")
+    README.write_text(text.replace(readme_section(text), render(summary)), encoding="utf-8")
     print(render(summary))
 
 
