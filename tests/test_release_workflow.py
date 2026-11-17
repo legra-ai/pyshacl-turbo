@@ -247,3 +247,25 @@ def test_local_commit_policy(header, expected, tmp_path):
         check=False,
     )
     assert (result.returncode != 0) == bool(expected)
+
+
+def test_minor_and_major_plans_wait_for_owner_review_before_preparation():
+    text = (ROOT / ".github/workflows/ci.yml").read_text()
+    workflow = yaml.safe_load(text)
+    plan = next(step for step in workflow["jobs"]["plan"]["steps"] if step.get("id") == "release")
+    prepare = next(
+        step for step in workflow["jobs"]["prepare"]["steps"] if step.get("id") == "release"
+    )
+    assert plan["with"]["plan-only"] == "true"
+    assert plan["with"]["token"] == "${{ github.token }}"
+    assert plan["uses"] == prepare["uses"]
+    for option in ("breaking-change-bump", "manifest-kind", "tag-format"):
+        assert plan["with"][option] == prepare["with"][option]
+    approval = workflow["jobs"]["approve-release"]
+    assert approval["environment"] == (
+        "${{ needs.plan.outputs.approval-required == 'true' && 'release-approval' || '' }}"
+    )
+    assert "if" not in approval
+    assert workflow["jobs"]["prepare"]["needs"] == ["plan", "approve-release"]
+    assert workflow["permissions"]["actions"] == "read"
+    assert "major-release" not in text
