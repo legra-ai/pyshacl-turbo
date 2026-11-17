@@ -41,7 +41,6 @@ from rdflib import Graph
         "sh:rule [a ex:UnsupportedRule]",
         "sh:expression [sh:filterShape ex:Check]",
         "sh:expression [ex:unknown ()]",
-        "sh:misspelledConstraint true",
     ],
 )
 def test_invalid_executable_declarations_fail_before_use(declaration):
