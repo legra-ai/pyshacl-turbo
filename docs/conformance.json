@@ -15,7 +15,7 @@
     },
     "w3c-shacl12": {
       "intentional": 14,
-      "gap": 28
+      "gap": 6
     }
   },
   "w3c-shacl10": {
@@ -133,10 +133,10 @@
       },
       "VALIDATE": {
         "pyshacl-turbo": {
-          "error": 37,
-          "fail": 31,
+          "error": 15,
+          "fail": 51,
           "not-run": 11,
-          "pass": 195
+          "pass": 197
         },
         "pyshacl": {
           "error": 11,
@@ -148,10 +148,10 @@
     },
     "outcomes": {
       "pyshacl-turbo": {
-        "error": 37,
-        "fail": 31,
+        "error": 15,
+        "fail": 51,
         "not-run": 670,
-        "pass": 195
+        "pass": 197
       },
       "pyshacl": {
         "error": 11,
@@ -161,10 +161,9 @@
       }
     },
     "relations": {
-      "behind-pyshacl": 2,
       "beyond-pyshacl": 14,
-      "different-failure": 26,
-      "pyshacl-parity": 891
+      "different-failure": 6,
+      "pyshacl-parity": 913
     },
     "not_run": {
       "NODE_EXPRESSIONS": 276,
@@ -210,8 +209,8 @@
     },
     "versions": {
       "pyshacl": "0.40.2",
-      "pyshacl-turbo": "0.10.2",
-      "rdflib-turbo": "0.2.0a39"
+      "pyshacl-turbo": "0.10.4",
+      "rdflib-turbo": "0.2.0a41"
     },
     "outcomes": {
       "different": 5,

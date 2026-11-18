@@ -153,7 +153,7 @@ harness and the divergence ledger:
 | Suite | Cases | pyshacl-turbo | pySHACL | Ledger intentional / gap |
 | --- | --- | --- | --- | --- |
 | W3C SHACL 1.0 (Graph inputs) | 120 | 1 fail, 119 pass | 1 error, 1 fail, 118 pass | 2 / 0 |
-| W3C SHACL 1.2 | 933 | 37 error, 31 fail, 670 not-run, 195 pass | 11 error, 69 fail, 670 not-run, 183 pass | 14 / 28 |
+| W3C SHACL 1.2 | 933 | 15 error, 51 fail, 670 not-run, 197 pass | 11 error, 69 fail, 670 not-run, 183 pass | 14 / 6 |
 | pySHACL upstream (non-JS) | 403 | first-party: 2 passed; locally-corrected: 1 passed; vendored: 400 passed | locally-corrected: 1 passed; vendored: 2 failed, 400 passed | 2 / 0 |
 | Direct API/CLI contract | 62 | 5 different, 55 equal, 1 reference_error, 1 reference_timeout (compared with pySHACL) | — | 5 / 2 |
 
@@ -170,9 +170,9 @@ W3C SHACL 1.2 by test type (not-run cases are counted, with a typed reason):
 | SRL_POSITIVE_STRATIFICATION | 11 | 11 not-run | 11 not-run |
 | SRL_POSITIVE_SYNTAX | 146 | 146 not-run | 146 not-run |
 | SRL_POSITIVE_WELL_FORMEDNESS | 14 | 14 not-run | 14 not-run |
-| VALIDATE | 274 | 37 error, 31 fail, 11 not-run, 195 pass | 11 error, 69 fail, 11 not-run, 183 pass |
+| VALIDATE | 274 | 15 error, 51 fail, 11 not-run, 197 pass | 11 error, 69 fail, 11 not-run, 183 pass |
 
-SHACL 1.2 relations to pySHACL: 2 behind-pyshacl, 14 beyond-pyshacl, 26 different-failure, 891 pyshacl-parity. Not-run reasons: 276 NODE_EXPRESSIONS, 11 RDF12_SYNTAX, 41 RULE_INFERENCE, 342 SPARQL_RL.
+SHACL 1.2 relations to pySHACL: 14 beyond-pyshacl, 6 different-failure, 913 pyshacl-parity. Not-run reasons: 276 NODE_EXPRESSIONS, 11 RDF12_SYNTAX, 41 RULE_INFERENCE, 342 SPARQL_RL.
 Upstream outcomes are split by origin: only vendored cases are upstream
 passes; the issue-70 fixture is locally corrected and two cases run
 first-party native equivalents. Every difference from pySHACL is listed in

@@ -94,7 +94,7 @@ suite = "w3c-shacl12"
 case = "core/node/datatype-003.ttl::datatype-003"
 kind = "gap"
 baseline = "pyshacl"
-reason = "Turbo rejects a SHACL 1.2 parameter form (list-valued sh:datatype/sh:class/sh:nodeKind/sh:equals/sh:disjoint, or sh:TripleTerm) at shape load; pySHACL loads the shapes and only fails the W3C expectation."
+reason = "Turbo rejects a SHACL 1.2 parameter form (a list-valued sh:datatype, sh:class, sh:nodeKind, sh:equals or sh:disjoint) at shape load; pySHACL loads the shapes and only fails the W3C expectation."
 adr = "docs/adr/0047-conformance-divergence-ledger.md"
 
 [[divergence]]
@@ -134,26 +134,8 @@ suite = "w3c-shacl12"
 case = "core/node/nodeKind-002.ttl::nodeKind-002"
 kind = "gap"
 baseline = "pyshacl"
-reason = "Turbo rejects a SHACL 1.2 parameter form (list-valued sh:datatype/sh:class/sh:nodeKind/sh:equals/sh:disjoint, or sh:TripleTerm) at shape load; pySHACL loads the shapes and only fails the W3C expectation."
+reason = "Turbo rejects a SHACL 1.2 parameter form (a list-valued sh:datatype, sh:class, sh:nodeKind, sh:equals or sh:disjoint) at shape load; pySHACL loads the shapes and only fails the W3C expectation."
 adr = "docs/adr/0047-conformance-divergence-ledger.md"
-
-[[divergence]]
-suite = "w3c-shacl12"
-case = "core/node/rootClass-001.ttl::rootClass-001"
-kind = "gap"
-baseline = "pyshacl"
-reason = "Turbo errors where pySHACL completes but fails the W3C expectation: the pinned rdflib-turbo 0.2.0a39 refuses SHACL 1.2 vocabulary that pySHACL ignores; PH-05 ignores it but is not yet released."
-adr = "docs/adr/0047-conformance-divergence-ledger.md"
-tracking = "https://github.com/legra-ai/rdflib-turbo/pull/198"
-
-[[divergence]]
-suite = "w3c-shacl12"
-case = "core/node/subsetOf-001.ttl::subsetOf-001"
-kind = "gap"
-baseline = "pyshacl"
-reason = "Turbo errors where pySHACL completes but fails the W3C expectation: the pinned rdflib-turbo 0.2.0a39 refuses SHACL 1.2 vocabulary that pySHACL ignores; PH-05 ignores it but is not yet released."
-adr = "docs/adr/0047-conformance-divergence-ledger.md"
-tracking = "https://github.com/legra-ai/rdflib-turbo/pull/198"
 
 [[divergence]]
 suite = "w3c-shacl12"
@@ -162,60 +144,6 @@ kind = "intentional"
 baseline = "pyshacl"
 reason = "Beyond pySHACL: Turbo implements the SHACL 1.2 list constraints."
 adr = "docs/adr/0047-conformance-divergence-ledger.md"
-
-[[divergence]]
-suite = "w3c-shacl12"
-case = "core/node/uniqueValuesFor-001.ttl::uniqueValuesFor-001"
-kind = "gap"
-baseline = "pyshacl"
-reason = "Turbo errors where pySHACL completes but fails the W3C expectation: the pinned rdflib-turbo 0.2.0a39 refuses SHACL 1.2 vocabulary that pySHACL ignores; PH-05 ignores it but is not yet released."
-adr = "docs/adr/0047-conformance-divergence-ledger.md"
-tracking = "https://github.com/legra-ai/rdflib-turbo/pull/198"
-
-[[divergence]]
-suite = "w3c-shacl12"
-case = "core/node/uniqueValuesFor-002.ttl::uniqueValuesFor-002"
-kind = "gap"
-baseline = "pyshacl"
-reason = "Turbo errors where pySHACL completes but fails the W3C expectation: the pinned rdflib-turbo 0.2.0a39 refuses SHACL 1.2 vocabulary that pySHACL ignores; PH-05 ignores it but is not yet released."
-adr = "docs/adr/0047-conformance-divergence-ledger.md"
-tracking = "https://github.com/legra-ai/rdflib-turbo/pull/198"
-
-[[divergence]]
-suite = "w3c-shacl12"
-case = "core/node/uniqueValuesFor-003.ttl::uniqueValuesFor-003"
-kind = "gap"
-baseline = "pyshacl"
-reason = "Turbo errors where pySHACL completes but fails the W3C expectation: the pinned rdflib-turbo 0.2.0a39 refuses SHACL 1.2 vocabulary that pySHACL ignores; PH-05 ignores it but is not yet released."
-adr = "docs/adr/0047-conformance-divergence-ledger.md"
-tracking = "https://github.com/legra-ai/rdflib-turbo/pull/198"
-
-[[divergence]]
-suite = "w3c-shacl12"
-case = "core/node/uniqueValuesFor-004.ttl::uniqueValuesFor-004"
-kind = "gap"
-baseline = "pyshacl"
-reason = "Behind pySHACL, which passes: the pinned rdflib-turbo 0.2.0a39 refuses SHACL 1.2 vocabulary that pySHACL ignores; PH-05 ignores it but is not yet released."
-adr = "docs/adr/0047-conformance-divergence-ledger.md"
-tracking = "https://github.com/legra-ai/rdflib-turbo/pull/198"
-
-[[divergence]]
-suite = "w3c-shacl12"
-case = "core/node/uniqueValuesFor-005.ttl::uniqueValuesFor-005"
-kind = "gap"
-baseline = "pyshacl"
-reason = "Turbo errors where pySHACL completes but fails the W3C expectation: the pinned rdflib-turbo 0.2.0a39 refuses SHACL 1.2 vocabulary that pySHACL ignores; PH-05 ignores it but is not yet released."
-adr = "docs/adr/0047-conformance-divergence-ledger.md"
-tracking = "https://github.com/legra-ai/rdflib-turbo/pull/198"
-
-[[divergence]]
-suite = "w3c-shacl12"
-case = "core/node/uniqueValuesFor-006.ttl::uniqueValuesFor-006"
-kind = "gap"
-baseline = "pyshacl"
-reason = "Turbo errors where pySHACL completes but fails the W3C expectation: the pinned rdflib-turbo 0.2.0a39 refuses SHACL 1.2 vocabulary that pySHACL ignores; PH-05 ignores it but is not yet released."
-adr = "docs/adr/0047-conformance-divergence-ledger.md"
-tracking = "https://github.com/legra-ai/rdflib-turbo/pull/198"
 
 [[divergence]]
 suite = "w3c-shacl12"
@@ -238,7 +166,7 @@ suite = "w3c-shacl12"
 case = "core/property/class-002.ttl::class-002"
 kind = "gap"
 baseline = "pyshacl"
-reason = "Turbo rejects a SHACL 1.2 parameter form (list-valued sh:datatype/sh:class/sh:nodeKind/sh:equals/sh:disjoint, or sh:TripleTerm) at shape load; pySHACL loads the shapes and only fails the W3C expectation."
+reason = "Turbo rejects a SHACL 1.2 parameter form (a list-valued sh:datatype, sh:class, sh:nodeKind, sh:equals or sh:disjoint) at shape load; pySHACL loads the shapes and only fails the W3C expectation."
 adr = "docs/adr/0047-conformance-divergence-ledger.md"
 
 [[divergence]]
@@ -246,7 +174,7 @@ suite = "w3c-shacl12"
 case = "core/property/datatype-004.ttl::datatype-004"
 kind = "gap"
 baseline = "pyshacl"
-reason = "Turbo rejects a SHACL 1.2 parameter form (list-valued sh:datatype/sh:class/sh:nodeKind/sh:equals/sh:disjoint, or sh:TripleTerm) at shape load; pySHACL loads the shapes and only fails the W3C expectation."
+reason = "Turbo rejects a SHACL 1.2 parameter form (a list-valued sh:datatype, sh:class, sh:nodeKind, sh:equals or sh:disjoint) at shape load; pySHACL loads the shapes and only fails the W3C expectation."
 adr = "docs/adr/0047-conformance-divergence-ledger.md"
 
 [[divergence]]
@@ -254,7 +182,7 @@ suite = "w3c-shacl12"
 case = "core/property/disjoint-002.ttl::disjoint-002"
 kind = "gap"
 baseline = "pyshacl"
-reason = "Turbo rejects a SHACL 1.2 parameter form (list-valued sh:datatype/sh:class/sh:nodeKind/sh:equals/sh:disjoint, or sh:TripleTerm) at shape load; pySHACL loads the shapes and only fails the W3C expectation."
+reason = "Turbo rejects a SHACL 1.2 parameter form (a list-valued sh:datatype, sh:class, sh:nodeKind, sh:equals or sh:disjoint) at shape load; pySHACL loads the shapes and only fails the W3C expectation."
 adr = "docs/adr/0047-conformance-divergence-ledger.md"
 
 [[divergence]]
@@ -262,7 +190,7 @@ suite = "w3c-shacl12"
 case = "core/property/equals-002.ttl::equals-002"
 kind = "gap"
 baseline = "pyshacl"
-reason = "Turbo rejects a SHACL 1.2 parameter form (list-valued sh:datatype/sh:class/sh:nodeKind/sh:equals/sh:disjoint, or sh:TripleTerm) at shape load; pySHACL loads the shapes and only fails the W3C expectation."
+reason = "Turbo rejects a SHACL 1.2 parameter form (a list-valued sh:datatype, sh:class, sh:nodeKind, sh:equals or sh:disjoint) at shape load; pySHACL loads the shapes and only fails the W3C expectation."
 adr = "docs/adr/0047-conformance-divergence-ledger.md"
 
 [[divergence]]
@@ -291,56 +219,11 @@ adr = "docs/adr/0047-conformance-divergence-ledger.md"
 
 [[divergence]]
 suite = "w3c-shacl12"
-case = "core/property/rootClass-001.ttl::rootClass-001"
-kind = "gap"
-baseline = "pyshacl"
-reason = "Turbo errors where pySHACL completes but fails the W3C expectation: the pinned rdflib-turbo 0.2.0a39 refuses SHACL 1.2 vocabulary that pySHACL ignores; PH-05 ignores it but is not yet released."
-adr = "docs/adr/0047-conformance-divergence-ledger.md"
-tracking = "https://github.com/legra-ai/rdflib-turbo/pull/198"
-
-[[divergence]]
-suite = "w3c-shacl12"
 case = "core/property/singleLine-001.ttl::singleLine-001"
 kind = "intentional"
 baseline = "pyshacl"
 reason = "Beyond pySHACL: Turbo implements SHACL 1.2 sh:singleLine."
 adr = "docs/adr/0047-conformance-divergence-ledger.md"
-
-[[divergence]]
-suite = "w3c-shacl12"
-case = "core/property/someValue-001.ttl::someValue-001"
-kind = "gap"
-baseline = "pyshacl"
-reason = "Turbo errors where pySHACL completes but fails the W3C expectation: the pinned rdflib-turbo 0.2.0a39 refuses SHACL 1.2 vocabulary that pySHACL ignores; PH-05 ignores it but is not yet released."
-adr = "docs/adr/0047-conformance-divergence-ledger.md"
-tracking = "https://github.com/legra-ai/rdflib-turbo/pull/198"
-
-[[divergence]]
-suite = "w3c-shacl12"
-case = "core/property/someValue-002.ttl::someValue-002"
-kind = "gap"
-baseline = "pyshacl"
-reason = "Turbo errors where pySHACL completes but fails the W3C expectation: the pinned rdflib-turbo 0.2.0a39 refuses SHACL 1.2 vocabulary that pySHACL ignores; PH-05 ignores it but is not yet released."
-adr = "docs/adr/0047-conformance-divergence-ledger.md"
-tracking = "https://github.com/legra-ai/rdflib-turbo/pull/198"
-
-[[divergence]]
-suite = "w3c-shacl12"
-case = "core/property/subsetOf-001.ttl::subsetOf-001"
-kind = "gap"
-baseline = "pyshacl"
-reason = "Turbo errors where pySHACL completes but fails the W3C expectation: the pinned rdflib-turbo 0.2.0a39 refuses SHACL 1.2 vocabulary that pySHACL ignores; PH-05 ignores it but is not yet released."
-adr = "docs/adr/0047-conformance-divergence-ledger.md"
-tracking = "https://github.com/legra-ai/rdflib-turbo/pull/198"
-
-[[divergence]]
-suite = "w3c-shacl12"
-case = "core/property/subsetOf-002.ttl::subsetOf-002"
-kind = "gap"
-baseline = "pyshacl"
-reason = "Turbo errors where pySHACL completes but fails the W3C expectation: the pinned rdflib-turbo 0.2.0a39 refuses SHACL 1.2 vocabulary that pySHACL ignores; PH-05 ignores it but is not yet released."
-adr = "docs/adr/0047-conformance-divergence-ledger.md"
-tracking = "https://github.com/legra-ai/rdflib-turbo/pull/198"
 
 [[divergence]]
 suite = "w3c-shacl12"
@@ -352,92 +235,11 @@ adr = "docs/adr/0047-conformance-divergence-ledger.md"
 
 [[divergence]]
 suite = "w3c-shacl12"
-case = "core/property/values-001.ttl::values-001"
-kind = "gap"
-baseline = "pyshacl"
-reason = "Turbo errors where pySHACL completes but fails the W3C expectation: the pinned rdflib-turbo 0.2.0a39 refuses SHACL 1.2 vocabulary that pySHACL ignores; PH-05 ignores it but is not yet released."
-adr = "docs/adr/0047-conformance-divergence-ledger.md"
-tracking = "https://github.com/legra-ai/rdflib-turbo/pull/198"
-
-[[divergence]]
-suite = "w3c-shacl12"
-case = "core/targets/targetWhere-001.ttl::targetWhere-001"
-kind = "gap"
-baseline = "pyshacl"
-reason = "Turbo errors where pySHACL completes but fails the W3C expectation: the pinned rdflib-turbo 0.2.0a39 refuses SHACL 1.2 vocabulary that pySHACL ignores; PH-05 ignores it but is not yet released."
-adr = "docs/adr/0047-conformance-divergence-ledger.md"
-tracking = "https://github.com/legra-ai/rdflib-turbo/pull/198"
-
-[[divergence]]
-suite = "w3c-shacl12"
-case = "node-expr/constraints/nodeByExpression-001.ttl::nodeByExpression-001"
-kind = "gap"
-baseline = "pyshacl"
-reason = "Turbo errors where pySHACL completes but fails the W3C expectation: the pinned rdflib-turbo 0.2.0a39 refuses SHACL 1.2 vocabulary that pySHACL ignores; PH-05 ignores it but is not yet released."
-adr = "docs/adr/0047-conformance-divergence-ledger.md"
-tracking = "https://github.com/legra-ai/rdflib-turbo/pull/198"
-
-[[divergence]]
-suite = "w3c-shacl12"
-case = "node-expr/constraints/nodeByExpression-002.ttl::nodeByExpression-002"
-kind = "gap"
-baseline = "pyshacl"
-reason = "Turbo errors where pySHACL completes but fails the W3C expectation: the pinned rdflib-turbo 0.2.0a39 refuses SHACL 1.2 vocabulary that pySHACL ignores; PH-05 ignores it but is not yet released."
-adr = "docs/adr/0047-conformance-divergence-ledger.md"
-tracking = "https://github.com/legra-ai/rdflib-turbo/pull/198"
-
-[[divergence]]
-suite = "w3c-shacl12"
-case = "node-expr/constraints/nodeByExpression-003.ttl::nodeByExpression-003"
-kind = "gap"
-baseline = "pyshacl"
-reason = "Turbo errors where pySHACL completes but fails the W3C expectation: the pinned rdflib-turbo 0.2.0a39 refuses SHACL 1.2 vocabulary that pySHACL ignores; PH-05 ignores it but is not yet released."
-adr = "docs/adr/0047-conformance-divergence-ledger.md"
-tracking = "https://github.com/legra-ai/rdflib-turbo/pull/198"
-
-[[divergence]]
-suite = "w3c-shacl12"
-case = "node-expr/constraints/nodeByExpression-004.ttl::nodeByExpression-004"
-kind = "gap"
-baseline = "pyshacl"
-reason = "Turbo errors where pySHACL completes but fails the W3C expectation: the pinned rdflib-turbo 0.2.0a39 refuses SHACL 1.2 vocabulary that pySHACL ignores; PH-05 ignores it but is not yet released."
-adr = "docs/adr/0047-conformance-divergence-ledger.md"
-tracking = "https://github.com/legra-ai/rdflib-turbo/pull/198"
-
-[[divergence]]
-suite = "w3c-shacl12"
-case = "node-expr/constraints/nodeByExpression-005.ttl::nodeByExpression-005"
-kind = "gap"
-baseline = "pyshacl"
-reason = "Behind pySHACL, which passes: the pinned rdflib-turbo 0.2.0a39 refuses SHACL 1.2 vocabulary that pySHACL ignores; PH-05 ignores it but is not yet released."
-adr = "docs/adr/0047-conformance-divergence-ledger.md"
-tracking = "https://github.com/legra-ai/rdflib-turbo/pull/198"
-
-[[divergence]]
-suite = "w3c-shacl12"
 case = "sparql/node/sparql-failure-001.ttl::sparql-failure-001"
 kind = "intentional"
 baseline = "pyshacl"
 reason = "Beyond pySHACL: Turbo reports a SPARQL solution binding ?failure true as a validation failure."
 adr = "docs/adr/0047-conformance-divergence-ledger.md"
-
-[[divergence]]
-suite = "w3c-shacl12"
-case = "sparql/property/property-select-001.ttl::property-select-001"
-kind = "gap"
-baseline = "pyshacl"
-reason = "Turbo errors where pySHACL completes but fails the W3C expectation: the pinned rdflib-turbo 0.2.0a39 refuses SHACL 1.2 vocabulary that pySHACL ignores; PH-05 ignores it but is not yet released."
-adr = "docs/adr/0047-conformance-divergence-ledger.md"
-tracking = "https://github.com/legra-ai/rdflib-turbo/pull/198"
-
-[[divergence]]
-suite = "w3c-shacl12"
-case = "sparql/property/property-sparqlExpr-001.ttl::property-sparqlExpr-001"
-kind = "gap"
-baseline = "pyshacl"
-reason = "Turbo errors where pySHACL completes but fails the W3C expectation: the pinned rdflib-turbo 0.2.0a39 refuses SHACL 1.2 vocabulary that pySHACL ignores; PH-05 ignores it but is not yet released."
-adr = "docs/adr/0047-conformance-divergence-ledger.md"
-tracking = "https://github.com/legra-ai/rdflib-turbo/pull/198"
 
 [[divergence]]
 suite = "w3c-shacl12"
