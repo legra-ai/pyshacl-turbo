@@ -1,0 +1,223 @@
+{
+  "schema": 1,
+  "ledger": {
+    "direct-contract": {
+      "intentional": 5,
+      "gap": 2
+    },
+    "pyshacl-upstream": {
+      "intentional": 2,
+      "gap": 0
+    },
+    "w3c-shacl10": {
+      "intentional": 2,
+      "gap": 0
+    },
+    "w3c-shacl12": {
+      "intentional": 14,
+      "gap": 28
+    }
+  },
+  "w3c-shacl10": {
+    "cases": 120,
+    "origin": {
+      "vendored": 120
+    },
+    "types": {
+      "VALIDATE": {
+        "pyshacl-turbo": {
+          "fail": 1,
+          "pass": 119
+        },
+        "pyshacl": {
+          "error": 1,
+          "fail": 1,
+          "pass": 118
+        }
+      }
+    },
+    "outcomes": {
+      "pyshacl-turbo": {
+        "fail": 1,
+        "pass": 119
+      },
+      "pyshacl": {
+        "error": 1,
+        "fail": 1,
+        "pass": 118
+      }
+    },
+    "relations": {
+      "beyond-pyshacl": 1,
+      "pyshacl-parity": 119
+    },
+    "not_run": {}
+  },
+  "w3c-shacl12": {
+    "cases": 933,
+    "origin": {
+      "vendored": 933
+    },
+    "types": {
+      "EVAL_NODE_EXPR": {
+        "pyshacl-turbo": {
+          "not-run": 276
+        },
+        "pyshacl": {
+          "not-run": 276
+        }
+      },
+      "INFER": {
+        "pyshacl-turbo": {
+          "not-run": 41
+        },
+        "pyshacl": {
+          "not-run": 41
+        }
+      },
+      "SRL_EVAL": {
+        "pyshacl-turbo": {
+          "not-run": 76
+        },
+        "pyshacl": {
+          "not-run": 76
+        }
+      },
+      "SRL_NEGATIVE_STRATIFICATION": {
+        "pyshacl-turbo": {
+          "not-run": 10
+        },
+        "pyshacl": {
+          "not-run": 10
+        }
+      },
+      "SRL_NEGATIVE_SYNTAX": {
+        "pyshacl-turbo": {
+          "not-run": 66
+        },
+        "pyshacl": {
+          "not-run": 66
+        }
+      },
+      "SRL_NEGATIVE_WELL_FORMEDNESS": {
+        "pyshacl-turbo": {
+          "not-run": 19
+        },
+        "pyshacl": {
+          "not-run": 19
+        }
+      },
+      "SRL_POSITIVE_STRATIFICATION": {
+        "pyshacl-turbo": {
+          "not-run": 11
+        },
+        "pyshacl": {
+          "not-run": 11
+        }
+      },
+      "SRL_POSITIVE_SYNTAX": {
+        "pyshacl-turbo": {
+          "not-run": 146
+        },
+        "pyshacl": {
+          "not-run": 146
+        }
+      },
+      "SRL_POSITIVE_WELL_FORMEDNESS": {
+        "pyshacl-turbo": {
+          "not-run": 14
+        },
+        "pyshacl": {
+          "not-run": 14
+        }
+      },
+      "VALIDATE": {
+        "pyshacl-turbo": {
+          "error": 37,
+          "fail": 31,
+          "not-run": 11,
+          "pass": 195
+        },
+        "pyshacl": {
+          "error": 11,
+          "fail": 69,
+          "not-run": 11,
+          "pass": 183
+        }
+      }
+    },
+    "outcomes": {
+      "pyshacl-turbo": {
+        "error": 37,
+        "fail": 31,
+        "not-run": 670,
+        "pass": 195
+      },
+      "pyshacl": {
+        "error": 11,
+        "fail": 69,
+        "not-run": 670,
+        "pass": 183
+      }
+    },
+    "relations": {
+      "behind-pyshacl": 2,
+      "beyond-pyshacl": 14,
+      "different-failure": 26,
+      "pyshacl-parity": 891
+    },
+    "not_run": {
+      "NODE_EXPRESSIONS": 276,
+      "RDF12_SYNTAX": 11,
+      "RULE_INFERENCE": 41,
+      "SPARQL_RL": 342
+    }
+  },
+  "pyshacl-upstream": {
+    "cases": 403,
+    "origin": {
+      "first-party": 2,
+      "locally-corrected": 1,
+      "vendored": 400
+    },
+    "outcomes": {
+      "pyshacl-turbo": {
+        "first-party": {
+          "passed": 2
+        },
+        "locally-corrected": {
+          "passed": 1
+        },
+        "vendored": {
+          "passed": 400
+        }
+      },
+      "pyshacl": {
+        "locally-corrected": {
+          "passed": 1
+        },
+        "vendored": {
+          "failed": 2,
+          "passed": 400
+        }
+      }
+    }
+  },
+  "direct-contract": {
+    "cases": 62,
+    "origin": {
+      "first-party": 62
+    },
+    "versions": {
+      "pyshacl": "0.40.2",
+      "pyshacl-turbo": "0.10.2",
+      "rdflib-turbo": "0.2.0a39"
+    },
+    "outcomes": {
+      "different": 5,
+      "equal": 55,
+      "reference_error": 1,
+      "reference_timeout": 1
+    }
+  }
+}

@@ -29,6 +29,7 @@ from rdflib.compare import to_isomorphic
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "tests"))
+from divergence_ledger import Ledger, Origin, Suite
 from upstream_support.process_launch import Popen
 
 PREFIXES = """@prefix ex: <urn:example:> .
@@ -431,6 +432,14 @@ def check_baseline(rows, baseline):
             raise RuntimeError(f"Changed Turbo execution state in direct contract: {row['id']}")
 
 
+def reconcile_ledger(rows, ledger):
+    """Every first-party probe that is not equal must be listed, and nothing else."""
+    for row in rows:
+        if row.get("origin") != Origin.FIRST_PARTY:
+            raise RuntimeError(f"Direct contract probes are first-party: {row['id']}")
+    ledger.reconcile(Suite.DIRECT_CONTRACT, (row["id"] for row in rows if row["status"] != "equal"))
+
+
 def source_fingerprint():
     digest = hashlib.sha256()
     for directory in ("python", "tests", "scripts", "vendor"):
@@ -498,11 +507,15 @@ def runtime_provenance(installed_pair=None):
     return result
 
 
-def markdown(report):
+def markdown(report, ledger):
+    entries = ledger.select(Suite.DIRECT_CONTRACT)
     lines = [
         "# Direct pySHACL comparison",
         "",
-        f"Reference: pySHACL {report['reference_version']}. Turbo: {report['turbo_version']}.",
+        (
+            f"Reference: pySHACL {report['reference_version']}. Turbo: {report['turbo_version']}"
+            f" with rdflib-turbo {report['provider_version']}."
+        ),
         f"Measured: {report['measured_at']}; {report['build_kind']}.",
         f"Platform: {report['platform']}. Python: {report['python']}.",
         f"Source fingerprint: `{report['source_sha256']}`.",
@@ -519,15 +532,17 @@ def markdown(report):
         "Reference errors/timeouts remain separate and never count as compatibility passes.",
         "",
         f"Outcomes: {dict(report['summary'])}. This catalogue is not universal compatibility coverage.",
+        "Every probe is first-party. Each non-equal case is an entry in the",
+        "[divergence ledger](../tests/divergences.toml); see ADR 0047.",
         "",
-        "| Case | Outcome | Differences | Speedup |",
-        "| --- | --- | --- | --- |",
+        "| Case | Outcome | Differences | Ledger | Speedup |",
+        "| --- | --- | --- | --- | --- |",
     ]
     for row in report["cases"]:
         speed = f"{row['speedup']:.2f}×" if "speedup" in row else "—"
-        lines.append(
-            f"| {row['id']} | {row['status']} | {', '.join(row.get('different_fields', []))} | {speed} |"
-        )
+        kind = entries[row["id"]].kind if row["id"] in entries else ""
+        fields = ", ".join(row.get("different_fields", []))
+        lines.append(f"| {row['id']} | {row['status']} | {fields} | {kind} | {speed} |")
     return "\n".join(lines) + "\n"
 
 
@@ -574,6 +589,7 @@ def main():
             )
         row = {
             "id": case["id"],
+            "origin": Origin.FIRST_PARTY.value,
             **compare(observations["pyshacl"], observations["pyshacl_turbo"]),
             **observations,
         }
@@ -584,6 +600,7 @@ def main():
         "schema": 1,
         "reference_version": version("pyshacl"),
         "turbo_version": version("pyshacl-turbo"),
+        "provider_version": version("rdflib-turbo"),
         "measured_at": datetime.now(UTC).isoformat(),
         "build_kind": "installed shared native provider and pure Python facade",
         "performance_eligible": False,
@@ -608,11 +625,13 @@ def main():
         ],
         "cases": rows,
     }
+    ledger = Ledger.load()
     args.output.write_text(json.dumps(report, indent=2) + "\n")
-    args.output.with_suffix(".md").write_text(markdown(report))
+    args.output.with_suffix(".md").write_text(markdown(report, ledger), encoding="utf-8")
     if args.baseline:
         baseline = json.loads(args.baseline.read_text())
         check_baseline(rows, {row["id"]: row for row in baseline["cases"]})
+    reconcile_ledger(rows, ledger)
 
 
 if __name__ == "__main__":

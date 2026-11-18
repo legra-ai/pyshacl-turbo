@@ -77,6 +77,17 @@ compare their descriptions and shared references across independent parses.
 See [ADR 0014](adr/0014-complete-python-coverage.md). A finite passing suite does
 not prove universal compatibility.
 
+The pinned [W3C SHACL 1.2 suite](../tests/w3c12) is graded case by case for
+Turbo and plain pySHACL with Graph inputs; the README lists the counts per suite
+and per test type. Node-expression, inference-rule and SPARQL-RL cases and
+inputs in RDF 1.2 Turtle syntax are counted as not-run with a typed reason.
+Every difference from pySHACL in any suite, and the `uniqueLang-002` W3C
+expectation above, is an entry in the one
+[divergence ledger](../tests/divergences.toml). CI fails on an unlisted
+difference and on a stale entry. Only vendored upstream cases count as upstream
+passes; the issue-70 fixture is locally corrected and the native equivalents
+are first-party. See [ADR 0047](adr/0047-conformance-divergence-ledger.md).
+
 The complete Python package has **100% line and branch coverage**, enforced by
 CI with no omitted package files. This measures executed Python API/CLI code,
 not Rust coverage or universal SHACL compatibility. The coverage expansion found

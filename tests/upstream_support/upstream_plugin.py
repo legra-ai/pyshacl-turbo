@@ -25,14 +25,18 @@ def pytest_collection_modifyitems(items):
     from native_equivalents import PORTS
 
     for item in items:
-        ROWS[item.nodeid] = {"id": portable_id(item.nodeid, ROOT), "status": "not_run"}
+        ROWS[item.nodeid] = {
+            "id": portable_id(item.nodeid, ROOT),
+            "status": "not_run",
+            "origin": "vendored",
+        }
         if correction := CORRECTIONS.get(ROWS[item.nodeid]["id"]):
-            ROWS[item.nodeid]["local_correction"] = correction
+            ROWS[item.nodeid].update(local_correction=correction, origin="locally-corrected")
         if os.environ.get("PYSHACL_TURBO_TEST_REDIRECT") == "1" and item.nodeid in PORTS:
             port = PORTS[item.nodeid]
             module = item.module
             item.obj = lambda port=port, module=module: port(module)
-            ROWS[item.nodeid]["native_equivalent"] = port.__name__
+            ROWS[item.nodeid].update(native_equivalent=port.__name__, origin="first-party")
 
 
 def pytest_runtest_setup(item):
@@ -59,6 +63,15 @@ def pytest_collectreport(report):
         )
 
 
+def origin_summary(rows):
+    """Count outcomes per origin so corrected and first-party cases stay separate."""
+    result = {}
+    for row in rows:
+        counts = result.setdefault(row["origin"], {})
+        counts[row["status"]] = counts.get(row["status"], 0) + 1
+    return {origin: dict(sorted(counts.items())) for origin, counts in sorted(result.items())}
+
+
 def pytest_sessionfinish(session, exitstatus):
     path = Path(os.environ["PYSHACL_TURBO_UPSTREAM_REPORT"])
     rows = list(ROWS.values())
@@ -69,6 +82,7 @@ def pytest_sessionfinish(session, exitstatus):
                 "engine": "turbo" if os.environ.get("PYSHACL_TURBO_TEST_REDIRECT") else "reference",
                 "excluded": ["SHACL-JS"],
                 "summary": dict(Counter(row["status"] for row in rows)),
+                "origin_summary": origin_summary(rows),
                 "collection_errors": COLLECTION_ERRORS,
                 "cases": rows,
                 "exit_status": exitstatus,
