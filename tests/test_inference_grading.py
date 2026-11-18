@@ -77,3 +77,39 @@ def test_projected_rdf12_inputs_never_reach_the_runner(cases):
     case = replace(cases["same-order"], rdf12_syntax=True)
     with pytest.raises(ValueError, match="RDF 1.2"):
         InferenceFixture.read(case)
+
+
+def test_all_pinned_infer_expectations_are_accounted_for(cases):
+    readable = []
+    native_parser_required = []
+    for name, case in cases.items():
+        try:
+            readable.append(InferenceFixture.read(case))
+        except ValueError as error:
+            assert "RDF 1.2" in str(error)
+            native_parser_required.append(name)
+    assert len(cases) == 41
+    assert len(readable) == 40
+    assert sum(fixture.expected is None for fixture in readable) == 6
+    assert native_parser_required == ["run-once-example"]
+
+
+def test_namespace_mutation_is_not_hidden_by_an_otherwise_correct_result(cases):
+    fixture = InferenceFixture.read(cases["same-order"])
+
+    def run(data, shapes):
+        shapes.bind("corruption", "urn:corruption:")
+        return fixture.expected
+
+    assert fixture.grade(run, ValueError).detail == "input graph mutated"
+
+
+def test_non_graph_results_are_not_passes(cases):
+    fixture = InferenceFixture.read(cases["same-order"])
+    assert fixture.grade(lambda data, shapes: None, ValueError).outcome is Outcome.FAIL
+
+
+def test_validate_cases_cannot_be_executed_as_infer_cases():
+    case = next(case for case in W3C_SHACL12.discover() if case.case_type is CaseType.VALIDATE)
+    with pytest.raises(ValueError, match="Not an Infer case"):
+        InferenceFixture.read(case)
