@@ -6,6 +6,8 @@ Timing and whole-process peak RSS are descriptive measurements on shared CI mach
 
 | Date | Platform | Candidate versions | Report | Raw evidence | CI run |
 |---|---|---|---|---|---|
+| 2026-11-18T11:59:10.559944+00:00 | macos-latest | owlrl-turbo 0.2.0a2, pyshacl-turbo 0.10.4, rdflib-turbo 0.2.0a39 | [report](runs/44296801646-1/macos-latest/releases.md) | [JSON.gz](runs/44296801646-1/macos-latest/releases.json.gz) | [run](https://github.com/legra-ai/pyshacl-turbo/actions/runs/44296801646) |
+| 2026-11-18T11:54:30.039588+00:00 | ubuntu-latest | owlrl-turbo 0.2.0a2, pyshacl-turbo 0.10.4, rdflib-turbo 0.2.0a39 | [report](runs/44296801646-1/ubuntu-latest/releases.md) | [JSON.gz](runs/44296801646-1/ubuntu-latest/releases.json.gz) | [run](https://github.com/legra-ai/pyshacl-turbo/actions/runs/44296801646) |
 | 2026-11-18T00:52:22.571851+00:00 | macos-latest | owlrl-turbo 0.2.0a2, pyshacl-turbo 0.10.3, rdflib-turbo 0.2.0a39 | [report](runs/44201960475-1/macos-latest/releases.md) | [JSON.gz](runs/44201960475-1/macos-latest/releases.json.gz) | [run](https://github.com/legra-ai/pyshacl-turbo/actions/runs/44201960475) |
 | 2026-11-18T00:46:52.695980+00:00 | ubuntu-latest | owlrl-turbo 0.2.0a2, pyshacl-turbo 0.10.3, rdflib-turbo 0.2.0a39 | [report](runs/44201960475-1/ubuntu-latest/releases.md) | [JSON.gz](runs/44201960475-1/ubuntu-latest/releases.json.gz) | [run](https://github.com/legra-ai/pyshacl-turbo/actions/runs/44201960475) |
 | 2026-11-18T00:04:08.749923+00:00 | macos-latest | owlrl-turbo 0.2.0a2, pyshacl-turbo 0.10.3, rdflib-turbo 0.2.0a39 | [report](runs/44201829494-1/macos-latest/releases.md) | [JSON.gz](runs/44201829494-1/macos-latest/releases.json.gz) | [run](https://github.com/legra-ai/pyshacl-turbo/actions/runs/44201829494) |
