@@ -61,9 +61,10 @@ per-suite counts from the harness and the ledger; tests fail when either drifts.
 
 ## Consequences
 
-Thirty of the 53 entries are gaps. Twenty-eight SHACL 1.2 Validate cases are
-behind pySHACL or fail differently, mostly because the pinned rdflib-turbo
-0.2.0a39 refuses SHACL 1.2 vocabulary that pySHACL ignores. rdflib-turbo PR 198
-(PH-05) fixes that but is not yet released; adopting its release must remove
-the entries it resolves, because they become stale. Grading does not claim
-SHACL 1.2 conformance: most 1.2 features are not implemented by either engine.
+Eight of the 31 entries are gaps. Six SHACL 1.2 Validate cases fail
+differently: Turbo rejects a list-valued `sh:datatype`, `sh:class`, `sh:nodeKind`,
+`sh:equals` or `sh:disjoint` at shape load, where pySHACL loads the shapes and
+only misses the W3C expectation. rdflib-turbo 0.2.0a41 (PH-05) ignores unknown
+SHACL vocabulary like pySHACL, which removed the 22 entries that its earlier
+refusal caused. Grading does not claim SHACL 1.2 conformance: most 1.2 features
+are not implemented by either engine.
