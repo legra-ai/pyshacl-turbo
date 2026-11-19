@@ -32,7 +32,7 @@ jobs:
       - uses: actions/checkout@v7
         with:
           fetch-depth: 0
-      - uses: legra-ai/github-actions/.github/actions/prepare-cargo-release@8cdaad621c581c2f59e5eb0dfafc05f635c12c0a
+      - uses: legra-ai/github-actions/.github/actions/prepare-cargo-release@b3cebd0e56098fb20bbf8bc2d5770b82d9020ddd
         id: release
         with:
           breaking-change-bump: minor
@@ -102,7 +102,7 @@ jobs:
           private-key: ${{ secrets.RELEASE_WRITER_APP_KEY }}
           owner: ${{ github.repository_owner }}
           repositories: ${{ github.event.repository.name }}
-      - uses: legra-ai/github-actions/.github/actions/prepare-cargo-release@8cdaad621c581c2f59e5eb0dfafc05f635c12c0a
+      - uses: legra-ai/github-actions/.github/actions/prepare-cargo-release@b3cebd0e56098fb20bbf8bc2d5770b82d9020ddd
         id: release
         with:
           token: ${{ steps.writer.outputs.token || github.token }}
@@ -344,13 +344,13 @@ jobs:
       - uses: actions/setup-python@v7
         with:
           python-version: '3.13.18'
-      - uses: legra-ai/github-actions/.github/actions/tag-tested-release@8cdaad621c581c2f59e5eb0dfafc05f635c12c0a
+      - uses: legra-ai/github-actions/.github/actions/tag-tested-release@b3cebd0e56098fb20bbf8bc2d5770b82d9020ddd
         with:
           version: ${{ needs.prepare.outputs.version }}
           revision: ${{ needs.prepare.outputs.revision }}
           manifest-kind: uv
           tag-format: pep440
-      - uses: legra-ai/github-actions/.github/actions/generate-changelog@8cdaad621c581c2f59e5eb0dfafc05f635c12c0a
+      - uses: legra-ai/github-actions/.github/actions/generate-changelog@b3cebd0e56098fb20bbf8bc2d5770b82d9020ddd
         with:
           revision: ${{ needs.prepare.outputs.revision }}
       - uses: softprops/action-gh-release@v3
