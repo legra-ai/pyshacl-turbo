@@ -7,7 +7,9 @@ import os
 import shutil
 import subprocess
 import sys
+from contextlib import contextmanager
 from pathlib import Path
+from tempfile import TemporaryDirectory
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "tests"))
@@ -37,8 +39,11 @@ def output(*arguments):
     return value.strip()
 
 
-def build_archive(archive, output, isolated_output, *, environment=None, python="3.13"):
+def build_archive(archive, output, isolated_output, *, environment, python="3.13"):
     """uv unpacks beside --out-dir, so keep native sources outside callers' Cargo workspaces."""
+    target = environment.get("CARGO_TARGET_DIR")
+    if not target or not Path(target).is_absolute():
+        raise ValueError("Native builds require an explicit absolute CARGO_TARGET_DIR")
     run(*archive_command(archive, isolated_output, python), environment=environment)
     wheels = list(isolated_output.glob("*.whl"))
     if len(wheels) != 1:
@@ -50,6 +55,19 @@ def build_archive(archive, output, isolated_output, *, environment=None, python=
     ):
         raise ValueError("Copied original candidate wheel bytes changed")
     return destination
+
+
+@contextmanager
+def native_build_environment(environment):
+    """Own short Cargo scratch independently of artifact/output path depth.
+
+    The caller records the yielded environment before launching any build. Keep
+    scratch alive through validation, and remove it on both success and failure.
+    """
+    with TemporaryDirectory(prefix="pt-cargo-") as directory:
+        selected = environment.copy()
+        selected["CARGO_TARGET_DIR"] = str(Path(directory).resolve())
+        yield selected
 
 
 def archive_command(archive, isolated_output, python):
@@ -162,44 +180,48 @@ def main():
     )
     receipt_path = args.output / "candidate-build.json"
     isolated_output = args.output / "isolated-native-build"
-    environment = build_environment(context["owner"])
-    command = archive_command(context["archive"], isolated_output, sys.executable)
-    launch = load("benchmark_launch").capture(
-        environment, context["owner"], isolated_output, command
-    )
-    receipt["launch_configuration"] = launch
-    receipt_path.write_text(json.dumps(receipt, indent=2) + "\n")
-    wheels = args.output / "candidate-wheels"
-    wheels.mkdir()
-    receipt["retained_peer_wheels"] = {
-        prefix: str(
-            copy_original_wheel(
-                getattr(args, prefix + "_wheel"), wheels, getattr(args, prefix + "_wheel_sha256")
-            )
+    with native_build_environment(build_environment(context["owner"])) as environment:
+        command = archive_command(context["archive"], isolated_output, sys.executable)
+        launch = load("benchmark_launch").capture(
+            environment, context["owner"], isolated_output, command
         )
-        for prefix in ("facade", "owlrl")
-    }
-    receipt_path.write_text(json.dumps(receipt, indent=2) + "\n")
-    native_wheel = build_archive(
-        context["archive"],
-        wheels,
-        isolated_output,
-        environment=environment,
-        python=sys.executable,
-    )
-    authority.verify_inputs(args, context)
-    authority.verify_harness(ROOT, harness)
-    if (
-        load("benchmark_launch").capture(environment, context["owner"], isolated_output, command)
-        != launch
-    ):
-        raise ValueError("Actual native build tools or launch configuration changed")
-    installed = load("benchmark_candidate").verify(args, context, native_wheel, args.output)
-    authority.verify_inputs(args, context)
-    authority.verify_harness(ROOT, harness)
-    receipt.update(status="verified", installed_candidate=installed, performance_eligible=True)
-    receipt_path.write_text(json.dumps(receipt, indent=2) + "\n")
-    write_worker_sources(receipt, receipt_path, wheels / "sources.json")
+        receipt["launch_configuration"] = launch
+        receipt_path.write_text(json.dumps(receipt, indent=2) + "\n")
+        wheels = args.output / "candidate-wheels"
+        wheels.mkdir()
+        receipt["retained_peer_wheels"] = {
+            prefix: str(
+                copy_original_wheel(
+                    getattr(args, prefix + "_wheel"),
+                    wheels,
+                    getattr(args, prefix + "_wheel_sha256"),
+                )
+            )
+            for prefix in ("facade", "owlrl")
+        }
+        receipt_path.write_text(json.dumps(receipt, indent=2) + "\n")
+        native_wheel = build_archive(
+            context["archive"],
+            wheels,
+            isolated_output,
+            environment=environment,
+            python=sys.executable,
+        )
+        authority.verify_inputs(args, context)
+        authority.verify_harness(ROOT, harness)
+        if (
+            load("benchmark_launch").capture(
+                environment, context["owner"], isolated_output, command
+            )
+            != launch
+        ):
+            raise ValueError("Actual native build tools or launch configuration changed")
+        installed = load("benchmark_candidate").verify(args, context, native_wheel, args.output)
+        authority.verify_inputs(args, context)
+        authority.verify_harness(ROOT, harness)
+        receipt.update(status="verified", installed_candidate=installed, performance_eligible=True)
+        receipt_path.write_text(json.dumps(receipt, indent=2) + "\n")
+        write_worker_sources(receipt, receipt_path, wheels / "sources.json")
 
 
 if __name__ == "__main__":
