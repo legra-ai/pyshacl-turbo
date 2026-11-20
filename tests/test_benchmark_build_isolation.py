@@ -235,3 +235,13 @@ def test_archive_build_rejects_missing_explicit_target_before_spawning(monkeypat
     monkeypatch.setattr(module, "run", unexpected)
     with pytest.raises(ValueError, match="CARGO_TARGET_DIR"):
         module.build_archive(tmp_path / "original.tar.gz", tmp_path, tmp_path, environment={})
+
+
+def test_published_pure_facade_uses_the_explicit_archive_build_environment(tmp_path):
+    path = Path(__file__).resolve().parents[1] / "scripts/build_published_benchmark.py"
+    spec = importlib.util.spec_from_file_location("published_builder", path)
+    published = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(published)
+    archive, wheel = published.pure_artifacts(path.parents[1], tmp_path)
+    assert archive.is_file() and wheel.is_file()
+    assert archive.parent == wheel.parent == tmp_path / "facade-originals"
