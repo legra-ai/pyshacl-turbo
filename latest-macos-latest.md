@@ -2,45 +2,45 @@
 
 Serial isolated wheel environments; parse → in-place inference → validation, including shape compilation and full public report output. Shapes are parsed before timing. Python uses the original three libraries; shared Turbo retains one native dataset; historical Turbo includes RDFLib conversion. One warmup precedes retained timing samples. Independent cold processes measure whole-process peak RSS before observation encoding. Full-output speedups require stable, completely equal outputs. Generalized RDF differences remain visible. No timing threshold on shared CI runners. Closed literal fanout profiles separately measure only the public in-place OWL-RL invocation through a call-local owner; capture setup/cleanup and all observation encoding are outside timers. Raw full-API comparison remains unchanged. A separate logical_inplace_owlrl result excludes only independently validated container/return route fields; complete raw namespace order, caches, effects and context still must match, with full raw warm/cold stability.
 
-Measured: 2026-11-23T15:10:34.068906+00:00; platform: macOS-26.7.2-arm64-arm-64bit-Mach-O.
+Measured: 2026-11-24T15:20:09.450787+00:00; platform: macOS-26.7.2-arm64-arm-64bit-Mach-O.
 Harness revision: `f0d8f379a7f3a9a388ea23bbb18d344e3daccc67`; dirty source tree: `False`. Candidate wheel source revisions and hashes are retained in the raw evidence.
 
 | Operation/profile | Nodes | Environment | Median ms | Min–max ms | Peak MiB | Full-output parity | Speedup vs Python | Logical in-place OWL-RL status | Logical in-place ratio vs Python |
 |---|---:|---|---:|---:|---:|---|---:|---|---:|
-| pipeline_rdfs | 100 | candidate | 9.320 | 6.742–17.273 | 57.98 | equal | 11.20× | — | — |
-| pipeline_rdfs | 100 | python-reference | 104.368 | 92.252–128.554 | 59.31 | reference | — | — | — |
-| pipeline_rdfs | 100 | turbo-historical | 23.885 | 20.488–30.761 | 54.80 | different | — | — | — |
-| pipeline_owlrl | 100 | candidate | 14.802 | 13.910–15.909 | 58.58 | equal | 18.07× | — | — |
-| pipeline_owlrl | 100 | python-reference | 267.497 | 189.861–364.433 | 59.64 | reference | — | — | — |
-| pipeline_owlrl | 100 | turbo-historical | 34.463 | 31.059–39.388 | 56.92 | different | — | — | — |
-| pipeline_rdfs | 1000 | turbo-historical | 217.561 | 178.780–302.995 | 110.95 | different | — | — | — |
-| pipeline_rdfs | 1000 | python-reference | 700.630 | 582.818–1047.132 | 64.89 | reference | — | — | — |
-| pipeline_rdfs | 1000 | candidate | 44.420 | 42.815–49.986 | 63.58 | equal | 15.77× | — | — |
-| pipeline_owlrl | 1000 | python-reference | 958.274 | 907.172–1113.418 | 65.97 | reference | — | — | — |
-| pipeline_owlrl | 1000 | candidate | 90.431 | 79.965–115.830 | 63.23 | equal | 10.60× | — | — |
-| pipeline_owlrl | 1000 | turbo-historical | 231.498 | 223.762–268.374 | 120.62 | different | — | — | — |
-| pipeline_rdfs | 10000 | turbo-historical | 2936.026 | 2745.012–3478.300 | 693.34 | different | — | — | — |
-| pipeline_rdfs | 10000 | python-reference | 23076.103 | 18401.253–23372.643 | 140.45 | reference | — | — | — |
-| pipeline_rdfs | 10000 | candidate | 573.970 | 524.261–800.832 | 128.33 | equal | 40.20× | — | — |
-| pipeline_owlrl | 10000 | python-reference | 11196.134 | 11132.662–11738.804 | 149.56 | reference | — | — | — |
-| pipeline_owlrl | 10000 | candidate | 1264.432 | 1164.894–1548.587 | 121.27 | equal | 8.85× | — | — |
-| pipeline_owlrl | 10000 | turbo-historical | 5719.135 | 4955.921–5920.027 | 785.12 | different | — | — | — |
-| literal-reflexivity | 32 | python-reference | 22.538 | 21.736–24.585 | 47.62 | reference | — | — | — |
-| literal-reflexivity | 32 | candidate | 4.237 | 3.634–4.462 | 55.84 | different | — | logical_inplace_owlrl_different | — |
-| literal-type | 32 | candidate | 4.944 | 4.563–5.400 | 55.89 | different | — | logical_inplace_owlrl_different | — |
-| literal-type | 32 | python-reference | 37.021 | 30.188–49.550 | 47.59 | reference | — | — | — |
-| literal-reflexivity | 128 | candidate | 7.824 | 6.952–12.730 | 56.22 | different | — | logical_inplace_owlrl_different | — |
-| literal-reflexivity | 128 | python-reference | 58.078 | 49.304–63.804 | 47.61 | reference | — | — | — |
-| literal-type | 128 | python-reference | 71.203 | 66.803–74.858 | 47.55 | reference | — | — | — |
-| literal-type | 128 | candidate | 9.507 | 8.666–13.347 | 56.20 | different | — | logical_inplace_owlrl_different | — |
-| literal-reflexivity | 512 | python-reference | 220.591 | 195.564–251.920 | 49.25 | reference | — | — | — |
-| literal-reflexivity | 512 | candidate | 19.944 | 17.494–25.304 | 58.75 | different | — | logical_inplace_owlrl_different | — |
-| literal-type | 512 | python-reference | 252.283 | 222.747–390.610 | 49.50 | reference | — | — | — |
-| literal-type | 512 | candidate | 24.856 | 22.802–26.066 | 59.06 | different | — | logical_inplace_owlrl_different | — |
-| literal-reflexivity | 1000 | candidate | 30.415 | 28.019–38.362 | 62.14 | different | — | logical_inplace_owlrl_different | — |
-| literal-reflexivity | 1000 | python-reference | 363.714 | 356.625–449.246 | 51.41 | reference | — | — | — |
-| literal-type | 1000 | candidate | 43.206 | 37.481–59.411 | 62.64 | different | — | logical_inplace_owlrl_different | — |
-| literal-type | 1000 | python-reference | 515.822 | 457.938–596.519 | 52.05 | reference | — | — | — |
+| pipeline_rdfs | 100 | candidate | 8.067 | 7.208–12.648 | 58.11 | equal | 8.28× | — | — |
+| pipeline_rdfs | 100 | python-reference | 66.813 | 62.362–79.919 | 59.45 | reference | — | — | — |
+| pipeline_rdfs | 100 | turbo-historical | 23.617 | 21.608–26.696 | 54.62 | different | — | — | — |
+| pipeline_owlrl | 100 | candidate | 16.398 | 15.424–24.819 | 58.72 | equal | 13.56× | — | — |
+| pipeline_owlrl | 100 | python-reference | 222.367 | 163.979–268.069 | 59.70 | reference | — | — | — |
+| pipeline_owlrl | 100 | turbo-historical | 35.790 | 33.290–44.516 | 56.69 | different | — | — | — |
+| pipeline_rdfs | 1000 | turbo-historical | 231.283 | 191.105–251.616 | 106.98 | different | — | — | — |
+| pipeline_rdfs | 1000 | python-reference | 899.733 | 675.089–1002.036 | 64.95 | reference | — | — | — |
+| pipeline_rdfs | 1000 | candidate | 60.843 | 51.856–102.078 | 63.81 | equal | 14.79× | — | — |
+| pipeline_owlrl | 1000 | python-reference | 1101.771 | 1035.227–1521.226 | 66.16 | reference | — | — | — |
+| pipeline_owlrl | 1000 | candidate | 110.774 | 95.609–148.248 | 63.20 | equal | 9.95× | — | — |
+| pipeline_owlrl | 1000 | turbo-historical | 393.245 | 309.368–466.391 | 115.62 | different | — | — | — |
+| pipeline_rdfs | 10000 | turbo-historical | 4240.777 | 3395.927–5445.379 | 649.81 | different | — | — | — |
+| pipeline_rdfs | 10000 | python-reference | 25308.668 | 20659.542–35643.773 | 140.61 | reference | — | — | — |
+| pipeline_rdfs | 10000 | candidate | 601.820 | 514.041–774.286 | 127.91 | equal | 42.05× | — | — |
+| pipeline_owlrl | 10000 | python-reference | 13480.168 | 10883.933–14246.795 | 149.75 | reference | — | — | — |
+| pipeline_owlrl | 10000 | candidate | 1222.074 | 1141.548–1683.070 | 121.45 | equal | 11.03× | — | — |
+| pipeline_owlrl | 10000 | turbo-historical | 5504.196 | 5149.396–5940.028 | 745.06 | different | — | — | — |
+| literal-reflexivity | 32 | python-reference | 27.417 | 25.119–29.321 | 47.75 | reference | — | — | — |
+| literal-reflexivity | 32 | candidate | 4.814 | 4.509–5.455 | 56.02 | different | — | logical_inplace_owlrl_different | — |
+| literal-type | 32 | candidate | 4.791 | 4.731–5.028 | 55.92 | different | — | logical_inplace_owlrl_different | — |
+| literal-type | 32 | python-reference | 25.304 | 24.828–25.948 | 47.78 | reference | — | — | — |
+| literal-reflexivity | 128 | candidate | 7.861 | 7.700–8.741 | 56.27 | different | — | logical_inplace_owlrl_different | — |
+| literal-reflexivity | 128 | python-reference | 67.393 | 63.868–92.767 | 47.78 | reference | — | — | — |
+| literal-type | 128 | python-reference | 71.634 | 69.096–87.552 | 47.78 | reference | — | — | — |
+| literal-type | 128 | candidate | 9.515 | 8.147–9.684 | 56.31 | different | — | logical_inplace_owlrl_different | — |
+| literal-reflexivity | 512 | python-reference | 198.684 | 180.670–238.006 | 49.41 | reference | — | — | — |
+| literal-reflexivity | 512 | candidate | 20.497 | 19.858–25.520 | 58.81 | different | — | logical_inplace_owlrl_different | — |
+| literal-type | 512 | python-reference | 245.000 | 233.437–298.871 | 49.64 | reference | — | — | — |
+| literal-type | 512 | candidate | 26.619 | 22.808–34.031 | 59.09 | different | — | logical_inplace_owlrl_different | — |
+| literal-reflexivity | 1000 | candidate | 35.954 | 34.844–37.566 | 62.14 | different | — | logical_inplace_owlrl_different | — |
+| literal-reflexivity | 1000 | python-reference | 447.667 | 408.420–576.883 | 51.62 | reference | — | — | — |
+| literal-type | 1000 | candidate | 51.618 | 41.242–66.628 | 62.62 | different | — | logical_inplace_owlrl_different | — |
+| literal-type | 1000 | python-reference | 505.547 | 441.195–520.754 | 52.19 | reference | — | — | — |
 | literal-reflexivity | 32 | turbo-historical | — | — | — | not measured: Published a2 Dataset.namespaces() public API is absent; inference is not classified as failed | — | not measured | — |
 | literal-type | 32 | turbo-historical | — | — | — | not measured: Published a2 Dataset.namespaces() public API is absent; inference is not classified as failed | — | not measured | — |
 | literal-reflexivity | 128 | turbo-historical | — | — | — | not measured: Published a2 Dataset.namespaces() public API is absent; inference is not classified as failed | — | not measured | — |
