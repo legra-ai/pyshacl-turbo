@@ -7,7 +7,7 @@ dependencies = [
     "owlrl==7.6.2",
     "owlrl-turbo==0.1.0a2",
     "packaging==26.3",
-    "prettytable==3.18.0",
+    "prettytable==3.19.0",
     "pyparsing==3.3.3",
     "pyshacl==0.40.1",
     "pyshacl-turbo==0.2.4",
