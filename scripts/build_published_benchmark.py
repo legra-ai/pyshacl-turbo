@@ -29,13 +29,15 @@ def pure_artifacts(source, output):
     archives = list(originals.glob("*.tar.gz"))
     if len(archives) != 1:
         raise ValueError("Expected one original pure facade source archive")
-    wheel = load("build_benchmark_wheels").build_archive(
-        archives[0],
-        originals,
-        output / "isolated-pure-build",
-        environment=env,
-        python=sys.executable,
-    )
+    builder = load("build_benchmark_wheels")
+    with builder.native_build_environment(env) as build_environment:
+        wheel = builder.build_archive(
+            archives[0],
+            originals,
+            output / "isolated-pure-build",
+            environment=build_environment,
+            python=sys.executable,
+        )
     validation.run(
         [sys.executable, "-B", ROOT / "scripts/check_package.py", archives[0], wheel], env=env
     )
