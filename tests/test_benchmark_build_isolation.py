@@ -3,6 +3,7 @@
 import hashlib
 import importlib.util
 import json
+import os
 import subprocess
 from pathlib import Path
 
@@ -49,7 +50,10 @@ edition = "2024"
     archives = tmp_path / "archives"
     builder.run("uv", "build", "--sdist", "--out-dir", archives, source)
     archive = next(archives.glob("*.tar.gz"))
-    wheel = builder.build_archive(archive, output, tmp_path / "isolated-output")
+    with builder.native_build_environment(os.environ.copy()) as environment:
+        wheel = builder.build_archive(
+            archive, output, tmp_path / "isolated-output", environment=environment
+        )
     assert wheel.is_file() and wheel.parent == output
     assert not list(parent.glob("pipeline-wheels/.tmp*"))
     assert subprocess.Popen is original_spawner
@@ -195,3 +199,49 @@ def test_release_builder_preserves_the_real_setup_action_dev_profile_environment
     assert env["CARGO_PROFILE_DEV_DEBUG"] == "0"
     assert env["CARGO_INCREMENTAL"] == "0"
     assert env["CARGO_BUILD_WARNINGS"] == "deny"
+
+
+def test_native_build_scratch_is_short_owned_and_removed_after_failure(tmp_path):
+    module = builder_module()
+    inherited = {"CARGO_TARGET_DIR": str(tmp_path / "unrelated-target"), "PATH": "original"}
+    with (
+        pytest.raises(RuntimeError, match="build failed"),
+        module.native_build_environment(inherited) as environment,
+    ):
+        target = Path(environment["CARGO_TARGET_DIR"])
+        assert target.is_absolute() and target.is_dir()
+        assert not target.is_relative_to(tmp_path)
+        assert (
+            len(
+                str(
+                    target
+                    / "release/build/isolated-benchmark-fixture/0123456789abcdef/out/isolated_benchmark_fixture.exe"
+                )
+            )
+            < 260
+        )
+        assert environment["PATH"] == "original"
+        raise RuntimeError("build failed")
+    assert not target.exists()
+    assert inherited["CARGO_TARGET_DIR"] == str(tmp_path / "unrelated-target")
+
+
+def test_archive_build_rejects_missing_explicit_target_before_spawning(monkeypatch, tmp_path):
+    module = builder_module()
+
+    def unexpected(*args, **kwargs):
+        raise AssertionError("native process started without owned target scratch")
+
+    monkeypatch.setattr(module, "run", unexpected)
+    with pytest.raises(ValueError, match="CARGO_TARGET_DIR"):
+        module.build_archive(tmp_path / "original.tar.gz", tmp_path, tmp_path, environment={})
+
+
+def test_published_pure_facade_uses_the_explicit_archive_build_environment(tmp_path):
+    path = Path(__file__).resolve().parents[1] / "scripts/build_published_benchmark.py"
+    spec = importlib.util.spec_from_file_location("published_builder", path)
+    published = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(published)
+    archive, wheel = published.pure_artifacts(path.parents[1], tmp_path)
+    assert archive.is_file() and wheel.is_file()
+    assert archive.parent == wheel.parent == tmp_path / "facade-originals"
