@@ -6,6 +6,11 @@ from pathlib import Path
 
 import pytest
 
+# Differential tests compare pyshacl-turbo with the pinned reference pySHACL, so
+# `import pyshacl` must load the reference, not the start-up alias (ADR 0049).
+# The alias finder reads the switch on every lookup; subprocesses inherit it.
+os.environ["PYSHACL_TURBO_ALIAS"] = "0"
+
 
 @pytest.fixture
 def canonical_release_project(tmp_path):

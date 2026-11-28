@@ -155,7 +155,8 @@ harness and the divergence ledger:
 | W3C SHACL 1.0 (Graph inputs) | 120 | 1 fail, 119 pass | 1 error, 1 fail, 118 pass | 2 / 0 |
 | W3C SHACL 1.2 | 933 | 15 error, 51 fail, 670 not-run, 197 pass | 11 error, 69 fail, 670 not-run, 183 pass | 14 / 6 |
 | pySHACL upstream (non-JS) | 403 | first-party: 2 passed; locally-corrected: 1 passed; vendored: 400 passed | locally-corrected: 1 passed; vendored: 2 failed, 400 passed | 2 / 0 |
-| Direct API/CLI contract | 62 | 5 different, 55 equal, 1 reference_error, 1 reference_timeout (compared with pySHACL) | — | 5 / 2 |
+| Direct API/CLI contract | 62 | 4 different, 56 equal, 1 reference_error, 1 reference_timeout (compared with pySHACL) | — | 5 / 1 |
+| pySHACL commands (exit codes) | 28 | 4 different, 24 same (compared with pySHACL) | — | 4 / 0 |
 
 W3C SHACL 1.2 by test type (not-run cases are counted, with a typed reason):
 
@@ -206,6 +207,43 @@ For optional PyOxigraph Store input, use:
 uv add 'pyshacl-turbo[oxigraph]'
 ```
 
+## Drop-in for `import pyshacl`
+
+Installing pyshacl-turbo makes existing pySHACL code use Turbo without edits,
+even when the real `pyshacl` distribution is installed too (for example as
+another package's dependency):
+
+```python
+import pyshacl
+from pyshacl import validate
+from pyshacl.errors import ConstraintLoadError
+
+assert pyshacl.__turbo__  # True only when pyshacl-turbo serves the import
+conforms, report, text = validate(data, shacl_graph=shapes)
+```
+
+A start-up hook in the wheel (`pyshacl_turbo_alias.pth`, standard library only,
+about 0.7 ms per interpreter start) points `import pyshacl` and its submodules at
+`pyshacl_turbo.compat`, which mirrors pySHACL 0.40.2's public import paths.
+`pyshacl.__version__` is that mirrored API version, `0.40.2`;
+`pyshacl.__turbo_version__` is the installed pyshacl-turbo version. A pySHACL
+module that Turbo does not provide, such as `pyshacl.sh_http`, raises
+`pyshacl_turbo_alias.TurboAliasError`, never a mixture of the two packages.
+`import pyshacl_turbo` keeps working unchanged.
+
+To use the real pySHACL instead, set either switch before Python imports
+`pyshacl`:
+
+```sh
+PYSHACL_TURBO_ALIAS=0 python app.py   # this package only
+TURBO_ALIAS=0 python app.py           # every turbo package's alias
+```
+
+`0`, `false`, `no` and `off` turn an alias off. The hook does not run under
+`python -S` or in interpreters that skip `site-packages` `.pth` files; there
+`import pyshacl` loads the real pySHACL if it is installed. See
+[ADR 0049](https://github.com/legra-ai/pyshacl-turbo/blob/main/docs/adr/0049-pyshacl-import-alias.md).
+
 ## Command line
 
 Run validation or rules in your uv project:
@@ -228,6 +266,13 @@ To install both commands for regular use:
 uv tool install pyshacl-turbo
 pyshacl-turbo data.ttl -s shapes.ttl
 ```
+
+The wheel also installs pySHACL's command names, `pyshacl` and `pyshacl_rules`,
+which accept pySHACL's options and exit codes and follow the alias switch. If the
+real pySHACL is installed as well, the two distributions write the same script
+files and the one installed last owns them; both route through the switch, so
+`pyshacl` runs Turbo unless `PYSHACL_TURBO_ALIAS=0`. `pyshacl-turbo` and
+`pyshacl-turbo-rules` always run Turbo.
 
 If uv reports that its tool directory is missing from `PATH`, run
 `uv tool update-shell` and restart your shell. Tool environments are isolated;

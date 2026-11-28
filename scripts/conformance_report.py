@@ -16,6 +16,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "tests"))
+from cli_parity import CASES as CLI_CASES
 from divergence_ledger import Kind, Ledger, Origin, Suite
 from w3c_grading import (
     PYSHACL,
@@ -38,6 +39,7 @@ TITLES = {
     Suite.W3C_SHACL12: "W3C SHACL 1.2",
     Suite.PYSHACL_UPSTREAM: "pySHACL upstream (non-JS)",
     Suite.DIRECT_CONTRACT: "Direct API/CLI contract",
+    Suite.PYSHACL_CLI: "pySHACL commands (exit codes)",
 }
 
 
@@ -80,6 +82,16 @@ def direct() -> dict[str, object]:
     }
 
 
+def cli() -> dict[str, object]:
+    # tests/test_cli_parity.py reconciles the measured differences with the ledger exactly.
+    differing = len(Ledger.load().select(Suite.PYSHACL_CLI))
+    return {
+        "cases": len(CLI_CASES),
+        "origin": {Origin.FIRST_PARTY.value: len(CLI_CASES)},
+        "outcomes": {"different": differing, "same": len(CLI_CASES) - differing},
+    }
+
+
 def collect() -> dict[str, object]:
     return {
         "schema": 1,
@@ -88,6 +100,7 @@ def collect() -> dict[str, object]:
         Suite.W3C_SHACL12.value: w3c(W3C_SHACL12),
         Suite.PYSHACL_UPSTREAM.value: upstream(),
         Suite.DIRECT_CONTRACT.value: direct(),
+        Suite.PYSHACL_CLI.value: cli(),
     }
 
 
@@ -127,6 +140,12 @@ def render(summary: dict) -> str:
         f"| {TITLES[Suite.DIRECT_CONTRACT]} | {data['cases']} "
         f"| {outcomes(data['outcomes'])} (compared with pySHACL) | — "
         f"| {ledger_cell(summary, Suite.DIRECT_CONTRACT)} |"
+    )
+    data = summary[Suite.PYSHACL_CLI.value]
+    rows.append(
+        f"| {TITLES[Suite.PYSHACL_CLI]} | {data['cases']} "
+        f"| {outcomes(data['outcomes'])} (compared with pySHACL) | — "
+        f"| {ledger_cell(summary, Suite.PYSHACL_CLI)} |"
     )
     shacl12 = summary[Suite.W3C_SHACL12.value]
     types = [

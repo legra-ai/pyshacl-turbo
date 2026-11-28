@@ -20,6 +20,10 @@ defaults:
   run:
     shell: bash {0}
 
+# Differential gates compare with the reference pySHACL: turn off the ADR 0049 import alias.
+env:
+  PYSHACL_TURBO_ALIAS: '0'
+
 jobs:
   plan:
     runs-on: ubuntu-latest

@@ -1,0 +1,1 @@
+import pyshacl_turbo_alias; pyshacl_turbo_alias.install()

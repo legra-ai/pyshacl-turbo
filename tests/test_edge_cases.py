@@ -90,17 +90,30 @@ def test_missing_target_projection_fails_during_compilation():
 
 
 @pytest.mark.parametrize(
-    "definition",
+    ("definition", "message"),
     [
-        "sh:minCount -1",
-        "sh:minCount 1, 2",
-        'sh:minCount "1"',
-        'sh:deactivated "true"',
-        'sh:severity "error"',
+        ("sh:minCount -1", "MinCountConstraintComponent sh:minCount must be an integer >= 0."),
+        (
+            'sh:minCount "1"',
+            "MinCountConstraintComponent sh:minCount must be a literal with datatype xsd:integer.",
+        ),
     ],
 )
+def test_malformed_counts_are_reference_constraint_errors(definition, message):
+    with pytest.raises(turbo.ConstraintLoadError) as error:
+        turbo.compile_shapes(graph(f"ex:S a sh:PropertyShape; sh:path ex:p; {definition}."))
+    assert error.value.args == [
+        message,
+        "https://www.w3.org/TR/shacl/#MinCountConstraintComponent",
+    ]
+
+
+@pytest.mark.parametrize(
+    "definition",
+    ["sh:minCount 1, 2", 'sh:deactivated "true"', 'sh:severity "error"'],
+)
 def test_malformed_shapes_are_errors(definition):
-    with pytest.raises((ValueError, turbo.ConstraintLoadError)):
+    with pytest.raises(ValueError):
         turbo.compile_shapes(graph(f"ex:S a sh:PropertyShape; sh:path ex:p; {definition}."))
 
 

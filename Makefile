@@ -1,5 +1,8 @@
 PYTHON ?= python3.13
 
+# Differential targets compare with the reference pySHACL: turn the import alias off (ADR 0049).
+export PYSHACL_TURBO_ALIAS := 0
+
 .PHONY: dev test test-compatibility test-coverage lint check benchmark benchmark-pipeline benchmark-targeting benchmark-preparation coverage
 
 dev:

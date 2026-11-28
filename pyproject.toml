@@ -21,7 +21,7 @@ classifiers = [
 ]
 dependencies = [
     "rdflib[html]>=7.3,<8",
-    "rdflib-turbo==0.2.0a43",
+    "rdflib-turbo==0.2.0a46",
 ]
 
 [project.urls]
@@ -36,16 +36,23 @@ test = [
     "pyshacl[oxigraph]==0.40.2",
     "ruff>=0.12",
     "pyyaml>=6,<7",
-    "rdflib-turbo==0.2.0a43",
+    "rdflib-turbo==0.2.0a46",
     "owlrl-turbo>=0.2.0a1,<0.3",
 ]
 
 [project.scripts]
 pyshacl-turbo = "pyshacl_turbo.cli:entrypoint"
 pyshacl-turbo-rules = "pyshacl_turbo.cli:rules_entrypoint"
+pyshacl = "pyshacl_turbo_alias:validate_command"
+pyshacl_rules = "pyshacl_turbo_alias:rules_command"
 
 [tool.hatch.build.targets.wheel]
 packages = ["python/pyshacl_turbo"]
+
+[tool.hatch.build.targets.wheel.force-include]
+# The start-up import alias (ADR 0049): a stdlib-only hook module and the .pth that installs it.
+"python/pyshacl_turbo_alias.py" = "pyshacl_turbo_alias.py"
+"python/pyshacl_turbo_alias.pth" = "pyshacl_turbo_alias.pth"
 
 [tool.hatch.build.targets.sdist]
 include = [
@@ -79,7 +86,7 @@ exclude = [
 testpaths = ["tests"]
 
 [tool.coverage.run]
-source = ["pyshacl_turbo"]
+source = ["pyshacl_turbo", "pyshacl_turbo_alias"]
 branch = true
 relative_files = true
 

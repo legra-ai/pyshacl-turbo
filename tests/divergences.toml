@@ -51,14 +51,6 @@ adr = "docs/adr/0020-measure-the-complete-public-contract.md"
 
 [[divergence]]
 suite = "direct-contract"
-case = "errors/constraint-load"
-kind = "gap"
-baseline = "pyshacl"
-reason = "Turbo raises ValueError for a malformed sh:minCount; pySHACL raises ConstraintLoadError with its specification link."
-adr = "docs/adr/0020-measure-the-complete-public-contract.md"
-
-[[divergence]]
-suite = "direct-contract"
 case = "errors/rule-load"
 kind = "gap"
 baseline = "pyshacl"
@@ -248,3 +240,35 @@ kind = "intentional"
 baseline = "pyshacl"
 reason = "Beyond pySHACL: Turbo reports a SPARQL solution binding ?failure true as a validation failure."
 adr = "docs/adr/0047-conformance-divergence-ledger.md"
+
+[[divergence]]
+suite = "pyshacl-cli"
+case = "validate/bad-data-syntax"
+kind = "intentional"
+baseline = "pyshacl"
+reason = "Reference crash: pySHACL's command exits 1 with an uncaught rdflib IndexError traceback for malformed Turtle; Turbo reports the parser error and exits 2 like its other load errors."
+adr = "docs/adr/0049-pyshacl-import-alias.md"
+
+[[divergence]]
+suite = "pyshacl-cli"
+case = "validate/bad-shapes-syntax"
+kind = "intentional"
+baseline = "pyshacl"
+reason = "Reference crash: pySHACL's command exits 1 with an uncaught rdflib IndexError traceback for malformed shapes Turtle; Turbo reports the parser error and exits 2."
+adr = "docs/adr/0049-pyshacl-import-alias.md"
+
+[[divergence]]
+suite = "pyshacl-cli"
+case = "rules/bad-shapes-syntax"
+kind = "intentional"
+baseline = "pyshacl"
+reason = "Reference crash: pySHACL's pyshacl_rules exits 1 with an UnboundLocalError traceback for malformed shapes Turtle; Turbo reports the parser error and exits 2."
+adr = "docs/adr/0049-pyshacl-import-alias.md"
+
+[[divergence]]
+suite = "pyshacl-cli"
+case = "validate/rules-option"
+kind = "intentional"
+baseline = "pyshacl"
+reason = "Superset: Turbo's pyshacl command also accepts --rules (its pyshacl_rules implementation) and expands the rules; pySHACL rejects the option with exit 2."
+adr = "docs/adr/0049-pyshacl-import-alias.md"

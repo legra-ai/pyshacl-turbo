@@ -33,10 +33,11 @@ def main():
         [str(ROOT / "tests/upstream_support"), str(source.parent), env.get("PYTHONPATH", "")]
     )
     env["PYSHACL_TURBO_UPSTREAM_REPORT"] = str(report.resolve())
-    if args.reference:
-        env.pop("PYSHACL_TURBO_TEST_REDIRECT", None)
-    else:
-        env["PYSHACL_TURBO_TEST_REDIRECT"] = "1"
+    # The suite's own `import pyshacl` selects the engine (ADR 0049): the
+    # reference run turns the pyshacl-turbo alias off, the turbo run requires it.
+    env.pop("TURBO_ALIAS", None)
+    env["PYSHACL_TURBO_ALIAS"] = "0" if args.reference else "1"
+    env["PYSHACL_TURBO_UPSTREAM_ENGINE"] = "reference" if args.reference else "turbo"
     result = subprocess.run(
         [
             "uv",

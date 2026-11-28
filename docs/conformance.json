@@ -3,7 +3,11 @@
   "ledger": {
     "direct-contract": {
       "intentional": 5,
-      "gap": 2
+      "gap": 1
+    },
+    "pyshacl-cli": {
+      "intentional": 4,
+      "gap": 0
     },
     "pyshacl-upstream": {
       "intentional": 2,
@@ -209,14 +213,24 @@
     },
     "versions": {
       "pyshacl": "0.40.2",
-      "pyshacl-turbo": "0.10.9",
-      "rdflib-turbo": "0.2.0a43"
+      "pyshacl-turbo": "0.10.10",
+      "rdflib-turbo": "0.2.0a46"
     },
     "outcomes": {
-      "different": 5,
-      "equal": 55,
+      "different": 4,
+      "equal": 56,
       "reference_error": 1,
       "reference_timeout": 1
+    }
+  },
+  "pyshacl-cli": {
+    "cases": 28,
+    "origin": {
+      "first-party": 28
+    },
+    "outcomes": {
+      "different": 4,
+      "same": 24
     }
   }
 }
