@@ -41,6 +41,8 @@ def environment():
         UV_NO_BUILD="1",
         UV_PYTHON=sys.executable,
         PYTHONDONTWRITEBYTECODE="1",
+        # The gates compare with the reference pySHACL; ADR 0049 alias off.
+        PYSHACL_TURBO_ALIAS="0",
     )
     return result
 

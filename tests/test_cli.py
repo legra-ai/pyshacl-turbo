@@ -159,3 +159,52 @@ def test_console_and_module_entrypoints(cli_files, monkeypatch, capsys, entry):
                 runpy.run_module("pyshacl_turbo.cli", run_name="__main__")
     assert exited.value.code == 0
     assert capsys.readouterr().out
+
+
+@pytest.mark.parametrize(
+    ("arguments", "message"),
+    [
+        (["-q", "data.ttl"], "SPARQL Endpoint must start with http:// or https://."),
+        (["--sparql-mode", "http://a", "http://b"], "only supports a single target."),
+    ],
+)
+def test_sparql_mode_rejects_inputs_like_the_reference(arguments, message, capsys):
+    assert main(arguments) == 1
+    assert message in capsys.readouterr().err
+
+
+def test_sparql_mode_passes_one_endpoint_to_validation(cli_files, capsys):
+    _, shapes = cli_files
+    # Remote endpoints are not implemented; the reference's exit status 3 applies.
+    assert main(["-q", " https://example.org/sparql ", "-s", str(shapes)]) == 3
+    assert "Remote SPARQL endpoint input" in capsys.readouterr().err
+
+
+@pytest.mark.parametrize(
+    ("arguments", "environ"),
+    [
+        (["--server"], {}),
+        (["data.ttl"], {"PYSHACL_SERVER": "1"}),
+        (["data.ttl"], {"PYSHACL_HTTP": "true"}),
+    ],
+)
+def test_the_http_server_is_reported_as_unavailable(arguments, environ, monkeypatch, capsys):
+    for name in ("PYSHACL_SERVER", "PYSHACL_HTTP"):
+        monkeypatch.delenv(name, raising=False)
+    for name, value in environ.items():
+        monkeypatch.setenv(name, value)
+    assert main(arguments) == 1
+    assert "does not provide the pySHACL HTTP server" in capsys.readouterr().err
+
+
+@pytest.mark.parametrize("value", ["0", "False", "no", ""])
+def test_false_server_switches_validate_normally(value, cli_files, monkeypatch):
+    data, shapes = cli_files
+    monkeypatch.setenv("PYSHACL_SERVER", value)
+    assert main([str(data), "-s", str(shapes)]) == 1
+
+
+def test_the_server_switch_does_not_apply_to_rules(cli_files, monkeypatch):
+    data, shapes = cli_files
+    monkeypatch.setenv("PYSHACL_SERVER", "1")
+    assert main(["--rules", str(data), "-s", str(shapes)]) == 0

@@ -5,6 +5,10 @@
       "intentional": 5,
       "gap": 2
     },
+    "pyshacl-cli": {
+      "intentional": 4,
+      "gap": 0
+    },
     "pyshacl-upstream": {
       "intentional": 2,
       "gap": 0
@@ -217,6 +221,16 @@
       "equal": 55,
       "reference_error": 1,
       "reference_timeout": 1
+    }
+  },
+  "pyshacl-cli": {
+    "cases": 28,
+    "origin": {
+      "first-party": 28
+    },
+    "outcomes": {
+      "different": 4,
+      "same": 24
     }
   }
 }

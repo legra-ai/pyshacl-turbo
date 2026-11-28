@@ -2,6 +2,7 @@
 
 import argparse
 import logging
+import os
 import sys
 from contextlib import ExitStack
 from importlib.metadata import version
@@ -109,6 +110,8 @@ def main(argv=None):
     parser.add_argument("--shape")
     parser.add_argument("-d", "--debug", action="store_true")
     parser.add_argument("--rules", action="store_true")
+    parser.add_argument("-q", "--sparql-mode", dest="sparql_mode", action="store_true")
+    parser.add_argument("--server", action="store_true")
     parser.add_argument("-df", "--data-file-format", dest="data_graph_format")
     parser.add_argument("-sf", "--shacl-file-format", dest="shacl_graph_format")
     parser.add_argument("-ef", "--ont-file-format", dest="ont_graph_format")
@@ -121,6 +124,8 @@ def main(argv=None):
     parser.add_argument("-o", "--output")
     parser.add_argument("-V", "--version", action="version", version=version("pyshacl-turbo"))
     args = parser.parse_args(argv)
+    if args.server or (not args.rules and _server_requested(os.environ)):
+        return _no_server()
     if not args.data:
         print("Input Error. No DataGraph file or endpoint supplied.", file=sys.stderr)
         parser.print_usage(sys.stderr)
@@ -151,6 +156,20 @@ def main(argv=None):
         focus_nodes=[name.strip() for name in args.focus.split(",")] if args.focus else None,
         use_shapes=[name.strip() for name in args.shape.split(",")] if args.shape else None,
     )
+    if args.sparql_mode:
+        if len(args.data) > 1:
+            print(
+                "Input Error. SPARQL Endpoint mode only supports a single target.", file=sys.stderr
+            )
+            return 1
+        endpoint = args.data[0].strip()
+        if not endpoint.lower().startswith(("http:", "https:")):
+            print(
+                "Input Error. SPARQL Endpoint must start with http:// or https://.", file=sys.stderr
+            )
+            return 1
+        options["sparql_mode"] = True
+        return _run(args, [endpoint], options)
     with ExitStack() as files:
         try:
             data = [
@@ -166,6 +185,22 @@ def main(argv=None):
             print("Input Error. DataGraph file not readable.", file=sys.stderr)
             return 1
         return _run(args, data, options)
+
+
+def _server_requested(environ):
+    # pySHACL's str_is_true: any non-empty value except its false spellings.
+    value = environ.get("PYSHACL_SERVER", environ.get("PYSHACL_HTTP", ""))
+    return bool(value) and value.lower() not in {"0", "f", "n", "false", "no"}
+
+
+def _no_server():
+    # pySHACL exits 1 when its optional HTTP server components are missing.
+    print(
+        "pyshacl-turbo does not provide the pySHACL HTTP server; set PYSHACL_TURBO_ALIAS=0 "
+        "and install pyshacl[http] to run it.",
+        file=sys.stderr,
+    )
+    return 1
 
 
 def _validation_output(result, rdf_format):

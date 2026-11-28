@@ -29,6 +29,7 @@ class Suite(enum.StrEnum):
     W3C_SHACL12 = "w3c-shacl12"
     PYSHACL_UPSTREAM = "pyshacl-upstream"
     DIRECT_CONTRACT = "direct-contract"
+    PYSHACL_CLI = "pyshacl-cli"
 
 
 class Kind(enum.StrEnum):

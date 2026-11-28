@@ -52,6 +52,38 @@ def check_commands(validation, rules, directory, environment, version):
     assert derived in expanded, expanded
 
 
+ALIAS_PROBE = (
+    "import pyshacl; "
+    "print(getattr(pyshacl, '__turbo__', False), pyshacl.__version__, pyshacl.__name__)"
+)
+
+
+def check_alias(project_run, directory, environment, version, *, reference):
+    """ADR 0049: `import pyshacl` and the pyshacl commands follow the alias switch."""
+    on = {k: v for k, v in environment.items() if k not in {"PYSHACL_TURBO_ALIAS", "TURBO_ALIAS"}}
+    probe = [*project_run, "python", "-c", ALIAS_PROBE]
+    assert run(probe, on).split() == ["True", "0.40.2", "pyshacl_turbo.compat"]
+    check_commands(
+        [*project_run, "pyshacl"], [*project_run, "pyshacl_rules"], directory, on, version
+    )
+    for switch in ("PYSHACL_TURBO_ALIAS", "TURBO_ALIAS"):
+        off = {**on, switch: "0"}
+        if reference:
+            assert run(probe, off).split() == ["False", "0.40.2", "pyshacl"]
+            shown = subprocess.run(
+                [*map(str, project_run), "pyshacl", "--version"],
+                env=off,
+                text=True,
+                capture_output=True,
+                check=True,
+                timeout=180,
+            )
+            assert "PySHACL Version: 0.40.2" in shown.stdout + shown.stderr, shown
+        else:
+            run(probe, off, expected=1)
+            run([*project_run, "pyshacl", "--version"], off, expected=1)
+
+
 def verify(directory):
     wheels = list(directory.resolve().glob("*.whl"))
     if len(wheels) != 1:
@@ -106,6 +138,10 @@ def verify(directory):
                 "uv add / uv sync / uv run: locked project, API, CLIs and Store extra passed.",
                 flush=True,
             )
+            check_alias(project_run, directory, environment, version, reference=False)
+            run(["uv", "--directory", project, "add", "pyshacl==0.40.2"], environment)
+            check_alias(project_run, directory, environment, version, reference=True)
+            print("Import alias: on by default, off by either switch, beside pySHACL.", flush=True)
 
             check_commands(
                 ["uv", "tool", "run", "--from", wheel, "pyshacl-turbo"],

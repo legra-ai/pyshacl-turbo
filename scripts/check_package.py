@@ -26,6 +26,18 @@ def check(path):
         assert "pyshacl_turbo/_native.py" in files, "Shared native provider facade missing"
         assert "pyshacl_turbo/assets/shacl-shacl.ttl" in files
         assert files["pyshacl_turbo/py.typed"] == b"", "Inline typing marker missing"
+        # ADR 0049: the start-up import alias, never a top-level pyshacl package.
+        assert (
+            files["pyshacl_turbo_alias.pth"]
+            == (Path(__file__).parents[1] / "python/pyshacl_turbo_alias.pth").read_bytes()
+        ), "Start-up import alias hook missing or changed"
+        assert "pyshacl_turbo_alias.py" in files and "pyshacl_turbo/compat/__init__.py" in files
+        assert not any(name.startswith("pyshacl/") for name in files), (
+            "A top-level pyshacl package would collide with the real pySHACL wheel"
+        )
+        scripts = files[metadata_names[0].removesuffix("METADATA") + "entry_points.txt"].decode()
+        for script in ("pyshacl", "pyshacl_rules", "pyshacl-turbo", "pyshacl-turbo-rules"):
+            assert f"\n{script} = " in scripts, f"Console script missing: {script}"
     else:
         with tarfile.open(path) as archive:
             files = {
@@ -40,6 +52,8 @@ def check(path):
             "pyproject.toml",
             "python/pyshacl_turbo/py.typed",
             "python/pyshacl_turbo/_native.py",
+            "python/pyshacl_turbo_alias.py",
+            "python/pyshacl_turbo_alias.pth",
             "tests/test_release.py",
             "scripts/smoke_wheel.py",
             "scripts/provider_validation.py",

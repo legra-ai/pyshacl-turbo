@@ -1,76 +1,58 @@
-"""Test-only routing of the pinned upstream tests to turbo.
+"""Select the engine behind the upstream suite's own ``import pyshacl``.
 
-Reference report comparators remain test infrastructure. Original validation,
-rules, loading and query-execution entry points cannot execute through this bridge.
+The turbo run imports ``pyshacl`` through pyshacl-turbo's start-up alias (ADR
+0049); the reference run turns the alias off and imports the pinned pySHACL.
+Nothing is monkeypatched: the engine is whichever package ``import pyshacl``
+resolves to, and that is verified before any test runs.
 """
 
-import importlib.util
+import os
 import sys
+from enum import Enum
+
+ENGINE_VARIABLE = "PYSHACL_TURBO_UPSTREAM_ENGINE"
 
 
-def install():
-    import pyshacl
-    import pyshacl.rdfutil.load as loader
-    import pyshacl.validator_conformance as conformance
-    import pyshacl_turbo as turbo
-    from pyshacl import entrypoints, errors, rdfutil
+class Engine(Enum):
+    TURBO = "turbo"
+    REFERENCE = "reference"
 
-    if getattr(pyshacl, "_turbo_test_redirect", False):
-        return
+    @classmethod
+    def requested(cls):
+        return cls(os.environ[ENGINE_VARIABLE])
 
-    def unsupported(name):
-        def call(*args, **kwargs):
-            raise NotImplementedError(f"Turbo compatibility entry point not implemented: {name}")
+    @classmethod
+    def imported(cls):
+        import pyshacl
 
-        return call
-
-    for name in ("validate", "validate_each", "shacl_rules", "meta_validate"):
-        implementation = getattr(turbo, name, unsupported(name))
-        setattr(pyshacl, name, implementation)
-        setattr(entrypoints, name, implementation)
-
-    for name, implementation in (
-        ("ValidationFailure", turbo.ValidationFailure),
-        ("ReportableRuntimeError", turbo.ReportableRuntimeError),
-        ("ConstraintLoadError", ValueError),
-        ("ShapeLoadError", ValueError),
-        ("RuleLoadError", ValueError),
-    ):
-        setattr(errors, name, implementation)
-        if hasattr(conformance, name):
-            setattr(conformance, name, implementation)
-
-    implementation = getattr(turbo, "load_from_source", unsupported("load_from_source"))
-    loader.load_from_source = implementation
-    rdfutil.load_from_source = implementation
-    for name in ("extract_query_and_expected_result", "evaluate_query_testcase"):
-        setattr(conformance, name, getattr(turbo, name, unsupported(name)))
-
-    from pyshacl.graph_abstraction import DataGraph
-    from pyshacl.rule_expand_runner import RuleExpandRunner
-    from pyshacl.validator import Validator
-
-    DataGraph.from_oxigraph_store = staticmethod(
-        getattr(turbo, "from_oxigraph_store", unsupported("from_oxigraph_store"))
-    )
-    Validator.run = unsupported("reference Validator.run is forbidden")
-    RuleExpandRunner.run = unsupported("reference RuleExpandRunner.run is forbidden")
-    pyshacl._turbo_test_redirect = True
+        return cls.TURBO if getattr(pyshacl, "__turbo__", False) is True else cls.REFERENCE
 
 
-def configure_item(item, redirect_cli=True):
-    """Disable upstream failure allowances and route CLI subprocesses explicitly."""
+def require_engine():
+    """Fail the session when ``import pyshacl`` resolves to the other engine."""
+    requested, imported = Engine.requested(), Engine.imported()
+    if requested is not imported:
+        raise RuntimeError(
+            f"The {requested.value} upstream run imported the {imported.value} pyshacl; "
+            "check the pyshacl-turbo alias switch"
+        )
+    return requested
+
+
+def configure_item(item, engine):
+    """Disable upstream failure allowances and pin CLI subprocesses to the engine.
+
+    The turbo run keeps the upstream commands, so the installed ``pyshacl`` and
+    ``pyshacl_rules`` scripts run through the alias. The reference run uses the
+    reference modules directly, because the last-installed script may be turbo's.
+    """
     module = item.module
     for name in ("ALLOWABLE_FAILURES", "ALLOWABLE_NOT_IMPLEMENTED"):
         if hasattr(module, name):
             setattr(module, name, [])
-    if not redirect_cli:
+    if engine is Engine.TURBO:
         return
     if hasattr(module, "pyshacl_command"):
-        if importlib.util.find_spec("pyshacl_turbo.cli") is None:
-            raise NotImplementedError("Turbo CLI is not implemented")
-        module.pyshacl_command = [sys.executable, "-m", "pyshacl_turbo.cli"]
+        module.pyshacl_command = [sys.executable, "-m", "pyshacl.cli"]
     if hasattr(module, "pyshacl_rules_command"):
-        if importlib.util.find_spec("pyshacl_turbo.cli") is None:
-            raise NotImplementedError("Turbo CLI is not implemented")
-        module.pyshacl_rules_command = [sys.executable, "-m", "pyshacl_turbo.cli", "--rules"]
+        module.pyshacl_rules_command = [sys.executable, "-m", "pyshacl.cli_rules"]

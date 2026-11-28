@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 from case_ids import portable_id
-from redirect import configure_item, install
+from redirect import Engine, configure_item, require_engine
 
 ROWS = {}
 COLLECTION_ERRORS = []
@@ -17,8 +17,7 @@ def pytest_configure(config):
     from process_launch import install as install_process_launcher
 
     install_process_launcher()
-    if os.environ.get("PYSHACL_TURBO_TEST_REDIRECT") == "1":
-        install()
+    require_engine()
 
 
 def pytest_collection_modifyitems(items):
@@ -32,7 +31,7 @@ def pytest_collection_modifyitems(items):
         }
         if correction := CORRECTIONS.get(ROWS[item.nodeid]["id"]):
             ROWS[item.nodeid].update(local_correction=correction, origin="locally-corrected")
-        if os.environ.get("PYSHACL_TURBO_TEST_REDIRECT") == "1" and item.nodeid in PORTS:
+        if Engine.requested() is Engine.TURBO and item.nodeid in PORTS:
             port = PORTS[item.nodeid]
             module = item.module
             item.obj = lambda port=port, module=module: port(module)
@@ -40,7 +39,7 @@ def pytest_collection_modifyitems(items):
 
 
 def pytest_runtest_setup(item):
-    configure_item(item, redirect_cli=os.environ.get("PYSHACL_TURBO_TEST_REDIRECT") == "1")
+    configure_item(item, Engine.requested())
 
 
 @pytest.hookimpl(hookwrapper=True)
@@ -79,7 +78,7 @@ def pytest_sessionfinish(session, exitstatus):
         json.dumps(
             {
                 "reference": "pySHACL 0.40.1",
-                "engine": "turbo" if os.environ.get("PYSHACL_TURBO_TEST_REDIRECT") else "reference",
+                "engine": Engine.imported().value,
                 "excluded": ["SHACL-JS"],
                 "summary": dict(Counter(row["status"] for row in rows)),
                 "origin_summary": origin_summary(rows),
