@@ -1,5 +1,33 @@
 [
   {
+    "run_id": "46111846110-1",
+    "platform": "macos-latest",
+    "date": "2026-11-28T05:45:29.393731+00:00",
+    "revision": "0dda2a5678d7863ab07fba7f3b40393295fc13db",
+    "versions": {
+      "owlrl-turbo": "0.2.0a2",
+      "rdflib-turbo": "0.2.0a43",
+      "pyshacl-turbo": "0.10.7"
+    },
+    "report": "runs/46111846110-1/macos-latest/releases.md",
+    "raw": "runs/46111846110-1/macos-latest/releases.json.gz",
+    "workflow": "https://github.com/legra-ai/pyshacl-turbo/actions/runs/46111846110"
+  },
+  {
+    "run_id": "46111846110-1",
+    "platform": "ubuntu-latest",
+    "date": "2026-11-28T05:40:13.856819+00:00",
+    "revision": "0dda2a5678d7863ab07fba7f3b40393295fc13db",
+    "versions": {
+      "rdflib-turbo": "0.2.0a43",
+      "pyshacl-turbo": "0.10.7",
+      "owlrl-turbo": "0.2.0a2"
+    },
+    "report": "runs/46111846110-1/ubuntu-latest/releases.md",
+    "raw": "runs/46111846110-1/ubuntu-latest/releases.json.gz",
+    "workflow": "https://github.com/legra-ai/pyshacl-turbo/actions/runs/46111846110"
+  },
+  {
     "run_id": "46088574143-1",
     "platform": "macos-latest",
     "date": "2026-11-28T01:46:44.419398+00:00",
