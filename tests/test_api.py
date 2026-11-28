@@ -222,10 +222,18 @@ def test_dataset_inplace_preparation_preserves_inference_destination(named, vali
 
 
 def test_ignored_properties_without_closed_is_invalid():
-    with pytest.raises((ValueError, turbo.ConstraintLoadError), match="ignoredProperties"):
+    with pytest.raises(turbo.ConstraintLoadError) as error:
         turbo.validate(
             graph(""), shacl_graph=graph("ex:S a sh:NodeShape; sh:ignoredProperties (ex:type).")
         )
+    # pySHACL 0.40.2's exact arguments (upstream issues/test_058).
+    assert error.value.args == [
+        (
+            "ClosedConstraintComponent: You can only use sh:ignoredProperties on a Closed Shape "
+            "(sh:closed)."
+        ),
+        "https://www.w3.org/TR/shacl/#ClosedConstraintComponent",
+    ]
 
 
 def test_function_declarations_are_inactive_without_advanced_mode():

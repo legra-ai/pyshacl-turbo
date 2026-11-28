@@ -155,7 +155,7 @@ harness and the divergence ledger:
 | W3C SHACL 1.0 (Graph inputs) | 120 | 1 fail, 119 pass | 1 error, 1 fail, 118 pass | 2 / 0 |
 | W3C SHACL 1.2 | 933 | 15 error, 51 fail, 670 not-run, 197 pass | 11 error, 69 fail, 670 not-run, 183 pass | 14 / 6 |
 | pySHACL upstream (non-JS) | 403 | first-party: 2 passed; locally-corrected: 1 passed; vendored: 400 passed | locally-corrected: 1 passed; vendored: 2 failed, 400 passed | 2 / 0 |
-| Direct API/CLI contract | 62 | 5 different, 55 equal, 1 reference_error, 1 reference_timeout (compared with pySHACL) | — | 5 / 2 |
+| Direct API/CLI contract | 62 | 4 different, 56 equal, 1 reference_error, 1 reference_timeout (compared with pySHACL) | — | 5 / 1 |
 | pySHACL commands (exit codes) | 28 | 4 different, 24 same (compared with pySHACL) | — | 4 / 0 |
 
 W3C SHACL 1.2 by test type (not-run cases are counted, with a typed reason):

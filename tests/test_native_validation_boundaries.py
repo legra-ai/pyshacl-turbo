@@ -17,7 +17,6 @@ from rdflib import Graph
         "sh:maxInclusive ex:notLiteral",
         "sh:minCount ex:notLiteral",
         "sh:maxCount 1, 2",
-        'sh:minLength "invalid"',
         "sh:languageIn (ex:notString)",
         "sh:pattern ex:notLiteral",
         'sh:pattern "a"; sh:flags ex:notLiteral',
@@ -49,5 +48,18 @@ def test_invalid_executable_declarations_fail_before_use(declaration):
     @prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
     ex:S a sh:NodeShape; sh:targetNode ex:s; {declaration}.
     """
-    with pytest.raises((ValueError, NotImplementedError, turbo.ConstraintLoadError)):
+    with pytest.raises((ValueError, NotImplementedError)):
         turbo.compile_shapes(Graph().parse(data=source, format="turtle"), advanced=True)
+
+
+def test_invalid_length_declarations_raise_the_reference_constraint_error():
+    source = """@prefix sh: <http://www.w3.org/ns/shacl#>.
+    @prefix ex: <https://example.org/>.
+    ex:S a sh:NodeShape; sh:targetNode ex:s; sh:minLength "invalid".
+    """
+    with pytest.raises(turbo.ConstraintLoadError) as error:
+        turbo.compile_shapes(Graph().parse(data=source, format="turtle"), advanced=True)
+    assert error.value.args == [
+        "sh:minLength value must be a literal value with an integer.",
+        "https://www.w3.org/TR/shacl/#MinLengthConstraintComponent",
+    ]

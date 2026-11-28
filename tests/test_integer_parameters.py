@@ -119,20 +119,40 @@ def test_zero_min_length_accepts_blank_nodes_like_reference():
     assert compare(data, parameter_shape("minLength", Literal(0)))[0]
 
 
+def assert_reference_constraint_error(shapes):
+    """Turbo raises pySHACL's ConstraintLoadError with its exact message and link."""
+    data = graph('ex:s ex:p "abc".')
+    with pytest.raises(ConstraintLoadError) as expected:
+        pyshacl.validate(data, shacl_graph=shapes)
+    with pytest.raises(turbo.ConstraintLoadError) as actual:
+        turbo.validate(data, shacl_graph=shapes)
+    assert type(actual.value) is turbo.ConstraintLoadError
+    assert actual.value.args == expected.value.args
+    assert actual.value.link == expected.value.link
+    assert str(actual.value) == str(expected.value)
+
+
 @pytest.mark.parametrize("parameter", ["minCount", "maxCount", "minLength", "maxLength"])
 @pytest.mark.parametrize("value", [Literal(-1), Literal("no"), Literal("1", datatype=XSD.decimal)])
-def test_invalid_integer_parameters_remain_hard_errors(parameter, value):
-    for validate in (pyshacl.validate, turbo.validate):
-        with pytest.raises((ConstraintLoadError, turbo.ConstraintLoadError, TypeError, ValueError)):
-            validate(graph('ex:s ex:p "abc".'), shacl_graph=parameter_shape(parameter, value))
+def test_invalid_integer_parameters_raise_the_reference_constraint_error(parameter, value):
+    assert_reference_constraint_error(parameter_shape(parameter, value))
+
+
+NEGATIVE_ZERO_MESSAGE = pytest.mark.xfail(
+    strict=True,
+    reason="rdflib-turbo 0.2.0a46 words the ill-typed zero differently from pySHACL: "
+    "https://github.com/legra-ai/rdflib-turbo/issues/229",
+)
 
 
 @pytest.mark.parametrize("parameter", ["minLength", "maxLength"])
-@pytest.mark.parametrize("datatype", [XSD.negativeInteger, XSD.nonPositiveInteger, XSD.byte])
+@pytest.mark.parametrize(
+    "datatype",
+    [
+        pytest.param(XSD.negativeInteger, marks=NEGATIVE_ZERO_MESSAGE),
+        XSD.nonPositiveInteger,
+        XSD.byte,
+    ],
+)
 def test_length_parameters_reject_reference_excluded_datatypes(parameter, datatype):
-    for validate in (pyshacl.validate, turbo.validate):
-        with pytest.raises((ConstraintLoadError, turbo.ConstraintLoadError, ValueError)):
-            validate(
-                graph('ex:s ex:p "abc".'),
-                shacl_graph=parameter_shape(parameter, Literal(0, datatype=datatype)),
-            )
+    assert_reference_constraint_error(parameter_shape(parameter, Literal(0, datatype=datatype)))
