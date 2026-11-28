@@ -7,7 +7,7 @@ import sys
 from contextlib import ExitStack
 from importlib.metadata import version
 
-from rdflib import Dataset, Graph
+from rdflib.graph import Dataset, Graph
 from rdflib.namespace import SH
 
 from . import shacl_rules, validate, validate_each

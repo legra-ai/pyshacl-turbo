@@ -8,7 +8,8 @@ from pathlib import Path
 from urllib.parse import urlparse
 from urllib.request import Request, url2pathname, urlopen
 
-from rdflib import BNode, ConjunctiveGraph, Dataset, Graph, Literal, URIRef
+from rdflib import BNode, Literal, URIRef
+from rdflib.graph import ConjunctiveGraph, Dataset, Graph
 from rdflib.namespace import OWL, NamespaceManager
 from rdflib.plugins.parsers.nquads import NQuadsParser
 from rdflib.plugins.parsers.ntriples import (

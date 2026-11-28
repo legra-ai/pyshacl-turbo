@@ -10,6 +10,10 @@ import pytest
 # `import pyshacl` must load the reference, not the start-up alias (ADR 0049).
 # The alias finder reads the switch on every lookup; subprocesses inherit it.
 os.environ["PYSHACL_TURBO_ALIAS"] = "0"
+# Reference graphs and the reference OWL-RL are ordinary too: rdflib-turbo ADR 0081 and
+# owlrl-turbo ADR 0014 would otherwise serve `rdflib.Graph()` and `import owlrl` from Turbo.
+os.environ["RDFLIB_TURBO_ALIAS"] = "0"
+os.environ["OWLRL_TURBO_ALIAS"] = "0"
 
 
 @pytest.fixture

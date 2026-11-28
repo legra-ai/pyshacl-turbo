@@ -2,8 +2,9 @@
 
 from io import StringIO
 
-from rdflib import BNode, Graph, Literal, Namespace
+from rdflib import BNode, Literal, Namespace
 from rdflib.compare import isomorphic
+from rdflib.graph import Graph
 from rdflib.namespace import OWL, RDF, RDFS, SH
 from rdflib.query import Result
 

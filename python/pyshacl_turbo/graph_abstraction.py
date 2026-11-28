@@ -6,7 +6,8 @@ Native I/O explicitly uses the underlying graph to preserve its real scope.
 
 import sys
 
-from rdflib import Dataset, Graph, URIRef
+from rdflib import URIRef
+from rdflib.graph import Dataset, Graph
 
 
 def _native_view(graph):

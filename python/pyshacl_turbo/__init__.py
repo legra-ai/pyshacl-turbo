@@ -10,7 +10,8 @@ from functools import lru_cache, wraps
 from importlib.metadata import version
 from pathlib import Path
 
-from rdflib import BNode, Dataset, Graph, Literal, URIRef
+from rdflib import BNode, Literal, URIRef
+from rdflib.graph import Dataset, Graph
 
 from . import _native
 from ._inference import inference_mode

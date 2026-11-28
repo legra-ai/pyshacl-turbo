@@ -2,7 +2,8 @@
 
 import logging
 
-from rdflib import Dataset, Graph, URIRef
+from rdflib import URIRef
+from rdflib.graph import Dataset, Graph
 
 from ._inference import inference_mode
 from .graph_abstraction import DataGraph

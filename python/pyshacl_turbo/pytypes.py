@@ -2,7 +2,8 @@
 
 from dataclasses import dataclass
 
-from rdflib import Dataset, Graph, Literal, URIRef
+from rdflib import Literal, URIRef
+from rdflib.graph import Dataset, Graph
 from rdflib.term import IdentifiedNode
 
 GraphLike = Dataset | Graph

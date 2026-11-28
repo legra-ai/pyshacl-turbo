@@ -9,7 +9,8 @@ focus/value/path keys: every retained field and multiplicity must match.
 import logging
 from collections import Counter
 
-from rdflib import BNode, Graph, Namespace, URIRef
+from rdflib import BNode, Namespace, URIRef
+from rdflib.graph import Graph
 from rdflib.namespace import RDF, RDFS, SH
 from rdflib.term import Node
 

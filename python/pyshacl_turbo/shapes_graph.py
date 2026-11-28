@@ -5,7 +5,8 @@ from collections.abc import Iterable
 from threading import Lock
 from typing import ClassVar
 
-from rdflib import BNode, Dataset, Graph, Literal, URIRef
+from rdflib import BNode, Literal, URIRef
+from rdflib.graph import Dataset, Graph
 from rdflib.namespace import OWL, RDF, RDFS
 from rdflib.util import from_n3
 
