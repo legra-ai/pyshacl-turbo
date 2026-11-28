@@ -23,6 +23,8 @@ defaults:
 # Differential gates compare with the reference pySHACL: turn off the ADR 0049 import alias.
 env:
   PYSHACL_TURBO_ALIAS: '0'
+  RDFLIB_TURBO_ALIAS: '0'
+  OWLRL_TURBO_ALIAS: '0'
 
 jobs:
   plan:

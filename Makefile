@@ -2,6 +2,9 @@ PYTHON ?= python3.13
 
 # Differential targets compare with the reference pySHACL: turn the import alias off (ADR 0049).
 export PYSHACL_TURBO_ALIAS := 0
+# The rdflib-turbo (ADR 0081) and owlrl-turbo (ADR 0014) aliases too: references are ordinary.
+export RDFLIB_TURBO_ALIAS := 0
+export OWLRL_TURBO_ALIAS := 0
 
 .PHONY: dev test test-compatibility test-coverage lint check benchmark benchmark-pipeline benchmark-targeting benchmark-preparation coverage
 

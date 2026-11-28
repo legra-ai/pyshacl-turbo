@@ -43,6 +43,8 @@ def environment():
         PYTHONDONTWRITEBYTECODE="1",
         # The gates compare with the reference pySHACL; ADR 0049 alias off.
         PYSHACL_TURBO_ALIAS="0",
+        RDFLIB_TURBO_ALIAS="0",
+        OWLRL_TURBO_ALIAS="0",
     )
     return result
 

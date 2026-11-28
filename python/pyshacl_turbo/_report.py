@@ -1,7 +1,8 @@
 """Format caller-supplied report results without executing SHACL constraints."""
 
-from rdflib import BNode, Graph, Literal, URIRef
+from rdflib import BNode, Literal, URIRef
 from rdflib.collection import Collection
+from rdflib.graph import Graph
 from rdflib.namespace import RDF, SH
 
 
