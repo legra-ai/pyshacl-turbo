@@ -80,7 +80,8 @@ class DirectContractFreshness:
     rdflib-turbo pin to its unpublished build and sets the explicit
     ``PYSHACL_TURBO_CANDIDATE_PROVIDER=1`` marker. The measured provider cannot
     equal that pin, so only the exact provider-version equality is narrowed to
-    "a provider is named"; every other assertion stays strict.
+    "a provider is named", and the facade's ``+candidate.`` local version
+    segment is ignored; every other assertion stays strict.
     """
 
     def __init__(self, measured, version, pinned, header, *, candidate_provider):
@@ -109,13 +110,23 @@ class DirectContractFreshness:
         assert measured == self.pinned["rdflib-turbo"]
         return measured
 
+    def facade_version(self):
+        """The candidate cohort also rewrites the facade to a ``+candidate.`` local version."""
+        if not self.candidate_provider:
+            assert re.fullmatch(r"\d+\.\d+\.\d+", self.version)
+            return self.version
+        public, separator, local = self.version.partition("+")
+        if separator:
+            assert re.fullmatch(r"candidate\.[0-9a-f]+\.[0-9a-f]+", local)
+        return public
+
     def check(self):
         measured = self.measured
         assert measured["reference_version"] == self.pinned["pyshacl"]
         provider = self.provider()
         assert measured["runtime_authority"]["provider_version"] == provider
         assert measured["runtime_authority"]["facade_version"] == measured["turbo_version"]
-        assert within_one_release(measured["turbo_version"], self.version)
+        assert within_one_release(measured["turbo_version"], self.facade_version())
         assert self.header == (
             f"Reference: pySHACL {self.pinned['pyshacl']}. Turbo: {measured['turbo_version']}"
             f" with rdflib-turbo {provider}."
@@ -156,6 +167,19 @@ def test_candidate_marker_narrows_only_the_provider_pin():
     stale_facade.measured["runtime_authority"]["facade_version"] = "0.10.7"
     with pytest.raises(AssertionError):
         stale_facade.check()
+
+
+def test_candidate_marker_reads_the_public_part_of_a_candidate_facade_version():
+    candidate = "0.10.8+candidate.fb243de2e60c.6c7b8c4df28d"
+    freshness("0.2.0a43", "0.2.0a45", candidate_provider=True, version=candidate).check()
+    with pytest.raises(AssertionError):
+        freshness("0.2.0a43", "0.2.0a45", candidate_provider=True, version="0.10.8+other.1").check()
+    with pytest.raises(AssertionError):
+        freshness(
+            "0.2.0a43", "0.2.0a45", candidate_provider=True, version="0.10.10+candidate.a.b"
+        ).check()
+    with pytest.raises(AssertionError):
+        freshness("0.2.0a43", "0.2.0a43", candidate_provider=False, version=candidate).check()
 
 
 @pytest.mark.parametrize(("value", "candidate"), [("1", True), ("0", False), (None, False)])
