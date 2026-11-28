@@ -1,9 +1,9 @@
 # Direct pySHACL comparison
 
-Reference: pySHACL 0.40.2. Turbo: 0.10.6 with rdflib-turbo 0.2.0a43.
-Measured: 2026-11-27T22:29:43.033182+00:00; installed shared native provider and pure Python facade.
-Platform: macOS-27.0.1-arm64-arm-64bit-Mach-O. Python: 3.13.18.
-Source fingerprint: `837083316878369684f8205fb23afcabe255936cd71f21fe053a1826af4de117`.
+Reference: pySHACL 0.40.2. Turbo: 0.10.8 with rdflib-turbo 0.2.0a43.
+Measured: 2026-11-28T06:39:28.328100+00:00; installed shared native provider and pure Python facade.
+Platform: macOS-27.0.1-arm64-arm-64bit-Mach-O. Python: 3.15.2.
+Source fingerprint: `6e6bbce2c7443d12eb77c3c28ad8760c21d3d3f5520730e5096747f6f0a2ee68`.
 
 Each row calls the actual public package without the upstream test bridge.
 RDF comparison preserves literal terms, graph scope and blank-node sharing;
@@ -22,40 +22,40 @@ Every probe is first-party. Each non-equal case is an entry in the
 
 | Case | Outcome | Differences | Ledger | Speedup |
 | --- | --- | --- | --- | --- |
-| validate/graph/violation | equal |  |  | 1.02× |
-| validate/graph/conforming | equal |  |  | 0.98× |
-| validate/dataset/violation | equal |  |  | 1.01× |
-| validate/dataset/conforming | equal |  |  | 0.80× |
-| validate/store/violation | equal |  |  | 0.94× |
-| validate/store/conforming | equal |  |  | 1.06× |
-| validate/text/violation | equal |  |  | 0.91× |
-| validate/text/conforming | equal |  |  | 0.92× |
-| validate/bytes/violation | equal |  |  | 0.90× |
-| validate/bytes/conforming | equal |  |  | 0.92× |
-| validate/list | equal |  |  | 0.96× |
-| validate_each/list | equal |  |  | 0.94× |
-| validate/tuple | equal |  |  | 0.96× |
-| validate_each/tuple | equal |  |  | 1.01× |
-| validate/user-list | equal |  |  | 0.98× |
-| validate_each/user-list | equal |  |  | 0.97× |
+| validate/graph/violation | equal |  |  | 0.51× |
+| validate/graph/conforming | equal |  |  | 0.89× |
+| validate/dataset/violation | equal |  |  | 0.45× |
+| validate/dataset/conforming | equal |  |  | 0.79× |
+| validate/store/violation | equal |  |  | 1.81× |
+| validate/store/conforming | equal |  |  | 0.58× |
+| validate/text/violation | equal |  |  | 0.57× |
+| validate/text/conforming | equal |  |  | 0.80× |
+| validate/bytes/violation | equal |  |  | 0.53× |
+| validate/bytes/conforming | equal |  |  | 0.84× |
+| validate/list | equal |  |  | 0.98× |
+| validate_each/list | equal |  |  | 1.60× |
+| validate/tuple | equal |  |  | 0.44× |
+| validate_each/tuple | equal |  |  | 1.20× |
+| validate/user-list | equal |  |  | 1.19× |
+| validate_each/user-list | equal |  |  | 0.93× |
 | validate_each/reject-empty-list | equal |  |  | — |
 | validate_each/reject-graph | equal |  |  | — |
 | validate_each/reject-text | equal |  |  | — |
-| validate/legacy-positional | equal |  |  | 1.05× |
-| validate_each/legacy-positional | equal |  |  | 1.01× |
-| shacl_rules/legacy-positional | equal |  |  | 0.69× |
-| validate/rules-focus | equal |  |  | 0.87× |
-| shacl_rules/rules-focus | equal |  |  | 0.64× |
-| validate/rules-shape | equal |  |  | 0.79× |
-| shacl_rules/rules-shape | equal |  |  | 0.45× |
-| validate/rules-untargeted | equal |  |  | 0.60× |
-| shacl_rules/rules-untargeted | equal |  |  | 0.52× |
-| validate/rules-override-target | equal |  |  | 0.79× |
-| shacl_rules/rules-override-target | equal |  |  | 0.45× |
-| shacl_rules/serialize-trig | equal |  |  | 0.86× |
-| shacl_rules/serialize-turtle | equal |  |  | 0.65× |
-| shacl_rules/serialize-nt | equal |  |  | 0.73× |
-| shacl_rules/serialize-json-ld | equal |  |  | 0.50× |
+| validate/legacy-positional | equal |  |  | 0.78× |
+| validate_each/legacy-positional | equal |  |  | 0.34× |
+| shacl_rules/legacy-positional | equal |  |  | 0.15× |
+| validate/rules-focus | equal |  |  | 1.00× |
+| shacl_rules/rules-focus | equal |  |  | 0.65× |
+| validate/rules-shape | equal |  |  | 1.90× |
+| shacl_rules/rules-shape | equal |  |  | 0.56× |
+| validate/rules-untargeted | equal |  |  | 1.80× |
+| shacl_rules/rules-untargeted | equal |  |  | 0.34× |
+| validate/rules-override-target | equal |  |  | 0.89× |
+| shacl_rules/rules-override-target | equal |  |  | 1.02× |
+| shacl_rules/serialize-trig | equal |  |  | 3.05× |
+| shacl_rules/serialize-turtle | equal |  |  | 0.29× |
+| shacl_rules/serialize-nt | equal |  |  | 0.61× |
+| shacl_rules/serialize-json-ld | equal |  |  | 1.24× |
 | shacl_rules/serialize-xml | reference_error |  | intentional | — |
 | inference/rdfs/complete-closure | different | mutation | intentional | — |
 | inference/owlrl/complete-closure | different | mutation | intentional | — |
