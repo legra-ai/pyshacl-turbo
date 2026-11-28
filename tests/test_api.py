@@ -222,7 +222,7 @@ def test_dataset_inplace_preparation_preserves_inference_destination(named, vali
 
 
 def test_ignored_properties_without_closed_is_invalid():
-    with pytest.raises(ValueError, match="ignoredProperties"):
+    with pytest.raises((ValueError, turbo.ConstraintLoadError), match="ignoredProperties"):
         turbo.validate(
             graph(""), shacl_graph=graph("ex:S a sh:NodeShape; sh:ignoredProperties (ex:type).")
         )

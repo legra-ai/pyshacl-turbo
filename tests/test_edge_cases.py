@@ -100,7 +100,7 @@ def test_missing_target_projection_fails_during_compilation():
     ],
 )
 def test_malformed_shapes_are_errors(definition):
-    with pytest.raises(ValueError):
+    with pytest.raises((ValueError, turbo.ConstraintLoadError)):
         turbo.compile_shapes(graph(f"ex:S a sh:PropertyShape; sh:path ex:p; {definition}."))
 
 

@@ -49,5 +49,5 @@ def test_invalid_executable_declarations_fail_before_use(declaration):
     @prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
     ex:S a sh:NodeShape; sh:targetNode ex:s; {declaration}.
     """
-    with pytest.raises((ValueError, NotImplementedError)):
+    with pytest.raises((ValueError, NotImplementedError, turbo.ConstraintLoadError)):
         turbo.compile_shapes(Graph().parse(data=source, format="turtle"), advanced=True)
