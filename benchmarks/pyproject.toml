@@ -6,7 +6,7 @@ dependencies = [
     "html5rdf==1.2.1",
     "owlrl==7.6.2",
     "owlrl-turbo==0.1.0a2",
-    "packaging==26.3",
+    "packaging==26.4",
     "prettytable==3.19.0",
     "pyparsing==3.3.3",
     "pyshacl==0.40.1",
