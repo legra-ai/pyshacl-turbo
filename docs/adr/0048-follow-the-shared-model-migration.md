@@ -1,9 +1,10 @@
 # ADR 0048: Follow the provider's move onto the shared model crates
 
-Status: Proposed; design only, see rdflib-turbo ADR 0079
+Status: Accepted; the owner approved this record and rdflib-turbo ADR 0079 on
+2026-11-28
 
 The SHACL engine and its bindings live in rdflib-turbo (`crates/engine`,
-`crates/python`; rdflib-turbo ADR 0068). rdflib-turbo ADR 0079 proposes
+`crates/python`; rdflib-turbo ADR 0068). rdflib-turbo ADR 0079 decides
 that the compiler use shacl-structural-model types directly instead of the
 parallel engine structures it lowers them into today, that report terms
 become rdf-structural-model terms, that the engine's duplicate CONSTRUCT
