@@ -209,7 +209,7 @@
     },
     "versions": {
       "pyshacl": "0.40.2",
-      "pyshacl-turbo": "0.10.8",
+      "pyshacl-turbo": "0.10.9",
       "rdflib-turbo": "0.2.0a43"
     },
     "outcomes": {
