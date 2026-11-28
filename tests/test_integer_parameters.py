@@ -123,7 +123,7 @@ def test_zero_min_length_accepts_blank_nodes_like_reference():
 @pytest.mark.parametrize("value", [Literal(-1), Literal("no"), Literal("1", datatype=XSD.decimal)])
 def test_invalid_integer_parameters_remain_hard_errors(parameter, value):
     for validate in (pyshacl.validate, turbo.validate):
-        with pytest.raises((ConstraintLoadError, TypeError, ValueError)):
+        with pytest.raises((ConstraintLoadError, turbo.ConstraintLoadError, TypeError, ValueError)):
             validate(graph('ex:s ex:p "abc".'), shacl_graph=parameter_shape(parameter, value))
 
 
@@ -131,7 +131,7 @@ def test_invalid_integer_parameters_remain_hard_errors(parameter, value):
 @pytest.mark.parametrize("datatype", [XSD.negativeInteger, XSD.nonPositiveInteger, XSD.byte])
 def test_length_parameters_reject_reference_excluded_datatypes(parameter, datatype):
     for validate in (pyshacl.validate, turbo.validate):
-        with pytest.raises((ConstraintLoadError, ValueError)):
+        with pytest.raises((ConstraintLoadError, turbo.ConstraintLoadError, ValueError)):
             validate(
                 graph('ex:s ex:p "abc".'),
                 shacl_graph=parameter_shape(parameter, Literal(0, datatype=datatype)),
